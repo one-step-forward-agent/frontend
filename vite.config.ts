@@ -17,7 +17,7 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    // Прокси для API (чтобы избежать CORS при разработке)
+    // Прокси для API (чтобы избежать CORS при разработке)ы
     proxy: {
       '/api': {
         target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
