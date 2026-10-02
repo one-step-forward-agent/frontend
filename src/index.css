@@ -15,6 +15,7 @@
 
   body {
     @apply bg-white text-gray-900;
+    @apply font-sans antialiased;
     line-height: 1.5;
   }
 
@@ -64,6 +65,9 @@
   }
   .apple-gradient-dark {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  }
+  .text-eyebrow {
+    @apply text-xs md:text-sm uppercase tracking-[0.2em] font-medium;
   }
 }
 

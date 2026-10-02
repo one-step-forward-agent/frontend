@@ -79,12 +79,20 @@ export interface InteractiveButtonProps extends ButtonProps {
   scaleAmount?: number;
   glowRadius?: string;
   transitionDelay?: number;
+  /** Цвета радиального градиента внутри superellipse. */
+  gradientStops?: Array<{ offset: string; color: string }>;
+  /** Классы для контента — например, чтобы сделать текст тёмным на белой кнопке. */
+  contentClassName?: string;
 }
 
-const InteractiveButton = forwardRef<
-  HTMLButtonElement,
-  InteractiveButtonProps
->(
+const DEFAULT_GRADIENT_STOPS: Array<{ offset: string; color: string }> = [
+  { offset: "10%", color: "#3b82f6" },
+  { offset: "35%", color: "#6366f1" },
+  { offset: "70%", color: "#8b5cf6" },
+  { offset: "100%", color: "#2563eb" },
+];
+
+const InteractiveButton = forwardRef<HTMLButtonElement, InteractiveButtonProps>(
   (
     {
       className,
@@ -98,10 +106,14 @@ const InteractiveButton = forwardRef<
       disabled,
       isLoading,
       transitionDelay = 0,
+      gradientStops = DEFAULT_GRADIENT_STOPS,   // ← новый
+      contentClassName,                          // ← новый
       ...props
     },
     ref
   ) => {
+    const gradientId = React.useId();          // ← уникальный id для <radialGradient>
+    // ...остальной код как был
     /*
      * Координаты курсора храним в ref.
      * Они меняются очень часто, поэтому НЕ используем useState.
@@ -413,38 +425,19 @@ const InteractiveButton = forwardRef<
       >
         <defs>
           <radialGradient
-            id="button-gradient"
+            id={gradientId}
             gradientUnits="userSpaceOnUse"
             cx={`${mouseX.current}`}
             cy={`${mouseY.current}`}
             r={glowRadius}
           >
-            <stop
-              offset="10%"
-              stopColor="#3b82f6"
-            />
-
-            <stop
-              offset="35%"
-              stopColor="#6366f1"
-            />
-
-            <stop
-              offset="70%"
-              stopColor="#8b5cf6"
-            />
-
-            <stop
-              offset="100%"
-              stopColor="#2563eb"
-            />
+            {gradientStops.map((stop) => (
+              <stop key={stop.offset} offset={stop.offset} stopColor={stop.color} />
+            ))}
           </radialGradient>
         </defs>
 
-        <path
-          d={buttonPath}
-          fill="url(#button-gradient)"
-        />
+        <path d={buttonPath} fill={`url(#${gradientId})`} />
       </svg>
     );
 
@@ -469,6 +462,15 @@ const InteractiveButton = forwardRef<
 
     const wrapperClassName = cn(
       buttonVariants({ variant, size }),
+
+      // InteractiveButton рисует свою форму (superellipse) через SVG.
+      // Фон и тень от базового Button здесь лишние — они дают
+      // прямоугольные полосы за пределами squircle.
+      "!bg-none",
+      "!bg-transparent",
+      "!shadow-none",
+      "hover:!shadow-none",
+
       "relative inline-flex",
       "items-center justify-center",
       "font-medium",
@@ -480,8 +482,7 @@ const InteractiveButton = forwardRef<
       "focus-visible:ring-blue-500",
       "focus-visible:ring-offset-2",
 
-      isDisabled &&
-        "opacity-50 pointer-events-none",
+      isDisabled && "opacity-50 pointer-events-none",
 
       className
     );
@@ -491,17 +492,10 @@ const InteractiveButton = forwardRef<
      */
     const content = (
       <span
-        className="
-          relative
-          z-20
-          flex
-          h-full
-          w-full
-          items-center
-          justify-center
-          gap-2
-          text-white
-        "
+        className={cn(
+          "relative z-20 flex h-full w-full items-center justify-center gap-2",
+          contentClassName ?? "text-white"
+        )}
       >
         {isLoading && (
           <Loader2

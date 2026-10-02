@@ -8,6 +8,19 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: [
+          "Inter",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif",
+        ],
+        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+      },
       colors: {
         glass: {
           light: 'rgba(255,255,255,0.7)',

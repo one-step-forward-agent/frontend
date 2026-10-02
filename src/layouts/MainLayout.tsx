@@ -81,7 +81,7 @@ const MainLayout: React.FC = () => {
               P
             </div>
             <span className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-              Proskladai
+              Deyla
             </span>
           </div>
 

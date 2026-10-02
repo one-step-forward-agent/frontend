@@ -1,51 +1,170 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui";
+// src/components/landing/LandingHeader.tsx
+import * as React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 
-const MaskotImg = "/images/maskot.png";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/utils/cn";
 
-const LandingHeader: React.FC = () => (
-  <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-      <Link to="/" className="flex items-center gap-2">
-        <img
-          src={MaskotImg}
-          className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-semibold"
-          alt="Маскот"
-        />
-        <span className="text-xl font-semibold text-gray-800 dark:text-white">Proskladai</span>
-      </Link>
-      <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+// ---------- Данные навигации ----------
+
+type NavItem =
+  | { kind: "anchor"; href: string; label: string }
+  | { kind: "route"; to: string; label: string };
+
+const NAV_ITEMS: NavItem[] = [
+  { kind: "anchor", href: "#benefits", label: "Возможности" },
+  { kind: "anchor", href: "#how-it-works", label: "Как это работает" },
+  { kind: "route", to: "/features", label: "Фичи" },
+];
+
+// ---------- Логотип ----------
+
+const Logo: React.FC = () => (
+  <span
+    aria-hidden="true"
+    className="w-7 h-7 rounded bg-gradient-to-br from-blue-500 to-purple-600 inline-block"
+  />
+);
+
+// ---------- Компонент ----------
+
+export const LandingHeader: React.FC = () => {
+  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  const goStart = () => {
+    setMobileOpen(false);
+    navigate("/onboarding/for-what-using");
+  };
+
+  const closeMobile = () => setMobileOpen(false);
+
+  return (
+    <header
+      className={cn(
+        "sticky top-0 z-40",
+        "backdrop-blur bg-white/70 dark:bg-gray-950/70",
+        "border-b border-gray-200/60 dark:border-gray-800/60"
+      )}
+    >
+      <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 flex items-center gap-3">
+        {/* Логотип */}
         <Link
-          to="/features"
-          className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-500 hover:to-purple-500 transition-all duration-200"
+          to="/"
+          className="flex items-center gap-2 shrink-0"
+          aria-label="Deyla — на главную"
         >
-          Возможности
+          <Logo />
+          <span className="font-semibold">Deyla</span>
         </Link>
-        <Link
-          to="/pricing"
-          className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-500 hover:to-purple-500 transition-all duration-200"
+
+        {/* Навигация — desktop */}
+        <nav
+          className="hidden md:flex items-center gap-1 ml-6"
+          aria-label="Основная навигация"
         >
-          Цены
-        </Link>
-      </nav>
-      <div className="flex items-center gap-4">
+          {NAV_ITEMS.map((item) =>
+            item.kind === "anchor" ? (
+              <a
+                key={item.href}
+                href={item.href}
+                className="px-3 py-2 text-sm rounded text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800/60 transition-colors"
+              >
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="px-3 py-2 text-sm rounded text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800/60 transition-colors"
+              >
+                {item.label}
+              </Link>
+            )
+          )}
+        </nav>
+
+        <div className="flex-1" />
+
+        {/* Правые действия — desktop */}
         <Link
           to="/login"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          className="hidden sm:inline-flex px-3 py-2 text-sm rounded text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800/60 transition-colors"
         >
           Войти
         </Link>
+
         <Button
-          asChild
+          type="button"
           size="sm"
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+          onClick={goStart}
+          className="hidden sm:inline-flex"
         >
-          <Link to="/register">Начать бесплатно</Link>
+          Начать бесплатно
+        </Button>
+
+        {/* Гамбургер — mobile */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label={mobileOpen ? "Закрыть меню" : "Открыть меню"}
+          aria-expanded={mobileOpen}
+          aria-controls="landing-mobile-nav"
+        >
+          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </Button>
       </div>
-    </div>
-  </header>
-);
+
+      {/* Выпадающее меню — mobile */}
+      {mobileOpen && (
+        <div
+          id="landing-mobile-nav"
+          className="md:hidden border-t border-gray-200/60 dark:border-gray-800/60 bg-white/95 dark:bg-gray-950/95 backdrop-blur"
+        >
+          <nav className="px-4 py-3 space-y-1" aria-label="Мобильная навигация">
+            {NAV_ITEMS.map((item) =>
+              item.kind === "anchor" ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMobile}
+                  className="block px-3 py-2 text-sm rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={closeMobile}
+                  className="block px-3 py-2 text-sm rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
+
+            <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
+              <Link
+                to="/login"
+                onClick={closeMobile}
+                className="block px-3 py-2 text-sm rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Войти
+              </Link>
+              <Button type="button" onClick={goStart} className="w-full">
+                Начать бесплатно
+              </Button>
+            </div>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+};
 
 export default LandingHeader;
