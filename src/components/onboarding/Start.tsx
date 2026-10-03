@@ -779,7 +779,7 @@ const UserCase: React.FC = () => (
             src="/images/airplaneTicketWB-mes.png"
             alt="Сообщение с авиабилетом"
             className="
-                absolute left-[24%] top-[28%] z-30
+                absolute left-[24%] top-[30%] z-30
                 w-[50%] h-auto
                 rounded-2xl shadow-lg
                 pointer-events-none select-none
