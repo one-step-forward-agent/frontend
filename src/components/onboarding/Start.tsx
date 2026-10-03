@@ -4,6 +4,13 @@ import { useNavigate } from "react-router-dom";
 import {
   Sparkles, Send, Calendar, BarChart3,
   Mic, Zap, Target, ArrowRight, Check,
+  Reply,       
+  Copy,        
+  Download,    
+  Pin,         
+  Forward,     
+  Trash2,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Button, InteractiveButton } from "@/components/ui/button";
@@ -573,6 +580,107 @@ const BackgroundPulses: React.FC = () => (
   </>
 );
 
+// ---------- Контекстное меню (как при long-press в Telegram) ----------
+
+type MenuItem = {
+  label: string;
+  icon: LucideIcon;
+  tone?: "default" | "danger";
+};
+
+const CONTEXT_MENU_ITEMS: MenuItem[] = [
+  { label: "Ответить",         icon: Reply },
+  { label: "Скопировать",      icon: Copy },
+  { label: "Сохранить фото",   icon: Download },
+  { label: "Переслать Deyla",        icon: Forward },
+  { label: "Удалить",          icon: Trash2, tone: "danger" },
+];
+
+const ChatContextMenu: React.FC = () => (
+  <div
+    className="
+      relative rounded-2xl overflow-visible
+      bg-white/95 dark:bg-gray-900/95 backdrop-blur-md
+      ring-1 ring-gray-200/80 dark:ring-gray-700/60
+      shadow-2xl
+    "
+    role="menu"
+    aria-label="Действия с сообщением"
+  >
+    {CONTEXT_MENU_ITEMS.map(({ label, icon: Icon, tone }, i) => {
+      const isDanger = tone === "danger";
+      const isHighlighted = label === "Переслать Deyla";
+
+      return (
+        <React.Fragment key={label}>
+          {isDanger && i > 0 && (
+            <div className="h-px bg-gray-100 dark:bg-gray-800" />
+          )}
+
+          <button
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
+            className={cn(
+                "relative isolate w-full flex items-center gap-2.5",
+                "px-3 py-2 text-left text-[9px] font-medium",
+                "transition-colors rounded-xl",
+                isHighlighted ? "z-10" : "z-0",
+                // Без bg-white на самой кнопке — белая заливка пойдёт отдельным слоем
+                isDanger &&
+                "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40",
+                !isDanger &&
+                !isHighlighted &&
+                "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+            )}
+            >
+            {isHighlighted && (
+                <>
+                {/* ─── Слой 1 (z-0): радиальный градиент-ореол ─── */}
+                <span
+                    aria-hidden="true"
+                    className="
+                    absolute inset-[-30%] z-0 pointer-events-none
+                    blur-xl rounded-full
+                    "
+                    style={{
+                    background:
+                        "radial-gradient(circle at center, rgba(59,130,246,0.75) 0%, rgba(99,102,241,0.45) 40%, rgba(139,92,246,0.2) 65%, transparent 90%)",
+                    }}
+                />
+
+                {/* ─── Слой 2 (z-10): белая заливка кнопки ─── */}
+                <span
+                    aria-hidden="true"
+                    className="
+                    absolute inset-0 z-10 pointer-events-none
+                    rounded-xl
+                    bg-white dark:bg-gray-900
+                    shadow-md
+                    "
+                />
+                </>
+            )}
+
+            {/* ─── Слой 3 (z-20): контент поверх всего ─── */}
+            <Icon
+                size={13}
+                className={cn(
+                "shrink-0 relative z-20",
+                isDanger && "text-red-500 dark:text-red-400",
+                !isDanger && !isHighlighted && "text-gray-400 dark:text-gray-500"
+                )}
+                aria-hidden="true"
+            />
+
+            <span className="relative z-20 flex-1 truncate">{label}</span>
+            </button>
+        </React.Fragment>
+      );
+    })}
+  </div>
+);
+
 // ---------- UserCase: авиабилет из мессенджера ----------
 
 const UserCase: React.FC = () => (
@@ -597,9 +705,9 @@ const UserCase: React.FC = () => (
             className="relative w-full max-w-[400px]"
             style={{
                 WebkitMaskImage:
-                    "linear-gradient(to bottom, black 0%, black 55%, rgba(0,0,0,0.5) 65%, transparent 70%, transparent 100%)",
+                    "linear-gradient(to bottom, black 0%, black 68%, rgba(0,0,0,0.5) 71%, transparent 75%, transparent 100%)",
                 maskImage:
-                    "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.5) 65%, transparent 70%, transparent 100%)",
+                    "linear-gradient(to bottom, black 0%, black 68%, rgba(0,0,0,0.5) 71%, transparent 75%, transparent 100%)",
                 }}
         >
 
@@ -640,7 +748,7 @@ const UserCase: React.FC = () => (
                 <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
                     Андрей Смирнов
                 </p>
-                <p className="text-[9px] text-emerald-500">онлайн</p>
+                <p className="text-[10px] text-emerald-500">онлайн</p>
                 </div>
             </div>
 
@@ -679,18 +787,16 @@ const UserCase: React.FC = () => (
             loading="lazy"
             />
 
-            {/* ─── z-40: оверлей «переслать» ──────────────────────── */}
-            <img
-            src="/images/airplaneTicketWB-resend.png"
-            alt="Переслать сообщение"
+            {/* ─── z-40: контекстное меню (long-press) ──────────── */}
+            <div
             className="
                 absolute left-[24%] top-[46%] z-40
-                w-[25%] h-auto
-                drop-shadow-xl
+                w-[31%]
                 pointer-events-none select-none
             "
-            loading="lazy"
-            />
+            >
+            <ChatContextMenu />
+            </div>
         </div>
         </div>
 
@@ -721,12 +827,12 @@ const UserCase: React.FC = () => (
                 <Sparkles size={15} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Deyla
+                <p className="text-xs font-medium text-gray-900 dark:text-white">
+                Deyla
                 </p>
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Онлайн
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Онлайн
                 </p>
               </div>
             </div>
@@ -910,19 +1016,25 @@ const HeroScene: React.FC = () => {
       >
         {/* ── Маскот: слева, затухает к низу туловища ──────── */}
         <div
-          className="absolute z-0"
-          style={{
-            left: 0,
-            top: 0,
-            width: 425,
-            height: 555,
+        className="absolute z-0"
+        style={{
+            left: -80,
+            top: -170,
+            width: 825,
+            height: 1000,
             WebkitMaskImage:
-              "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
+            "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
             maskImage:
-              "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
-          }}
+            "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
+        }}
         >
-          <MascotWithPhone />
+        <img
+            src="/images/MaskotWB.png"
+            alt="Ассистент Deyla говорит по телефону"
+            className="w-full h-full object-contain select-none pointer-events-none"
+            draggable={false}
+            loading="lazy"
+        />
         </div>
 
         {/* ── Календарь: справа, поверх маскота ────────────── */}
