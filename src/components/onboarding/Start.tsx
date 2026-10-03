@@ -147,7 +147,6 @@ export const Start: React.FC = () => {
 
       <Hero onStart={start} />
       <Benefits />
-      <HowItWorks />
       <FinalCTA onStart={start} />
 
       <LandingFooter />
@@ -573,62 +572,88 @@ const BackgroundPulses: React.FC = () => (
     </div>
   </>
 );
+// ─── Дизайн-канвас сцены ─────────────────────────────────────
+// Все три элемента (маскот, календарь, речь) раскладываются внутри
+// этого канваса в пикселях. На рендере канвас масштабируется целиком
+// через transform: scale(), поэтому ничего не «разъезжается»
+// и не скейлится по-разному.
+const HERO_SCENE_W = 790;
+const HERO_SCENE_H = 600;
 
-// Контейнер: календарь + маскот + речь — единый адаптивный блок
-const HeroScene: React.FC = () => (
-  <div className="relative w-full">
-    {/* Слой 0 — маскот: за календарём, затухает к низу туловища */}
+const HeroScene: React.FC = () => {
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const [scale, setScale] = React.useState(0.5);
+
+  // Синхронный замер ширины до первой отрисовки — чтобы не было «прыжка».
+  React.useLayoutEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.clientWidth;
+      if (w > 0) setScale(w / HERO_SCENE_W);
+    };
+
+    update();
+
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
     <div
-      className="
-        absolute z-0
-        -top-24 md:-top-40 lg:-top-80
-        -left-[10%] sm:-left-[25%] md:-left-[40%] lg:-left-[50%]
-        w-[60%] sm:w-[70%] md:w-[80%] lg:w-[85%]
-        min-w-[140px] max-w-[420px]
-      "
-      style={{
-        WebkitMaskImage:
-          "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
-        maskImage:
-          "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
-      }}
+      ref={wrapperRef}
+      className="relative w-full"
+      style={{ height: HERO_SCENE_H * scale }}
+      aria-label="Календарь и голосовой ассистент Deyla"
+      role="img"
     >
-      <MascotWithPhone />
-    </div>
-
-    {/* Слой 1 — календарь: поверх маскота */}
-    <div className="relative z-10 w-full">
-      <HeroMockup />
-    </div>
-
-    {/* Слой 2 — невидимый бокс под маскота, чтобы речь встала на уровне рта
-        и оказалась поверх календаря */}
-    <div
-      className="
-        absolute z-20 pointer-events-none
-        -top-24 md:-top-40 lg:-top-80
-        -left-[10%] sm:-left-[25%] md:-left-[40%] lg:-left-[50%]
-        w-[60%] sm:w-[70%] md:w-[80%] lg:w-[85%]
-        min-w-[140px] max-w-[420px]
-        aspect-[260/340]
-      "
-    >
-      <div className="relative w-full h-full">
+      <div
+        className="absolute top-0 left-0 origin-top-left"
+        style={{
+          width: HERO_SCENE_W,
+          height: HERO_SCENE_H,
+          transform: `scale(${scale})`,
+        }}
+      >
+        {/* ── Маскот: слева, затухает к низу туловища ──────── */}
         <div
-          className="
-            absolute left-full ml-3 md:ml-4
-            top-[40%] -translate-y-1/2
-            w-[130%] md:w-[140%]
-            max-w-[340px] md:max-w-[400px]
-            pointer-events-auto
-          "
+          className="absolute z-0"
+          style={{
+            left: 0,
+            top: 0,
+            width: 425,
+            height: 555,
+            WebkitMaskImage:
+              "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
+            maskImage:
+              "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
+          }}
+        >
+          <MascotWithPhone />
+        </div>
+
+        {/* ── Календарь: справа, поверх маскота ────────────── */}
+        <div
+          className="absolute z-10"
+          style={{ left: 250, top: 320, width: 500 }}
+        >
+          <HeroMockup />
+        </div>
+
+        {/* ── Речь: справа от маскота, на уровне рта ───────── */}
+        <div
+          className="absolute z-20"
+          style={{ left: 441, top: 155, width: 595 }}
         >
           <SpeechBubble />
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ---------- Hero ----------
 
@@ -766,11 +791,10 @@ const SpeechBubble: React.FC = () => (
             Голосовой запрос
           </p>
           <p className="text-base md:text-lg leading-snug text-gray-900 dark:text-white">
-            «Deyla, что я могу сделать вместо тренировки в 15 часов?»
+            «Deyla, тренировка отменилась»
           </p>
           <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-            Deyla подберёт альтернативу под ваши цели — например, созвон
-            с контрагентом или лабораторную работу.
+            Deyla подберёт альтернативу под ваши цели.
           </p>
         </div>
       </div>
@@ -1010,17 +1034,17 @@ const Benefits: React.FC = () => (
       </div>
     </div>
 
-        {/* ─── Прогресс-группа: кольцо + A–F + график ─────────
-        Один ряд, растянутый по правому краю секции.
-        gap-[25vw] = ¼ ширины окна между элементами (desktop).
-        На мобилке — вертикальный стак с обычным gap. */}
+    {/* ─── Прогресс-группа: кольцо + A–F + график ─────────
+    Показываем ТОЛЬКО если все 3 элемента влезают.
+    hidden xl:flex → ниже 1280px группа скрывается целиком.
+    xl:gap-[10vw]  → на широких экранах адаптивный разрыв. */}
     <div
     className="
         absolute z-0 pointer-events-none
         inset-x-0 bottom-44
-        flex flex-col lg:flex-row
-        items-center lg:items-end justify-end
-        gap-10 lg:gap-[10vw]
+        hidden xl:flex
+        items-end justify-end
+        xl:gap-[20vw]
         px-4 md:px-8 lg:px-12
         blur-[1.4px]
     "
@@ -1128,56 +1152,6 @@ const BenefitsBackdrop: React.FC = () => (
     </div>
   </div>
 );
-
-// ---------- Как это работает ----------
-
-const STEPS = [
-  { num: 1, icon: Target, title: "Расскажите о себе", text: "Ответьте на пару вопросов о целях, сферах и удобном графике." },
-  { num: 2, icon: Zap, title: "Добавляйте задачи", text: "Через чат, голос или Telegram — как удобно." },
-  { num: 3, icon: Sparkles, title: "Получайте план", text: "Deyla расставит задачи по слотам и напомнит о важном." },
-];
-
-const HowItWorks: React.FC = () => (
-  <section className="relative py-16 md:py-24">
-    <div className="max-w-6xl mx-auto px-4 md:px-6">
-      <div className="max-w-2xl mb-12">
-        <Badge variant="default" className="mb-3 text-eyebrow">Как это работает</Badge>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Три шага до спокойного дня
-        </h2>
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-4 md:gap-6">
-        {STEPS.map(({ num, icon: Icon, title, text }, i) => (
-          <div key={num} className="relative">
-            <Card className="h-full bg-white dark:bg-gray-900 shadow-lg">
-              <CardContent>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-semibold flex items-center justify-center">
-                    {num}
-                  </span>
-                  <Icon size={20} className="text-gray-400" aria-hidden="true" />
-                </div>
-                <p className="font-medium">{title}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">{text}</p>
-              </CardContent>
-            </Card>
-
-            {i < STEPS.length - 1 && (
-              <ArrowRight
-                size={20}
-                className="hidden md:block absolute top-1/2 -right-4 -translate-y-1/2 text-gray-300 dark:text-gray-700 z-10"
-                aria-hidden="true"
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-// ---------- Финальный CTA ----------
 
 // ---------- Финальный CTA: интеграции ----------
 
