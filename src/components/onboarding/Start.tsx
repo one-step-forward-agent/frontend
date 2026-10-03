@@ -146,7 +146,7 @@ export const Start: React.FC = () => {
       <BackgroundPulses />
 
       <Hero onStart={start} />
-      <Benefits />
+      <UserCase /> 
       <FinalCTA onStart={start} />
 
       <LandingFooter />
@@ -572,6 +572,296 @@ const BackgroundPulses: React.FC = () => (
     </div>
   </>
 );
+
+// ---------- UserCase: авиабилет из мессенджера ----------
+
+const UserCase: React.FC = () => (
+  <section id="usecase" className="relative py-20 md:py-28 overflow-hidden">
+    <div className="max-w-5xl mx-auto px-4 md:px-6">
+      {/* ─── Заголовок секции ─────────────────────────────── */}
+      <div className="max-w-2xl mb-12 md:mb-16">
+        <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Пересылайте события — Deyla всё спланирует
+        </h2>
+        <p className="mt-3 text-gray-600 dark:text-gray-400">
+          Не нужно вручную копировать дату, время и место. Отправьте сообщение
+          боту — Deyla разберётся сама — от Вас только подтверждение.
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        {/* ═══════════ ЛЕВАЯ ЧАСТЬ: iPhone ═══════════ */}
+        <div className="relative flex justify-center">
+        <div
+            className="relative w-full max-w-[400px]"
+            style={{
+                WebkitMaskImage:
+                    "linear-gradient(to bottom, black 0%, black 55%, rgba(0,0,0,0.5) 65%, transparent 70%, transparent 100%)",
+                maskImage:
+                    "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.5) 65%, transparent 70%, transparent 100%)",
+                }}
+        >
+
+            {/* ─── z-0: радиальный фиолетовый градиент за iPhone ───
+                inset-[-15%] → градиент выходит за границы контейнера
+                filter:blur(40px) → мягкое рассеянное свечение */}
+            <div
+            aria-hidden="true"
+            className="absolute inset-[-15%] -z-10 pointer-events-none"
+            //style={{
+            //    background:
+            //    "radial-gradient(ellipse at center, rgba(167,139,250,0.55) 0%, rgba(139,92,246,0.35) 35%, rgba(124,58,237,0.18) 60%, transparent 80%)",
+            //    filter: "blur(40px)",
+            //}}
+            />
+
+            {/* ─── z-10: чат с Андреем Смирновым ───────────────────
+                Сидит позади каркаса iPhone. Экран iPhone прозрачный,
+                поэтому чат виден «сквозь экран».
+                inset-[5%] → отступ от рамки (подгони под своё изображение). */}
+            <div
+                className="absolute inset-[20%] top-[10%] z-30 rounded-[2.2rem] overflow-hidden"
+                style={{
+                    // подгони под свой iPhoneScreenWB.png
+                    inset: "11% 21% 11% 22%",   // top right bottom left
+                    borderRadius: "0rem",
+                }}
+            >
+            {/* Шапка чата */}
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95">
+                <div
+                aria-hidden="true"
+                className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-semibold shadow-sm shrink-0"
+                >
+                АС
+                </div>
+                <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
+                    Андрей Смирнов
+                </p>
+                <p className="text-[9px] text-emerald-500">онлайн</p>
+                </div>
+            </div>
+
+            {/* Лента сообщений */}
+            <div className="absolute left-[0%] p-2.5 space-y-2">
+                <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5">
+                    <p className="text-[10px] text-gray-800 dark:text-gray-200">
+                    Привет! Не забудь про рейс ✈️
+                    </p>
+                </div>
+                </div>
+                
+            </div>
+            </div>
+
+            {/* ─── z-20: каркас iPhone поверх чата ───────────────────
+                Экран картинки должен быть прозрачным, чтобы чат был виден. */}
+            <img
+            src="/images/iPhoneScreenWB.png"
+            alt="Экран iPhone"
+            className="relative z-20 w-full h-auto pointer-events-none select-none"
+            loading="lazy"
+            />
+
+            {/* ─── z-30: оверлей билета ───────────────────────────── */}
+            <img
+            src="/images/airplaneTicketWB-mes.png"
+            alt="Сообщение с авиабилетом"
+            className="
+                absolute left-[24%] top-[28%] z-30
+                w-[50%] h-auto
+                rounded-2xl shadow-lg
+                pointer-events-none select-none
+            "
+            loading="lazy"
+            />
+
+            {/* ─── z-40: оверлей «переслать» ──────────────────────── */}
+            <img
+            src="/images/airplaneTicketWB-resend.png"
+            alt="Переслать сообщение"
+            className="
+                absolute left-[24%] top-[46%] z-40
+                w-[25%] h-auto
+                drop-shadow-xl
+                pointer-events-none select-none
+            "
+            loading="lazy"
+            />
+        </div>
+        </div>
+
+        {/* ═══════════ ПРАВАЯ ЧАСТЬ: чат ═══════════ */}
+        <div className="relative">
+          <Card className="relative overflow-hidden p-0 shadow-2xl">
+            {/* Декоративный градиент */}
+            <div
+              aria-hidden="true"
+              className="
+                absolute -top-24 -right-24 w-64 h-64 rounded-full
+                bg-gradient-to-br from-blue-400/20 to-purple-500/20
+                blur-3xl pointer-events-none
+              "
+            />
+
+            {/* ─── Шапка чата ──────────────────────────────── */}
+            <div className="relative flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+              <div
+                aria-hidden="true"
+                className="
+                  w-9 h-9 rounded-full shrink-0
+                  bg-gradient-to-br from-blue-500 to-purple-600
+                  flex items-center justify-center text-white
+                  shadow-sm
+                "
+              >
+                <Sparkles size={15} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  Deyla
+                </p>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Онлайн
+                </p>
+              </div>
+            </div>
+
+            {/* ─── Сообщения ───────────────────────────────── */}
+            <div className="relative p-4 space-y-4 bg-gradient-to-b from-gray-50/60 to-white dark:from-gray-900/40 dark:to-gray-950">
+              {/* Пользователь пересылает билет */}
+              <div className="flex justify-end">
+                <div
+                  className="
+                    max-w-[82%] rounded-2xl rounded-br-sm
+                    bg-gradient-to-br from-blue-500 to-blue-600
+                    text-white px-4 py-2.5 shadow-sm
+                  "
+                >
+                  <p className="text-[10px] uppercase tracking-wide opacity-70 mb-1">
+                    Переслано от Андрея Смирнова
+                  </p>
+                  <p className="text-sm leading-snug">
+                    Авиабилет PD-205 · VKO → LED
+                  </p>
+                </div>
+              </div>
+
+              {/* Ответ Deyla */}
+              <div className="flex items-end gap-2">
+                <div
+                  aria-hidden="true"
+                  className="
+                    w-7 h-7 rounded-full shrink-0
+                    bg-gradient-to-br from-blue-500 to-purple-600
+                    flex items-center justify-center text-white
+                    shadow-sm
+                  "
+                >
+                  <Sparkles size={13} />
+                </div>
+
+                <div className="max-w-[86%] min-w-0">
+                  <div
+                    className="
+                      rounded-2xl rounded-bl-sm
+                      bg-gray-100 dark:bg-gray-800
+                      px-4 py-3 shadow-sm
+                    "
+                  >
+                    <p className="text-sm text-gray-900 dark:text-white leading-snug">
+                      Распознала авиабилет:{' '}
+                      <strong className="font-semibold">
+                        дата — 05 апреля, 21:55
+                      </strong>
+                      ,{' '}
+                      <strong className="font-semibold">
+                        место посадки — Внуково, терминал A
+                      </strong>
+                      . Куда добавить событие?
+                    </p>
+                  </div>
+
+                  {/* ─── Reply markups ──────────────────── */}
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    <button
+                      type="button"
+                      className="
+                        inline-flex items-center gap-1.5
+                        text-xs font-medium px-3.5 py-2 rounded-full
+                        bg-blue-500 text-white
+                        hover:bg-blue-600
+                        shadow-sm hover:shadow-md
+                        transition-all hover:-translate-y-0.5
+                      "
+                    >
+                      <Calendar size={12} aria-hidden="true" />
+                      В календарь
+                    </button>
+
+                    <button
+                      type="button"
+                      className="
+                        inline-flex items-center gap-1.5
+                        text-xs font-medium px-3.5 py-2 rounded-full
+                        bg-white dark:bg-gray-900
+                        border border-gray-200 dark:border-gray-700
+                        text-gray-700 dark:text-gray-300
+                        hover:border-blue-400 hover:text-blue-600
+                        dark:hover:text-blue-400
+                        shadow-sm hover:shadow-md
+                        transition-all hover:-translate-y-0.5
+                      "
+                    >
+                      <Send size={12} aria-hidden="true" />
+                      В заметки
+                    </button>
+
+                    <button
+                      type="button"
+                      className="
+                        inline-flex items-center
+                        text-xs font-medium px-3 py-2 rounded-full
+                        text-gray-500 dark:text-gray-400
+                        hover:text-gray-800 dark:hover:text-gray-200
+                        hover:bg-gray-100 dark:hover:bg-gray-800
+                        transition-colors
+                      "
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ─── Фейковое поле ввода ─────────────────────── */}
+            <div className="relative px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60">
+              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                <Send size={14} aria-hidden="true" />
+                <span>Сообщение Deyla…</span>
+              </div>
+            </div>
+
+          </Card>
+        </div>
+      </div>
+
+      {/* ─── Подпись под сценой ───────────────────────────── */}
+      <div className="mt-12 md:mt-16 max-w-2xl mx-auto text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+          Deyla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
+        </p>
+      </div>
+    </div>
+  </section>
+);
+
 // ─── Дизайн-канвас сцены ─────────────────────────────────────
 // Все три элемента (маскот, календарь, речь) раскладываются внутри
 // этого канваса в пикселях. На рендере канвас масштабируется целиком
@@ -1034,82 +1324,6 @@ const Benefits: React.FC = () => (
       </div>
     </div>
 
-    {/* ─── Прогресс-группа: кольцо + A–F + график ─────────
-    Показываем ТОЛЬКО если все 3 элемента влезают.
-    hidden xl:flex → ниже 1280px группа скрывается целиком.
-    xl:gap-[10vw]  → на широких экранах адаптивный разрыв. */}
-    <div
-    className="
-        absolute z-0 pointer-events-none
-        inset-x-0 bottom-44
-        hidden xl:flex
-        items-end justify-end
-        xl:gap-[20vw]
-        px-4 md:px-8 lg:px-12
-        blur-[1.4px]
-    "
-    >
-    {/* 1. Кольцо 68% */}
-    <ProgressRing value={68} size={180} stroke={14} />
-
-    {/* 2. Блок A–F */}
-    <div
-        className="
-        w-[320px] md:w-[360px] shrink-0
-        p-4 rounded-2xl
-        bg-white/75 dark:bg-gray-900/75
-        ring-1 ring-gray-200/80 dark:ring-gray-700/60
-        backdrop-blur-sm
-        space-y-4
-        "
-    >
-        <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400">
-        Время по приоритетам
-        </p>
-
-        {PRIORITY_TIME.map((row) => {
-        const max = Math.max(...PRIORITY_TIME.map((x) => x.minutes));
-        const widthPct = (row.minutes / max) * 100;
-        return (
-            <div key={row.priority} className="flex items-center gap-2.5">
-            <span
-                className={cn(
-                "shrink-0 inline-flex items-center justify-center w-7 h-7 rounded text-[12px] font-bold ring-2 shadow-sm",
-                PRIORITY_BADGE_SOLID[row.priority],
-                )}
-            >
-                {row.priority}
-            </span>
-
-            <div className="relative flex-1 h-3.5 rounded-full bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
-                <div
-                className={cn(
-                    "absolute inset-y-0 left-0 rounded-full shadow-sm",
-                    PRIORITY_BAR_SOLID[row.priority],
-                )}
-                style={{ width: `${widthPct}%` }}
-                />
-            </div>
-
-            <span className="text-[11px] w-16 text-right tabular-nums text-gray-900 dark:text-white font-semibold">
-                {formatMinutes(row.minutes)}
-            </span>
-            </div>
-        );
-        })}
-    </div>
-
-    {/* 3. Вертикальный график по дням */}
-    <div className="flex items-end h-40 gap-2 shrink-0">
-        {[40, 75, 55, 90, 30, 60, 45].map((h, i) => (
-        <div
-            key={i}
-            className="w-5 rounded-t bg-blue-500"
-            style={{ height: `${h}%` }}
-        />
-        ))}
-    </div>
-    </div>
   </section>
 );
 
