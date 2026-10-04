@@ -2,25 +2,21 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  CalendarDays,
-  Clock,
-  Globe,
-  Briefcase,
-  Sun,
-  Moon,
-  Info,
+  CalendarDays, Clock, Globe, Info, Sparkles, Copy,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
-import { useOnboarding } from "./OnboardingContext";
+import { useOnboarding, type DayShort } from "./OnboardingContext";
 import { Input } from "@/components/ui/form-field";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
+import { glass } from "@/styles/glass";
 
 const TOTAL = 10;
 
-const DAYS = [
+/** Уровень Liquid Glass — одна строка меняет всю страницу */
+const G = glass.strong;
+
+const DAYS: { short: DayShort; full: string }[] = [
   { short: "Пн", full: "Понедельник" },
   { short: "Вт", full: "Вторник" },
   { short: "Ср", full: "Среда" },
@@ -30,20 +26,64 @@ const DAYS = [
   { short: "Вс", full: "Воскресенье" },
 ];
 
-// Быстрые пресеты графика
 const PRESETS = [
-  { id: "classic", label: "Классика", days: ["Пн", "Вт", "Ср", "Чт", "Пт"], from: "09:00", to: "18:00" },
-  { id: "early",   label: "Ранний",   days: ["Пн", "Вт", "Ср", "Чт", "Пт"], from: "07:00", to: "16:00" },
-  { id: "short",   label: "Сокращённый", days: ["Пн", "Вт", "Ср", "Чт"],    from: "10:00", to: "18:00" },
+  { id: "classic", label: "Классика",    days: ["Пн", "Вт", "Ср", "Чт", "Пт"] as DayShort[], from: "09:00", to: "18:00" },
+  { id: "early",   label: "Ранний",      days: ["Пн", "Вт", "Ср", "Чт", "Пт"] as DayShort[], from: "07:00", to: "16:00" },
+  { id: "short",   label: "Сокращённый", days: ["Пн", "Вт", "Ср", "Чт"]       as DayShort[], from: "10:00", to: "18:00" },
 ];
+
+/* ─── Спекулярный блик поверх стекла ─────────────────────── */
+const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
+  <span aria-hidden="true" className={cn(G.specular, className)} />
+);
+
+/* ─── Стеклянный разделитель с подписью ─────────────────── */
+const SectionDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="flex items-center gap-3">
+    <div className="h-px flex-1 bg-white/60 dark:bg-white/10" />
+    <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium">
+      {children}
+    </span>
+    <div className="h-px flex-1 bg-white/60 dark:bg-white/10" />
+  </div>
+);
+
+/* ─── Утилита: часы между двумя HH:MM ───────────────────── */
+const hoursBetween = (from: string, to: string): number => {
+  const [fh, fm] = from.split(":").map(Number);
+  const [th, tm] = to.split(":").map(Number);
+  return Math.max(0, (th * 60 + tm - fh * 60 - fm) / 60);
+};
 
 export const ExistingPlans: React.FC = () => {
   const navigate = useNavigate();
   const { data, patch } = useOnboarding();
+
   const [days, setDays] = React.useState<string[]>(data.workDays);
-  const [from, setFrom] = React.useState(data.workHoursFrom);
-  const [to, setTo] = React.useState(data.workHoursTo);
   const [tz, setTz] = React.useState(data.timezone);
+
+  // Одинаковое время (fallback) — используется как база для режима «одинаково»
+  const [uniformFrom, setUniformFrom] = React.useState(data.workHoursFrom);
+  const [uniformTo, setUniformTo] = React.useState(data.workHoursTo);
+
+  // Режим «разное время по дням»
+  const [perDay, setPerDay] = React.useState<boolean>(
+    Boolean(data.perDayWorkHours && Object.keys(data.perDayWorkHours).length)
+  );
+
+  // Индивидуальные времена: всегда инициализированы для всех 7 дней
+  const [dayTimes, setDayTimes] = React.useState<
+    Record<DayShort, { from: string; to: string }>
+  >(() => {
+    const base = {} as Record<DayShort, { from: string; to: string }>;
+    for (const d of DAYS) {
+      base[d.short] = {
+        from: data.perDayWorkHours?.[d.short]?.from ?? data.workHoursFrom,
+        to:   data.perDayWorkHours?.[d.short]?.to   ?? data.workHoursTo,
+      };
+    }
+    return base;
+  });
 
   const toggleDay = (d: string) => {
     setDays((prev) =>
@@ -53,50 +93,101 @@ export const ExistingPlans: React.FC = () => {
 
   const applyPreset = (p: (typeof PRESETS)[number]) => {
     setDays(p.days);
-    setFrom(p.from);
-    setTo(p.to);
+    setUniformFrom(p.from);
+    setUniformTo(p.to);
+    // Обновим индивидуальные времена тоже — чтобы переключение режима не «теряло» пресет
+    const next = {} as Record<DayShort, { from: string; to: string }>;
+    for (const d of DAYS) next[d.short] = { from: p.from, to: p.to };
+    setDayTimes(next);
+  };
+
+  const updateDayTime = (day: DayShort, key: "from" | "to", value: string) => {
+    setDayTimes((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], [key]: value },
+    }));
+  };
+
+  /** Скопировать время первого активного дня на все остальные */
+  const applyFirstToAll = () => {
+    const first = days[0] as DayShort | undefined;
+    if (!first) return;
+    const src = dayTimes[first];
+    const next = {} as Record<DayShort, { from: string; to: string }>;
+    for (const d of DAYS) next[d.short] = { ...src };
+    setDayTimes(next);
   };
 
   const handleNext = () => {
-    patch({
-      workDays: days,
-      workHoursFrom: from,
-      workHoursTo: to,
-      timezone: tz,
-    });
+    if (perDay) {
+      const perDayWorkHours: Partial<Record<DayShort, { from: string; to: string }>> = {};
+      for (const d of days) {
+        const key = d as DayShort;
+        perDayWorkHours[key] = dayTimes[key];
+      }
+      patch({
+        workDays: days,
+        // Держим fallback синхронным первому дню — на случай, если где-то в пайплайне используется uniform
+        workHoursFrom: dayTimes[(days[0] as DayShort) ?? "Пн"].from,
+        workHoursTo:   dayTimes[(days[0] as DayShort) ?? "Пн"].to,
+        timezone: tz,
+        perDayWorkHours,
+      });
+    } else {
+      patch({
+        workDays: days,
+        workHoursFrom: uniformFrom,
+        workHoursTo: uniformTo,
+        timezone: tz,
+        perDayWorkHours: undefined,
+      });
+    }
     navigate("/onboarding/apple-google-logging");
   };
 
-  // Сколько часов в неделю, если каждый рабочий день — от from до to
   const weeklyHours = React.useMemo(() => {
-    const [fh, fm] = from.split(":").map(Number);
-    const [th, tm] = to.split(":").map(Number);
-    const perDay = (th * 60 + tm - fh * 60 - fm) / 60;
-    return Math.max(0, perDay * days.length);
-  }, [from, to, days]);
+    if (!perDay) {
+      return hoursBetween(uniformFrom, uniformTo) * days.length;
+    }
+    let total = 0;
+    for (const d of days) {
+      const t = dayTimes[d as DayShort];
+      if (t) total += hoursBetween(t.from, t.to);
+    }
+    return total;
+  }, [perDay, uniformFrom, uniformTo, days, dayTimes]);
+
+  const activeDays = DAYS.filter((d) => days.includes(d.short));
 
   return (
     <OnboardingLayout
       step={5}
       totalSteps={TOTAL}
       title="Укажите свой обычный график"
-      subtitle="Так я буду знать, когда рабочая задача уместна, а когда лучше оставить её на потом. Изменить график можно в настройках в любой момент."
       onBack={() => navigate("/onboarding/goals-and-habits")}
       onNext={handleNext}
       nextDisabled={days.length === 0}
       nextLabel={`Далее${weeklyHours > 0 ? ` · ${Math.round(weeklyHours)} ч/нед` : ""}`}
     >
-      <div className="relative space-y-4">
-        {/* Мягкое свечение на фоне */}
-        <div
-          aria-hidden="true"
-          className="absolute -inset-8 -z-10 pointer-events-none"
-        >
-          <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-blue-400/15 blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-violet-400/15 blur-3xl" />
+      <div className="relative space-y-5">
+        {/* ─── Eyebrow ─────────────────────────────── */}
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "relative inline-flex items-center gap-1.5",
+              "px-2.5 py-1 rounded-full",
+              G.surface,
+              "text-[11px] uppercase tracking-widest font-medium",
+              "text-gray-600 dark:text-gray-300"
+            )}
+          >
+            <Sparkles size={11} aria-hidden="true" />
+            Ваш график
+          </span>
+
         </div>
 
-        {/* ─── Быстрые пресеты ───────────────────────────── */}
+        {/* ─── Быстрые пресеты ─────────────────────── */}
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
             Быстрый выбор
@@ -105,51 +196,79 @@ export const ExistingPlans: React.FC = () => {
             {PRESETS.map((p) => {
               const active =
                 days.length === p.days.length &&
-                days.every((d) => p.days.includes(d)) &&
-                from === p.from &&
-                to === p.to;
+                days.every((d) => p.days.includes(d as DayShort)) &&
+                !perDay &&
+                uniformFrom === p.from &&
+                uniformTo === p.to;
+
               return (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => applyPreset(p)}
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200",
-                    "hover:-translate-y-0.5",
+                    "group relative inline-flex items-center",
+                    "px-3 py-1.5 rounded-full text-xs font-medium",
+                    "overflow-hidden transition-all duration-200",
+                    "backdrop-blur-md",
                     active
-                      ? "bg-blue-500 border-blue-500 text-white shadow-sm"
-                      : "bg-white/70 dark:bg-gray-900/60 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-300 hover:text-blue-700 dark:hover:text-blue-300 hover:shadow-sm"
+                      ? [
+                          "bg-blue-500/90 text-white",
+                          "ring-1 ring-blue-400/60",
+                          "shadow-[0_4px_14px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.4)]",
+                        ]
+                      : [
+                          "bg-white/50 dark:bg-white/[0.05]",
+                          "ring-1 ring-white/60 dark:ring-white/10",
+                          "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
+                          "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+                          "text-gray-700 dark:text-gray-300",
+                          "hover:-translate-y-0.5 hover:bg-white/70 dark:hover:bg-white/[0.08]",
+                        ]
                   )}
                 >
-                  {p.label} · {p.from}–{p.to}
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-2 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[1px]"
+                  />
+                  <span className="relative">
+                    {p.label} · {p.from}–{p.to}
+                  </span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* ─── Рабочие дни ───────────────────────────────── */}
-        <Card className="relative overflow-hidden">
-          <div
+        {/* ─── Карточка графика ─────────────────────── */}
+        <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
+          <span
             aria-hidden="true"
-            className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-500/20 blur-3xl"
+            className="pointer-events-none absolute inset-x-6 top-1 h-16 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-60 blur-md"
           />
 
-          <CardContent className="relative space-y-5">
+          <div className="relative p-5 space-y-5">
             {/* Заголовок блока */}
             <div className="flex items-start gap-3">
               <div
                 aria-hidden="true"
-                className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-white shadow-sm"
+                className={cn(
+                  "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
+                  "bg-white/60 dark:bg-white/[0.06] text-blue-600 dark:text-blue-300",
+                  "ring-1 ring-white/70 dark:ring-white/10",
+                  "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
+                  "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]"
+                )}
               >
-                <CalendarDays size={16} />
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
+                />
+                <CalendarDays size={16} className="relative" />
               </div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">
                   Рабочие дни
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Кликните, чтобы добавить или убрать день
                 </p>
               </div>
             </div>
@@ -167,91 +286,230 @@ export const ExistingPlans: React.FC = () => {
                     aria-label={d.full}
                     title={d.full}
                     className={cn(
-                      "group relative flex flex-col items-center justify-center",
+                      "group relative flex flex-col items-center justify-center overflow-hidden",
                       "h-14 rounded-xl transition-all duration-200",
-                      "border",
+                      "backdrop-blur-md",
                       active
-                        ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-transparent shadow-md ring-2 ring-blue-400/30"
-                        : "bg-white/70 dark:bg-gray-900/60 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 dark:hover:text-blue-400"
+                        ? [
+                            "bg-blue-500/90 text-white",
+                            "ring-1 ring-blue-400/60",
+                            "shadow-[0_6px_18px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.4)]",
+                          ]
+                        : [
+                            "bg-white/40 dark:bg-white/[0.04]",
+                            "ring-1 ring-white/60 dark:ring-white/10",
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
+                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+                            "text-gray-500 dark:text-gray-400",
+                            "hover:-translate-y-0.5 hover:bg-white/60 dark:hover:bg-white/[0.08]",
+                          ]
                     )}
                   >
-                    <span className="text-sm font-semibold">{d.short}</span>
-                    <span className={cn(
-                      "mt-0.5 w-1 h-1 rounded-full transition-all",
-                      active ? "bg-white" : "bg-transparent"
-                    )} aria-hidden="true" />
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[1px]"
+                    />
+                    <span className="relative text-sm font-semibold">{d.short}</span>
+                    <span
+                      className={cn(
+                        "relative mt-0.5 w-1 h-1 rounded-full transition-all",
+                        active ? "bg-white" : "bg-transparent"
+                      )}
+                      aria-hidden="true"
+                    />
                   </button>
                 );
               })}
             </div>
 
-            {/* Разделитель */}
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
-              <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium">
-                Рабочие часы
-              </span>
-              <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+            <SectionDivider>Рабочие часы</SectionDivider>
+
+            {/* ─── Переключатель: одинаковое / разное время ─── */}
+            <div className="flex items-center justify-between gap-3 px-1">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                  Одинаковое время во все дни
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Выключите, чтобы задать расписание для каждого дня отдельно
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!perDay}
+                aria-label="Одинаковое время во все дни"
+                onClick={() => setPerDay((v) => !v)}
+                className={cn(
+                  "relative shrink-0 w-11 h-6 rounded-full overflow-hidden transition-colors duration-200",
+                  "ring-1",
+                  !perDay
+                    ? [
+                        "bg-blue-500/90 ring-blue-400/60",
+                        "shadow-[0_4px_14px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.4)]",
+                      ]
+                    : [
+                        "bg-white/40 dark:bg-white/[0.05]",
+                        "ring-white/60 dark:ring-white/10",
+                        "shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]",
+                      ]
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white",
+                    "shadow-[0_2px_6px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                    "transition-transform duration-200",
+                    !perDay ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </button>
             </div>
 
-            {/* Рабочие часы */}
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-                  <Sun size={12} aria-hidden="true" />
-                  Начало
-                </span>
-                <div className="relative">
-                  <Clock
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                    aria-hidden="true"
-                  />
-                  <Input
-                    type="time"
-                    value={from}
-                    onChange={(e) => setFrom(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </label>
+            {/* ─── Режим «одинаково»: две пары инпутов как раньше ─── */}
+            {!perDay && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                    <Clock size={12} aria-hidden="true" />
+                    Начало
+                  </span>
+                  <div className="relative">
+                    <Clock
+                      size={14}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
+                      aria-hidden="true"
+                    />
+                    <Input
+                      type="time"
+                      value={uniformFrom}
+                      onChange={(e) => setUniformFrom(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </label>
 
-              <label className="block">
-                <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-                  <Moon size={12} aria-hidden="true" />
-                  Конец
-                </span>
-                <div className="relative">
-                  <Clock
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                    aria-hidden="true"
-                  />
-                  <Input
-                    type="time"
-                    value={to}
-                    onChange={(e) => setTo(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </label>
-            </div>
+                <label className="block">
+                  <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                    <Clock size={12} aria-hidden="true" />
+                    Конец
+                  </span>
+                  <div className="relative">
+                    <Clock
+                      size={14}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
+                      aria-hidden="true"
+                    />
+                    <Input
+                      type="time"
+                      value={uniformTo}
+                      onChange={(e) => setUniformTo(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </label>
+              </div>
+            )}
 
-            {/* Разделитель */}
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
-              <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium">
-                Часовой пояс
-              </span>
-              <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
-            </div>
+            {/* ─── Режим «разное по дням»: строки для каждого активного дня ─── */}
+            {perDay && (
+              <div className="space-y-2">
+                {activeDays.length === 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-3">
+                    Сначала выберите хотя бы один рабочий день
+                  </p>
+                )}
 
-            {/* Часовой пояс */}
+                {activeDays.map((d) => {
+                  const t = dayTimes[d.short];
+                  return (
+                    <div
+                      key={d.short}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-xl",
+                        "bg-white/50 dark:bg-white/[0.03]",
+                        "backdrop-blur-md",
+                        "ring-1 ring-white/60 dark:ring-white/10",
+                        "shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,23,42,0.04)]",
+                        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]"
+                      )}
+                    >
+                      <span className="shrink-0 w-9 text-xs font-semibold text-gray-700 dark:text-gray-200">
+                        {d.short}
+                      </span>
+
+                      <div className="relative flex-1">
+                        <Clock
+                          size={13}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
+                          aria-hidden="true"
+                        />
+                        <Input
+                          type="time"
+                          value={t.from}
+                          onChange={(e) => updateDayTime(d.short, "from", e.target.value)}
+                          className="pl-9"
+                          aria-label={`Начало работы в ${d.full}`}
+                        />
+                      </div>
+
+                      <span className="text-gray-400 text-xs">–</span>
+
+                      <div className="relative flex-1">
+                        <Clock
+                          size={13}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
+                          aria-hidden="true"
+                        />
+                        <Input
+                          type="time"
+                          value={t.to}
+                          onChange={(e) => updateDayTime(d.short, "to", e.target.value)}
+                          className="pl-9"
+                          aria-label={`Конец работы в ${d.full}`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {activeDays.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={applyFirstToAll}
+                    className={cn(
+                      "group relative inline-flex items-center gap-1.5",
+                      "px-3 py-1.5 rounded-full text-xs font-medium",
+                      "overflow-hidden transition-all duration-200",
+                      "backdrop-blur-md",
+                      "bg-white/50 dark:bg-white/[0.05]",
+                      "ring-1 ring-white/60 dark:ring-white/10",
+                      "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
+                      "text-gray-700 dark:text-gray-300",
+                      "hover:-translate-y-0.5 hover:bg-white/70 dark:hover:bg-white/[0.08]"
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-2 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[1px]"
+                    />
+                    <Copy size={12} className="relative" />
+                    <span className="relative">
+                      Применить время «{activeDays[0].short}» ко всем
+                    </span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            <SectionDivider>Часовой пояс</SectionDivider>
+
             <label className="block">
               <div className="relative">
                 <Globe
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
                   aria-hidden="true"
                 />
                 <Input
@@ -261,78 +519,15 @@ export const ExistingPlans: React.FC = () => {
                   className="pl-9"
                 />
               </div>
-              <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
-                <Info size={11} aria-hidden="true" />
-                Определили автоматически — можно изменить
-              </p>
             </label>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* ─── Превью недели ────────────────────────────── */}
-        <Card className="relative overflow-hidden">
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-gradient-to-br from-violet-400/20 to-pink-500/20 blur-3xl"
-          />
-
-          <CardContent className="relative">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div
-                  aria-hidden="true"
-                  className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white shadow-sm"
-                >
-                  <Briefcase size={13} />
-                </div>
-                <p className="font-medium text-gray-900 dark:text-white text-sm">
-                  Ваша рабочая неделя
-                </p>
-              </div>
-              <Badge variant="default">
-                <span className="tabular-nums">{Math.round(weeklyHours)} ч</span>
-              </Badge>
-            </div>
-
-            {/* Полоса недели: будни / выходные */}
-            <div className="grid grid-cols-7 gap-1">
-              {DAYS.map((d) => {
-                const active = days.includes(d.short);
-                return (
-                  <div
-                    key={`preview-${d.short}`}
-                    className={cn(
-                      "h-2 rounded-full transition-colors",
-                      active
-                        ? "bg-gradient-to-r from-blue-500 to-indigo-600"
-                        : "bg-gray-100 dark:bg-gray-800"
-                    )}
-                    title={d.full}
-                  />
-                );
-              })}
-            </div>
-
-            <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
-              <span>
-                {days.length > 0
-                  ? `${days.length} ${plural(days.length, "день", "дня", "дней")} · ${from}–${to}`
-                  : "Ни один день не выбран"}
-              </span>
-              {weeklyHours > 0 && (
-                <span className="tabular-nums">
-                  ≈ {Math.round(weeklyHours)} ч в неделю
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </OnboardingLayout>
   );
 };
 
-// Утилита для склонения «день / дня / дней»
 function plural(n: number, one: string, few: string, many: string): string {
   const mod10 = n % 10;
   const mod100 = n % 100;

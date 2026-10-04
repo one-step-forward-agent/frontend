@@ -2,156 +2,73 @@
 import React from "react";
 import { Check, Sparkles } from "lucide-react";
 import { Outlet } from "react-router-dom";
+import { cn } from "@/utils/cn";
 
-// ---------- Маскот со смартфоном (перенос из Start.tsx) ----------
+// ---------- Маскот из лендинга ----------
 
 const MascotWithPhone: React.FC = () => (
-  <svg
-    viewBox="0 0 260 340"
-    className="w-full h-auto"
-    role="img"
-    aria-label="Человек говорит по телефону с голосовым ассистентом"
+  <div
+    className="relative w-full max-w-[380px] mx-auto"
+    style={{
+      // мягкое затухание низа, как в HeroScene на лендинге
+      WebkitMaskImage:
+        "linear-gradient(to bottom, black 0%, black 55%, rgba(0,0,0,0.35) 78%, transparent 95%)",
+      maskImage:
+        "linear-gradient(to bottom, black 0%, black 55%, rgba(0,0,0,0.35) 78%, transparent 95%)",
+    }}
   >
-    <defs>
-      <linearGradient id="auth-mq-head" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#93c5fd" />
-        <stop offset="100%" stopColor="#a78bfa" />
-      </linearGradient>
-      <linearGradient id="auth-mq-body" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#3b82f6" />
-        <stop offset="100%" stopColor="#6366f1" />
-      </linearGradient>
-      <linearGradient id="auth-mq-phone" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#38bdf8" />
-        <stop offset="100%" stopColor="#6366f1" />
-      </linearGradient>
-    </defs>
-
-    {/* Тень на «полу» */}
-    <ellipse cx="130" cy="320" rx="86" ry="10" fill="#0f172a" opacity="0.08" />
-
-    {/* Торс */}
-    <path
-      d="M 88 190
-         C 88 175, 105 165, 130 165
-         C 155 165, 172 175, 172 190
-         L 186 315
-         L 74 315
-         Z"
-      fill="url(#auth-mq-body)"
+    <img
+      src="/images/MaskotWB.png"
+      alt="Ассистент Dayla говорит по телефону"
+      className="w-full h-auto select-none pointer-events-none"
+      draggable={false}
+      loading="lazy"
     />
-
-    {/* Левая рука */}
-    <path
-      d="M 90 205 Q 62 250 78 300"
-      stroke="url(#auth-mq-body)"
-      strokeWidth="24"
-      strokeLinecap="round"
-      fill="none"
-    />
-
-    {/* Голова */}
-    <circle cx="130" cy="115" r="55" fill="url(#auth-mq-head)" />
-
-    {/* Волосы */}
-    <path
-      d="M 75 110
-         C 75 65, 100 50, 130 50
-         C 160 50, 185 65, 185 110
-         C 178 88, 158 80, 130 80
-         C 102 80, 82 88, 75 110 Z"
-      fill="#0f172a"
-    />
-
-    {/* Глаза */}
-    <path d="M 105 118 Q 112 110 119 118" stroke="#0f172a" strokeWidth="3" fill="none" strokeLinecap="round" />
-    <path d="M 141 118 Q 148 110 155 118" stroke="#0f172a" strokeWidth="3" fill="none" strokeLinecap="round" />
-
-    {/* Улыбка */}
-    <path
-      d="M 115 138 Q 130 150 145 138"
-      stroke="#0f172a"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-    />
-
-    {/* Правая рука */}
-    <path
-      d="M 170 205 Q 205 190 195 150"
-      stroke="url(#auth-mq-body)"
-      strokeWidth="24"
-      strokeLinecap="round"
-      fill="none"
-    />
-
-    {/* Смартфон */}
-    <rect x="186" y="96" width="26" height="48" rx="6" fill="#0f172a" />
-    <rect x="190" y="101" width="18" height="38" rx="3" fill="url(#auth-mq-phone)" />
-
-    {/* Волны звука */}
-    <path
-      d="M 220 108 Q 228 120 220 132"
-      stroke="#60a5fa"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-    />
-    <path
-      d="M 228 98 Q 240 120 228 142"
-      stroke="#60a5fa"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-      opacity="0.7"
-    />
-    <path
-      d="M 236 88 Q 252 120 236 152"
-      stroke="#60a5fa"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-      opacity="0.4"
-    />
-
-    {/* Искорки */}
-    <circle cx="60" cy="80" r="3" fill="#93c5fd" opacity="0.7" />
-    <circle cx="52" cy="150" r="2" fill="#c4b5fd" opacity="0.6" />
-    <circle cx="70" cy="40" r="2" fill="#a5f3fc" opacity="0.6" />
-  </svg>
+  </div>
 );
 
 // ---------- Layout ----------
 
 const AuthLayout: React.FC = () => {
   return (
-    <div className="relative min-h-screen grid lg:grid-cols-2 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 overflow-hidden">
-      {/* Общие градиентные пятна на всю ширину страницы.
-          Ключевое: они вне сетки колонок и лежат под всем layout,
-          поэтому не обрываются по середине. */}
+    <div
+      className={cn(
+        "relative min-h-screen grid lg:grid-cols-2 overflow-hidden",
+        // ─── Фон: нейтральные синие оттенки, без фиолетового ───
+        "bg-gradient-to-br from-sky-50 via-blue-50 to-slate-100",
+        "dark:from-gray-950 dark:via-gray-950 dark:to-slate-950"
+      )}
+    >
+      {/* Общие градиентные пятна — синие/голубые */}
       <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-[36rem] h-[36rem] rounded-full bg-blue-400/25 blur-3xl" />
-        <div className="absolute top-1/3 right-1/4 w-[28rem] h-[28rem] rounded-full bg-purple-400/20 blur-3xl" />
-        <div className="absolute -bottom-40 left-1/3 w-[34rem] h-[34rem] rounded-full bg-indigo-400/20 blur-3xl" />
+        <div className="absolute -top-40 -left-40 w-[36rem] h-[36rem] rounded-full bg-sky-400/20 blur-3xl" />
+        <div className="absolute top-1/3 right-1/4 w-[28rem] h-[28rem] rounded-full bg-blue-400/15 blur-3xl" />
+        <div className="absolute -bottom-40 left-1/3 w-[34rem] h-[34rem] rounded-full bg-slate-400/15 blur-3xl" />
       </div>
 
-      {/* ─── Левая колонка — брендинг ─────────────────────── */}
+      {/* ═══════════ ЛЕВАЯ КОЛОНКА — брендинг и маскот ═══════════ */}
       <div className="relative hidden lg:flex flex-col justify-center items-center p-12">
         <div className="relative max-w-md w-full text-center">
-          {/* Логотип */}
+          {/* Логотип — синий градиент */}
           <div
-            className="
-              w-20 h-20 rounded-2xl mx-auto shadow-lg
-              bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600
-              flex items-center justify-center text-white
-              ring-4 ring-white/60 dark:ring-gray-900/60
-            "
+            className={cn(
+              "relative w-20 h-20 rounded-2xl mx-auto overflow-hidden",
+              "bg-gradient-to-br from-sky-500 to-blue-600",
+              "flex items-center justify-center text-white",
+              "ring-1 ring-white/50",
+              "shadow-[0_8px_32px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.5)]"
+            )}
           >
-            <Sparkles size={34} aria-hidden="true" />
+            {/* Спекулярный блик */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[1px]"
+            />
+            <Sparkles size={34} className="relative" aria-hidden="true" />
           </div>
 
-          <h1 className="mt-6 text-4xl font-bold text-gray-900 dark:text-white">
-            Deyla
+          <h1 className="mt-6 text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+            Dayla
           </h1>
 
           <p className="mt-3 text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
@@ -164,9 +81,14 @@ const AuthLayout: React.FC = () => {
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <span
                 aria-hidden="true"
-                className="shrink-0 w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-sm"
+                className={cn(
+                  "relative shrink-0 w-4 h-4 rounded-full overflow-hidden",
+                  "bg-gradient-to-br from-sky-400 to-blue-500",
+                  "flex items-center justify-center text-white",
+                  "shadow-[0_1px_3px_rgba(59,130,246,0.4),inset_0_1px_0_rgba(255,255,255,0.5)]"
+                )}
               >
-                <Check size={10} strokeWidth={3.5} />
+                <Check size={10} strokeWidth={3.5} className="relative" />
               </span>
               Бесплатно
             </div>
@@ -174,30 +96,56 @@ const AuthLayout: React.FC = () => {
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <span
                 aria-hidden="true"
-                className="shrink-0 w-4 h-4 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm"
+                className={cn(
+                  "relative shrink-0 w-4 h-4 rounded-full overflow-hidden",
+                  "bg-gradient-to-br from-blue-400 to-sky-600",
+                  "flex items-center justify-center text-white",
+                  "shadow-[0_1px_3px_rgba(59,130,246,0.4),inset_0_1px_0_rgba(255,255,255,0.5)]"
+                )}
               >
-                <Check size={10} strokeWidth={3.5} />
+                <Check size={10} strokeWidth={3.5} className="relative" />
               </span>
               Для жизни и работы
             </div>
           </div>
 
-          {/* ─── Маскот ──────────────────────────────────── */}
-          <div className="relative mt-10 mx-auto w-full max-w-[260px]">
-            {/* Свечение под маскотом */}
+          {/* ─── Маскот ──────────────────────────── */}
+          <div className="relative mt-10 mx-auto w-full max-w-[420px]">
+            {/* Мягкое свечение под маскотом — нейтральное, синее */}
             <div
               aria-hidden="true"
-              className="absolute inset-0 -z-10 rounded-full bg-gradient-to-br from-blue-400/40 via-indigo-400/30 to-purple-400/40 blur-3xl"
+              className="absolute inset-0 -z-10 rounded-full bg-gradient-to-br from-sky-400/30 via-blue-400/20 to-slate-400/15 blur-3xl"
             />
             <MascotWithPhone />
           </div>
         </div>
       </div>
 
-      {/* ─── Правая колонка — форма ───────────────────────── */}
+      {/* ═══════════ ПРАВАЯ КОЛОНКА — форма ═══════════ */}
       <div className="relative flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-apple dark:shadow-apple-dark p-8 border border-white/60 dark:border-gray-700/60">
-          <Outlet />
+        <div
+          className={cn(
+            "relative w-full max-w-md overflow-hidden rounded-3xl",
+            // ─── Прозрачное стекло: без белой заливки ───
+            "bg-white/10 dark:bg-white/[0.03]",
+            "backdrop-blur-2xl",
+            // ─── Тонкая грань ───
+            "ring-1 ring-white/40 dark:ring-white/10",
+            // ─── Верхний блик + нижний отблеск + мягкая тень ───
+            "shadow-[0_8px_32px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-1px_0_rgba(255,255,255,0.15)]",
+            "dark:shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_-1px_0_rgba(255,255,255,0.02)]",
+            "p-6 md:p-8"
+          )}
+        >
+          {/* Спекулярный блик — верхняя треть карточки */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-8 top-1 h-1/3 rounded-full bg-gradient-to-b from-white/40 to-transparent opacity-70 blur-[1px]"
+          />
+
+          <div className="relative">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>

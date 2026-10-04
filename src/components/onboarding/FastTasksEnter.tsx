@@ -2,37 +2,38 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  PenLine,
-  Sparkles,
-  Bell,
-  BellOff,
-  Clock,
-  AlarmClock,
-  Sunrise,
-  CalendarDays,
-  Check,
-  Tag,
-  Info,
+  PenLine, Sparkles, Bell, BellOff, Clock, AlarmClock,
+  Sunrise, Check, Tag, Info,
   type LucideIcon,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
 import { Alert } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/form-field";
 import { cn } from "@/utils/cn";
+import { glass } from "@/styles/glass";
 
 const TOTAL = 10;
 
+/** Уровень Liquid Glass — одна строка меняет всю страницу */
+const G = glass.strong;
+
+type ReminderId = "off" | "10m" | "30m" | "1h" | "1d";
+
 type ReminderOption = {
-  id: "off" | "10m" | "30m" | "1h" | "1d";
+  id: ReminderId;
   label: string;
   short: string;
   hint: string;
   icon: LucideIcon;
-  gradient: string;
+  tint: string;
+  tintSoft: string;
+  tintRing: string;
+  /** ← НОВОЕ: active-цвета */
+  tintActiveBg: string;
+  tintActiveRing: string;
+  tintActiveShadow: string;
 };
 
 const REMINDER_OPTIONS: ReminderOption[] = [
@@ -42,7 +43,12 @@ const REMINDER_OPTIONS: ReminderOption[] = [
     short: "Выкл",
     hint: "Напомню, если попросите",
     icon: BellOff,
-    gradient: "from-slate-400 to-slate-600",
+    tint:     "text-slate-600 dark:text-slate-300",
+    tintSoft: "bg-slate-100/55 dark:bg-slate-500/10",
+    tintRing: "ring-slate-200/60 dark:ring-slate-400/20",
+    tintActiveBg:     "bg-slate-600",
+    tintActiveRing:   "ring-slate-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(71,85,105,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
   },
   {
     id: "10m",
@@ -50,7 +56,12 @@ const REMINDER_OPTIONS: ReminderOption[] = [
     short: "10 мин",
     hint: "Прямо перед началом",
     icon: Clock,
-    gradient: "from-cyan-400 to-sky-600",
+    tint:     "text-cyan-600 dark:text-cyan-300",
+    tintSoft: "bg-cyan-100/55 dark:bg-cyan-500/10",
+    tintRing: "ring-cyan-200/60 dark:ring-cyan-400/20",
+    tintActiveBg:     "bg-cyan-500",
+    tintActiveRing:   "ring-cyan-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(6,182,212,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
   },
   {
     id: "30m",
@@ -58,7 +69,12 @@ const REMINDER_OPTIONS: ReminderOption[] = [
     short: "30 мин",
     hint: "Время собраться",
     icon: AlarmClock,
-    gradient: "from-blue-400 to-indigo-600",
+    tint:     "text-blue-600 dark:text-blue-300",
+    tintSoft: "bg-blue-100/55 dark:bg-blue-500/10",
+    tintRing: "ring-blue-200/60 dark:ring-blue-400/20",
+    tintActiveBg:     "bg-blue-500",
+    tintActiveRing:   "ring-blue-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(59,130,246,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
   },
   {
     id: "1h",
@@ -66,7 +82,12 @@ const REMINDER_OPTIONS: ReminderOption[] = [
     short: "1 час",
     hint: "Успеть переключиться",
     icon: Bell,
-    gradient: "from-violet-400 to-purple-600",
+    tint:     "text-violet-600 dark:text-violet-300",
+    tintSoft: "bg-violet-100/55 dark:bg-violet-500/10",
+    tintRing: "ring-violet-200/60 dark:ring-violet-400/20",
+    tintActiveBg:     "bg-violet-500",
+    tintActiveRing:   "ring-violet-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(139,92,246,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
   },
   {
     id: "1d",
@@ -74,18 +95,29 @@ const REMINDER_OPTIONS: ReminderOption[] = [
     short: "1 день",
     hint: "Накануне, вечером",
     icon: Sunrise,
-    gradient: "from-amber-400 to-orange-500",
+    tint:     "text-amber-600 dark:text-amber-300",
+    tintSoft: "bg-amber-100/55 dark:bg-amber-500/10",
+    tintRing: "ring-amber-200/60 dark:ring-amber-400/20",
+    tintActiveBg:     "bg-amber-500",
+    tintActiveRing:   "ring-amber-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(245,158,11,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
   },
 ];
+
+/* ─── Спекулярный блик поверх стекла ─────────────────────── */
+const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
+  <span aria-hidden="true" className={cn(G.specular, className)} />
+);
 
 export const FastTasksEnter: React.FC = () => {
   const navigate = useNavigate();
   const { data, patch } = useOnboarding();
+
   const [title, setTitle] = React.useState(data.firstTask.title);
   const [sphereId, setSphereId] = React.useState<string | null>(
     data.firstTask.sphereId ?? data.spheres[0]?.id ?? null
   );
-  const [reminder, setReminder] = React.useState(data.firstTask.reminder);
+  const [reminder, setReminder] = React.useState<ReminderId>(data.firstTask.reminder);
 
   const activeSphere = data.spheres.find((s) => s.id === sphereId) ?? null;
   const activeReminder = REMINDER_OPTIONS.find((r) => r.id === reminder) ?? null;
@@ -96,7 +128,7 @@ export const FastTasksEnter: React.FC = () => {
     patch({
       firstTask: { title: title.trim(), sphereId, reminder },
     });
-    navigate("/onboarding/lets-plan-tomorrow");
+    navigate("/onboarding/success-and-learning");
   };
 
   return (
@@ -104,22 +136,29 @@ export const FastTasksEnter: React.FC = () => {
       step={8}
       totalSteps={TOTAL}
       title="Создайте первую задачу"
-      subtitle="Пока без даты и времени — их можно будет добавить позже. Это первые 30 секунд вашей новой привычки."
       onBack={() => navigate("/onboarding/sources-import")}
       onNext={handleNext}
       nextDisabled={!canContinue}
     >
       <div className="relative space-y-5">
-        {/* Мягкое свечение на фоне */}
-        <div
-          aria-hidden="true"
-          className="absolute -inset-8 -z-10 pointer-events-none"
-        >
-          <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-blue-400/15 blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-amber-400/15 blur-3xl" />
+        {/* ─── Eyebrow ─────────────────────────────── */}
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "relative inline-flex items-center gap-1.5",
+              "px-2.5 py-1 rounded-full",
+              G.surface,
+              "text-[11px] uppercase tracking-widest font-medium",
+              "text-gray-600 dark:text-gray-300"
+            )}
+          >
+            <Sparkles size={11} aria-hidden="true" />
+            Первый шаг
+          </span>
+
         </div>
 
-        {/* ─── Название задачи ──────────────────────────── */}
+        {/* ─── Название задачи ──────────────────────── */}
         <div>
           <label
             htmlFor="first-task-title"
@@ -131,10 +170,9 @@ export const FastTasksEnter: React.FC = () => {
               aria-hidden="true"
             />
             Название задачи
-            <span className="text-red-500" aria-hidden="true">
-              *
-            </span>
+            <span className="text-red-500" aria-hidden="true">*</span>
           </label>
+
           <Input
             id="first-task-title"
             value={title}
@@ -144,7 +182,7 @@ export const FastTasksEnter: React.FC = () => {
           />
         </div>
 
-        {/* ─── Сфера ────────────────────────────────────── */}
+        {/* ─── Сфера ───────────────────────────────── */}
         {data.spheres.length > 0 && (
           <div>
             <p className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2.5">
@@ -159,34 +197,59 @@ export const FastTasksEnter: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               {data.spheres.map((s) => {
                 const active = sphereId === s.id;
+
                 return (
                   <button
                     key={s.id}
                     type="button"
                     onClick={() => setSphereId(s.id)}
                     aria-pressed={active}
+                    style={
+                      active
+                        ? {
+                            boxShadow: `0 0 0 2px ${s.color}55, 0 4px 14px ${s.color}33, inset 0 1px 0 rgba(255,255,255,0.7)`,
+                          }
+                        : undefined
+                    }
                     className={cn(
-                      "group inline-flex items-center gap-2",
+                      "group relative inline-flex items-center gap-2 overflow-hidden",
                       "px-3 py-2 rounded-full text-sm font-medium",
-                      "border transition-all duration-200",
+                      "backdrop-blur-md ring-1 transition-all duration-200",
                       "hover:-translate-y-0.5",
                       active
-                        ? "bg-white dark:bg-gray-800 border-transparent shadow-md ring-2"
-                        : "bg-white/70 dark:bg-gray-900/60 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm"
+                        ? "bg-white/70 dark:bg-white/[0.08] ring-transparent"
+                        : [
+                            "bg-white/50 dark:bg-white/[0.05]",
+                            "ring-white/60 dark:ring-white/10",
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
+                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+                            "text-gray-700 dark:text-gray-300",
+                            "hover:bg-white/70 dark:hover:bg-white/[0.08]",
+                          ]
                     )}
-                    style={active ? { boxShadow: `0 0 0 2px ${s.color}40`, borderColor: s.color } : undefined}
                   >
+                    {/* Спекулярный блик */}
                     <span
-                      className="w-3 h-3 rounded-full shrink-0 transition-transform group-hover:scale-110"
-                      style={{ backgroundColor: s.color }}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-2 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[1px]"
+                    />
+
+                    <span
+                      className="relative w-3 h-3 rounded-full shrink-0 transition-transform group-hover:scale-110"
+                      style={{
+                        backgroundColor: s.color,
+                        boxShadow: `0 1px 2px ${s.color}88, inset 0 1px 0 rgba(255,255,255,0.5)`,
+                      }}
                       aria-hidden="true"
                     />
-                    <span className="text-gray-900 dark:text-white">{s.name}</span>
+                    <span className="relative text-gray-900 dark:text-white">
+                      {s.name}
+                    </span>
                     {active && (
                       <Check
                         size={13}
                         strokeWidth={3}
-                        className="text-emerald-500"
+                        className="relative text-blue-600 dark:text-blue-300"
                         aria-hidden="true"
                       />
                     )}
@@ -197,7 +260,7 @@ export const FastTasksEnter: React.FC = () => {
           </div>
         )}
 
-        {/* ─── Напоминание ──────────────────────────────── */}
+        {/* ─── Напоминание ──────────────────────────── */}
         <div>
           <p className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2.5">
             <Bell
@@ -212,6 +275,7 @@ export const FastTasksEnter: React.FC = () => {
             {REMINDER_OPTIONS.map((opt) => {
               const active = reminder === opt.id;
               const Icon = opt.icon;
+
               return (
                 <button
                   key={opt.id}
@@ -220,39 +284,68 @@ export const FastTasksEnter: React.FC = () => {
                   aria-pressed={active}
                   title={opt.hint}
                   className={cn(
-                    "group relative flex flex-col items-center gap-1.5",
+                    "group relative isolate overflow-hidden flex flex-col items-center gap-1.5",
                     "px-2 py-3 rounded-2xl",
-                    "bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm",
-                    "border transition-all duration-300",
-                    "hover:-translate-y-0.5 hover:shadow-md",
-                    active
-                      ? "border-transparent ring-2 ring-blue-500/60 shadow-md"
-                      : "border-gray-200/70 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600"
+                    G.surface,
+                    // ─── Синий акцент в active ───
+                    active && [
+                    `ring-2 ${opt.tintActiveRing}`,
+                    "shadow-[0_12px_40px_rgba(15,23,42,0.15),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-1px_0_rgba(255,255,255,0.4)]",
+                    ],
+                    "transition-all duration-300",
+                    "hover:-translate-y-0.5",
+                    "hover:bg-white/70 dark:hover:bg-gray-900/55"
                   )}
                 >
+                  <SpecularHighlight className="opacity-80" />
+
+                  {/* Иконка-плашка — свой оттенок в покое, синяя в active */}
                   <div
                     className={cn(
-                      "w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-sm",
-                      "bg-gradient-to-br transition-transform duration-300",
-                      "group-hover:scale-105",
-                      opt.gradient
+                        "relative w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
+                        "ring-1 backdrop-blur-md transition-all duration-300",
+                        active
+                        ? [
+                            opt.tintActiveBg,
+                            "text-white",
+                            opt.tintActiveRing,
+                            opt.tintActiveShadow,
+                            ]
+                        : [
+                            opt.tint,
+                            opt.tintSoft,
+                            opt.tintRing,
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
+                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]",
+                            ]
                     )}
                     aria-hidden="true"
-                  >
-                    <Icon size={16} />
+                    >
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
+                    />
+                    <Icon size={16} className="relative" />
                   </div>
-                  <span className="text-[11px] font-medium text-gray-800 dark:text-gray-100 leading-tight text-center">
+
+                  <span className="relative text-[11px] font-medium text-gray-800 dark:text-gray-100 leading-tight text-center">
                     {opt.short}
                   </span>
 
+                  {/* Индикатор активного — стеклянный кружок */}
                   {active && (
                     <span
-                      aria-hidden="true"
-                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm"
+                        aria-hidden="true"
+                        className={cn(
+                        "absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-white",
+                        "ring-1 ring-white/60 dark:ring-white/20",
+                        opt.tintActiveBg,
+                        "shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]"
+                        )}
                     >
-                      <Check size={10} strokeWidth={3} />
+                        <Check size={10} strokeWidth={3} />
                     </span>
-                  )}
+                    )}
                 </button>
               );
             })}
@@ -266,32 +359,45 @@ export const FastTasksEnter: React.FC = () => {
           )}
         </div>
 
-        {/* ─── Превью задачи ────────────────────────────── */}
-        <Card className="relative overflow-hidden">
-          <div
+        {/* ─── Превью задачи ────────────────────────── */}
+        <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
+          <span
             aria-hidden="true"
-            className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-blue-400/20 to-amber-500/20 blur-3xl"
+            className="pointer-events-none absolute inset-x-6 top-1 h-16 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-60 blur-md"
           />
 
-          <CardContent className="relative p-4 md:p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div
+          <div className="relative p-4 md:p-5">
+            <div className="flex items-center gap-2.5 mb-3">
+              {/* Стеклянная плашка с иконкой */}
+              <span
                 aria-hidden="true"
-                className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm"
+                className={cn(
+                  "relative shrink-0 w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden",
+                  "bg-white/60 dark:bg-white/[0.06] text-blue-600 dark:text-blue-300",
+                  "ring-1 ring-white/70 dark:ring-white/10",
+                  "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.05)]"
+                )}
               >
-                <Sparkles size={13} />
-              </div>
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
+                />
+                <Sparkles size={14} className="relative" />
+              </span>
               <p className="text-sm font-medium text-gray-900 dark:text-white">
                 Так задача появится у вас
               </p>
             </div>
 
-            {/* Строка-предпросмотр — как в календаре */}
+            {/* Строка-предпросмотр — стеклянная */}
             <div
               className={cn(
                 "flex items-center gap-2.5 p-3 rounded-xl",
-                "bg-white dark:bg-gray-800",
-                "border border-gray-200/70 dark:border-gray-700/60 shadow-sm"
+                "bg-white/50 dark:bg-white/[0.03]",
+                "backdrop-blur-md",
+                "ring-1 ring-white/60 dark:ring-white/10",
+                "shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,23,42,0.04)]",
+                "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]"
               )}
             >
               {/* Цветная полоса сферы */}
@@ -299,6 +405,9 @@ export const FastTasksEnter: React.FC = () => {
                 className="w-1 self-stretch rounded shrink-0"
                 style={{
                   backgroundColor: activeSphere?.color ?? "#9ca3af",
+                  boxShadow: activeSphere
+                    ? `0 0 8px ${activeSphere.color}55`
+                    : undefined,
                 }}
                 aria-hidden="true"
               />
@@ -315,19 +424,31 @@ export const FastTasksEnter: React.FC = () => {
                 {title.trim() || "Название задачи"}
               </span>
 
-              {/* Сфера-бейдж */}
+              {/* Сфера-бейдж — стеклянная пилюля */}
               {activeSphere && (
-                <Badge
-                  variant="neutral"
-                  className="shrink-0 gap-1.5"
+                <span
+                  className={cn(
+                    "relative shrink-0 inline-flex items-center gap-1.5",
+                    "px-2 py-1 rounded-full",
+                    "bg-white/50 dark:bg-white/[0.05]",
+                    "backdrop-blur-md",
+                    "ring-1 ring-white/60 dark:ring-white/10",
+                    "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
+                    "text-[10px] font-medium text-gray-700 dark:text-gray-300"
+                  )}
                 >
                   <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: activeSphere.color }}
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{
+                      backgroundColor: activeSphere.color,
+                      boxShadow: `0 1px 2px ${activeSphere.color}88`,
+                    }}
                     aria-hidden="true"
                   />
-                  <span className="truncate max-w-[100px]">{activeSphere.name}</span>
-                </Badge>
+                  <span className="truncate max-w-[100px]">
+                    {activeSphere.name}
+                  </span>
+                </span>
               )}
 
               {/* Напоминание */}
@@ -341,15 +462,8 @@ export const FastTasksEnter: React.FC = () => {
                 </span>
               )}
             </div>
-
-            {/* Подпись */}
-            <p className="mt-3 flex items-start gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
-              <Info size={11} className="shrink-0 mt-0.5" aria-hidden="true" />
-              Дата и время появятся позже — их можно будет добавить в один клик
-              или через чат.
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </OnboardingLayout>
   );

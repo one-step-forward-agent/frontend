@@ -47,7 +47,6 @@ import { ToneOfVoice } from './components/onboarding/ToneOfVoice';
 import { GoalsAndHabits } from './components/onboarding/GoalsAndHabits';
 import { ExistingPlans } from './components/onboarding/ExistingPlans';
 import { AppleAndGoogleLogging } from './components/onboarding/AppleAndGoogleLogging';
-import { SourcesImport } from './components/onboarding/SourcesImport';
 import { FastTasksEnter } from './components/onboarding/FastTasksEnter';
 import { LetsPlanTomorrow } from './components/onboarding/LetsPlanTomorrow';
 import { SuccessAndLearning } from './components/onboarding/SuccessAndLearning';
@@ -162,12 +161,7 @@ const App: React.FC = () => {
             path="/onboarding/apple-google-logging"
             element={<AppleAndGoogleLogging />}
           />
-          <Route path="/onboarding/sources-import" element={<SourcesImport />} />
           <Route path="/onboarding/fast-tasks-enter" element={<FastTasksEnter />} />
-          <Route
-            path="/onboarding/lets-plan-tomorrow"
-            element={<LetsPlanTomorrow />}
-          />
           <Route
             path="/onboarding/success-and-learning"
             element={<SuccessAndLearning />}

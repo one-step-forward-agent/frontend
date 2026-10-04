@@ -2,18 +2,8 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Target,
-  Sparkles,
-  Trophy,
-  Rocket,
-  Heart,
-  Star,
-  Flag,
-  Flame,
-  Plus,
-  X,
-  Lightbulb,
-  ArrowRight,
+  Target, Sparkles, Trophy, Rocket, Heart, Star, Flag, Flame,
+  Plus, X, Lightbulb, GripVertical, ChevronUp, ChevronDown,
   type LucideIcon,
 } from "lucide-react";
 
@@ -21,25 +11,42 @@ import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-field";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
+import { glass } from "@/styles/glass";
 
 const TOTAL = 10;
 
-// Список иконок и градиентов — циклически присваиваем каждой новой цели
-const GOAL_VISUALS: { icon: LucideIcon; gradient: string }[] = [
-  { icon: Target,  gradient: "from-blue-400 to-indigo-600" },
-  { icon: Sparkles, gradient: "from-violet-400 to-purple-600" },
-  { icon: Trophy,  gradient: "from-amber-400 to-orange-500" },
-  { icon: Rocket,  gradient: "from-cyan-400 to-sky-600" },
-  { icon: Heart,   gradient: "from-pink-400 to-rose-500" },
-  { icon: Star,    gradient: "from-yellow-400 to-amber-500" },
-  { icon: Flag,    gradient: "from-emerald-400 to-teal-600" },
-  { icon: Flame,   gradient: "from-red-400 to-orange-500" },
+/** Уровень Liquid Glass — одна строка меняет всю страницу */
+const G = glass.strong;
+
+type GoalVisual = {
+  icon: LucideIcon;
+  tint: string;
+  tintSoft: string;
+  tintRing: string;
+};
+
+/** Палитра визуалов — присваивается цели по хэшу текста (стабильно при перестановках) */
+const GOAL_VISUALS: GoalVisual[] = [
+  { icon: Target,   tint: "text-blue-600 dark:text-blue-300",       tintSoft: "bg-blue-100/55 dark:bg-blue-500/10",       tintRing: "ring-blue-200/60 dark:ring-blue-400/20" },
+  { icon: Sparkles, tint: "text-violet-600 dark:text-violet-300",   tintSoft: "bg-violet-100/55 dark:bg-violet-500/10",   tintRing: "ring-violet-200/60 dark:ring-violet-400/20" },
+  { icon: Trophy,   tint: "text-amber-600 dark:text-amber-300",     tintSoft: "bg-amber-100/55 dark:bg-amber-500/10",     tintRing: "ring-amber-200/60 dark:ring-amber-400/20" },
+  { icon: Rocket,   tint: "text-cyan-600 dark:text-cyan-300",       tintSoft: "bg-cyan-100/55 dark:bg-cyan-500/10",       tintRing: "ring-cyan-200/60 dark:ring-cyan-400/20" },
+  { icon: Heart,    tint: "text-pink-600 dark:text-pink-300",       tintSoft: "bg-pink-100/55 dark:bg-pink-500/10",       tintRing: "ring-pink-200/60 dark:ring-pink-400/20" },
+  { icon: Star,     tint: "text-yellow-600 dark:text-yellow-300",   tintSoft: "bg-yellow-100/55 dark:bg-yellow-500/10",   tintRing: "ring-yellow-200/60 dark:ring-yellow-400/20" },
+  { icon: Flag,     tint: "text-emerald-600 dark:text-emerald-300", tintSoft: "bg-emerald-100/55 dark:bg-emerald-500/10", tintRing: "ring-emerald-200/60 dark:ring-emerald-400/20" },
+  { icon: Flame,    tint: "text-rose-600 dark:text-rose-300",       tintSoft: "bg-rose-100/55 dark:bg-rose-500/10",       tintRing: "ring-rose-200/60 dark:ring-rose-400/20" },
 ];
 
-// Быстрые подсказки — клик добавляет цель сразу
+/** Стабильный визуал для строки: одинаковый текст → одинаковая иконка и цвет */
+const visualForGoal = (text: string): GoalVisual => {
+  let h = 0;
+  for (let i = 0; i < text.length; i++) {
+    h = (h * 31 + text.charCodeAt(i)) >>> 0;
+  }
+  return GOAL_VISUALS[h % GOAL_VISUALS.length];
+};
+
 const SUGGESTIONS = [
   "Заниматься спортом 3 раза в неделю",
   "Учить английский по 20 минут",
@@ -49,11 +56,39 @@ const SUGGESTIONS = [
   "Медитировать",
 ];
 
+/* Перестановка: поменять from и to местами */
+const reorder = (list: string[], from: number, to: number): string[] => {
+  if (from === to) return list;
+  const next = [...list];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+};
+
+/* Перестановка стрелками: сдвиг на delta позиций */
+const move = (list: string[], index: number, delta: number): string[] => {
+  const target = index + delta;
+  if (target < 0 || target >= list.length) return list;
+  const next = [...list];
+  const [moved] = next.splice(index, 1);
+  next.splice(target, 0, moved);
+  return next;
+};
+
+/* ─── Спекулярный блик поверх стекла ─────────────────────── */
+const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
+  <span aria-hidden="true" className={cn(G.specular, className)} />
+);
+
 export const GoalsAndHabits: React.FC = () => {
   const navigate = useNavigate();
   const { data, update } = useOnboarding();
   const [goal, setGoal] = React.useState("");
   const [goals, setGoals] = React.useState<string[]>(data.goals);
+
+  // DnD-состояние
+  const [draggingIdx, setDraggingIdx] = React.useState<number | null>(null);
+  const [overIdx, setOverIdx] = React.useState<number | null>(null);
 
   const add = (value?: string) => {
     const v = (value ?? goal).trim();
@@ -80,33 +115,65 @@ export const GoalsAndHabits: React.FC = () => {
     navigate("/onboarding/existing-plans");
   };
 
+  // ─── DnD-обработчики ─────────────────────────────
+  const onDragStart = (e: React.DragEvent, idx: number) => {
+    setDraggingIdx(idx);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(idx));
+  };
+  const onDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (idx !== overIdx) setOverIdx(idx);
+  };
+  const onDragLeave = () => setOverIdx(null);
+  const onDrop = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    const from = draggingIdx ?? Number(e.dataTransfer.getData("text/plain"));
+    if (Number.isFinite(from) && from !== idx) {
+      setGoals((prev) => reorder(prev, from, idx));
+    }
+    setDraggingIdx(null);
+    setOverIdx(null);
+  };
+  const onDragEnd = () => {
+    setDraggingIdx(null);
+    setOverIdx(null);
+  };
+
   return (
     <OnboardingLayout
       step={4}
       totalSteps={TOTAL}
       title="Что вы хотите встроить в свою жизнь?"
-      subtitle="Например: «Заниматься спортом 3 раза в неделю», «Учить английский», «Больше читать». Пока это просто намерения — детали поможем уточнить позже."
       onBack={() => navigate("/onboarding/tone-of-voice")}
       onNext={handleNext}
       onSkip={handleSkip}
       nextLabel={`Далее${goals.length > 0 ? ` · ${goals.length}` : ""}`}
     >
       <div className="relative">
-        {/* Мягкое свечение за карточками */}
-        <div
-          aria-hidden="true"
-          className="absolute -inset-8 -z-10 pointer-events-none"
-        >
-          <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-amber-400/15 blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-blue-400/15 blur-3xl" />
+        {/* ─── Eyebrow ─────────────────────────────── */}
+        <div className="mb-5 flex items-center gap-3">
+          <span
+            className={cn(
+              "relative inline-flex items-center gap-1.5",
+              "px-2.5 py-1 rounded-full",
+              G.surface,
+              "text-[11px] uppercase tracking-widest font-medium",
+              "text-gray-600 dark:text-gray-300"
+            )}
+          >
+            <Sparkles size={11} aria-hidden="true" />
+            Намерения
+          </span>
         </div>
 
-        {/* ─── Поле ввода ────────────────────────────────── */}
+        {/* ─── Поле ввода ───────────────────────────── */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Target
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
               aria-hidden="true"
             />
             <Input
@@ -129,14 +196,10 @@ export const GoalsAndHabits: React.FC = () => {
           </Button>
         </div>
 
-        {/* ─── Быстрые подсказки ─────────────────────────── */}
+        {/* ─── Быстрые подсказки — стеклянные пилюли ─── */}
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-2">
-            <Lightbulb
-              size={14}
-              className="text-amber-500"
-              aria-hidden="true"
-            />
+            <Lightbulb size={14} className="text-amber-500" aria-hidden="true" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Или выберите из готовых
             </p>
@@ -154,140 +217,238 @@ export const GoalsAndHabits: React.FC = () => {
                   onClick={() => add(s)}
                   disabled={already}
                   className={cn(
-                    "group inline-flex items-center gap-1.5",
+                    "group relative inline-flex items-center gap-1.5",
                     "px-3 py-1.5 rounded-full text-xs font-medium",
-                    "border transition-all duration-200",
-                    already
-                      ? "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 cursor-default"
-                      : "bg-white/70 dark:bg-gray-900/60 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-700 dark:hover:text-blue-300 hover:shadow-sm"
+                    "overflow-hidden transition-all duration-200",
+                    "backdrop-blur-md",
+                    !already && [
+                      "bg-white/50 dark:bg-white/[0.05]",
+                      "ring-1 ring-white/60 dark:ring-white/10",
+                      "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
+                      "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+                      "text-gray-700 dark:text-gray-300",
+                      "hover:-translate-y-0.5 hover:bg-white/70 dark:hover:bg-white/[0.08]",
+                    ],
+                    already && [
+                      "bg-emerald-500/15 dark:bg-emerald-500/15",
+                      "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30",
+                      "text-emerald-700 dark:text-emerald-300",
+                      "cursor-default",
+                    ]
                   )}
                 >
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-2 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[1px]"
+                  />
                   <Plus
                     size={12}
                     className={cn(
-                      "transition-transform",
+                      "relative transition-transform",
                       !already && "group-hover:rotate-90"
                     )}
                     aria-hidden="true"
                   />
-                  {s}
+                  <span className="relative">{s}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* ─── Список добавленных целей ─────────────────── */}
+        {/* ─── Список с приоритетами ─────────────────── */}
         {goals.length > 0 && (
-          <Card className="mt-6 relative overflow-hidden">
-            {/* Декоративный градиент */}
-            <div
-              aria-hidden="true"
-              className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-amber-400/20 to-rose-500/20 blur-3xl"
-            />
-
-            <CardContent className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div
-                    aria-hidden="true"
-                    className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-sm"
-                  >
-                    <Sparkles size={13} />
-                  </div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Ваши намерения
-                  </p>
-                </div>
-                <Badge variant="default">
-                  <span className="tabular-nums">{goals.length}</span>
-                </Badge>
+          <div className="mt-8">
+            <div className="mb-3 flex items-end justify-between gap-3">
+              <div>
+                <span
+                  className={cn(
+                    "relative inline-flex items-center gap-1.5",
+                    "px-2.5 py-1 rounded-full",
+                    G.surface,
+                    "text-[11px] uppercase tracking-widest font-medium",
+                    "text-gray-600 dark:text-gray-300"
+                  )}
+                >
+                  Приоритеты
+                </span>
+                <h3 className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
+                  Что для вас важнее всего
+                </h3>
               </div>
+              <span className="hidden sm:block text-xs text-gray-500 dark:text-gray-400">
+                Перетащите или ▲▼
+              </span>
+            </div>
 
-              <ul className="space-y-2">
-                {goals.map((g, i) => {
-                  const visual = GOAL_VISUALS[i % GOAL_VISUALS.length];
-                  const Icon = visual.icon;
-                  return (
-                    <li
-                      key={g}
-                      className={cn(
-                        "group flex items-center gap-3 px-3 py-3 rounded-xl",
-                        "bg-gray-50/70 dark:bg-gray-800/40",
-                        "border border-gray-100 dark:border-gray-800",
-                        "hover:bg-white hover:dark:bg-gray-800/70 hover:shadow-sm",
-                        "transition-all",
-                        "animate-in fade-in slide-in-from-bottom-1 duration-300"
-                      )}
-                      style={{ animationDelay: `${i * 40}ms` }}
-                    >
-                      {/* Иконка с градиентом */}
-                      <div
+            <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-6 top-1 h-16 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-60 blur-md"
+              />
+
+              <div className="relative p-3 sm:p-4">
+                <ul className="space-y-2">
+                  {goals.map((g, i) => {
+                    const visual = visualForGoal(g);
+                    const Icon = visual.icon;
+                    const isDragging = draggingIdx === i;
+                    const isOver =
+                      overIdx === i && draggingIdx !== null && draggingIdx !== i;
+
+                    return (
+                      <li
+                        key={g}
+                        draggable
+                        onDragStart={(e) => onDragStart(e, i)}
+                        onDragOver={(e) => onDragOver(e, i)}
+                        onDragLeave={onDragLeave}
+                        onDrop={(e) => onDrop(e, i)}
+                        onDragEnd={onDragEnd}
                         className={cn(
-                          "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-sm",
-                          "bg-gradient-to-br",
-                          visual.gradient
+                          "group relative flex items-center gap-3 px-3 py-3 rounded-xl",
+                          "bg-white/50 dark:bg-white/[0.03]",
+                          "backdrop-blur-md",
+                          "ring-1 ring-white/60 dark:ring-white/10",
+                          "shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,23,42,0.04)]",
+                          "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+                          "transition-all duration-200",
+                          "hover:bg-white/70 dark:hover:bg-white/[0.06]",
+                          isDragging && "opacity-40 cursor-grabbing",
+                          isOver && "ring-2 ring-blue-500/60 -translate-y-1",
+                          "cursor-grab active:cursor-grabbing"
                         )}
-                        aria-hidden="true"
                       >
-                        <Icon size={16} />
-                      </div>
+                        {/* Хват */}
+                        <GripVertical
+                          size={16}
+                          className="shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500 transition-colors"
+                          aria-hidden="true"
+                        />
 
-                      {/* Текст цели */}
-                      <span className="flex-1 min-w-0 text-sm font-medium text-gray-800 dark:text-gray-100">
-                        {g}
-                      </span>
+                        {/* Номер приоритета — стеклянный бейдж */}
+                        <span
+                          className={cn(
+                            "relative shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-xs font-semibold tabular-nums",
+                            "bg-white/60 dark:bg-white/[0.06] text-gray-600 dark:text-gray-300",
+                            "ring-1 ring-white/70 dark:ring-white/10",
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.05)]",
+                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]"
+                          )}
+                          aria-label={`Приоритет ${i + 1}`}
+                        >
+                          {i + 1}
+                        </span>
 
-                      {/* Удалить */}
-                      <button
-                        type="button"
-                        onClick={() => remove(g)}
-                        className={cn(
-                          "shrink-0 w-7 h-7 rounded-full flex items-center justify-center",
-                          "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40",
-                          "transition-colors",
-                          "opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        )}
-                        title="Убрать"
-                        aria-label={`Убрать цель «${g}»`}
-                      >
-                        <X size={14} />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+                        {/* Иконка-плашка — цвет привязан к тексту */}
+                        <div
+                          className={cn(
+                            "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
+                            "ring-1 backdrop-blur-md",
+                            visual.tint,
+                            visual.tintSoft,
+                            visual.tintRing,
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
+                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]"
+                          )}
+                          aria-hidden="true"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
+                          />
+                          <Icon size={16} className="relative" />
+                        </div>
 
-              {/* CTA-подсказка снизу карточки */}
-              <button
-                type="button"
-                onClick={handleNext}
-                className={cn(
-                  "mt-4 w-full flex items-center justify-between px-3 py-2.5 rounded-xl",
-                  "bg-blue-50/70 dark:bg-blue-950/30",
-                  "border border-blue-100 dark:border-blue-900/60",
-                  "text-sm font-medium text-blue-700 dark:text-blue-300",
-                  "hover:bg-blue-100/70 dark:hover:bg-blue-950/50 transition-colors"
-                )}
-              >
-                <span>Продолжить</span>
-                <ArrowRight size={16} aria-hidden="true" />
-              </button>
-            </CardContent>
-          </Card>
+                        {/* Текст */}
+                        <span className="flex-1 min-w-0 text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                          {g}
+                        </span>
+
+                        {/* Стрелки — стеклянные кнопки */}
+                        <div className="shrink-0 flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={() => setGoals((prev) => move(prev, i, -1))}
+                            disabled={i === 0}
+                            aria-label={`Поднять «${g}» выше`}
+                            className={cn(
+                              "w-7 h-7 rounded-lg flex items-center justify-center",
+                              "text-gray-400 hover:text-gray-800 hover:bg-white/60",
+                              "dark:hover:text-gray-100 dark:hover:bg-white/[0.08]",
+                              "disabled:opacity-30 disabled:cursor-not-allowed",
+                              "transition-colors"
+                            )}
+                          >
+                            <ChevronUp size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGoals((prev) => move(prev, i, 1))}
+                            disabled={i === goals.length - 1}
+                            aria-label={`Опустить «${g}» ниже`}
+                            className={cn(
+                              "w-7 h-7 rounded-lg flex items-center justify-center",
+                              "text-gray-400 hover:text-gray-800 hover:bg-white/60",
+                              "dark:hover:text-gray-100 dark:hover:bg-white/[0.08]",
+                              "disabled:opacity-30 disabled:cursor-not-allowed",
+                              "transition-colors"
+                            )}
+                          >
+                            <ChevronDown size={15} />
+                          </button>
+                        </div>
+
+                        {/* Удалить */}
+                        <button
+                          type="button"
+                          onClick={() => remove(g)}
+                          className={cn(
+                            "shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+                            "text-gray-400 hover:text-red-500",
+                            "hover:bg-white/60 dark:hover:bg-white/[0.08]",
+                            "transition-colors",
+                            "opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          )}
+                          title="Убрать"
+                          aria-label={`Убрать цель «${g}»`}
+                        >
+                          <X size={15} />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                <div className="mt-3 flex items-center gap-2 px-2 text-[11px] text-gray-500 dark:text-gray-400">
+                  <Sparkles size={12} className="text-blue-500" aria-hidden="true" />
+                  Первый в списке — главный приоритет. Я подскажу, если что-то
+                  будет идти вразрез с ним.
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* ─── Пустое состояние ─────────────────────────── */}
+        {/* ─── Пустое состояние ────────────────────── */}
         {goals.length === 0 && (
           <div className="mt-6 flex flex-col items-center text-center py-8">
             <div
               aria-hidden="true"
-              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400/20 to-purple-500/20 flex items-center justify-center mb-3"
+              className={cn(
+                "relative w-14 h-14 rounded-2xl flex items-center justify-center mb-3 overflow-hidden",
+                "bg-white/55 dark:bg-white/[0.05]",
+                "backdrop-blur-2xl",
+                "ring-1 ring-white/60 dark:ring-white/10",
+                "shadow-[0_8px_32px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.75)]",
+                "dark:shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]"
+              )}
             >
-              <Target
-                size={24}
-                className="text-blue-500 dark:text-blue-400"
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[1px]"
               />
+              <Target size={24} className="relative text-blue-500 dark:text-blue-400" />
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
               Добавьте хотя бы одно намерение — или пропустите шаг, если пока не готовы формулировать.

@@ -2,34 +2,35 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Zap,
-  Bell,
-  ListChecks,
-  Scale,
-  Target,
-  Clock,
-  Sparkles,
-  ArrowRight,
-  Check,
+  Zap, Bell, ListChecks, Scale, Target, Clock,
+  Sparkles, ArrowRight, Check,
   type LucideIcon,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
-import { Button, InteractiveButton } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/cn";
+import { glass } from "@/styles/glass";
 
-const TOTAL = 10; // Start больше не в счётчике — начинается с ForWhatUsing
+const TOTAL = 10;
+
+/** ─── Уровень Liquid Glass для всего экрана — меняется одним словом ─── */
+const G = glass.subtle;
 
 type Option = {
   id: string;
   label: string;
   hint: string;
   icon: LucideIcon;
-  gradient: string;
-  ring: string;
+  tint: string;
+  tintSoft: string;
+  tintRing: string;
+  // ─── active ───
+  tintActiveBg: string;       // насыщенный фон плашки
+  tintActiveRing: string;     // грань плашки
+  tintActiveShadow: string;   // тень плашки
+  tintGlow: string;           // ореол за карточкой (градиент)
 };
 
 const OPTIONS: Option[] = [
@@ -38,50 +39,85 @@ const OPTIONS: Option[] = [
     label: "Повысить продуктивность",
     hint: "Успевать больше без выгорания",
     icon: Zap,
-    gradient: "from-amber-400 to-orange-500",
-    ring: "ring-amber-400/40",
+    tint:     "text-amber-600 dark:text-amber-300",
+    tintSoft: "bg-amber-100/55 dark:bg-amber-500/10",
+    tintRing: "ring-amber-200/60 dark:ring-amber-400/20",
+    tintActiveBg:     "bg-amber-500",
+    tintActiveRing:   "ring-amber-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(245,158,11,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
+    tintGlow:         "from-amber-400/60 to-orange-500/40",
   },
   {
     id: "remember",
     label: "Не забывать",
     hint: "Держать всё под рукой",
     icon: Bell,
-    gradient: "from-sky-400 to-blue-500",
-    ring: "ring-sky-400/40",
+    tint:     "text-sky-600 dark:text-sky-300",
+    tintSoft: "bg-sky-100/55 dark:bg-sky-500/10",
+    tintRing: "ring-sky-200/60 dark:ring-sky-400/20",
+    tintActiveBg:     "bg-sky-500",
+    tintActiveRing:   "ring-sky-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(14,165,233,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
+    tintGlow:         "from-sky-400/60 to-blue-500/40",
   },
   {
     id: "order",
     label: "Навести порядок в делах",
     hint: "Собрать всё в одном месте",
     icon: ListChecks,
-    gradient: "from-emerald-400 to-teal-500",
-    ring: "ring-emerald-400/40",
+    tint:     "text-emerald-600 dark:text-emerald-300",
+    tintSoft: "bg-emerald-100/55 dark:bg-emerald-500/10",
+    tintRing: "ring-emerald-200/60 dark:ring-emerald-400/20",
+    tintActiveBg:     "bg-emerald-500",
+    tintActiveRing:   "ring-emerald-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
+    tintGlow:         "from-emerald-400/60 to-teal-500/40",
   },
   {
     id: "balance",
     label: "Совмещать работу и личное",
     hint: "Баланс без перекосов",
     icon: Scale,
-    gradient: "from-pink-400 to-rose-500",
-    ring: "ring-pink-400/40",
+    tint:     "text-rose-600 dark:text-rose-300",
+    tintSoft: "bg-rose-100/55 dark:bg-rose-500/10",
+    tintRing: "ring-rose-200/60 dark:ring-rose-400/20",
+    tintActiveBg:     "bg-rose-500",
+    tintActiveRing:   "ring-rose-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(244,63,94,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
+    tintGlow:         "from-rose-400/60 to-pink-500/40",
   },
   {
     id: "goals",
     label: "Двигаться к своим целям",
     hint: "Маленькими шагами каждый день",
     icon: Target,
-    gradient: "from-violet-400 to-purple-600",
-    ring: "ring-violet-400/40",
+    tint:     "text-violet-600 dark:text-violet-300",
+    tintSoft: "bg-violet-100/55 dark:bg-violet-500/10",
+    tintRing: "ring-violet-200/60 dark:ring-violet-400/20",
+    tintActiveBg:     "bg-violet-500",
+    tintActiveRing:   "ring-violet-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(139,92,246,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
+    tintGlow:         "from-violet-400/60 to-purple-500/40",
   },
   {
     id: "time",
     label: "Понять, куда уходит время",
     hint: "Увидеть настоящую картину дня",
     icon: Clock,
-    gradient: "from-cyan-400 to-indigo-500",
-    ring: "ring-cyan-400/40",
+    tint:     "text-cyan-600 dark:text-cyan-300",
+    tintSoft: "bg-cyan-100/55 dark:bg-cyan-500/10",
+    tintRing: "ring-cyan-200/60 dark:ring-cyan-400/20",
+    tintActiveBg:     "bg-cyan-500",
+    tintActiveRing:   "ring-cyan-400/70",
+    tintActiveShadow: "shadow-[0_4px_14px_rgba(6,182,212,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]",
+    tintGlow:         "from-cyan-400/60 to-sky-500/40",
   },
 ];
+
+/* ─── Спекулярный блик поверх тела стекла ────────────────── */
+const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
+  <span aria-hidden="true" className={cn(G.specular, className)} />
+);
 
 export const ForWhatUsing: React.FC = () => {
   const navigate = useNavigate();
@@ -107,24 +143,34 @@ export const ForWhatUsing: React.FC = () => {
     <OnboardingLayout
       step={1}
       totalSteps={TOTAL}
-      title="Зачем тебе приложение?"
+      title="Зачем Вам приложение?"
       subtitle="Выберите всё, что откликается — можно несколько вариантов."
       onBack={() => navigate("/onboarding/start")}
-      onNext={handleNext}
-      nextDisabled={!confirmed || selected.length === 0}
-      nextLabel={confirmed ? "Далее" : "Подтвердить"}
     >
       <div className="relative">
-        {/* Мягкое свечение за карточками */}
-        <div
-          aria-hidden="true"
-          className="absolute -inset-8 -z-10 pointer-events-none"
-        >
-          <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-blue-400/15 blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-purple-400/15 blur-3xl" />
+        {/* ─── Eyebrow — стеклянная пилюля ─────────────── */}
+        <div className="mb-5 flex items-center gap-3">
+          <span
+            className={cn(
+              "relative inline-flex items-center gap-1.5",
+              "px-2.5 py-1 rounded-full",
+              G.surface,
+              "text-[11px] uppercase tracking-widest font-medium",
+              "text-gray-600 dark:text-gray-300"
+            )}
+          >
+            <Sparkles size={11} aria-hidden="true" />
+            Ваша цель
+          </span>
+
+          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+            {selected.length > 0
+              ? `Выбрано: ${selected.length}`
+              : "Ничего не выбрано"}
+          </span>
         </div>
 
-        {/* Сетка карточек с опциями */}
+        {/* ─── Сетка опций ─────────────────────────────── */}
         <div className="grid sm:grid-cols-2 gap-3">
           {OPTIONS.map((opt) => {
             const active = selected.includes(opt.id);
@@ -137,28 +183,64 @@ export const ForWhatUsing: React.FC = () => {
                 onClick={() => toggle(opt.id)}
                 aria-pressed={active}
                 className={cn(
-                  "group relative text-left",
+                  "group relative isolate overflow-hidden text-left",
                   "rounded-2xl p-4",
-                  "bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm",
-                  "border transition-all duration-300",
-                  "hover:-translate-y-0.5 hover:shadow-lg",
-                  active
-                    ? "border-transparent ring-2 ring-blue-500/60 shadow-md"
-                    : "border-gray-200/70 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600"
+                  G.surface,
+                  // ─── На active — синий акцент ───
+                  active && [
+                    `ring-2 ${opt.tintActiveRing}`,     // было ring-blue-500/60
+                    // тень карточки оставьте нейтральной — она общая для всех
+                    "shadow-[0_12px_40px_rgba(15,23,42,0.15),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-1px_0_rgba(255,255,255,0.4)]",
+                    ],
+                  "transition-all duration-300",
+                  "hover:-translate-y-0.5",
+                  "hover:bg-white/70 dark:hover:bg-gray-900/55"
                 )}
               >
-                <div className="flex items-start gap-3">
-                  {/* Иконка с градиентом */}
+                <SpecularHighlight className="opacity-90" />
+
+                {/* Мягкий ореол за активной карточкой */}
+                {active && (
+                    <span
+                        aria-hidden="true"
+                        className={cn(
+                        "absolute -inset-4 -z-10 rounded-full blur-2xl opacity-25",
+                        "bg-gradient-to-br",
+                        opt.tintGlow  // ← было "from-blue-400/60 to-indigo-500/40"
+                        )}
+                    />
+                    )}
+
+                <div className="relative flex items-start gap-3">
+                  {/* ─── Иконка-плашка: свой оттенок в покое, синий на active ─── */}
                   <div
                     className={cn(
-                      "shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm",
-                      "bg-gradient-to-br transition-transform duration-300",
-                      "group-hover:scale-105",
-                      opt.gradient
-                    )}
+                        "relative shrink-0 w-11 h-11 rounded-xl flex items-center justify-center",
+                        "overflow-hidden ring-1 transition-all duration-300",
+                        active
+                            ? [
+                                opt.tintActiveBg,   // ← было "bg-blue-500"
+                                opt.tintActiveRing, // ← было "ring-blue-400/70"
+                                opt.tintActiveShadow, // ← было синее shadow
+                                "text-white",
+                            ]
+                            : [
+                                opt.tint,
+                                opt.tintSoft,
+                                opt.tintRing,
+                                "backdrop-blur-md",
+                                "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
+                                "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]",
+                            ]
+                        )}
                     aria-hidden="true"
                   >
-                    <Icon size={20} />
+                    {/* Спекулярный блик на иконке */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
+                    />
+                    <Icon size={20} className="relative" />
                   </div>
 
                   {/* Текст */}
@@ -175,13 +257,25 @@ export const ForWhatUsing: React.FC = () => {
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                      "relative shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
+                      "transition-all duration-300",
                       active
-                        ? "bg-blue-500 border-blue-500 text-white scale-100"
-                        : "border-gray-300 dark:border-gray-600 scale-90"
+                        ? [
+                            opt.tintActiveBg,
+                            `border ${opt.tintActiveRing}`,
+                            "text-white",
+                            opt.tintActiveShadow,
+                            "scale-100",
+                            ]
+                        : [
+                            "border border-white/70 dark:border-white/15",
+                            "bg-white/40 dark:bg-white/[0.05]",
+                            "backdrop-blur-sm",
+                            "scale-90",
+                          ]
                     )}
                   >
-                    {active && <Check size={12} strokeWidth={3} />}
+                    {active && <Check size={12} strokeWidth={3} className="relative" />}
                   </span>
                 </div>
               </button>
@@ -189,89 +283,145 @@ export const ForWhatUsing: React.FC = () => {
           })}
         </div>
 
-        {/* Счётчик выбранного */}
+        {/* ─── Подтверждение ────────────────────────────── */}
         {selected.length > 0 && !confirmed && (
-          <div className="mt-5 flex items-center justify-between">
-            <Badge variant="default">
-              <Sparkles size={11} className="mr-1" aria-hidden="true" />
-              Выбрано: {selected.length}
-            </Badge>
-
+          <div className="mt-6 flex items-center justify-end gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
+            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+              {selected.length} из {OPTIONS.length}
+            </span>
             <Button type="button" onClick={handleConfirm}>
               Подтвердить
+              <ArrowRight size={16} className="ml-1" aria-hidden="true" />
             </Button>
           </div>
         )}
 
-        {/* Ответ Астер после подтверждения */}
+        {/* ─── Ответ Dayla ──────────────────────────────── */}
         {confirmed && (
-          <Card className="mt-6 relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* Декоративный градиент в углу */}
-            <div
+          <div
+            className={cn(
+              "mt-6 relative overflow-hidden rounded-2xl",
+              "animate-in fade-in slide-in-from-bottom-2 duration-500",
+              G.surface
+            )}
+          >
+            {/* Большой спекулярный блик поверх карточки */}
+            <span
               aria-hidden="true"
-              className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-500/30 blur-3xl"
+              className="pointer-events-none absolute inset-x-6 top-1 h-20 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-70 blur-md"
             />
 
-            <CardContent className="relative">
+            {/* Угловой ореол */}
+            <span
+              aria-hidden="true"
+              className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-500/15 blur-3xl"
+            />
+
+            <div className="relative p-5">
               <div className="flex items-start gap-3">
-                {/* Аватар Астер */}
+                {/* Аватар Dayla */}
                 <div
                   aria-hidden="true"
-                  className="
-                    shrink-0 w-10 h-10 rounded-full
-                    bg-gradient-to-br from-blue-500 to-purple-600
-                    flex items-center justify-center text-white
-                    shadow-md ring-2 ring-white/60 dark:ring-gray-900/60
-                  "
+                  className={cn(
+                    "relative shrink-0 w-10 h-10 rounded-full overflow-hidden",
+                    "bg-gradient-to-br from-blue-500 to-purple-600",
+                    "flex items-center justify-center text-white",
+                    "ring-1 ring-white/40",
+                    "shadow-[0_4px_14px_rgba(99,102,241,0.35),inset_0_1px_0_rgba(255,255,255,0.5)]"
+                  )}
                 >
-                  <Sparkles size={18} />
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
+                  />
+                  <Sparkles size={18} className="relative" />
                 </div>
 
                 <div className="min-w-0">
                   <p className="font-medium text-gray-900 dark:text-white">
-                    Похоже, мы нашли друг друга!
-                  </p>
-                  <p className="text-gray-700 dark:text-gray-300 mt-2 text-sm">
-                    Я — <span className="font-semibold">Deyla</span>. Буду рядом, чтобы помочь вам:
+                    Похоже, мы нашли друг друга
                   </p>
 
-                  <ul className="mt-3 text-sm text-gray-600 dark:text-gray-400 space-y-1.5">
-                    <li className="flex items-start gap-2">
-                      <Check size={14} className="shrink-0 mt-0.5 text-green-500" aria-hidden="true" />
-                      собрать дела в понятный план на день;
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check size={14} className="shrink-0 mt-0.5 text-green-500" aria-hidden="true" />
-                      не потеряться среди задач;
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check size={14} className="shrink-0 mt-0.5 text-green-500" aria-hidden="true" />
-                      понять, что делать дальше.
-                    </li>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+                    Я —{" "}
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      Dayla
+                    </span>
+                    . Буду рядом, чтобы помочь вам:
+                  </p>
+
+                  <ul className="mt-3 text-sm text-gray-600 dark:text-gray-300 space-y-1.5">
+                    {[
+                      "собрать дела в понятный план на день;",
+                      "не потеряться среди задач;",
+                      "понять, что делать дальше.",
+                    ].map((t) => (
+                      <li key={t} className="flex items-start gap-2">
+                        <Check
+                          size={14}
+                          className="shrink-0 mt-0.5 text-blue-500"
+                          aria-hidden="true"
+                        />
+                        {t}
+                      </li>
+                    ))}
                   </ul>
 
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
                     Чтобы мои рекомендации были точнее, мне нужно немного узнать о вас.
                   </p>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <Badge variant="default">Выбрано: {selected.length}</Badge>
-
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleNext}
-                      className="text-blue-600 dark:text-blue-400"
+                  <div className="mt-5 flex flex-wrap items-center gap-3">
+                    {/* Стеклянный бейдж */}
+                    <span
+                      className={cn(
+                        "relative inline-flex items-center gap-1.5",
+                        "px-2.5 py-1 rounded-full",
+                        G.surface,
+                        "text-xs font-medium text-gray-700 dark:text-gray-300"
+                      )}
                     >
-                      Начать
-                      <ArrowRight size={14} className="ml-1" aria-hidden="true" />
-                    </Button>
+                      Выбрано:
+                      <span className="tabular-nums">{selected.length}</span>
+                    </span>
+
+                    {/* Liquid Glass CTA «Начать» */}
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className={cn(
+                        "group relative overflow-hidden",
+                        "inline-flex items-center gap-1.5",
+                        "px-4 py-2 rounded-full",
+                        "text-sm font-semibold",
+                        "text-blue-700 dark:text-blue-300",
+                        "bg-white/70 dark:bg-white/15",
+                        "backdrop-blur-xl",
+                        "ring-1 ring-white/70 dark:ring-white/20",
+                        "shadow-[0_4px_16px_rgba(59,130,246,0.15),inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(255,255,255,0.4)]",
+                        "hover:bg-white/85 dark:hover:bg-white/20",
+                        "hover:shadow-[0_8px_24px_rgba(59,130,246,0.25),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.5)]",
+                        "transition-all duration-300"
+                      )}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-3 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/80 to-transparent opacity-90 blur-[1px]"
+                      />
+                      <span className="relative inline-flex items-center gap-1.5">
+                        Начать
+                        <ArrowRight
+                          size={14}
+                          className="transition-transform duration-300 group-hover:translate-x-0.5"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </button>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
     </OnboardingLayout>

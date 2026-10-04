@@ -19,16 +19,19 @@ export interface OnboardingData {
   spheres: Sphere[];
   toneOfVoice: "neutral" | "supportive" | "motivating" | "strict" | null;
   goals: string[];
-  workDays: string[];
-  workHoursFrom: string;
-  workHoursTo: string;
-  timezone: string;
   googleConnected: boolean;
   telegramConnected: boolean;
   importedSources: string[];
   firstTask: FirstTask;
   tomorrowPlanned: boolean;
   integrations: string[];        // ← добавить
+  workDays: string[];
+  workHoursFrom: string;
+  workHoursTo: string;
+  timezone: string;
+
+  // ← НОВОЕ
+  perDayWorkHours?: Partial<Record<DayShort, { from: string; to: string }>>;
 }
 
 const defaultData: OnboardingData = {
@@ -85,3 +88,8 @@ export const useOnboarding = (): OnboardingContextValue => {
   if (!ctx) throw new Error("useOnboarding must be used within OnboardingProvider");
   return ctx;
 };
+
+// src/components/onboarding/OnboardingContext.tsx
+
+// ─── Экспортируемый тип для дней недели ───
+export type DayShort = "Пн" | "Вт" | "Ср" | "Чт" | "Пт" | "Сб" | "Вс";

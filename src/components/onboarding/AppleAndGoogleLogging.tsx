@@ -2,37 +2,39 @@
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Sparkles,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  GraduationCap,
-  Link2,
-  Info,
-  Loader2,
+  Sparkles, Check, ChevronDown, ChevronUp,
+  GraduationCap, Link2, Info, Loader2, ShieldCheck,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
+import { glass } from "@/styles/glass";
 
 const TOTAL = 10;
 const OAUTH_QUEUE_KEY = "onboarding:oauth-queue";
 const OAUTH_SELECTED_KEY = "onboarding:selected-integrations";
+
+/** Уровень Liquid Glass — одна строка меняет всю страницу */
+const G = glass.strong;
+
+/* ─── Спекулярный блик поверх стекла ─────────────────────── */
+const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
+  <span aria-hidden="true" className={cn(G.specular, className)} />
+);
 
 // ---------- Интеграции ----------
 
 type IntegrationKind = "oauth" | "manual";
 
 type Integration = {
-  id: "google" | "apple" | "jira" | "notion" | "obsidian";
+  id:
+    | "google" | "apple" | "jira" | "notion" | "obsidian"
+    | "telegram" | "slack" | "trueconf";
   name: string;
   hint: string;
   src: string;
   w: number;
-  /** `oauth` — редирект на провайдера. `manual` — «подключается» без редиректа. */
   kind: IntegrationKind;
 };
 
@@ -64,16 +66,40 @@ const INTEGRATIONS: Integration[] = [
   {
     id: "notion",
     name: "Notion",
-    hint: "Страницы и чек-листы — в едином ритме с остальными задачами",
+    hint: "Страницы и чек-листы — в едином ритме с задачами",
     src: "/images/Notion.png",
     w: 40,
-    kind: "manual",
+    kind: "oauth",
   },
   {
     id: "obsidian",
     name: "Obsidian",
     hint: "Идеи и заметки, которые стоит превратить в действия",
     src: "/images/Obsidian.png",
+    w: 40,
+    kind: "manual",
+  },
+  {
+    id: "telegram",
+    name: "Telegram",
+    hint: "Сообщения и пересланные события — сразу в план дня",
+    src: "/images/TelegramWB.png",
+    w: 40,
+    kind: "oauth",
+  },
+  {
+    id: "slack",
+    name: "Slack",
+    hint: "Рабочие обсуждения превращаю в задачи и напоминания",
+    src: "/images/slack.png",
+    w: 40,
+    kind: "oauth",
+  },
+  {
+    id: "trueconf",
+    name: "TrueConf",
+    hint: "Созвоны и встречи попадают в календарь автоматически",
+    src: "/images/tc_logo_square.png",
     w: 40,
     kind: "manual",
   },
@@ -89,7 +115,8 @@ const INTEGRATIONS: Integration[] = [
 const DEMO_MODE =
   !import.meta.env.VITE_GOOGLE_CLIENT_ID &&
   !import.meta.env.VITE_APPLE_CLIENT_ID &&
-  !import.meta.env.VITE_JIRA_CLIENT_ID;
+  !import.meta.env.VITE_JIRA_CLIENT_ID &&
+  !import.meta.env.VITE_SLACK_CLIENT_ID;
 
 // ---------- OAuth URL-строители (для real-mode) ----------
 
@@ -133,14 +160,44 @@ const buildOAuthUrl = (id: Integration["id"], state: string): string => {
       });
       return `https://auth.atlassian.com/authorize?${params}`;
     }
-    case "notion":
+    case "notion": {
+      const params = new URLSearchParams({
+        client_id: import.meta.env.VITE_NOTION_CLIENT_ID ?? "",
+        redirect_uri: redirect,
+        response_type: "code",
+        owner: "user",
+        state,
+      });
+      return `https://api.notion.com/v1/oauth/authorize?${params}`;
+    }
+    case "slack": {
+      const params = new URLSearchParams({
+        client_id: import.meta.env.VITE_SLACK_CLIENT_ID ?? "",
+        redirect_uri: redirect,
+        scope: "channels:history,channels:read,users:read",
+        state,
+      });
+      return `https://slack.com/oauth/v2/authorize?${params}`;
+    }
+    case "telegram":
     case "obsidian":
-      // Эти — без OAuth-редиректа в MVP.
+    case "trueconf":
+      // В MVP не имеют классического OAuth-редиректа: Telegram — через bot-login,
+      // Obsidian и TrueConf — локальные / on-prem подключения.
       return "";
   }
 };
 
-// ---------- Вспомогательные ----------
+/* ─── Стеклянный разделитель ───────────────────────────── */
+const SectionDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="flex items-center gap-3">
+    <div className="h-px flex-1 bg-white/60 dark:bg-white/10" />
+    <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium">
+      {children}
+    </span>
+    <div className="h-px flex-1 bg-white/60 dark:bg-white/10" />
+  </div>
+);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -156,11 +213,8 @@ export const AppleAndGoogleLogging: React.FC = () => {
   );
   const [showGuide, setShowGuide] = React.useState(false);
 
-  // Состояние процесса подключения
   const [phase, setPhase] = React.useState<"idle" | "connecting">("idle");
-  const [currentProvider, setCurrentProvider] = React.useState<Integration | null>(
-    null
-  );
+  const [currentProvider, setCurrentProvider] = React.useState<Integration | null>(null);
 
   const toggle = (id: string) => {
     setSelected((prev) =>
@@ -168,7 +222,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
     );
   };
 
-  // ─── Возврат из OAuth (real-mode) ─────────────────────
+  // ─── Возврат из OAuth (real-mode) ─────────────────
   React.useEffect(() => {
     if (DEMO_MODE) return;
 
@@ -176,14 +230,11 @@ export const AppleAndGoogleLogging: React.FC = () => {
     const state = searchParams.get("state");
     if (!code && !state) return;
 
-    // Мы только что вернулись с OAuth-редиректа.
-    // Забираем оставшуюся очередь и идём на следующего провайдера.
     const queue: string[] = JSON.parse(
       sessionStorage.getItem(OAUTH_QUEUE_KEY) ?? "[]"
     );
 
     if (queue.length === 0) {
-      // Всё подключено — завершаем и идём дальше.
       const saved: string[] = JSON.parse(
         sessionStorage.getItem(OAUTH_SELECTED_KEY) ?? "[]"
       );
@@ -200,35 +251,34 @@ export const AppleAndGoogleLogging: React.FC = () => {
     const provider = INTEGRATIONS.find((i) => i.id === next);
     if (!provider) return;
 
-    window.location.href = buildOAuthUrl(
-      provider.id,
-      JSON.stringify({ provider: provider.id })
-    );
+    const url = buildOAuthUrl(provider.id, JSON.stringify({ provider: provider.id }));
+    if (url) window.location.href = url;
+    else {
+      // Провайдер без OAuth — сразу к следующему в очереди
+      update("integrations", []);
+    }
   }, [searchParams, navigate, update]);
 
-  // ─── Клик «Далее» ─────────────────────────────────────
+  // ─── Клик «Далее» ─────────────────────────────────
   const handleNext = async () => {
-    // 1. Ничего не выбрано — просто идём дальше.
     if (selected.length === 0) {
       update("integrations", []);
       update("googleConnected", false);
-      navigate("/onboarding/sources-import");
+      navigate("/onboarding/fast-tasks-enter");
       return;
     }
 
-    // 2. Выбрано несколько — идём по очереди.
     const oauthQueue = selected.filter(
       (id) => INTEGRATIONS.find((i) => i.id === id)?.kind === "oauth"
     );
 
     if (DEMO_MODE) {
-      // ─── Demo: симулируем подключение с оверлеем ────
       setPhase("connecting");
       for (const id of selected) {
         const provider = INTEGRATIONS.find((i) => i.id === id);
         if (!provider) continue;
         setCurrentProvider(provider);
-        await sleep(1200);
+        await sleep(900);
       }
       setCurrentProvider(null);
       setPhase("idle");
@@ -239,7 +289,6 @@ export const AppleAndGoogleLogging: React.FC = () => {
       return;
     }
 
-    // ─── Real: если нет OAuth-очереди — просто идём дальше ────
     if (oauthQueue.length === 0) {
       update("integrations", selected);
       update("googleConnected", selected.includes("google"));
@@ -247,20 +296,14 @@ export const AppleAndGoogleLogging: React.FC = () => {
       return;
     }
 
-    // ─── Real: запускаем последовательный OAuth ────
     sessionStorage.setItem(OAUTH_SELECTED_KEY, JSON.stringify(selected));
-    sessionStorage.setItem(
-      OAUTH_QUEUE_KEY,
-      JSON.stringify(oauthQueue.slice(1))
-    );
+    sessionStorage.setItem(OAUTH_QUEUE_KEY, JSON.stringify(oauthQueue.slice(1)));
 
     const first = INTEGRATIONS.find((i) => i.id === oauthQueue[0]);
     if (!first) return;
 
-    window.location.href = buildOAuthUrl(
-      first.id,
-      JSON.stringify({ provider: first.id })
-    );
+    const url = buildOAuthUrl(first.id, JSON.stringify({ provider: first.id }));
+    if (url) window.location.href = url;
   };
 
   return (
@@ -269,7 +312,6 @@ export const AppleAndGoogleLogging: React.FC = () => {
         step={6}
         totalSteps={TOTAL}
         title="Что подключим?"
-        subtitle="Deyla соединяет то, чем вы уже пользуетесь, в одну картину дня. Можно выбрать несколько — или пропустить и подключить позже в настройках."
         onBack={() => navigate("/onboarding/existing-plans")}
         onNext={handleNext}
         onSkip={() => navigate("/onboarding/sources-import")}
@@ -280,44 +322,28 @@ export const AppleAndGoogleLogging: React.FC = () => {
             : "Далее"
         }
       >
-        <div className="relative">
-          {/* Мягкое свечение на фоне */}
-          <div
-            aria-hidden="true"
-            className="absolute -inset-8 -z-10 pointer-events-none"
-          >
-            <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-blue-400/15 blur-3xl" />
-            <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-violet-400/15 blur-3xl" />
+        <div className="relative space-y-5">
+          {/* ─── Eyebrow ─────────────────────────────── */}
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                "relative inline-flex items-center gap-1.5",
+                "px-2.5 py-1 rounded-full",
+                G.surface,
+                "text-[11px] uppercase tracking-widest font-medium",
+                "text-gray-600 dark:text-gray-300"
+              )}
+            >
+              <Link2 size={11} aria-hidden="true" />
+              Интеграции
+            </span>
           </div>
 
-          {/* Шапка со счётчиком */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div
-                aria-hidden="true"
-                className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm"
-              >
-                <Link2 size={13} />
-              </div>
-              <p className="font-medium text-gray-900 dark:text-white text-sm">
-                Интеграции
-              </p>
-            </div>
-
-            {selected.length > 0 ? (
-              <Badge variant="success">
-                <Check size={11} className="mr-1" aria-hidden="true" />
-                Выбрано: {selected.length}
-              </Badge>
-            ) : (
-              <Badge variant="neutral">Ничего не выбрано</Badge>
-            )}
-          </div>
-
-          {/* Сетка интеграций */}
+          {/* ─── Сетка интеграций ──────────────────── */}
           <div className="grid sm:grid-cols-2 gap-2.5">
             {INTEGRATIONS.map((i) => {
               const active = selected.includes(i.id);
+
               return (
                 <button
                   key={i.id}
@@ -326,45 +352,66 @@ export const AppleAndGoogleLogging: React.FC = () => {
                   disabled={phase === "connecting"}
                   aria-pressed={active}
                   className={cn(
-                    "group relative text-left",
+                    "group relative isolate overflow-hidden text-left",
                     "rounded-2xl p-4",
-                    "bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm",
-                    "border transition-all duration-300",
-                    "hover:-translate-y-0.5 hover:shadow-lg",
-                    "disabled:opacity-50 disabled:pointer-events-none",
-                    active
-                      ? "border-transparent ring-2 ring-blue-500/60 shadow-md"
-                      : "border-gray-200/70 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600"
+                    G.surface,
+                    // ─── Синий акцент в active ───
+                    active && [
+                      "ring-2 ring-blue-500/60 dark:ring-blue-400/60",
+                      "shadow-[0_12px_40px_rgba(59,130,246,0.20),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-1px_0_rgba(255,255,255,0.4)]",
+                    ],
+                    "transition-all duration-300",
+                    "hover:-translate-y-0.5",
+                    "hover:bg-white/70 dark:hover:bg-gray-900/55",
+                    "disabled:opacity-50 disabled:pointer-events-none"
                   )}
                 >
-                  <div
-                    aria-hidden="true"
-                    className={cn(
-                      "absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-300",
-                      "bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5",
-                      active ? "opacity-100" : "opacity-0"
-                    )}
-                  />
+                  <SpecularHighlight className="opacity-90" />
+
+                  {/* Ореол за активной карточкой */}
+                  {active && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -inset-4 -z-10 rounded-full blur-2xl opacity-25 bg-gradient-to-br from-blue-400/60 to-indigo-500/40"
+                    />
+                  )}
 
                   <div className="relative flex items-start gap-3">
+                    {/* Стеклянная плашка иконки — нейтральная */}
                     <div
                       className={cn(
-                        "shrink-0 w-12 h-12 rounded-xl flex items-center justify-center",
-                        "bg-white dark:bg-gray-800",
-                        "border border-gray-200/70 dark:border-gray-700/60",
-                        "shadow-sm",
-                        "transition-transform duration-300 group-hover:scale-105"
+                        "relative shrink-0 w-12 h-12 rounded-xl flex items-center justify-center",
+                        "overflow-hidden transition-all duration-300",
+                        "backdrop-blur-md ring-1",
+                        active
+                          ? [
+                              "bg-blue-500/15 dark:bg-blue-500/15",
+                              "ring-blue-400/60",
+                              "shadow-[0_4px_14px_rgba(59,130,246,0.30),inset_0_1px_0_rgba(255,255,255,0.6)]",
+                            ]
+                          : [
+                              "bg-white/60 dark:bg-white/[0.06]",
+                              "ring-white/70 dark:ring-white/10",
+                              "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
+                              "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]",
+                            ]
                       )}
                     >
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
+                      />
                       <img
                         src={i.src}
                         alt={i.name}
                         style={{ width: i.w, height: "auto" }}
-                        className="max-h-7 object-contain"
+                        className="relative max-h-7 object-contain select-none pointer-events-none"
                         loading="lazy"
+                        draggable={false}
                       />
                     </div>
 
+                    {/* Текст */}
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 dark:text-white leading-snug">
                         {i.name}
@@ -374,16 +421,29 @@ export const AppleAndGoogleLogging: React.FC = () => {
                       </p>
                     </div>
 
+                    {/* Индикатор — стеклянная капсула, в active — синяя */}
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
+                        "relative shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center",
+                        "transition-all duration-300",
                         active
-                          ? "bg-blue-500 border-blue-500 text-white scale-100"
-                          : "border-gray-300 dark:border-gray-600 scale-95"
+                          ? [
+                              "bg-blue-500 border border-blue-400/70 text-white",
+                              "shadow-[0_2px_8px_rgba(59,130,246,0.4),inset_0_1px_0_rgba(255,255,255,0.5)]",
+                              "scale-100",
+                            ]
+                          : [
+                              "border border-white/70 dark:border-white/15",
+                              "bg-white/40 dark:bg-white/[0.05]",
+                              "backdrop-blur-sm",
+                              "scale-95",
+                            ]
                       )}
                     >
-                      {active && <Check size={12} strokeWidth={3} />}
+                      {active && (
+                        <Check size={12} strokeWidth={3} className="relative" />
+                      )}
                     </span>
                   </div>
                 </button>
@@ -391,23 +451,15 @@ export const AppleAndGoogleLogging: React.FC = () => {
             })}
           </div>
 
-          {/* Подсказка о приватности */}
-          <div className="mt-4 flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
-            <Info size={12} className="shrink-0 mt-0.5" aria-hidden="true" />
-            <p>
-              Deyla только читает занятые интервалы и задачи — ничего не публикует
-              и не изменяет во внешних сервисах.
-            </p>
-          </div>
 
-          {/* Инструкция для ВШЭ */}
-          <Card className="mt-6 relative overflow-hidden">
-            <div
+          {/* ─── Гайд для ВШЭ ────────────────────────── */}
+          <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
+            <span
               aria-hidden="true"
-              className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-emerald-400/20 to-teal-500/20 blur-3xl"
+              className="pointer-events-none absolute inset-x-6 top-1 h-14 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-60 blur-md"
             />
 
-            <CardContent className="relative p-4 md:p-5">
+            <div className="relative p-4 md:p-5">
               <button
                 type="button"
                 onClick={() => setShowGuide((v) => !v)}
@@ -416,9 +468,18 @@ export const AppleAndGoogleLogging: React.FC = () => {
               >
                 <div
                   aria-hidden="true"
-                  className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white shadow-sm"
+                  className={cn(
+                    "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
+                    "bg-emerald-500/15 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+                    "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30",
+                    "shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_1px_2px_rgba(15,23,42,0.05)]"
+                  )}
                 >
-                  <GraduationCap size={16} />
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[0.5px]"
+                  />
+                  <GraduationCap size={16} className="relative" />
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -454,7 +515,12 @@ export const AppleAndGoogleLogging: React.FC = () => {
                     <li key={idx} className="flex items-start gap-3">
                       <span
                         aria-hidden="true"
-                        className="shrink-0 w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold flex items-center justify-center"
+                        className={cn(
+                          "shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
+                          "text-[11px] font-semibold",
+                          "bg-emerald-500/15 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+                          "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30"
+                        )}
                       >
                         {idx + 1}
                       </span>
@@ -463,11 +529,12 @@ export const AppleAndGoogleLogging: React.FC = () => {
                   ))}
                 </ol>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
+          {/* ─── Подсказка про пропуск ─────────────── */}
           {selected.length === 0 && (
-            <div className="mt-5 flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Можно пропустить — подключите интеграции позже в настройках
@@ -477,28 +544,53 @@ export const AppleAndGoogleLogging: React.FC = () => {
         </div>
       </OnboardingLayout>
 
-      {/* ─── Оверлей процесса подключения ──────────────── */}
+      {/* ─── Оверлей подключения — Liquid Glass ─── */}
       {phase === "connecting" && currentProvider && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-gray-950/80 backdrop-blur-md"
+          className={cn(
+            "fixed inset-0 z-50 flex items-center justify-center",
+            "bg-white/60 dark:bg-gray-950/70 backdrop-blur-xl"
+          )}
           role="dialog"
           aria-modal="true"
           aria-labelledby="oauth-title"
         >
-          <Card className="max-w-sm w-full mx-4 overflow-hidden">
-            <CardContent className="p-6 text-center">
+          <div className={cn("relative max-w-sm w-full mx-4 overflow-hidden rounded-2xl", G.surface)}>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-6 top-1 h-16 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-70 blur-md"
+            />
+
+            <div className="relative p-6 text-center">
               <div className="flex justify-center">
                 <div className="relative">
-                  <div
+                  {/* Ореол вокруг логотипа */}
+                  <span
                     aria-hidden="true"
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/40 to-purple-500/40 blur-xl"
+                    className="absolute -inset-3 rounded-3xl bg-blue-400/40 dark:bg-blue-500/30 blur-2xl"
                   />
-                  <div className="relative w-16 h-16 rounded-2xl bg-white dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700 flex items-center justify-center shadow-md">
+
+                  {/* Стеклянная плашка логотипа */}
+                  <div
+                    className={cn(
+                      "relative w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden",
+                      "bg-white/60 dark:bg-white/[0.06]",
+                      "ring-1 ring-white/70 dark:ring-white/10",
+                      "backdrop-blur-md",
+                      "shadow-[0_8px_32px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                      "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]"
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/80 to-transparent blur-[1px]"
+                    />
                     <img
                       src={currentProvider.src}
                       alt={currentProvider.name}
                       style={{ width: currentProvider.w + 6, height: "auto" }}
-                      className="max-h-9 object-contain"
+                      className="relative max-h-9 object-contain select-none pointer-events-none"
+                      draggable={false}
                     />
                   </div>
                 </div>
@@ -514,21 +606,33 @@ export const AppleAndGoogleLogging: React.FC = () => {
                 Это займёт пару секунд
               </p>
 
-              {/* Прогресс-полоска */}
-              <div className="mt-5 h-1 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div className="h-full w-full bg-gradient-to-r from-blue-500 to-purple-600 origin-left animate-[oauth-progress_1.2s_ease-in-out]" />
+              {/* Прогресс-полоска в стекле */}
+              <div
+                className={cn(
+                  "mt-5 h-1 w-full rounded-full overflow-hidden",
+                  "bg-white/40 dark:bg-white/[0.05]",
+                  "ring-1 ring-white/60 dark:ring-white/10",
+                  "shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]"
+                )}
+              >
+                <div
+                  className={cn(
+                    "h-full w-full origin-left",
+                    "bg-gradient-to-r from-blue-500 to-indigo-500",
+                    "animate-[oauth-progress_1.2s_ease-in-out]"
+                  )}
+                />
               </div>
 
               <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-500">
                 <Loader2 size={12} className="animate-spin" aria-hidden="true" />
                 <span>Не закрывайте вкладку</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* keyframes для прогресс-полоски оверлея */}
       <style>{`
         @keyframes oauth-progress {
           0%   { transform: scaleX(0); }

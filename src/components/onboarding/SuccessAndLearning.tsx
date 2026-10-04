@@ -2,55 +2,57 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  PartyPopper,
-  Sun,
-  MessageCircle,
-  Settings2,
-  Sparkles,
-  Check,
-  CalendarDays,
-  Target,
-  Link2,
-  Clock,
-  ArrowRight,
-  Rocket,
+  PartyPopper, Sun, MessageCircle, Settings2,
+  Sparkles, Check, CalendarDays, Target, Link2,
+  ArrowRight, Rocket,
   type LucideIcon,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
-import { InteractiveButton } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
+import { glass } from "@/styles/glass";
 
 const TOTAL = 10;
 
+/** Уровень Liquid Glass — одна строка меняет всю страницу */
+const G = glass.strong;
+
+/* ─── Спекулярный блик поверх стекла ─────────────────────── */
+const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
+  <span aria-hidden="true" className={cn(G.specular, className)} />
+);
+
+/* ─── HIGHLIGHTS: каждой иконке свой оттенок, в обоих состояниях ─── */
 type Highlight = {
   icon: LucideIcon;
-  gradient: string;
+  tint: string;
+  tintSoft: string;
+  tintRing: string;
   title: string;
-  text: string;
 };
 
 const HIGHLIGHTS: Highlight[] = [
   {
     icon: Sun,
-    gradient: "from-amber-400 to-orange-500",
+    tint:     "text-amber-600 dark:text-amber-300",
+    tintSoft: "bg-amber-100/55 dark:bg-amber-500/10",
+    tintRing: "ring-amber-200/60 dark:ring-amber-400/20",
     title: "Экран «Сегодня»",
-    text: "Каждое утро — понятный план дня и прогресс.",
   },
   {
     icon: MessageCircle,
-    gradient: "from-blue-400 to-indigo-600",
-    title: "Чат с Deyla",
-    text: "Добавляйте, переносите и уточняйте задачи прямо словами.",
+    tint:     "text-sky-600 dark:text-sky-300",
+    tintSoft: "bg-sky-100/55 dark:bg-sky-500/10",
+    tintRing: "ring-sky-200/60 dark:ring-sky-400/20",
+    title: "Чат с Dayla",
   },
   {
     icon: Settings2,
-    gradient: "from-violet-400 to-purple-600",
+    tint:     "text-emerald-600 dark:text-emerald-300",
+    tintSoft: "bg-emerald-100/55 dark:bg-emerald-500/10",
+    tintRing: "ring-emerald-200/60 dark:ring-emerald-400/20",
     title: "Настройки под вас",
-    text: "Сферы, тон общения, интеграции — всё можно поменять.",
   },
 ];
 
@@ -63,7 +65,6 @@ export const SuccessAndLearning: React.FC = () => {
     navigate("/dashboard", { replace: true });
   };
 
-  // Собираем короткие фразы для сводки — показываем только то, что заполнено
   const summary = React.useMemo(() => {
     const items: { icon: LucideIcon; label: string; value: string }[] = [];
 
@@ -74,7 +75,6 @@ export const SuccessAndLearning: React.FC = () => {
         value: `${data.spheres.length} ${plural(data.spheres.length, "сфера", "сферы", "сфер")}`,
       });
     }
-
     if (data.goals.length > 0) {
       items.push({
         icon: Sparkles,
@@ -82,15 +82,6 @@ export const SuccessAndLearning: React.FC = () => {
         value: `${data.goals.length} ${plural(data.goals.length, "цель", "цели", "целей")}`,
       });
     }
-
-    if (data.workDays.length > 0) {
-      items.push({
-        icon: CalendarDays,
-        label: "Рабочих дней",
-        value: `${data.workDays.length} · ${data.workHoursFrom}–${data.workHoursTo}`,
-      });
-    }
-
     if ((data.integrations ?? []).length > 0) {
       items.push({
         icon: Link2,
@@ -98,7 +89,6 @@ export const SuccessAndLearning: React.FC = () => {
         value: `${data.integrations.length} ${plural(data.integrations.length, "сервис", "сервиса", "сервисов")}`,
       });
     }
-
     return items;
   }, [data]);
 
@@ -111,127 +101,59 @@ export const SuccessAndLearning: React.FC = () => {
       onBack={() => navigate("/onboarding/lets-plan-tomorrow")}
     >
       <div className="relative space-y-5">
-        {/* ─── Праздничный бэкграунд ─────────────────────── */}
-        <div
-          aria-hidden="true"
-          className="absolute -inset-8 -z-10 pointer-events-none"
-        >
-          <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-amber-400/20 blur-3xl" />
-          <div className="absolute top-1/3 -right-6 w-64 h-64 rounded-full bg-pink-400/15 blur-3xl" />
-          <div className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-violet-400/20 blur-3xl" />
-        </div>
+        {/* ─── Главный праздничный блок ────────────── */}
+        <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
+          <SpecularHighlight />
 
-        {/* ─── Главный праздничный блок ──────────────────── */}
-        <Card className="relative overflow-hidden">
-          {/* Градиентная подложка */}
-          <div
-            aria-hidden="true"
-            className="
-              absolute inset-0
-              bg-gradient-to-br
-              from-blue-500/10 via-purple-500/5 to-pink-500/10
-              dark:from-blue-500/15 dark:via-purple-500/10 dark:to-pink-500/15
-            "
-          />
-
-          <CardContent className="relative p-6 md:p-8 text-center">
-            {/* Иконка праздника */}
+          <div className="relative p-6 md:p-8 text-center">
+            {/* Иконка-герой — стеклянная с синим акцентом */}
             <div className="relative flex justify-center mb-5">
-              {/* Пузырьки вокруг */}
-              <span
-                aria-hidden="true"
-                className="absolute -top-1 left-1/4 w-2 h-2 rounded-full bg-amber-400 animate-pulse"
-              />
-              <span
-                aria-hidden="true"
-                className="absolute top-2 right-1/4 w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse"
-                style={{ animationDelay: "300ms" }}
-              />
-              <span
-                aria-hidden="true"
-                className="absolute bottom-0 left-1/3 w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse"
-                style={{ animationDelay: "600ms" }}
-              />
-
               <div
                 aria-hidden="true"
-                className="
-                  relative w-16 h-16 rounded-2xl
-                  bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600
-                  flex items-center justify-center text-white
-                  shadow-lg ring-4 ring-white/60 dark:ring-gray-900/60
-                "
+                className={cn(
+                  "relative w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden",
+                  "bg-white/60 dark:bg-white/[0.06] text-sky-600 dark:text-sky-300",
+                  "ring-1 ring-white/70 dark:ring-white/15",
+                  "shadow-[0_8px_24px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                  "dark:shadow-[0_8px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]"
+                )}
               >
-                <PartyPopper size={28} />
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/80 to-transparent blur-[1px]"
+                />
+                <PartyPopper size={28} className="relative" />
               </div>
             </div>
 
             <p className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
               Онбординг пройден
             </p>
-            <p className="mt-2 text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-              Чем больше мы планируем вместе, тем точнее становятся мои
-              рекомендации. Вы подтверждаете любые изменения — финальное решение
-              всегда за вами.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* ─── Что вас ждёт ──────────────────────────────── */}
-        <div>
-          <p className="text-xs uppercase tracking-widest font-medium text-gray-500 dark:text-gray-400 mb-3">
-            Что вас ждёт
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-3">
-            {HIGHLIGHTS.map((h) => {
-              const Icon = h.icon;
-              return (
-                <Card
-                  key={h.title}
-                  className="relative overflow-hidden group hover:shadow-md transition-shadow"
-                >
-                  <CardContent className="p-4">
-                    <div
-                      className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm",
-                        "bg-gradient-to-br transition-transform duration-300",
-                        "group-hover:scale-105",
-                        h.gradient
-                      )}
-                      aria-hidden="true"
-                    >
-                      <Icon size={18} />
-                    </div>
-                    <p className="mt-3 font-medium text-gray-900 dark:text-white text-sm">
-                      {h.title}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-snug">
-                      {h.text}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
           </div>
         </div>
 
-        {/* ─── Сводка по вашим ответам ───────────────────── */}
+        {/* ─── Сводка ───────────────────────────────── */}
         {summary.length > 0 && (
-          <Card className="relative overflow-hidden">
-            <div
-              aria-hidden="true"
-              className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-emerald-400/20 to-sky-500/20 blur-3xl"
-            />
+          <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
+            <SpecularHighlight />
 
-            <CardContent className="relative p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div
+            <div className="relative p-5">
+              <div className="flex items-center gap-2.5 mb-4">
+                <span
                   aria-hidden="true"
-                  className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white shadow-sm"
+                  className={cn(
+                    "relative shrink-0 w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden",
+                    "bg-emerald-500/15 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+                    "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30",
+                    "shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_1px_2px_rgba(15,23,42,0.05)]"
+                  )}
                 >
-                  <Check size={13} strokeWidth={3} />
-                </div>
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[0.5px]"
+                  />
+                  <Check size={14} strokeWidth={3} className="relative" />
+                </span>
                 <p className="font-medium text-gray-900 dark:text-white text-sm">
                   Ваш профиль настроен
                 </p>
@@ -245,15 +167,27 @@ export const SuccessAndLearning: React.FC = () => {
                       key={s.label}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-xl",
-                        "bg-gray-50/70 dark:bg-gray-800/40",
-                        "border border-gray-100 dark:border-gray-800"
+                        "bg-white/50 dark:bg-white/[0.03]",
+                        "backdrop-blur-md",
+                        "ring-1 ring-white/60 dark:ring-white/10",
+                        "shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,23,42,0.04)]",
+                        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]"
                       )}
                     >
                       <span
                         aria-hidden="true"
-                        className="shrink-0 w-8 h-8 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300"
+                        className={cn(
+                          "relative shrink-0 w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden",
+                          "bg-white/60 dark:bg-white/[0.06] text-gray-600 dark:text-gray-300",
+                          "ring-1 ring-white/70 dark:ring-white/10",
+                          "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.05)]"
+                        )}
                       >
-                        <Icon size={14} />
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
+                        />
+                        <Icon size={14} className="relative" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-[11px] text-gray-500 dark:text-gray-400">
@@ -268,46 +202,84 @@ export const SuccessAndLearning: React.FC = () => {
                 })}
               </ul>
 
-              {/* Сферы — если выбраны, показываем их цветными бейджами */}
+              {/* Сферы — стеклянные пилюли */}
               {data.spheres.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <div className="mt-4 pt-4 border-t border-white/40 dark:border-white/10">
                   <p className="text-[11px] uppercase tracking-widest font-medium text-gray-500 dark:text-gray-400 mb-2">
                     Ваши сферы
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {data.spheres.map((s) => (
-                      <Badge
+                      <span
                         key={s.id}
-                        variant="neutral"
-                        className="gap-1.5"
+                        className={cn(
+                          "relative inline-flex items-center gap-1.5",
+                          "px-2.5 py-1 rounded-full",
+                          "bg-white/50 dark:bg-white/[0.05]",
+                          "backdrop-blur-md",
+                          "ring-1 ring-white/60 dark:ring-white/10",
+                          "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
+                          "text-xs font-medium text-gray-700 dark:text-gray-300"
+                        )}
                       >
                         <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: s.color }}
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{
+                            backgroundColor: s.color,
+                            boxShadow: `0 1px 2px ${s.color}88`,
+                          }}
                           aria-hidden="true"
                         />
                         {s.name}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
-        {/* ─── CTA ───────────────────────────────────────── */}
+        {/* ─── CTA — Liquid Glass кнопка ────────────── */}
         <div className="pt-2">
-          <InteractiveButton
+          <button
             type="button"
             onClick={finish}
-            className="w-full"
-            scaleAmount={1.2}
+            className={cn(
+              "group relative overflow-hidden w-full",
+              "inline-flex items-center justify-center gap-2",
+              "px-6 py-4 rounded-full",
+              "text-base font-semibold",
+              "text-sky-700 dark:text-sky-300",
+              // ─── Liquid Glass тело ───
+              "bg-white/75 dark:bg-white/15",
+              "backdrop-blur-xl",
+              "ring-1 ring-white/70 dark:ring-white/20",
+              "shadow-[0_8px_32px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(255,255,255,0.4)]",
+              "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(255,255,255,0.06)]",
+              // ─── Hover: ещё плотнее, без изменения цвета ───
+              "hover:bg-white/90 dark:hover:bg-white/25",
+              "hover:-translate-y-0.5 active:translate-y-0",
+              "transition-all duration-300"
+            )}
           >
-            <Rocket size={18} className="mr-2" aria-hidden="true" />
-            Начать
-            <ArrowRight size={18} className="ml-2" aria-hidden="true" />
-          </InteractiveButton>
+            {/* Спекулярный блик */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-6 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/80 to-transparent opacity-90 blur-[1px]"
+            />
+            <Rocket
+              size={18}
+              className="relative transition-transform duration-300 group-hover:-translate-y-0.5"
+              aria-hidden="true"
+            />
+            <span className="relative">Начать</span>
+            <ArrowRight
+              size={18}
+              className="relative transition-transform duration-300 group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </button>
 
           <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
             Настройки можно изменить в любой момент
@@ -319,7 +291,6 @@ export const SuccessAndLearning: React.FC = () => {
 };
 
 // ─── Утилита склонения ───────────────────────────────────
-
 function plural(n: number, one: string, few: string, many: string): string {
   const mod10 = n % 10;
   const mod100 = n % 100;
