@@ -31,113 +31,6 @@ import { cn } from "@/utils/cn";
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
 
-// ---------- Время, уделённое задачам по приоритетам ----------
-
-type PriorityTime = {
-  priority: Priority;
-  minutes: number;
-};
-
-const PRIORITY_TIME: PriorityTime[] = [
-  { priority: "A", minutes: 4 * 60 + 30 },   // 4 ч 30 мин
-  { priority: "B", minutes: 3 * 60 + 15 },   // 3 ч 15 мин
-];
-
-const formatMinutes = (m: number): string => {
-  const h = Math.floor(m / 60);
-  const min = m % 60;
-  if (h === 0) return `${min} мин`;
-  if (min === 0) return `${h} ч`;
-  return `${h} ч ${min} мин`;
-};
-
-// ---------- Круговой прогресс ----------
-
-interface ProgressRingProps {
-  value: number;   // 0–100
-  size?: number;
-  stroke?: number;
-}
-
-const ProgressRing: React.FC<ProgressRingProps> = ({
-  value,
-  size = 56,
-  stroke = 6,
-}) => {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const offset = c - (value / 100) * c;
-
-  return (
-    <div
-      className="relative shrink-0"
-      style={{ width: size, height: size }}
-      aria-label={`Выполнено ${value}%`}
-      role="img"
-    >
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          strokeWidth={stroke}
-          className="stroke-gray-200 dark:stroke-gray-700"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          className="stroke-blue-500 transition-[stroke-dashoffset] duration-700"
-        />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums">
-        {value}%
-      </span>
-    </div>
-  );
-};
-
-// ---------- Плитка метрики ----------
-
-interface MetricTileProps {
-  label: string;
-  value: string | number;
-  hint?: string;
-  tone: "success" | "warning" | "danger" | "neutral";
-}
-
-const METRIC_TONE: Record<MetricTileProps["tone"], string> = {
-  success: "text-green-600 dark:text-green-400",
-  warning: "text-amber-600 dark:text-amber-400",
-  danger:  "text-red-600 dark:text-red-400",
-  neutral: "text-gray-800 dark:text-gray-200",
-};
-
-const MetricTile: React.FC<MetricTileProps> = ({ label, value, hint, tone }) => (
-  <Card className="p-4">
-    <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-    <p
-      className={cn(
-        "text-2xl font-semibold mt-1 tabular-nums",
-        METRIC_TONE[tone],
-      )}
-    >
-      {value}
-    </p>
-    {hint && (
-      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
-        {hint}
-      </p>
-    )}
-  </Card>
-);
-
 type Priority = "A" | "B" | "C" | "D" | "E" | "F";
 
 const PRIORITY_STYLES: Record<
@@ -158,439 +51,25 @@ export const Start: React.FC = () => {
   const navigate = useNavigate();
   const start = () => navigate("/onboarding/for-what-using");
 
+  // Пользователь долистал до финального CTA → карусель встаёт на паузу
+  const [finalCtaActive, setFinalCtaActive] = React.useState(false);
+  const handleFinalCtaActive = React.useCallback((active: boolean) => {
+    setFinalCtaActive(active);
+  }, []);
+
   return (
     <div className="relative min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white overflow-x-hidden">
-      <BackgroundPulses />
-
-      <Hero onStart={start} />
-      <UserCase /> 
-      <UserCaseFinance />
-      <UserCaseGTD />
-      <FinalCTA onStart={start} />
-
-      <LandingFooter />
+      <PageBackdrop />
+      <div className="relative z-10">
+        <Hero onStart={start} />
+        <UserCaseCarousel paused={finalCtaActive} />
+        <FinalCTA onStart={start} onActiveChange={handleFinalCtaActive} />
+        <LandingFooter />
+      </div>
     </div>
   );
 };
 
-
-// ---------- Данные для секции аналитики ----------
-
-type SphereStat = {
-  name: string;
-  color: string;
-  tasks: number;
-  done: number;
-};
-
-const SPHERE_STATS: SphereStat[] = [
-  { name: "Работа",   color: "#1a73e8", tasks: 24, done: 18 },
-  { name: "Учёба",    color: "#bdfd46", tasks: 12, done: 7  },
-  { name: "Спорт",    color: "#188038", tasks: 6,  done: 5  },
-  { name: "Личное",   color: "#e91e63", tasks: 9,  done: 8  },
-];
-
-// Активность по дням: понедельник → воскресенье.
-// Значение 0–4 — условная «загруженность» дня.
-const WEEK_ACTIVITY: Array<{ day: string; level: number }> = [
-  { day: "Пн", level: 3 },
-  { day: "Вт", level: 4 },
-  { day: "Ср", level: 2 },
-  { day: "Чт", level: 4 },
-  { day: "Пт", level: 3 },
-  { day: "Сб", level: 1 },
-  { day: "Вс", level: 0 },
-];
-
-const WEEK_LEVEL_CLASSES = [
-  "bg-gray-100 dark:bg-gray-800",
-  "bg-blue-100 dark:bg-blue-900/40",
-  "bg-blue-300 dark:bg-blue-700/60",
-  "bg-blue-500 dark:bg-blue-500",
-  "bg-blue-700 dark:bg-blue-400",
-];
-
-
-// ---------- Аналитика и прогресс ----------
-
-// ---------- Анализ и прогресс ----------
-
-const Analytics: React.FC = () => {
-  const totalMinutes = PRIORITY_TIME.reduce((s, x) => s + x.minutes, 0);
-  const maxMinutes = Math.max(...PRIORITY_TIME.map((x) => x.minutes));
-
-  return (
-    <section id="analytics" className="relative py-20 md:py-32 overflow-hidden">
-      {/* Фоновый слой — декоративная визуализация.
-          Именно за ней «сидит» заголовок. */}
-      <AnalyticsBackdrop />
-
-      {/* Передний слой — заголовок + карточка метрик */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-6">
-        {/* Заголовок поверх фона */}
-        <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
-          <Badge variant="default" className="mb-3">
-            <BarChart3 size={12} className="mr-1" aria-hidden="true" />
-            Аналитика
-          </Badge>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-            Анализ и прогресс
-          </h2>
-          <p className="mt-3 text-gray-600 dark:text-gray-400">
-            Смотрите, куда уходит время и как вы справляетесь с планами.
-          </p>
-        </div>
-
-        {/* Карточка с метриками по времени для приоритетов A–F */}
-        <Card className="p-6 md:p-8 backdrop-blur-md bg-white/85 dark:bg-gray-900/85 shadow-xl">
-          {/* Шапка карточки */}
-          <div className="flex items-baseline justify-between mb-6 md:mb-8">
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                За последние 7 дней
-              </p>
-              <p className="font-medium">Время по приоритетам</p>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl md:text-4xl font-semibold tabular-nums">
-                {formatMinutes(totalMinutes)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                всего запланировано
-              </p>
-            </div>
-          </div>
-
-          {/* Горизонтальные бары по приоритетам */}
-          <div className="space-y-3 md:space-y-4">
-            {PRIORITY_TIME.map((row) => {
-              const pr = PRIORITY_STYLES[row.priority];
-              const widthPct = (row.minutes / maxMinutes) * 100;
-              const sharePct = Math.round((row.minutes / totalMinutes) * 100);
-
-              return (
-                <div key={row.priority} className="flex items-center gap-3">
-                  {/* Буква приоритета */}
-                  <span
-                    className={cn(
-                      "shrink-0 inline-flex items-center justify-center w-7 h-7 rounded text-[11px] font-bold ring-1",
-                      pr.bg,
-                      pr.text,
-                      pr.ring,
-                    )}
-                    aria-label={`Приоритет ${row.priority}`}
-                  >
-                    {row.priority}
-                  </span>
-
-                  {/* Бар */}
-                  <div className="relative flex-1 h-2.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                    <div
-                      className={cn(
-                        "absolute inset-y-0 left-0 rounded-full transition-all",
-                        pr.solid,
-                      )}
-                      style={{ width: `${widthPct}%` }}
-                    />
-                  </div>
-
-                  {/* Время */}
-                  <span className="shrink-0 w-20 text-right text-xs md:text-sm text-gray-700 dark:text-gray-200 tabular-nums">
-                    {formatMinutes(row.minutes)}
-                  </span>
-
-                  {/* Доля */}
-                  <span className="hidden sm:inline-block shrink-0 w-10 text-right text-xs text-gray-400 dark:text-gray-500 tabular-nums">
-                    {sharePct}%
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Итоговая полоска распределения */}
-          <div className="mt-8">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-              Распределение
-            </p>
-            <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
-              {PRIORITY_TIME.map((row) => {
-                const share = (row.minutes / totalMinutes) * 100;
-                const pr = PRIORITY_STYLES[row.priority];
-                return (
-                  <div
-                    key={row.priority}
-                    className={cn("h-full", pr.bg)}
-                    style={{ width: `${share}%` }}
-                    title={`${row.priority}: ${Math.round(share)}%`}
-                  />
-                );
-              })}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500 dark:text-gray-400">
-              {PRIORITY_TIME.map((row) => (
-                <span key={row.priority} className="inline-flex items-center gap-1.5">
-                  <span className={cn("w-2 h-2 rounded-sm", PRIORITY_STYLES[row.priority].bg)} />
-                  {row.priority}
-                </span>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
-    </section>
-  );
-};
-
-// ---------- Фон для секции аналитики ----------
-
-const AnalyticsBackdrop: React.FC = () => (
-  <div
-    aria-hidden="true"
-    className="absolute inset-0 z-0 pointer-events-none opacity-[0.18] dark:opacity-[0.14]"
-  >
-    <div className="max-w-6xl mx-auto h-full px-4 md:px-6 grid grid-cols-12 gap-4 items-center">
-      {/* Кольцо прогресса — слева */}
-      <div className="col-span-4 flex justify-center">
-        <ProgressRing value={68} size={200} stroke={16} />
-      </div>
-
-      {/* Вертикальные бары — в центре */}
-      <div className="col-span-5 flex items-end justify-between h-48 gap-2">
-        {[40, 75, 55, 90, 30, 60, 45].map((h, i) => (
-          <div
-            key={i}
-            className="flex-1 rounded-t bg-blue-500"
-            style={{ height: `${h}%` }}
-          />
-        ))}
-      </div>
-
-      {/* Облако тегов — справа */}
-      <div className="col-span-3 flex flex-wrap gap-2 content-center">
-        {["Работа", "Учёба", "Спорт", "Личное", "Хобби", "Здоровье"].map((t) => (
-          <span
-            key={t}
-            className="px-2 py-1 rounded bg-blue-500/40 text-blue-700 dark:text-blue-200 text-[10px]"
-          >
-            {t}
-          </span>
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-// ---------- Маскот со смартфоном ----------
-
-const MascotWithPhone: React.FC = () => (
-  <svg
-    viewBox="0 0 260 340"
-    className="w-full h-auto"
-    role="img"
-    aria-label="Человек говорит по телефону с голосовым ассистентом"
-  >
-    <defs>
-      <linearGradient id="mq-head" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#93c5fd" />
-        <stop offset="100%" stopColor="#a78bfa" />
-      </linearGradient>
-      <linearGradient id="mq-body" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#3b82f6" />
-        <stop offset="100%" stopColor="#6366f1" />
-      </linearGradient>
-      <linearGradient id="mq-phone" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#38bdf8" />
-        <stop offset="100%" stopColor="#6366f1" />
-      </linearGradient>
-    </defs>
-
-    {/* Тень на «полу» */}
-    <ellipse cx="130" cy="320" rx="86" ry="10" fill="#0f172a" opacity="0.08" />
-
-    {/* Торс */}
-    <path
-      d="M 88 190
-         C 88 175, 105 165, 130 165
-         C 155 165, 172 175, 172 190
-         L 186 315
-         L 74 315
-         Z"
-      fill="url(#mq-body)"
-    />
-
-    {/* Левая рука — опущена вниз */}
-    <path
-      d="M 90 205 Q 62 250 78 300"
-      stroke="url(#mq-body)"
-      strokeWidth="24"
-      strokeLinecap="round"
-      fill="none"
-    />
-
-    {/* Голова */}
-    <circle cx="130" cy="115" r="55" fill="url(#mq-head)" />
-
-    {/* Волосы */}
-    <path
-      d="M 75 110
-         C 75 65, 100 50, 130 50
-         C 160 50, 185 65, 185 110
-         C 178 88, 158 80, 130 80
-         C 102 80, 82 88, 75 110 Z"
-      fill="#0f172a"
-    />
-
-    {/* Глаза — «улыбающиеся» дуги */}
-    <path d="M 105 118 Q 112 110 119 118" stroke="#0f172a" strokeWidth="3" fill="none" strokeLinecap="round" />
-    <path d="M 141 118 Q 148 110 155 118" stroke="#0f172a" strokeWidth="3" fill="none" strokeLinecap="round" />
-
-    {/* Улыбка */}
-    <path
-      d="M 115 138 Q 130 150 145 138"
-      stroke="#0f172a"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-    />
-
-    {/* Правая рука — поднята к телефону */}
-    <path
-      d="M 170 205 Q 205 190 195 150"
-      stroke="url(#mq-body)"
-      strokeWidth="24"
-      strokeLinecap="round"
-      fill="none"
-    />
-
-    {/* Смартфон у уха */}
-    <rect x="186" y="96" width="26" height="48" rx="6" fill="#0f172a" />
-    <rect x="190" y="101" width="18" height="38" rx="3" fill="url(#mq-phone)" />
-
-    {/* Звуковые волны — ассистент слушает/отвечает */}
-    <path
-      d="M 220 108 Q 228 120 220 132"
-      stroke="#60a5fa"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-    />
-    <path
-      d="M 228 98 Q 240 120 228 142"
-      stroke="#60a5fa"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-      opacity="0.7"
-    />
-    <path
-      d="M 236 88 Q 252 120 236 152"
-      stroke="#60a5fa"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-      opacity="0.4"
-    />
-
-    {/* Искорки-акценты вокруг — «магия» ассистента */}
-    <circle cx="60" cy="80" r="3" fill="#93c5fd" opacity="0.7" />
-    <circle cx="52" cy="150" r="2" fill="#c4b5fd" opacity="0.6" />
-    <circle cx="70" cy="40" r="2" fill="#a5f3fc" opacity="0.6" />
-  </svg>
-);
-
-// ---------- Фоновые импульсы ----------
-
-const BackgroundPulses: React.FC = () => (
-  <>
-    <style>{`
-      /* Пульсации блобов */
-      @keyframes blob-pulse {
-        0%, 100% { opacity: 0.35; transform: scale(1)   translate(0, 0); }
-        50%      { opacity: 0.70; transform: scale(1.18) translate(0, -8px); }
-      }
-      @keyframes blob-pulse-slow {
-        0%, 100% { opacity: 0.30; transform: scale(1)   translate(0, 0); }
-        50%      { opacity: 0.60; transform: scale(1.25) translate(0, 10px); }
-      }
-      .blob-pulse       { animation: blob-pulse      8s  ease-in-out infinite; }
-      .blob-pulse-slow  { animation: blob-pulse-slow 14s ease-in-out infinite; }
-      .blob-pulse-fast  { animation: blob-pulse      6s  ease-in-out infinite; }
-      .blob-pulse-d-1   { animation-delay: 1.5s; }
-      .blob-pulse-d-2   { animation-delay: 3s; }
-      .blob-pulse-d-3   { animation-delay: 4.5s; }
-      .blob-pulse-d-4   { animation-delay: 6s; }
-      .blob-pulse-d-5   { animation-delay: 7.5s; }
-
-      /* Медленный дрейф всего слоя блобов */
-      @keyframes blobs-drift {
-        0%   { transform: translate3d(0,    0,   0) rotate(0deg); }
-        50%  { transform: translate3d(-24px, 16px, 0) rotate(1.2deg); }
-        100% { transform: translate3d(0,    0,   0) rotate(0deg); }
-      }
-      .blobs-drift { animation: blobs-drift 26s ease-in-out infinite; }
-
-      /* Кроссфейд AI-рекомендаций в мокапе.
-         Обе версии накладываются друг на друга, но в каждый момент одна
-         читается чётко, а вторая «эхом» растворяется рядом. */
-      @keyframes ai-reco-a {
-        0%, 42%   { opacity: 1;   filter: blur(0px); }
-        55%, 92%  { opacity: 0;   filter: blur(3px); }
-        100%      { opacity: 1;   filter: blur(0px); }
-      }
-      @keyframes ai-reco-b {
-        0%, 42%   { opacity: 0;   filter: blur(3px); }
-        55%, 92%  { opacity: 1;   filter: blur(0px); }
-        100%      { opacity: 0;   filter: blur(3px); }
-      }
-      .ai-reco-a { animation: ai-reco-a 7s ease-in-out infinite; }
-      .ai-reco-b { animation: ai-reco-b 7s ease-in-out infinite; }
-
-      @media (prefers-reduced-motion: reduce) {
-        .blob-pulse, .blob-pulse-slow, .blob-pulse-fast,
-        .blobs-drift, .ai-reco-a, .ai-reco-b { animation: none; }
-        .ai-reco-b { opacity: 0; }
-      }
-    `}</style>
-
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-    >
-      <div className="absolute inset-[-10%] blobs-drift">
-        {/* Ряд 1 — верх */}
-        <div className="absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-blue-500/25 blur-3xl blob-pulse" />
-        <div className="absolute -top-24 right-[-10rem] w-[32rem] h-[32rem] rounded-full bg-purple-500/25 blur-3xl blob-pulse-slow blob-pulse-d-1" />
-        <div className="absolute top-[-6rem] left-1/3 w-[20rem] h-[20rem] rounded-full bg-cyan-400/20 blur-3xl blob-pulse-fast blob-pulse-d-3" />
-
-        {/* Ряд 2 — верх-центр */}
-        <div className="absolute top-1/4 -left-24 w-96 h-96 rounded-full bg-indigo-500/20 blur-3xl blob-pulse-fast blob-pulse-d-2" />
-        <div className="absolute top-1/3 right-[-8rem] w-[26rem] h-[26rem] rounded-full bg-pink-500/20 blur-3xl blob-pulse blob-pulse-d-3" />
-        <div className="absolute top-[38%] left-[55%] w-[22rem] h-[22rem] rounded-full bg-violet-500/20 blur-3xl blob-pulse-slow blob-pulse-d-4" />
-
-        {/* Ряд 3 — центр */}
-        <div className="absolute top-[50%] left-1/4 w-80 h-80 rounded-full bg-sky-400/20 blur-3xl blob-pulse-slow" />
-        <div className="absolute top-[58%] right-1/4 w-[18rem] h-[18rem] rounded-full bg-blue-400/20 blur-3xl blob-pulse-fast blob-pulse-d-5" />
-
-        {/* Ряд 4 — низ */}
-        <div className="absolute bottom-1/4 -right-20 w-[30rem] h-[30rem] rounded-full bg-fuchsia-500/20 blur-3xl blob-pulse-fast blob-pulse-d-1" />
-        <div className="absolute bottom-[-6rem] left-[-4rem] w-[34rem] h-[34rem] rounded-full bg-blue-600/20 blur-3xl blob-pulse-slow blob-pulse-d-2" />
-        <div className="absolute bottom-[-4rem] right-1/3 w-[24rem] h-[24rem] rounded-full bg-purple-600/20 blur-3xl blob-pulse blob-pulse-d-4" />
-      </div>
-
-      {/* Тонкая сетка */}
-      <div
-        className="absolute inset-0 opacity-[0.035] dark:opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-          color: "#000",
-        }}
-      />
-    </div>
-  </>
-);
 
 // ---------- Контекстное меню (как при long-press в Telegram) ----------
 
@@ -698,29 +177,33 @@ const ChatContextMenu: React.FC = () => (
 // ─────────────────────────────────────────────────────────────
 
 const GTD_SOURCES = [
-  { id: "jira",     name: "Jira",     icon: ListChecks, gradient: "from-blue-500 to-indigo-600",    count: 6 },
-  { id: "trueconf", name: "TrueConf", icon: Video,      gradient: "from-emerald-500 to-teal-600",   count: 3 },
-  { id: "slack",    name: "Slack",    icon: Hash,       gradient: "from-fuchsia-500 to-purple-600", count: 3 },
+  { id: "jira",     name: "Jira",     src: "/images/Jira_Software_Logo.svg", count: 6 },
+  { id: "trueconf", name: "TrueConf", src: "/images/tc_logo_square.png",    count: 3 },
+  { id: "slack",    name: "Slack",    src: "/images/slack.png",            count: 3 },
 ];
 
 const GTDAggregation: React.FC = () => (
   <div className="relative w-full max-w-[460px]">
     <div
       aria-hidden="true"
-      className="absolute inset-[-10%] -z-10 rounded-full bg-gradient-to-br from-blue-400/20 via-indigo-400/15 to-purple-400/20 blur-3xl"
+      className="absolute inset-[-10%] -z-10 rounded-full bg-slate-400/10 blur-3xl"
     />
 
-    {/* Источники */}
-    <div className="grid grid-cols-3 gap-3 mb-2">
-      {GTD_SOURCES.map(({ id, name, icon: Icon, gradient, count }) => (
+    {/* ─── Источники ───────────────────────────────────── */}
+    <div className="grid grid-cols-3 gap-3 mb-1">
+      {GTD_SOURCES.map(({ id, name, src, count }) => (
         <div
           key={id}
-          className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm ring-1 ring-gray-200/70 dark:ring-gray-700/60 shadow-sm"
+          className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm ring-1 ring-gray-200/80 dark:ring-gray-700/60 shadow-sm"
         >
-          <div
-            className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white shadow-md`}
-          >
-            <Icon size={24} aria-hidden="true" />
+          <div className="w-14 h-14 rounded-xl bg-white dark:bg-gray-800 ring-1 ring-gray-200/70 dark:ring-gray-700/60 flex items-center justify-center">
+            <img
+              src={src}
+              alt={name}
+              className="w-9 h-9 object-contain select-none pointer-events-none"
+              loading="lazy"
+              draggable={false}
+            />
           </div>
           <p className="text-sm font-medium text-gray-900 dark:text-white">{name}</p>
           <span className="text-[11px] text-gray-500 dark:text-gray-400 tabular-nums">
@@ -730,25 +213,71 @@ const GTDAggregation: React.FC = () => (
       ))}
     </div>
 
-    {/* Сходящиеся стрелки */}
-    <svg
-      viewBox="0 0 400 40"
-      className="w-full h-10 text-blue-400/60"
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M72 0 Q72 22 200 22" />
-      <path d="M200 0 L200 22" />
-      <path d="M328 0 Q328 22 200 22" />
-      <path d="M200 22 L200 38" />
-    </svg>
+    {/* ─── Коннектор 1: источники → Dayla ──────────────── */}
+    <div className="text-slate-300 dark:text-slate-700">
+      <svg
+        viewBox="0 0 400 56"
+        className="w-full h-12"
+        aria-hidden="true"
+        fill="none"
+      >
+        <defs>
+          {/* Вертикальный градиент линии: сверху прозрачно, снизу плотнее */}
+          <linearGradient id="gtd-line-down" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="currentColor" stopOpacity="0" />
+            <stop offset="35%"  stopColor="currentColor" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0.85" />
+          </linearGradient>
 
-    {/* Dayla + GTD */}
-    <div className="flex justify-center mt-1">
-      <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-white dark:bg-gray-900 ring-1 ring-gray-200 dark:ring-gray-700 shadow-lg">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm shrink-0">
+          {/* Стеклянная сфера для узлов соединения */}
+          <radialGradient id="gtd-node" cx="35%" cy="30%" r="65%">
+            <stop offset="0%"   stopColor="#ffffff"       stopOpacity="0.95" />
+            <stop offset="55%"  stopColor="currentColor"  stopOpacity="0.55" />
+            <stop offset="100%" stopColor="currentColor"  stopOpacity="0.3" />
+          </radialGradient>
+
+          {/* Мягкое свечение под линиями */}
+          <filter id="gtd-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" />
+          </filter>
+        </defs>
+
+        {/* Свечение-подложка */}
+        <g
+          filter="url(#gtd-glow)"
+          opacity="0.35"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
+          <path d="M72 4 Q72 32 200 46" />
+          <path d="M200 4 L200 46" />
+          <path d="M328 4 Q328 32 200 46" />
+        </g>
+
+        {/* Основные тонкие линии */}
+        <g
+          stroke="url(#gtd-line-down)"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+        >
+          <path d="M72 4 Q72 32 200 46" />
+          <path d="M200 4 L200 46" />
+          <path d="M328 4 Q328 32 200 46" />
+        </g>
+
+        {/* Узлы: старт под каждым источником + точка схода */}
+        <circle cx="72"  cy="4"  r="3" fill="url(#gtd-node)" />
+        <circle cx="200" cy="4"  r="3" fill="url(#gtd-node)" />
+        <circle cx="328" cy="4"  r="3" fill="url(#gtd-node)" />
+        <circle cx="200" cy="46" r="4" fill="url(#gtd-node)" />
+      </svg>
+    </div>
+
+    {/* ─── Пин «Dayla разложила по GTD» ─────────────────── */}
+    <div className="flex justify-center">
+      <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-white dark:bg-gray-900 ring-1 ring-gray-200 dark:ring-gray-700 shadow-md">
+        <div className="w-9 h-9 rounded-full bg-slate-800 dark:bg-slate-700 flex items-center justify-center text-white shadow-sm shrink-0">
           <Sparkles size={15} aria-hidden="true" />
         </div>
         <div>
@@ -762,18 +291,52 @@ const GTDAggregation: React.FC = () => (
       </div>
     </div>
 
-    {/* Стрелка вниз */}
-    <div className="flex justify-center my-3">
-      <ArrowDown size={20} className="text-blue-400" aria-hidden="true" />
+    {/* ─── Коннектор 2: Dayla → Google Calendar ────────── */}
+    <div className="flex justify-center my-1 text-slate-300 dark:text-slate-700">
+      <svg
+        viewBox="0 0 40 40"
+        className="w-10 h-10"
+        aria-hidden="true"
+        fill="none"
+      >
+        <defs>
+          <linearGradient id="gtd-line-bottom" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="currentColor" stopOpacity="0.85" />
+            <stop offset="60%"  stopColor="currentColor" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          </linearGradient>
+          <radialGradient id="gtd-node-bottom" cx="35%" cy="30%" r="65%">
+            <stop offset="0%"   stopColor="#ffffff"       stopOpacity="0.95" />
+            <stop offset="55%"  stopColor="currentColor"  stopOpacity="0.55" />
+            <stop offset="100%" stopColor="currentColor"  stopOpacity="0.3" />
+          </radialGradient>
+        </defs>
+
+        <path
+          d="M20 6 L20 32"
+          stroke="url(#gtd-line-bottom)"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+        />
+        <circle cx="20" cy="6" r="4" fill="url(#gtd-node-bottom)" />
+      </svg>
     </div>
 
-    {/* Google Calendar */}
+    {/* ─── Google Calendar ─────────────────────────────── */}
     <div className="flex justify-center">
-      <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl">
-        <Calendar size={20} aria-hidden="true" />
+      <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-white dark:bg-gray-900 ring-1 ring-gray-200 dark:ring-gray-700 shadow-md">
+        <img
+          src="/images/google-calendar.png"
+          alt="Google Calendar"
+          className="w-7 h-7 object-contain select-none pointer-events-none shrink-0"
+          loading="lazy"
+          draggable={false}
+        />
         <div>
-          <p className="text-sm font-semibold">Внести в Google Calendar</p>
-          <p className="text-[11px] text-white/80">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+            Внести в Google Calendar
+          </p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">
             Слоты подобраны по вашему графику
           </p>
         </div>
@@ -782,7 +345,110 @@ const GTDAggregation: React.FC = () => (
   </div>
 );
 
-// ─── Развёрнутый ответ Dayla ───
+const SourceBadge: React.FC<{ kind: "jira" | "trueconf" | "slack" }> = ({ kind }) => {
+  const cfg = {
+    jira:     { label: "Jira",     tint: "jira" as const },
+    trueconf: { label: "TrueConf", tint: "trueconf" as const },
+    slack:    { label: "Slack",    tint: "slack" as const },
+  }[kind];
+
+  return (
+    <span
+      className={cn(
+        "shrink-0 inline-flex items-center gap-1.5",
+        "text-[10px] px-1.5 py-0.5 rounded",
+        "bg-gray-100/80 dark:bg-gray-800/80",
+        "backdrop-blur-sm",
+        "ring-1 ring-white/40 dark:ring-white/5",
+        "text-gray-700 dark:text-gray-300 font-medium",
+      )}
+    >
+      <GlassDot tint={cfg.tint} size={6} />
+      {cfg.label}
+    </span>
+  );
+};
+
+// ─── Liquid Glass: точка-сфера ───────────────────────────────
+// Полупрозрачная градиентная «капля» с верхним бликом и тонкой
+// внешней обводкой. Цвет — приглушённый, сквозь точку просвечивает фон.
+
+type GlassTint = "red" | "amber" | "slate" | "blue" | "jira" | "trueconf" | "slack";
+
+const GLASS_TINTS: Record<GlassTint, string> = {
+  red:      "from-red-300/80       to-red-500/60       shadow-red-400/30",
+  amber:    "from-amber-300/80     to-amber-500/60     shadow-amber-400/30",
+  slate:    "from-slate-300/80     to-slate-500/60     shadow-slate-400/30",
+  blue:     "from-blue-300/80      to-blue-500/60      shadow-blue-400/30",
+  jira:     "from-blue-300/80      to-indigo-500/60    shadow-indigo-400/30",
+  trueconf: "from-emerald-300/80   to-teal-500/60      shadow-teal-400/30",
+  slack:    "from-fuchsia-300/80   to-purple-500/60    shadow-purple-400/30",
+};
+
+const GlassDot: React.FC<{ tint: GlassTint; size?: number }> = ({
+  tint,
+  size = 8,
+}) => (
+  <span
+    aria-hidden="true"
+    className={cn(
+      "relative inline-block rounded-full shrink-0",
+      "bg-gradient-to-br",
+      GLASS_TINTS[tint],
+      "ring-1 ring-white/60 dark:ring-white/15",
+      "backdrop-blur-[2px]",
+      // Внутренний блик сверху + мягкая цветная тень снизу
+      "shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_1px_2px_rgba(15,23,42,0.06)]",
+      "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_2px_rgba(0,0,0,0.4)]",
+    )}
+    style={{ width: size, height: size }}
+  >
+    {/* Спекулярный блик */}
+    <span
+      className="absolute rounded-full bg-white/80 blur-[0.5px]"
+      style={{
+        top: "15%",
+        left: "15%",
+        width: "35%",
+        height: "35%",
+      }}
+    />
+  </span>
+);
+
+// ─── Liquid Glass: пилюля для текста-лейбла ──────────────────
+// Маленькая капсула с размытием фона, верхним внутренним бликом и
+// тонкой внешней обводкой. Текст остаётся нейтрально-серым.
+
+const GlassPill: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span
+    className={cn(
+      "relative inline-flex items-center gap-1.5",
+      "px-2.5 py-1 rounded-full",
+      "bg-white/35 dark:bg-white/[0.04]",
+      "backdrop-blur-md",
+      "ring-1 ring-white/50 dark:ring-white/10",
+      "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.05)]",
+      "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]",
+      "text-[11px] uppercase tracking-widest font-medium",
+      "text-gray-600 dark:text-gray-300",
+    )}
+  >
+    {children}
+  </span>
+);
+
+const SectionLabel: React.FC<{ tint: GlassTint; children: React.ReactNode }> = ({
+  tint,
+  children,
+}) => (
+  <div className="mb-2">
+    <GlassPill>
+      <GlassDot tint={tint} size={7} />
+      {children}
+    </GlassPill>
+  </div>
+);
 
 const GTD_RESPONSE = (
   <div className="space-y-3">
@@ -792,22 +458,16 @@ const GTD_RESPONSE = (
       Разложила по GTD:
     </p>
 
-    {/* Срочное */}
+    {/* Дедлайн сегодня */}
     <div>
-      <p className="text-[11px] uppercase tracking-widest font-semibold text-red-500 dark:text-red-400 mb-1.5">
-        🔥 Дедлайн сегодня
-      </p>
+      <SectionLabel tint="red">Дедлайн сегодня</SectionLabel>
       <ul className="space-y-1.5">
         <li className="flex items-start gap-2">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
-            Jira
-          </span>
+          <SourceBadge kind="jira" />
           <span className="flex-1">Ревью PR #482 — до 18:00</span>
         </li>
         <li className="flex items-start gap-2">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-300 font-medium">
-            Slack
-          </span>
+          <SourceBadge kind="slack" />
           <span className="flex-1">Ответить клиенту по SSO — до 12:00</span>
         </li>
       </ul>
@@ -815,74 +475,66 @@ const GTD_RESPONSE = (
 
     {/* На этой неделе */}
     <div>
-      <p className="text-[11px] uppercase tracking-widest font-semibold text-amber-500 dark:text-amber-400 mb-1.5">
-        📅 На этой неделе
-      </p>
+      <SectionLabel tint="amber">На этой неделе</SectionLabel>
       <ul className="space-y-1.5">
         <li className="flex items-start gap-2">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
-            Jira
-          </span>
+          <SourceBadge kind="jira" />
           <span className="flex-1">Спринт-планирование Q4 — 03.10, 11:00</span>
         </li>
         <li className="flex items-start gap-2">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-medium">
-            TrueConf
-          </span>
+          <SourceBadge kind="trueconf" />
           <span className="flex-1">Созвон с продажами — 03.10, 15:00</span>
         </li>
         <li className="flex items-start gap-2">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-300 font-medium">
-            Slack
-          </span>
+          <SourceBadge kind="slack" />
           <span className="flex-1">Согласовать бюджет на ноябрь — 04.10, до 17:00</span>
         </li>
         <li className="flex items-start gap-2">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
-            Jira
-          </span>
+          <SourceBadge kind="jira" />
           <span className="flex-1">Закрыть 3 задачи из Sprint 24 — 04.10</span>
         </li>
       </ul>
     </div>
 
-    {/* Следующая неделя */}
+    {/* На следующей неделе */}
     <div>
-      <p className="text-[11px] uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
-        🎯 На следующей неделе
-      </p>
+      <SectionLabel tint="slate">На следующей неделе</SectionLabel>
       <ul className="space-y-1.5">
         <li className="flex items-start gap-2">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
-            Jira
-          </span>
+          <SourceBadge kind="jira" />
           <span className="flex-1">Ретроспектива спринта — 08.10, 16:00</span>
         </li>
         <li className="flex items-start gap-2">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-medium">
-            TrueConf
-          </span>
+          <SourceBadge kind="trueconf" />
           <span className="flex-1">Демо для партнёров — 09.10, 14:00</span>
         </li>
         <li className="flex items-start gap-2">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-300 font-medium">
-            Slack
-          </span>
+          <SourceBadge kind="slack" />
           <span className="flex-1">Квартальный отчёт — 10.10</span>
         </li>
       </ul>
     </div>
 
     {/* План по графику */}
-    <div className="rounded-xl bg-blue-50/70 dark:bg-blue-950/30 p-3 ring-1 ring-blue-100 dark:ring-blue-900/60">
-      <p className="text-[11px] uppercase tracking-widest font-semibold text-blue-600 dark:text-blue-400 mb-2">
-        ⚡ План по вашему графику · Пн–Пт 09:00–18:00
-      </p>
-      <div className="space-y-2 text-[12px] leading-snug">
+    <div
+      className={cn(
+        "rounded-xl p-3",
+        "bg-white/40 dark:bg-white/[0.03]",
+        "backdrop-blur-md",
+        "ring-1 ring-white/50 dark:ring-white/10",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,23,42,0.04)]",
+        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+      )}
+    >
+      <SectionLabel tint="blue">
+        План по вашему графику · Пн–Пт 09:00–18:00
+      </SectionLabel>
+
+      <div className="space-y-2 text-[12px] leading-snug mt-1">
         <div>
           <p className="font-semibold text-gray-900 dark:text-white">Чт, 03.10</p>
           <p className="text-gray-600 dark:text-gray-300">
-            09:00–10:30 — Ревью PR #482 (🔥) · 11:00–12:00 — Планирование Q4 · 15:00–16:00 — Созвон с продажами
+            09:00–10:30 — Ревью PR #482 · 11:00–12:00 — Планирование Q4 · 15:00–16:00 — Созвон с продажами
           </p>
         </div>
         <div>
@@ -898,6 +550,7 @@ const GTD_RESPONSE = (
           </p>
         </div>
       </div>
+
       <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
         Добавила буферы 15 мин до и после каждого созвона. Обед 13:00–14:00 не тронут.
       </p>
@@ -930,7 +583,7 @@ const GTD_RESPONSE = (
 
 const UserCaseGTD: React.FC = () => (
   <section id="usecase-gtd" className="relative py-20 md:py-28 overflow-hidden">
-    <div className="max-w-6xl mx-auto px-4 md:px-6">
+    <div className="relative max-w-6xl mx-auto px-4 md:px-6">
       {/* Заголовок */}
       <div className="max-w-2xl mb-12 md:mb-16">
         <Badge className="text-eyebrow mb-3">Систематизация по GTD</Badge>
@@ -1144,21 +797,23 @@ const DaylaChatCard: React.FC<DaylaChatCardProps> = ({
   userMessage,
   daylaMessage,
 }) => (
-  <Card className="relative overflow-hidden p-0 shadow-2xl">
-    <div
-      aria-hidden="true"
-      className="
-        absolute -top-24 -right-24 w-64 h-64 rounded-full
-        bg-gradient-to-br from-blue-400/20 to-purple-500/20
-        blur-3xl pointer-events-none
-      "
-    />
-
+  <div
+    className={cn(
+      "relative overflow-hidden rounded-2xl",
+      // Стекло: полупрозрачный фон + размытие + светлая грань
+      "bg-white/55 dark:bg-gray-900/40",
+      "backdrop-blur-2xl",
+      "ring-1 ring-white/60 dark:ring-white/10",
+      // Внутренний верхний блик + мягкая тень
+      "shadow-[0_8px_32px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
+      "dark:shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]",
+    )}
+  >
     {/* Шапка */}
-    <div className="relative flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+    <div className="relative flex items-center gap-3 px-4 py-3 border-b border-white/40 dark:border-white/5 bg-white/30 dark:bg-white/[0.03] backdrop-blur-md">
       <div
         aria-hidden="true"
-        className="w-9 h-9 rounded-full shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm"
+        className="w-9 h-9 rounded-full shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-md ring-1 ring-white/40"
       >
         <Sparkles size={15} />
       </div>
@@ -1172,34 +827,48 @@ const DaylaChatCard: React.FC<DaylaChatCardProps> = ({
     </div>
 
     {/* Сообщения */}
-    <div className="relative p-4 space-y-4 bg-gradient-to-b from-gray-50/60 to-white dark:from-gray-900/40 dark:to-gray-950">
-      {/* Сообщение пользователя — рендерится только если есть хотя бы одно поле */}
-        {(forwardedFrom || userMessage) && (
+    <div className="relative p-4 space-y-4">
+      {(forwardedFrom || userMessage) && (
         <div className="flex justify-end">
-            <div className="max-w-[82%] rounded-2xl rounded-br-sm bg-gradient-to-br from-blue-500 to-blue-600 text-white px-4 py-2.5 shadow-sm">
+          <div
+            className={cn(
+              "max-w-[82%] rounded-2xl rounded-br-sm",
+              "bg-gradient-to-br from-blue-500/90 to-blue-600/90",
+              "backdrop-blur-md text-white px-4 py-2.5",
+              "ring-1 ring-white/25",
+              "shadow-[0_4px_16px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]",
+            )}
+          >
             {forwardedFrom && (
-                <p className="text-[10px] uppercase tracking-wide opacity-70 mb-1">
+              <p className="text-[10px] uppercase tracking-wide opacity-75 mb-1">
                 {forwardedFrom}
-                </p>
+              </p>
             )}
-            {userMessage && (
-                <p className="text-sm leading-snug">{userMessage}</p>
-            )}
-            </div>
+            {userMessage && <p className="text-sm leading-snug">{userMessage}</p>}
+          </div>
         </div>
-        )}
+      )}
 
       {/* Ответ Dayla */}
       <div className="flex items-end gap-2">
         <div
           aria-hidden="true"
-          className="w-7 h-7 rounded-full shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm"
+          className="w-7 h-7 rounded-full shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-md ring-1 ring-white/40"
         >
           <Sparkles size={13} />
         </div>
 
         <div className="max-w-[86%] min-w-0">
-          <div className="rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-4 py-3 shadow-sm">
+          <div
+            className={cn(
+              "rounded-2xl rounded-bl-sm px-4 py-3",
+              "bg-white/55 dark:bg-white/[0.06]",
+              "backdrop-blur-md",
+              "ring-1 ring-white/50 dark:ring-white/5",
+              "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_8px_rgba(15,23,42,0.05)]",
+              "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_2px_8px_rgba(0,0,0,0.25)]",
+            )}
+          >
             <p className="text-sm text-gray-900 dark:text-white leading-snug">
               {daylaMessage}
             </p>
@@ -1209,22 +878,140 @@ const DaylaChatCard: React.FC<DaylaChatCardProps> = ({
     </div>
 
     {/* Поле ввода */}
-    <div className="relative px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60">
-      <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+    <div className="relative px-4 py-3 border-t border-white/40 dark:border-white/5 bg-white/25 dark:bg-white/[0.02] backdrop-blur-md">
+      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
         <Send size={14} aria-hidden="true" />
         <span>Сообщение Dayla…</span>
       </div>
     </div>
-  </Card>
+  </div>
 );
-// ---------- UserCase: авиабилет из мессенджера ----------
 
+// ─────────────────────────────────────────────────────────────
+// PageBackdrop — единый градиентный фон на всю страницу.
+// Работает как absolute-слой под всеми секциями Start, поэтому
+// нет резких обрывов на границах между UserCase/Finance/GTD.
+// Блобы распределены вертикально по всей высоте документа.
+// ─────────────────────────────────────────────────────────────
 
+type PageBlob = {
+  left: string;
+  top: string;
+  size: string;
+  gradient: string;
+  shape: string;
+  duration: string;
+  delay: string;
+};
 
+const PAGE_BLOBS: PageBlob[] = [
+  // Hero + начало UserCase
+  { left: "-10%", top: "-2%",  size: "32rem", gradient: "from-blue-500/22     to-indigo-500/10",   shape: "60% 40% 70% 30% / 60% 30% 70% 40%", duration: "24s", delay: "0s"   },
+  { left: "55%",  top: "6%",   size: "28rem", gradient: "from-purple-500/18   to-fuchsia-500/10",  shape: "40% 60% 30% 70% / 50% 60% 40% 50%", duration: "28s", delay: "3s"   },
+
+  // UserCase + вход в Finance
+  { left: "60%",  top: "16%",  size: "30rem", gradient: "from-indigo-500/20   to-violet-500/10",   shape: "50% 50% 60% 40% / 40% 50% 60% 50%", duration: "30s", delay: "5s"   },
+  { left: "-14%", top: "26%",  size: "28rem", gradient: "from-cyan-500/15     to-blue-500/8",      shape: "70% 30% 50% 50% / 50% 40% 60% 50%", duration: "26s", delay: "2s"   },
+
+  // UserCaseFinance
+  { left: "58%",  top: "36%",  size: "30rem", gradient: "from-fuchsia-500/16  to-purple-500/8",    shape: "60% 40% 40% 60% / 50% 50% 40% 60%", duration: "24s", delay: "4s"   },
+  { left: "-10%", top: "46%",  size: "32rem", gradient: "from-blue-500/18     to-indigo-500/8",    shape: "40% 60% 50% 50% / 60% 40% 60% 40%", duration: "32s", delay: "6s"   },
+
+  // UserCaseGTD
+  { left: "70%",  top: "56%",  size: "28rem", gradient: "from-purple-500/16   to-pink-500/8",      shape: "50% 50% 30% 70% / 40% 60% 40% 60%", duration: "28s", delay: "1s"   },
+  { left: "-8%",  top: "66%",  size: "30rem", gradient: "from-indigo-500/18   to-blue-500/8",      shape: "60% 40% 50% 50% / 50% 50% 60% 40%", duration: "30s", delay: "3.5s" },
+
+  // FinalCTA + Footer
+  { left: "40%",  top: "80%",  size: "30rem", gradient: "from-fuchsia-500/14  to-purple-500/8",    shape: "40% 60% 60% 40% / 50% 50% 40% 60%", duration: "32s", delay: "5s"   },
+  { left: "-12%", top: "92%",  size: "28rem", gradient: "from-blue-500/16     to-cyan-500/8",      shape: "50% 50% 40% 60% / 60% 40% 50% 50%", duration: "34s", delay: "7s"   },
+];
+
+type PagePulse = {
+  left: string;
+  top: string;
+  color: string;
+  delay: string;
+  duration: string;
+};
+
+const PAGE_PULSES: PagePulse[] = [
+  { left: "14%",  top: "12%", color: "bg-blue-400/40",    delay: "0s",   duration: "7s"  },
+  { left: "82%",  top: "22%", color: "bg-purple-400/35",  delay: "1.5s", duration: "9s"  },
+  { left: "28%",  top: "34%", color: "bg-indigo-400/35",  delay: "3s",   duration: "11s" },
+  { left: "58%",  top: "44%", color: "bg-fuchsia-400/30", delay: "4.5s", duration: "8s"  },
+  { left: "36%",  top: "56%", color: "bg-violet-400/35",  delay: "2s",   duration: "9s"  },
+  { left: "72%",  top: "68%", color: "bg-pink-400/30",    delay: "5.5s", duration: "12s" },
+  { left: "12%",  top: "78%", color: "bg-indigo-400/35",  delay: "0.6s", duration: "9s"  },
+  { left: "84%",  top: "88%", color: "bg-blue-400/30",    delay: "3.8s", duration: "10s" },
+];
+
+const PageBackdrop: React.FC = () => (
+  <>
+    <style>{`
+      @keyframes page-blob-drift {
+        0%, 100% { transform: translate3d(0, 0, 0)    rotate(0deg)  scale(1);    }
+        50%      { transform: translate3d(2%, -2%, 0) rotate(10deg) scale(1.09); }
+      }
+      @keyframes page-pulse {
+        0%, 100% { transform: scale(0.6); opacity: 0; }
+        50%      { transform: scale(1.5); opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .page-blob, .page-pulse { animation: none; }
+      }
+    `}</style>
+
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
+    >
+      {/* Органические градиентные блобы */}
+      {PAGE_BLOBS.map((b, i) => (
+        <div
+          key={`blob-${i}`}
+          className={`absolute bg-gradient-to-br blur-3xl page-blob ${b.gradient}`}
+          style={{
+            left: b.left,
+            top: b.top,
+            width: b.size,
+            height: b.size,
+            borderRadius: b.shape,
+            animation: `page-blob-drift ${b.duration} ease-in-out ${b.delay} infinite`,
+          }}
+        />
+      ))}
+
+      {/* Импульсы */}
+      {PAGE_PULSES.map((p, i) => (
+        <span
+          key={`pulse-${i}`}
+          className={`absolute w-2 h-2 rounded-full blur-[1px] page-pulse ${p.color}`}
+          style={{
+            left: p.left,
+            top: p.top,
+            animation: `page-pulse ${p.duration} ease-in-out ${p.delay} infinite`,
+          }}
+        />
+      ))}
+
+      {/* Тонкая сетка поверх блобов */}
+      <div
+        className="absolute inset-0 opacity-[0.035] dark:opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+          color: "#000",
+        }}
+      />
+    </div>
+  </>
+);
 
 const UserCase: React.FC = () => (
   <section id="usecase" className="relative py-20 md:py-28 overflow-hidden">
-    <div className="max-w-5xl mx-auto px-4 md:px-6">
+
+    <div className="relative max-w-5xl mx-auto px-4 md:px-6">
       {/* ─── Заголовок секции ─────────────────────────────── */}
       <div className="max-w-2xl mb-12 md:mb-16">
         <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
@@ -1502,7 +1289,7 @@ const UserCaseFinance: React.FC = () => (
     id="usecase-finance"
     className="relative py-20 md:py-28 overflow-hidden"
   >
-    <div className="max-w-5xl mx-auto px-4 md:px-6">
+    <div className="relative max-w-5xl mx-auto px-4 md:px-6">
       {/* Заголовок */}
       <div className="max-w-2xl mb-12 md:mb-16">
         <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
@@ -1515,29 +1302,29 @@ const UserCaseFinance: React.FC = () => (
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-[2fr_1fr] gap-12 lg:gap-20 items-center">
-        {/* Левая колонка: монитор */}
-        <div className="relative flex justify-center">
-          <div className="relative w-full max-w-[2000px]">
-            <MonitorScene />
-          </div>
-        </div>
-
-        {/* Правая колонка: чат Dayla */}
+      <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-20 items-center">
+        {/* Чат Dayla — слева (1fr) */}
         <div className="relative">
-        <DaylaChatCard
+            <DaylaChatCard
             daylaMessage={
-            <>
-                Подтянула Финансовый_отчёт_Q4.xlsx
+                <>
+                Подтянула Финансовый_отчёт_Q4.xlsx.
                 Зафиксировала задачу{' '}
                 <strong className="font-semibold">«Подать фин отчёт»</strong>{' '}
                 на 30.09.2027 (конец квартала). Собираю ваши документы к концу
                 отчётного периода.
-            </>
+                </>
             }
-        />
+            />
         </div>
-      </div>
+
+        {/* Монитор — справа (2fr) */}
+        <div className="relative flex justify-center">
+            <div className="relative w-full max-w-[2000px]">
+            <MonitorScene />
+            </div>
+        </div>
+        </div>
     </div>
   </section>
 );
@@ -1900,98 +1687,6 @@ const HeroMockup: React.FC = () => (
     </Card>
   </div>
 );
-// ---------- Возможности ----------
-const BENEFITS = [
-  { icon: Mic, title: "Говорите как человеку", text: "Опишите задачу текстом или голосом — Dayla сам разберётся, куда её поставить." },
-  { icon: Send, title: "Telegram-бот", text: "Перешлите сообщение в бот — задача появится в календаре." },
-  { icon: Calendar, title: "Умные рекомендации", text: "Dayla находит свободные окна и подсказывает, что в них можно сделать." },
-  { icon: BarChart3, title: "Анализ и прогресс", text: "Смотрите, куда уходит время и как вы справляетесь с планами." },
-];
-
-const Benefits: React.FC = () => (
-  <section
-    id="benefits"
-    className="relative pt-20 pb-40 md:pt-28 md:pb-52 overflow-hidden"
-  >
-    {/* Фоновые декорации (кольцо, бары, теги) — правая половина */}
-    <BenefitsBackdrop />
-
-    {/* Передний план: заголовок + сетка карточек */}
-    <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-6">
-      <div className="max-w-2xl mb-12">
-        <Badge className="text-eyebrow">Возможности</Badge>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Меньше рутины — больше дня
-        </h2>
-        <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Всё, чтобы не терять задачи и не тратить полчаса на планирование.
-        </p>
-      </div>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {BENEFITS.map(({ icon: Icon, title, text }) => (
-          <Card
-            key={title}
-            className="
-              relative z-10
-              group hover:shadow-lg transition-shadow
-              backdrop-blur-sm bg-white/80 dark:bg-gray-900/70
-            "
-          >
-            <CardContent>
-              <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4 transition-transform group-hover:scale-110">
-                <Icon size={20} aria-hidden="true" />
-              </div>
-              <p className="font-medium">{title}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">{text}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-
-  </section>
-);
-
-// ---------- Фон для секции возможностей ----------
-const PRIORITY_BADGE_SOLID: Record<Priority, string> = {
-  A: "bg-red-500 text-white ring-red-600",
-  B: "bg-orange-500 text-white ring-orange-600",
-  C: "bg-amber-500 text-white ring-amber-600",
-  D: "bg-blue-500 text-white ring-blue-600",
-  E: "bg-slate-500 text-white ring-slate-600",
-  F: "bg-slate-400 text-white ring-slate-500",
-};
-
-const PRIORITY_BAR_SOLID: Record<Priority, string> = {
-  A: "bg-red-500",
-  B: "bg-orange-500",
-  C: "bg-amber-500",
-  D: "bg-blue-500",
-  E: "bg-slate-500",
-  F: "bg-slate-400",
-};
-
-const BenefitsBackdrop: React.FC = () => (
-  <div
-    aria-hidden="true"
-    className="
-      absolute inset-y-0 right-0 left-1/2 z-0 pointer-events-none
-      hidden md:block
-    "
-    style={{
-      // Лёгкое затухание к центру — у левого края половины фон тает,
-      // чтобы не спорить с колонкой текста.
-      maskImage:
-        "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 12%, black 30%, black 100%)",
-      WebkitMaskImage:
-        "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 12%, black 30%, black 100%)",
-    }}
-  >
-    <div className="relative w-full h-full opacity-[0.42] dark:opacity-[0.36]">
-    </div>
-  </div>
-);
 
 // ---------- Финальный CTA: интеграции ----------
 
@@ -2007,89 +1702,619 @@ const INTEGRATIONS = [
   { src: "/images/Jira_Software_Logo.svg",   alt: "Jira",            w: 40 },
   { src: "/images/Notion.png",               alt: "Notion",          w: 44 },
   { src: "/images/Obsidian.png",             alt: "Obsidian",        w: 44 },
+  { src: "/images/TelegramWB.png",             alt: "Telegram",        w: 44 },
+  { src: "/images/slack.png",             alt: "Slack",        w: 44 },
+  { src: "/images/tc_logo_square.png",             alt: "TrueConf",        w: 44 },
 ];
 
-const FinalCTA: React.FC<{ onStart: () => void }> = ({ onStart }) => (
-  <section className="relative py-20 md:py-28">
-    <div className="max-w-5xl mx-auto px-4 md:px-6">
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 px-8 py-14 md:px-16 md:py-20 text-white">
-        {/* Декоративные свечения */}
-        <div className="absolute inset-0 opacity-25 pointer-events-none" aria-hidden="true">
-          <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-white blur-3xl" />
-          <div className="absolute -bottom-10 right-1/4 w-72 h-72 rounded-full bg-white blur-3xl" />
+const FINAL_CTA_OVERLAP_TOP_VH = 10;
+const FINAL_CTA_EXTRA_BOTTOM_VH = 55;
+
+const ORBIT_PERIOD_MS = 24000;
+const ORBIT_TRANSITION_MS = 700;
+const ROW_ICON_SIZE = 56;
+const ROW_ICON_IMG_SIZE = 36;
+const ROW_GAP = 12;
+const ROW_Y_OFFSET = 140;
+
+const FinalCTA: React.FC<{
+  onStart: () => void;
+  onActiveChange?: (active: boolean) => void;
+}> = ({ onStart, onActiveChange }) => {
+  const sectionRef = React.useRef<HTMLElement>(null);
+  const [active, setActive] = React.useState(false);
+  const lastActive = React.useRef(false);
+  const lastY = React.useRef(0);
+
+  const iconRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+
+  /* ────────── Логика active (без изменений) ────────── */
+  React.useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    lastY.current = window.scrollY;
+
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+
+      const visibleTop = Math.max(0, rect.top);
+      const visibleBottom = Math.min(vh, rect.bottom);
+      const visible = Math.max(0, visibleBottom - visibleTop);
+      const ratio = visible / Math.min(vh, rect.height || vh);
+
+      const goingUp = window.scrollY < lastY.current;
+      const next = goingUp ? false : ratio > 0.5;
+
+      if (next !== lastActive.current) {
+        lastActive.current = next;
+        setActive(next);
+        onActiveChange?.(next);
+      }
+      lastY.current = window.scrollY;
+    };
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [onActiveChange]);
+
+  /* ────────── Орбита ↔ статичная строка ────────── */
+  React.useEffect(() => {
+    const N = INTEGRATIONS.length;
+    const icons = iconRefs.current;
+    if (!icons.length) return;
+
+    const computeRadius = () => Math.min(window.innerWidth * 0.45, 340);
+
+    const orbitValues = (i: number, angle: number) => {
+      const R = computeRadius();
+      const baseAngle = (i / N) * 360;
+      const rad = ((baseAngle + angle) * Math.PI) / 180;
+      const x = R * Math.cos(rad);
+      const y = R * Math.sin(rad);
+      const t = (Math.sin(rad) + 1) / 2;
+      const sf = 0.45 + 0.55 * t;
+      return {
+        x,
+        y,
+        opacity: 0.1 + 0.9 * t,
+        outerSize: 80 + 16 * sf,
+        imgSize: 44 + 12 * sf,
+      };
+    };
+
+    const staticValues = (i: number, maxWidth: number) => {
+      const perRow = Math.max(
+        1,
+        Math.floor((maxWidth + ROW_GAP) / (ROW_ICON_SIZE + ROW_GAP))
+      );
+      const rowIdx = Math.floor(i / perRow);
+      const colIdx = i % perRow;
+      const itemsInRow = Math.min(perRow, N - rowIdx * perRow);
+      const rowWidth = itemsInRow * ROW_ICON_SIZE + (itemsInRow - 1) * ROW_GAP;
+      const startX = -rowWidth / 2 + ROW_ICON_SIZE / 2;
+
+      return {
+        x: startX + colIdx * (ROW_ICON_SIZE + ROW_GAP),
+        y: ROW_Y_OFFSET + rowIdx * (ROW_ICON_SIZE + ROW_GAP),
+        opacity: 1,
+        outerSize: ROW_ICON_SIZE,
+        imgSize: ROW_ICON_IMG_SIZE,
+      };
+    };
+
+    const writeIcon = (
+      el: HTMLDivElement,
+      v: { x: number; y: number; opacity: number; outerSize: number; imgSize: number }
+    ) => {
+      el.style.transform = `translate(-50%, -50%) translate(${v.x}px, ${v.y}px)`;
+      el.style.opacity = v.opacity.toFixed(3);
+
+      const inner = el.firstElementChild as HTMLElement | null;
+      if (inner) {
+        inner.style.width = `${v.outerSize}px`;
+        inner.style.height = `${v.outerSize}px`;
+        const img = inner.querySelector("img") as HTMLImageElement | null;
+        if (img) {
+          img.style.width = `${v.imgSize}px`;
+          img.style.height = `${v.imgSize}px`;
+        }
+      }
+    };
+
+    const setTransition = (on: boolean) => {
+      const tr = on
+        ? `transform ${ORBIT_TRANSITION_MS}ms cubic-bezier(0.4,0,0.2,1), opacity ${ORBIT_TRANSITION_MS}ms ease-out`
+        : "none";
+      const trSize = on
+        ? `width ${ORBIT_TRANSITION_MS}ms cubic-bezier(0.4,0,0.2,1), height ${ORBIT_TRANSITION_MS}ms cubic-bezier(0.4,0,0.2,1)`
+        : "none";
+
+      icons.forEach((el) => {
+        if (!el) return;
+        el.style.transition = tr;
+        const inner = el.firstElementChild as HTMLElement | null;
+        if (inner) {
+          inner.style.transition = trSize;
+          const img = inner.querySelector("img") as HTMLImageElement | null;
+          if (img) img.style.transition = trSize;
+        }
+      });
+
+      // force reflow, чтобы transition зарегистрировался ДО изменения transform
+      void (icons[0]?.offsetWidth ?? 0);
+    };
+
+    if (active) {
+      // Фаза 1: CSS-переход из текущих позиций в стартовые орбитальные
+      setTransition(true);
+      icons.forEach((el, i) => {
+        if (el) writeIcon(el, orbitValues(i, 0));
+      });
+
+      // Фаза 2: по завершении — включаем непрерывный RAF с transition:none
+      let rafId = 0;
+      const timeoutId = window.setTimeout(() => {
+        setTransition(false);
+        const started = performance.now();
+        const tick = (now: number) => {
+          const angle = (((now - started) / ORBIT_PERIOD_MS) * 360) % 360;
+          icons.forEach((el, i) => {
+            if (el) writeIcon(el, orbitValues(i, angle));
+          });
+          rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+      }, ORBIT_TRANSITION_MS);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+        if (rafId) cancelAnimationFrame(rafId);
+      };
+    } else {
+      // Статичная строка
+      const applyStatic = () => {
+        const maxWidth = Math.min(window.innerWidth - 120, 600);
+        setTransition(true);
+        icons.forEach((el, i) => {
+          if (el) writeIcon(el, staticValues(i, maxWidth));
+        });
+      };
+
+      applyStatic();
+      window.addEventListener("resize", applyStatic);
+      return () => window.removeEventListener("resize", applyStatic);
+    }
+  }, [active]);
+
+  return (
+    <section
+      ref={sectionRef}
+      className="relative isolate w-full min-h-screen overflow-hidden"
+      style={{
+        minHeight: `calc(100vh + ${FINAL_CTA_EXTRA_BOTTOM_VH}vh)`,
+        marginTop: `-${FINAL_CTA_OVERLAP_TOP_VH}vh`,
+        paddingTop: `${FINAL_CTA_OVERLAP_TOP_VH}vh`,
+      }}
+    >
+      {/* Градиентный слой */}
+        <div
+        aria-hidden="true"
+        className="absolute inset-0 transition-[clip-path] duration-700 ease-out will-change-[clip-path]"
+        style={{
+            background:
+            "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
+            clipPath: active
+            ? "inset(0% 0% 0% 0% round 0px)"
+            : "inset(18% 12% 18% 12% round 32px)",
+
+            // ─── Плавный переход к фону страницы сверху ───
+            WebkitMaskImage:
+            "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 12%, black 28%)",
+            maskImage:
+            "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 12%, black 28%)",
+        }}
+        />
+
+      {/* Декор */}
+      <div
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-0 pointer-events-none transition-opacity duration-700",
+          active ? "opacity-25" : "opacity-0"
+        )}
+        style={{
+          clipPath: active
+            ? "inset(0% 0% 0% 0% round 0px)"
+            : "inset(18% 12% 18% 12% round 32px)",
+        }}
+      >
+        <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-white blur-3xl" />
+        <div className="absolute -bottom-10 right-1/4 w-72 h-72 rounded-full bg-white blur-3xl" />
+      </div>
+
+      {/* Контент — ВСЕГДА виден (убрали opacity-0/translate-y-10) */}
+      <div
+        className={cn(
+          "relative z-10 mx-auto w-full max-w-6xl px-6 md:px-16 text-white",
+          "flex flex-col items-center justify-center"
+        )}
+        style={{
+          minHeight: `calc(100vh + ${FINAL_CTA_EXTRA_BOTTOM_VH}vh)`,
+        }}
+      >
+        <div className="text-center max-w-3xl">
+          <p className="text-eyebrow text-white/70 mb-4">
+            Один ритм вместо десяти приложений
+          </p>
+
+          <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
+            Ваш день живёт в&nbsp;Google, Jira и&nbsp;блокноте.{" "}
+            <span className="text-white/85">
+              Dayla собирает его в&nbsp;одну картину.
+            </span>
+          </h2>
+
+          <p className="mt-5 md:mt-6 text-base md:text-lg text-white/85 max-w-2xl mx-auto">
+            Мы соединяем то, чем вы уже пользуетесь: календари, рабочие задачи,
+            заметки и идеи. Без переносов вручную. Без копирования.
+            Без «а где у меня это записано?».
+          </p>
         </div>
 
-        <div className="relative">
-          {/* ─── Заголовок ────────────────────────────────── */}
-          <div className="text-center max-w-3xl mx-auto">
-            <p className="text-eyebrow text-white/70 mb-4">
-              Один ритм вместо десяти приложений
-            </p>
+        {/* CTA + орбита */}
+        <div className="mt-16 flex flex-col items-center text-center">
+          <p className="text-lg md:text-xl font-medium">
+            Личный ИИ-ассистент, который держит день в&nbsp;форме.
+          </p>
 
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
-              Ваш день живёт в&nbsp;Google, Jira и&nbsp;блокноте.{" "}
-              <span className="text-white/85">
-                Dayla собирает его в&nbsp;одну картину.
-              </span>
-            </h2>
-
-            <p className="mt-5 md:mt-6 text-base md:text-lg text-white/85 max-w-2xl mx-auto">
-              Мы соединяем то, чем вы уже пользуетесь: календари, рабочие задачи,
-              заметки и идеи. Без переносов вручную. Без копирования.
-              Без «а где у меня это записано?».
-            </p>
-          </div>
-
-          {/* ─── Логотипы интеграций ──────────────────────── */}
-          <div className="mt-12 md:mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-            {INTEGRATIONS.map((i) => (
-              <div
-                key={i.alt}
-                className="
-                  flex items-center justify-center
-                  h-14 w-14 md:h-16 md:w-16
-                  rounded-2xl bg-white/10 backdrop-blur-sm
-                  ring-1 ring-white/20
-                  hover:bg-white/15 transition-colors
-                "
-                title={i.alt}
-              >
-                <img
-                  src={i.src}
-                  alt={i.alt}
-                  style={{ width: i.w, height: "auto" }}
-                  className="max-h-10 object-contain"
-                  loading="lazy"
-                />
-              </div>
-            ))}
-          </div>
-
-
-          {/* ─── CTA ─────────────────────────────────────── */}
-          <div className="mt-12 md:mt-14 flex flex-col items-center text-center">
-            <p className="text-lg md:text-xl font-medium">
-              Личный ИИ-ассистент,
-              который держит день в&nbsp;форме.
-            </p>
-
-            <div className="text-eyebrow mt-8 flex justify-center">
-                <InteractiveButton
-                    type="button"
-                    onClick={onStart}
-                    scaleAmount={1.3}
-                    glowRadius="80%"
-                    className="px-20 h-[13.75rem] min-w-[20rem] text-lg"
-                    gradientStops={WHITE_GRADIENT_STOPS}
-                    contentClassName="text-blue-700 text-lg md:text-xl font-semibold"
+          <div className="relative mt-10 flex justify-center">
+            {/* Орбитальный контейнер — 0×0 в центре кнопки */}
+            <div
+              aria-hidden="true"
+              className="absolute left-1/2 top-1/2 pointer-events-none"
+              style={{ width: 0, height: 0 }}
+            >
+              {INTEGRATIONS.map((i, idx) => (
+                <div
+                  key={i.alt}
+                  ref={(el) => {
+                    iconRefs.current[idx] = el;
+                  }}
+                  className="absolute top-0 left-0 will-change-transform"
+                  style={{
+                    transform: "translate(-50%, -50%)",
+                    opacity: 0,
+                  }}
                 >
-                    Начать бесплатно
-                    <ArrowRight size={24} className="ml-2" aria-hidden="true" />
-                </InteractiveButton>
+                  <div
+                    className="rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/30 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_6px_20px_rgba(0,0,0,0.2)]"
+                    style={{ width: ROW_ICON_SIZE, height: ROW_ICON_SIZE }}
+                  >
+                    <img
+                      src={i.src}
+                      alt=""
+                      className="object-contain"
+                      style={{ width: ROW_ICON_IMG_SIZE, height: ROW_ICON_IMG_SIZE }}
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
+
+            <button
+              type="button"
+              onClick={onStart}
+              className={cn(
+                "group relative z-10 inline-flex items-center justify-center",
+                "px-14 md:px-16 h-16 md:h-20",
+                "text-lg md:text-xl font-semibold text-blue-700",
+                "rounded-full",
+                "transition-all duration-300 ease-out",
+                "hover:-translate-y-0.5 active:translate-y-0",
+                "bg-white/70 dark:bg-white/20",
+                "backdrop-blur-xl",
+                "ring-1 ring-white/70 dark:ring-white/30",
+                "shadow-[0_8px_32px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(255,255,255,0.4)]",
+                "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(255,255,255,0.1)]",
+                "hover:bg-white/85 dark:hover:bg-white/25",
+                "hover:shadow-[0_12px_40px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.5)]"
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-3 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/80 to-transparent opacity-90 blur-[1px]"
+              />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/60 mix-blend-overlay"
+              />
+              <span className="relative inline-flex items-center">
+                Начать бесплатно
+                <ArrowRight
+                  size={22}
+                  className="ml-2 transition-transform duration-300 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const AUTO_ADVANCE_MS = 3000;      // авто-переключение каждые 3 сек
+const MANUAL_PAUSE_MS = 12000;     // пауза после ручного клика (12 сек)
+
+// ─── Слайд 1: авиабилет ──────────────────────────────────────
+const SlideFlight: React.FC = () => (
+  <div className="py-10 md:py-16">
+    <div className="max-w-5xl mx-auto px-4 md:px-6">
+      <div className="max-w-2xl mb-10 md:mb-14">
+        <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Пересылайте события — Dayla всё спланирует
+        </h2>
+        <p className="mt-3 text-gray-600 dark:text-gray-400">
+          Не нужно вручную копировать дату, время и место. Отправьте сообщение
+          боту — Dayla разберётся сама.
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="relative flex justify-center">
+          <div className="relative w-full max-w-[400px]">
+            <IPhoneScene />
+          </div>
+        </div>
+        <div className="relative">
+          <DaylaChatCard
+            forwardedFrom="Переслано от Андрея Смирнова"
+            userMessage="Авиабилет PD-205 · VKO → LED"
+            daylaMessage={
+              <>
+                Распознала авиабилет:{' '}
+                <strong className="font-semibold">дата — 05 апреля, 21:55</strong>,{' '}
+                <strong className="font-semibold">место посадки — Внуково, терминал A</strong>.
+                Куда добавить событие?
+              </>
+            }
+          />
+        </div>
+      </div>
+
+      <div className="mt-10 max-w-2xl mx-auto text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+          Dayla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Слайд 2: фин отчёт ──────────────────────────────────────
+const SlideFinance: React.FC = () => (
+  <div className="py-10 md:py-16">
+    <div className="max-w-6xl mx-auto px-4 md:px-6">
+      <div className="max-w-2xl mb-10 md:mb-14">
+        <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Прислали файл? Dayla превратит его в задачу
+        </h2>
+        <p className="mt-3 text-gray-600 dark:text-gray-400">
+          Добавьте Dayla в чат. Она распознает, что к чему и когда это надо сдать.
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-center">
+        <div className="relative">
+          <DaylaChatCard
+            daylaMessage={
+              <>
+                Подтянула Финансовый_отчёт_Q4.xlsx. Зафиксировала задачу{' '}
+                <strong className="font-semibold">«Подать фин отчёт»</strong>{' '}
+                на 30.09.2027 (конец квартала). Собираю ваши документы к концу
+                отчётного периода.
+              </>
+            }
+          />
+        </div>
+        <div className="relative flex justify-center">
+          <div className="relative w-full max-w-[2000px]">
+            <MonitorScene />
           </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 );
+
+// ─── Слайд 3: GTD ────────────────────────────────────────────
+const SlideGTD: React.FC = () => (
+  <div className="py-10 md:py-16">
+    <div className="max-w-6xl mx-auto px-4 md:px-6">
+      <div className="max-w-2xl mb-10 md:mb-14">
+        <Badge className="text-eyebrow mb-3">Систематизация по GTD</Badge>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Одна фраза — и всё разложено по полочкам
+        </h2>
+        <p className="mt-3 text-gray-600 dark:text-gray-400">
+          Jira, TrueConf, Slack — Dayla соберёт задачи из всех источников,
+          расставит дедлайны и впишет их в ваш календарь.
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-12 lg:gap-16 items-center">
+        <div className="relative flex justify-center">
+          <GTDAggregation />
+        </div>
+        <div className="relative">
+          <DaylaChatCard
+            userMessage="Систематизируй задачи по Getting Things Done, которые мне прислали на этой неделе из Jira, TrueConf и Slack, в мой Гугл календарь"
+            daylaMessage={GTD_RESPONSE}
+          />
+        </div>
+      </div>
+
+      <div className="mt-10 max-w-2xl mx-auto text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+          Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// ─────────────────────────────────────────────────────────────
+// UserCaseCarousel — карусель из трёх сценариев.
+// Авто-переключение каждые AUTO_ADVANCE_MS, пауза после ручного клика.
+// Кнопки и точки — в LiquidGlass-стиле.
+// ─────────────────────────────────────────────────────────────
+
+const USE_CASE_SLIDES: { id: string; render: () => React.ReactNode }[] = [
+  { id: "flight",  render: () => <SlideFlight />  },
+  { id: "finance", render: () => <SlideFinance /> },
+  { id: "gtd",     render: () => <SlideGTD />     },
+];
+
+
+const UserCaseCarousel: React.FC<{ paused?: boolean }> = ({ paused = false }) => {
+  const [index, setIndex] = React.useState(0);
+  const total = USE_CASE_SLIDES.length;
+  const pausedUntil = React.useRef<number>(0);
+
+  const goTo = React.useCallback(
+    (next: number) => {
+      setIndex(((next % total) + total) % total);
+      pausedUntil.current = Date.now() + MANUAL_PAUSE_MS;
+    },
+    [total]
+  );
+
+  const next = () => goTo(index + 1);
+  const prev = () => goTo(index - 1);
+
+  // Авто-переключение. Когда пользователь на FinalCTA — таймер не запускаем.
+  React.useEffect(() => {
+    if (paused) return;
+    const t = window.setInterval(() => {
+      if (Date.now() < pausedUntil.current) return;
+      setIndex((i) => (i + 1) % total);
+    }, AUTO_ADVANCE_MS);
+    return () => window.clearInterval(t);
+  }, [total, paused]);
+
+  return (
+    <section
+      id="usecases"
+      className="relative py-12 md:py-20 overflow-hidden"
+      aria-roledescription="carousel"
+    >
+      {/* Сцена: все слайды лежат друг под другом, но видим только активный */}
+      <div className="relative">
+        {USE_CASE_SLIDES.map((slide, i) => (
+          <div
+            key={slide.id}
+            aria-hidden={i !== index}
+            className={cn(
+              "transition-opacity duration-700",
+              i === index
+                ? "opacity-100 relative z-10"
+                : "opacity-0 absolute inset-0 z-0 pointer-events-none"
+            )}
+          >
+            {slide.render()}
+          </div>
+        ))}
+      </div>
+
+      {/* ─── Кнопки LiquidGlass ─────────────────────────── */}
+      <button
+        type="button"
+        onClick={prev}
+        aria-label="Предыдущий сценарий"
+        className={cn(
+          "absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20",
+          "w-11 h-11 md:w-12 md:h-12 rounded-full",
+          "flex items-center justify-center",
+          // LiquidGlass
+          "bg-white/40 dark:bg-white/[0.06]",
+          "backdrop-blur-xl",
+          "ring-1 ring-white/60 dark:ring-white/10",
+          "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
+          "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
+          "text-gray-700 dark:text-gray-200",
+          "hover:bg-white/60 dark:hover:bg-white/[0.1]",
+          "hover:scale-105 active:scale-95",
+          "transition-all duration-200",
+        )}
+      >
+        <svg
+          width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5"
+          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        onClick={next}
+        aria-label="Следующий сценарий"
+        className={cn(
+          "absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20",
+          "w-11 h-11 md:w-12 md:h-12 rounded-full",
+          "flex items-center justify-center",
+          "bg-white/40 dark:bg-white/[0.06]",
+          "backdrop-blur-xl",
+          "ring-1 ring-white/60 dark:ring-white/10",
+          "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
+          "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
+          "text-gray-700 dark:text-gray-200",
+          "hover:bg-white/60 dark:hover:bg-white/[0.1]",
+          "hover:scale-105 active:scale-95",
+          "transition-all duration-200",
+        )}
+      >
+        <svg
+          width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5"
+          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+        >
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
+
+      {/* ─── Точки-индикаторы ──────────────────────────── */}
+      <div className="mt-6 flex items-center justify-center gap-2">
+        {USE_CASE_SLIDES.map((slide, i) => (
+          <button
+            key={slide.id}
+            type="button"
+            onClick={() => goTo(i)}
+            aria-label={`Перейти к сценарию ${i + 1}`}
+            aria-current={i === index}
+            className={cn(
+              "h-2 rounded-full transition-all duration-300",
+              i === index
+                ? "w-8 bg-gray-800/70 dark:bg-white/70"
+                : "w-2 bg-gray-400/50 dark:bg-white/30 hover:bg-gray-500/70"
+            )}
+          />
+        ))}
+      </div>
+    </section>
+  );
+};
