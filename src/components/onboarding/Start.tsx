@@ -10,8 +10,18 @@ import {
   Pin,         
   Forward,     
   Trash2,
+  ArrowDown,     // ← добавить
+  Hash,          // ← добавить (Slack)
+  Video,         // ← добавить (TrueConf)
+  ListChecks,
   type LucideIcon,
 } from "lucide-react";
+
+import {
+  getPerspectiveMatrix,
+  usePerspectiveTransform,
+  type Point,
+} from "@/utils/perspective";
 
 import { Button, InteractiveButton } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -154,6 +164,8 @@ export const Start: React.FC = () => {
 
       <Hero onStart={start} />
       <UserCase /> 
+      <UserCaseFinance />
+      <UserCaseGTD />
       <FinalCTA onStart={start} />
 
       <LandingFooter />
@@ -592,7 +604,7 @@ const CONTEXT_MENU_ITEMS: MenuItem[] = [
   { label: "Ответить",         icon: Reply },
   { label: "Скопировать",      icon: Copy },
   { label: "Сохранить фото",   icon: Download },
-  { label: "Переслать Deyla",        icon: Forward },
+  { label: "Переслать Dayla",        icon: Forward },
   { label: "Удалить",          icon: Trash2, tone: "danger" },
 ];
 
@@ -609,7 +621,7 @@ const ChatContextMenu: React.FC = () => (
   >
     {CONTEXT_MENU_ITEMS.map(({ label, icon: Icon, tone }, i) => {
       const isDanger = tone === "danger";
-      const isHighlighted = label === "Переслать Deyla";
+      const isHighlighted = label === "Переслать Dayla";
 
       return (
         <React.Fragment key={label}>
@@ -623,7 +635,7 @@ const ChatContextMenu: React.FC = () => (
             tabIndex={-1}
             className={cn(
                 "relative isolate w-full flex items-center gap-2.5",
-                "px-3 py-2 text-left text-[9px] font-medium",
+                "px-3 py-2 text-left text-[20px] font-medium",
                 "transition-colors rounded-xl",
                 isHighlighted ? "z-10" : "z-0",
                 // Без bg-white на самой кнопке — белая заливка пойдёт отдельным слоем
@@ -681,7 +693,534 @@ const ChatContextMenu: React.FC = () => (
   </div>
 );
 
+// ─────────────────────────────────────────────────────────────
+// UserCaseGTD: систематизация задач по GTD
+// ─────────────────────────────────────────────────────────────
+
+const GTD_SOURCES = [
+  { id: "jira",     name: "Jira",     icon: ListChecks, gradient: "from-blue-500 to-indigo-600",    count: 6 },
+  { id: "trueconf", name: "TrueConf", icon: Video,      gradient: "from-emerald-500 to-teal-600",   count: 3 },
+  { id: "slack",    name: "Slack",    icon: Hash,       gradient: "from-fuchsia-500 to-purple-600", count: 3 },
+];
+
+const GTDAggregation: React.FC = () => (
+  <div className="relative w-full max-w-[460px]">
+    <div
+      aria-hidden="true"
+      className="absolute inset-[-10%] -z-10 rounded-full bg-gradient-to-br from-blue-400/20 via-indigo-400/15 to-purple-400/20 blur-3xl"
+    />
+
+    {/* Источники */}
+    <div className="grid grid-cols-3 gap-3 mb-2">
+      {GTD_SOURCES.map(({ id, name, icon: Icon, gradient, count }) => (
+        <div
+          key={id}
+          className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm ring-1 ring-gray-200/70 dark:ring-gray-700/60 shadow-sm"
+        >
+          <div
+            className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white shadow-md`}
+          >
+            <Icon size={24} aria-hidden="true" />
+          </div>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{name}</p>
+          <span className="text-[11px] text-gray-500 dark:text-gray-400 tabular-nums">
+            {count} задач
+          </span>
+        </div>
+      ))}
+    </div>
+
+    {/* Сходящиеся стрелки */}
+    <svg
+      viewBox="0 0 400 40"
+      className="w-full h-10 text-blue-400/60"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M72 0 Q72 22 200 22" />
+      <path d="M200 0 L200 22" />
+      <path d="M328 0 Q328 22 200 22" />
+      <path d="M200 22 L200 38" />
+    </svg>
+
+    {/* Dayla + GTD */}
+    <div className="flex justify-center mt-1">
+      <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-white dark:bg-gray-900 ring-1 ring-gray-200 dark:ring-gray-700 shadow-lg">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm shrink-0">
+          <Sparkles size={15} aria-hidden="true" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+            Dayla разложила по GTD
+          </p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">
+            12 задач · 4 проекта · 3 источника
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* Стрелка вниз */}
+    <div className="flex justify-center my-3">
+      <ArrowDown size={20} className="text-blue-400" aria-hidden="true" />
+    </div>
+
+    {/* Google Calendar */}
+    <div className="flex justify-center">
+      <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl">
+        <Calendar size={20} aria-hidden="true" />
+        <div>
+          <p className="text-sm font-semibold">Внести в Google Calendar</p>
+          <p className="text-[11px] text-white/80">
+            Слоты подобраны по вашему графику
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Развёрнутый ответ Dayla ───
+
+const GTD_RESPONSE = (
+  <div className="space-y-3">
+    <p>
+      Собрала <strong className="font-semibold">12 задач</strong> за период 30.09–06.10
+      из <strong>Jira</strong>, <strong>TrueConf</strong> и <strong>Slack</strong>.
+      Разложила по GTD:
+    </p>
+
+    {/* Срочное */}
+    <div>
+      <p className="text-[11px] uppercase tracking-widest font-semibold text-red-500 dark:text-red-400 mb-1.5">
+        🔥 Дедлайн сегодня
+      </p>
+      <ul className="space-y-1.5">
+        <li className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
+            Jira
+          </span>
+          <span className="flex-1">Ревью PR #482 — до 18:00</span>
+        </li>
+        <li className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-300 font-medium">
+            Slack
+          </span>
+          <span className="flex-1">Ответить клиенту по SSO — до 12:00</span>
+        </li>
+      </ul>
+    </div>
+
+    {/* На этой неделе */}
+    <div>
+      <p className="text-[11px] uppercase tracking-widest font-semibold text-amber-500 dark:text-amber-400 mb-1.5">
+        📅 На этой неделе
+      </p>
+      <ul className="space-y-1.5">
+        <li className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
+            Jira
+          </span>
+          <span className="flex-1">Спринт-планирование Q4 — 03.10, 11:00</span>
+        </li>
+        <li className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-medium">
+            TrueConf
+          </span>
+          <span className="flex-1">Созвон с продажами — 03.10, 15:00</span>
+        </li>
+        <li className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-300 font-medium">
+            Slack
+          </span>
+          <span className="flex-1">Согласовать бюджет на ноябрь — 04.10, до 17:00</span>
+        </li>
+        <li className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
+            Jira
+          </span>
+          <span className="flex-1">Закрыть 3 задачи из Sprint 24 — 04.10</span>
+        </li>
+      </ul>
+    </div>
+
+    {/* Следующая неделя */}
+    <div>
+      <p className="text-[11px] uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
+        🎯 На следующей неделе
+      </p>
+      <ul className="space-y-1.5">
+        <li className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
+            Jira
+          </span>
+          <span className="flex-1">Ретроспектива спринта — 08.10, 16:00</span>
+        </li>
+        <li className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-medium">
+            TrueConf
+          </span>
+          <span className="flex-1">Демо для партнёров — 09.10, 14:00</span>
+        </li>
+        <li className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-300 font-medium">
+            Slack
+          </span>
+          <span className="flex-1">Квартальный отчёт — 10.10</span>
+        </li>
+      </ul>
+    </div>
+
+    {/* План по графику */}
+    <div className="rounded-xl bg-blue-50/70 dark:bg-blue-950/30 p-3 ring-1 ring-blue-100 dark:ring-blue-900/60">
+      <p className="text-[11px] uppercase tracking-widest font-semibold text-blue-600 dark:text-blue-400 mb-2">
+        ⚡ План по вашему графику · Пн–Пт 09:00–18:00
+      </p>
+      <div className="space-y-2 text-[12px] leading-snug">
+        <div>
+          <p className="font-semibold text-gray-900 dark:text-white">Чт, 03.10</p>
+          <p className="text-gray-600 dark:text-gray-300">
+            09:00–10:30 — Ревью PR #482 (🔥) · 11:00–12:00 — Планирование Q4 · 15:00–16:00 — Созвон с продажами
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-gray-900 dark:text-white">Пт, 04.10</p>
+          <p className="text-gray-600 dark:text-gray-300">
+            09:00–10:00 — Ответить клиенту · 10:00–12:00 — Задачи Sprint 24 · 14:00–15:30 — Бюджет на ноябрь
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-gray-900 dark:text-white">Пн, 07.10</p>
+          <p className="text-gray-600 dark:text-gray-300">
+            10:00–11:00 — Разбор входящих · 14:00–15:00 — Подготовка к демо
+          </p>
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+        Добавила буферы 15 мин до и после каждого созвона. Обед 13:00–14:00 не тронут.
+      </p>
+    </div>
+
+    {/* CTA */}
+    <div className="pt-1 flex flex-wrap gap-1.5">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 shadow-sm transition-all hover:-translate-y-0.5"
+      >
+        <Check size={12} aria-hidden="true" />
+        Внести в календарь
+      </button>
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 transition-all hover:-translate-y-0.5"
+      >
+        Изменить
+      </button>
+      <button
+        type="button"
+        className="inline-flex items-center text-xs font-medium px-3 py-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+      >
+        Отмена
+      </button>
+    </div>
+  </div>
+);
+
+const UserCaseGTD: React.FC = () => (
+  <section id="usecase-gtd" className="relative py-20 md:py-28 overflow-hidden">
+    <div className="max-w-6xl mx-auto px-4 md:px-6">
+      {/* Заголовок */}
+      <div className="max-w-2xl mb-12 md:mb-16">
+        <Badge className="text-eyebrow mb-3">Систематизация по GTD</Badge>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Одна фраза — и всё разложено по полочкам
+        </h2>
+        <p className="mt-3 text-gray-600 dark:text-gray-400">
+          Jira, TrueConf, Slack — Dayla соберёт задачи из всех источников,
+          расставит дедлайны и впишет их в ваш календарь.
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-12 lg:gap-16 items-center">
+        {/* Левая колонка: визуализация потока */}
+        <div className="relative flex justify-center">
+          <GTDAggregation />
+        </div>
+
+        {/* Правая колонка: чат с Dayla */}
+        <div className="relative">
+          <DaylaChatCard
+            userMessage="Систематизируй задачи по Getting Things Done, которые мне прислали на этой неделе из Jira, TrueConf и Slack, в мой Гугл календарь"
+            daylaMessage={GTD_RESPONSE}
+          />
+        </div>
+      </div>
+
+      {/* Подпись */}
+      <div className="mt-12 md:mt-16 max-w-2xl mx-auto text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+          Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь
+        </p>
+      </div>
+    </div>
+  </section>
+);
+
+// ─────────────────────────────────────────────────────────────
+// IPhoneScene — единый канвас, в котором лежат:
+//   • PNG-рендер iPhone
+//   • UI-чат на экране (через matrix3d)
+//   • билет поверх
+//   • контекстное меню поверх
+//
+// Все координаты — в % от PNG (IMG_W × IMG_H).
+// Сцена целиком масштабируется через transform: scale().
+// ─────────────────────────────────────────────────────────────
+
+// ⚠️ ПОДСТАВЬ РЕАЛЬНЫЕ РАЗМЕРЫ СВОЕГО PNG (в пикселях)
+const IMG_W = 396;
+const IMG_H = 773;
+
+// ⚠️ Логический размер UI на экране — пропорции экрана iPhone.
+// 400×866 — для iPhone 14/15 (9:19.5). Подстрой под свой макет.
+const UI_W = 400;
+const UI_H = 866;
+
+// ⚠️ Углы экрана iPhone на PNG, в % от (IMG_W, IMG_H).
+// Порядок TL → TR → BR → BL (по часовой стрелке).
+const IPHONE_SCREEN_CORNERS: [Point, Point, Point, Point] = [
+  [37, -0.3],   // TL
+  [98, 17.3],   // TR
+  [97, 98],   // BR
+  [7, 96],   // BL
+];
+
+const IPhoneScene: React.FC = () => {
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const [scale, setScale] = React.useState(0.4);
+
+  React.useLayoutEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.clientWidth;
+      if (w > 0) setScale(w / IMG_W);
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const matrix = React.useMemo(() => {
+    const dst = IPHONE_SCREEN_CORNERS.map(([px, py]) => [
+      (px / 100) * IMG_W,
+      (py / 100) * IMG_H,
+    ]) as [Point, Point, Point, Point];
+
+    return getPerspectiveMatrix(
+      [
+        [0, 0],
+        [UI_W, 0],
+        [UI_W, UI_H],
+        [0, UI_H],
+      ],
+      dst
+    );
+  }, []);
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="relative w-full"
+      style={{ height: IMG_H * scale }}
+    >
+      {/* Единый канвас. Все координаты внутри — в пикселях PNG. */}
+      <div
+        className="absolute top-0 left-0 origin-top-left"
+        style={{
+            width: IMG_W,
+            height: IMG_H,
+            transform: `scale(${scale})`,
+            WebkitMaskImage:
+            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.25) 65%, transparent 78%, transparent 100%)",
+            maskImage:
+            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.25) 65%, transparent 78%, transparent 100%)",
+        }}
+      >
+        {/* 1. Рендер iPhone */}
+        <img
+          src="/images/iPhone.png"
+          alt="iPhone"
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+          loading="lazy"
+          draggable={false}
+        />
+
+        {/* 2. ОДИН трансформированный слой: чат + билет + меню.
+            Всё внутри получает одинаковое искажение через matrix3d. */}
+        <div
+          className="absolute top-0 left-0 overflow-hidden pointer-events-none select-none"
+          style={{
+            width: UI_W,
+            height: UI_H,
+            transformOrigin: "0 0",
+            transform: matrix,
+            borderRadius: 50,
+          }}
+        >
+          {/* ── 2.1. UI чата (фон экрана) ──────────────── */}
+          <div className="absolute inset-0 flex flex-col bg-white dark:bg-gray-950">
+            {/* Шапка */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                АС
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
+                  Андрей Смирнов
+                </p>
+                <p className="text-[20px] text-emerald-500">онлайн</p>
+              </div>
+            </div>
+
+            {/* Лента */}
+            <div className="flex-1 p-3 space-y-2">
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5">
+                  <p className="text-[25px] text-gray-800 dark:text-gray-200">
+                    Привет! Не забудь про рейс ✈️
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── 2.2. Билет ─────────────────────────────── */}
+          <img
+            src="/images/airplaneTicketWB-mes.png"
+            alt="Сообщение с авиабилетом"
+            className="
+              absolute left-[3%] top-[27%] z-20
+              w-[84%] h-auto
+              rounded-2xl shadow-lg
+              pointer-events-none select-none
+            "
+            loading="lazy"
+          />
+
+          {/* ── 2.3. Меню «Переслать» ──────────────────── */}
+          <div
+            className="
+              absolute left-[3%] top-[48%] z-30
+              w-[53%]
+              pointer-events-none select-none
+            "
+          >
+            <ChatContextMenu />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+// ─── Карточка чата с Dayla (переиспользуется в двух секциях) ───
+
+interface DaylaChatCardProps {
+  /** Префикс над сообщением пользователя, например «Переслано от Андрея Смирнова» */
+  forwardedFrom?: string;
+  /** Текст самого сообщения пользователя */
+  userMessage?: string;
+  /** Ответ Dayla */
+  daylaMessage: React.ReactNode;
+}
+
+const DaylaChatCard: React.FC<DaylaChatCardProps> = ({
+  forwardedFrom,
+  userMessage,
+  daylaMessage,
+}) => (
+  <Card className="relative overflow-hidden p-0 shadow-2xl">
+    <div
+      aria-hidden="true"
+      className="
+        absolute -top-24 -right-24 w-64 h-64 rounded-full
+        bg-gradient-to-br from-blue-400/20 to-purple-500/20
+        blur-3xl pointer-events-none
+      "
+    />
+
+    {/* Шапка */}
+    <div className="relative flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+      <div
+        aria-hidden="true"
+        className="w-9 h-9 rounded-full shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm"
+      >
+        <Sparkles size={15} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium text-gray-900 dark:text-white">Dayla</p>
+        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Онлайн
+        </p>
+      </div>
+    </div>
+
+    {/* Сообщения */}
+    <div className="relative p-4 space-y-4 bg-gradient-to-b from-gray-50/60 to-white dark:from-gray-900/40 dark:to-gray-950">
+      {/* Сообщение пользователя — рендерится только если есть хотя бы одно поле */}
+        {(forwardedFrom || userMessage) && (
+        <div className="flex justify-end">
+            <div className="max-w-[82%] rounded-2xl rounded-br-sm bg-gradient-to-br from-blue-500 to-blue-600 text-white px-4 py-2.5 shadow-sm">
+            {forwardedFrom && (
+                <p className="text-[10px] uppercase tracking-wide opacity-70 mb-1">
+                {forwardedFrom}
+                </p>
+            )}
+            {userMessage && (
+                <p className="text-sm leading-snug">{userMessage}</p>
+            )}
+            </div>
+        </div>
+        )}
+
+      {/* Ответ Dayla */}
+      <div className="flex items-end gap-2">
+        <div
+          aria-hidden="true"
+          className="w-7 h-7 rounded-full shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm"
+        >
+          <Sparkles size={13} />
+        </div>
+
+        <div className="max-w-[86%] min-w-0">
+          <div className="rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-4 py-3 shadow-sm">
+            <p className="text-sm text-gray-900 dark:text-white leading-snug">
+              {daylaMessage}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Поле ввода */}
+    <div className="relative px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60">
+      <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+        <Send size={14} aria-hidden="true" />
+        <span>Сообщение Dayla…</span>
+      </div>
+    </div>
+  </Card>
+);
 // ---------- UserCase: авиабилет из мессенджера ----------
+
+
+
 
 const UserCase: React.FC = () => (
   <section id="usecase" className="relative py-20 md:py-28 overflow-hidden">
@@ -690,279 +1229,314 @@ const UserCase: React.FC = () => (
       <div className="max-w-2xl mb-12 md:mb-16">
         <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Пересылайте события — Deyla всё спланирует
+          Пересылайте события — Dayla всё спланирует
         </h2>
         <p className="mt-3 text-gray-600 dark:text-gray-400">
           Не нужно вручную копировать дату, время и место. Отправьте сообщение
-          боту — Deyla разберётся сама.
+          боту — Dayla разберётся сама.
         </p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
         {/* ═══════════ ЛЕВАЯ ЧАСТЬ: iPhone ═══════════ */}
         <div className="relative flex justify-center">
-        <div
-            className="relative w-full max-w-[400px]"
-            style={{
-                WebkitMaskImage:
-                    "linear-gradient(to bottom, black 0%, black 68%, rgba(0,0,0,0.5) 71%, transparent 75%, transparent 100%)",
-                maskImage:
-                    "linear-gradient(to bottom, black 0%, black 68%, rgba(0,0,0,0.5) 71%, transparent 75%, transparent 100%)",
-                }}
-        >
-
-            {/* ─── z-0: радиальный фиолетовый градиент за iPhone ───
-                inset-[-15%] → градиент выходит за границы контейнера
-                filter:blur(40px) → мягкое рассеянное свечение */}
-            <div
-            aria-hidden="true"
-            className="absolute inset-[-15%] -z-10 pointer-events-none"
-            //style={{
-            //    background:
-            //    "radial-gradient(ellipse at center, rgba(167,139,250,0.55) 0%, rgba(139,92,246,0.35) 35%, rgba(124,58,237,0.18) 60%, transparent 80%)",
-            //    filter: "blur(40px)",
-            //}}
-            />
-
-            {/* ─── z-10: чат с Андреем Смирновым ───────────────────
-                Сидит позади каркаса iPhone. Экран iPhone прозрачный,
-                поэтому чат виден «сквозь экран».
-                inset-[5%] → отступ от рамки (подгони под своё изображение). */}
-            <div
-                className="absolute inset-[20%] top-[10%] z-30 rounded-[2.2rem] overflow-hidden"
-                style={{
-                    // подгони под свой iPhoneScreenWB.png
-                    inset: "11% 21% 11% 22%",   // top right bottom left
-                    borderRadius: "0rem",
-                }}
-            >
-            {/* Шапка чата */}
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95">
-                <div
-                aria-hidden="true"
-                className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-semibold shadow-sm shrink-0"
-                >
-                АС
-                </div>
-                <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
-                    Андрей Смирнов
-                </p>
-                <p className="text-[10px] text-emerald-500">онлайн</p>
-                </div>
-            </div>
-
-            {/* Лента сообщений */}
-            <div className="absolute left-[0%] p-2.5 space-y-2">
-                <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5">
-                    <p className="text-[10px] text-gray-800 dark:text-gray-200">
-                    Привет! Не забудь про рейс ✈️
-                    </p>
-                </div>
-                </div>
-                
-            </div>
-            </div>
-
-            {/* ─── z-20: каркас iPhone поверх чата ───────────────────
-                Экран картинки должен быть прозрачным, чтобы чат был виден. */}
-            <img
-            src="/images/iPhoneScreenWB.png"
-            alt="Экран iPhone"
-            className="relative z-20 w-full h-auto pointer-events-none select-none"
-            loading="lazy"
-            />
-
-            {/* ─── z-30: оверлей билета ───────────────────────────── */}
-            <img
-            src="/images/airplaneTicketWB-mes.png"
-            alt="Сообщение с авиабилетом"
-            className="
-                absolute left-[24%] top-[30%] z-30
-                w-[50%] h-auto
-                rounded-2xl shadow-lg
-                pointer-events-none select-none
-            "
-            loading="lazy"
-            />
-
-            {/* ─── z-40: контекстное меню (long-press) ──────────── */}
-            <div
-            className="
-                absolute left-[24%] top-[46%] z-40
-                w-[31%]
-                pointer-events-none select-none
-            "
-            >
-            <ChatContextMenu />
-            </div>
+        <div className="relative w-full max-w-[400px]">
+            <IPhoneScene />
         </div>
         </div>
 
         {/* ═══════════ ПРАВАЯ ЧАСТЬ: чат ═══════════ */}
         <div className="relative">
-          <Card className="relative overflow-hidden p-0 shadow-2xl">
-            {/* Декоративный градиент */}
-            <div
-              aria-hidden="true"
-              className="
-                absolute -top-24 -right-24 w-64 h-64 rounded-full
-                bg-gradient-to-br from-blue-400/20 to-purple-500/20
-                blur-3xl pointer-events-none
-              "
+            <DaylaChatCard
+                forwardedFrom="Переслано от Андрея Смирнова"
+                userMessage="Авиабилет PD-205 · VKO → LED"
+                daylaMessage={
+                <>
+                    Распознала авиабилет:{' '}
+                    <strong className="font-semibold">дата — 05 апреля, 21:55</strong>,{' '}
+                    <strong className="font-semibold">место посадки — Внуково, терминал A</strong>.
+                    Куда добавить событие?
+                </>
+                }
             />
-
-            {/* ─── Шапка чата ──────────────────────────────── */}
-            <div className="relative flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-              <div
-                aria-hidden="true"
-                className="
-                  w-9 h-9 rounded-full shrink-0
-                  bg-gradient-to-br from-blue-500 to-purple-600
-                  flex items-center justify-center text-white
-                  shadow-sm
-                "
-              >
-                <Sparkles size={15} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-gray-900 dark:text-white">
-                Deyla
-                </p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Онлайн
-                </p>
-              </div>
             </div>
-
-            {/* ─── Сообщения ───────────────────────────────── */}
-            <div className="relative p-4 space-y-4 bg-gradient-to-b from-gray-50/60 to-white dark:from-gray-900/40 dark:to-gray-950">
-              {/* Пользователь пересылает билет */}
-              <div className="flex justify-end">
-                <div
-                  className="
-                    max-w-[82%] rounded-2xl rounded-br-sm
-                    bg-gradient-to-br from-blue-500 to-blue-600
-                    text-white px-4 py-2.5 shadow-sm
-                  "
-                >
-                  <p className="text-[10px] uppercase tracking-wide opacity-70 mb-1">
-                    Переслано от Андрея Смирнова
-                  </p>
-                  <p className="text-sm leading-snug">
-                    Авиабилет PD-205 · VKO → LED
-                  </p>
-                </div>
-              </div>
-
-              {/* Ответ Deyla */}
-              <div className="flex items-end gap-2">
-                <div
-                  aria-hidden="true"
-                  className="
-                    w-7 h-7 rounded-full shrink-0
-                    bg-gradient-to-br from-blue-500 to-purple-600
-                    flex items-center justify-center text-white
-                    shadow-sm
-                  "
-                >
-                  <Sparkles size={13} />
-                </div>
-
-                <div className="max-w-[86%] min-w-0">
-                  <div
-                    className="
-                      rounded-2xl rounded-bl-sm
-                      bg-gray-100 dark:bg-gray-800
-                      px-4 py-3 shadow-sm
-                    "
-                  >
-                    <p className="text-sm text-gray-900 dark:text-white leading-snug">
-                      Распознала авиабилет:{' '}
-                      <strong className="font-semibold">
-                        дата — 05 апреля, 21:55
-                      </strong>
-                      ,{' '}
-                      <strong className="font-semibold">
-                        место посадки — Внуково, терминал A
-                      </strong>
-                      . Куда добавить событие?
-                    </p>
-                  </div>
-
-                  {/* ─── Reply markups ──────────────────── */}
-                  <div className="flex flex-wrap gap-1.5 mt-2.5">
-                    <button
-                      type="button"
-                      className="
-                        inline-flex items-center gap-1.5
-                        text-xs font-medium px-3.5 py-2 rounded-full
-                        bg-blue-500 text-white
-                        hover:bg-blue-600
-                        shadow-sm hover:shadow-md
-                        transition-all hover:-translate-y-0.5
-                      "
-                    >
-                      <Calendar size={12} aria-hidden="true" />
-                      В календарь
-                    </button>
-
-                    <button
-                      type="button"
-                      className="
-                        inline-flex items-center gap-1.5
-                        text-xs font-medium px-3.5 py-2 rounded-full
-                        bg-white dark:bg-gray-900
-                        border border-gray-200 dark:border-gray-700
-                        text-gray-700 dark:text-gray-300
-                        hover:border-blue-400 hover:text-blue-600
-                        dark:hover:text-blue-400
-                        shadow-sm hover:shadow-md
-                        transition-all hover:-translate-y-0.5
-                      "
-                    >
-                      <Send size={12} aria-hidden="true" />
-                      В заметки
-                    </button>
-
-                    <button
-                      type="button"
-                      className="
-                        inline-flex items-center
-                        text-xs font-medium px-3 py-2 rounded-full
-                        text-gray-500 dark:text-gray-400
-                        hover:text-gray-800 dark:hover:text-gray-200
-                        hover:bg-gray-100 dark:hover:bg-gray-800
-                        transition-colors
-                      "
-                    >
-                      Отмена
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ─── Фейковое поле ввода ─────────────────────── */}
-            <div className="relative px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60">
-              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-                <Send size={14} aria-hidden="true" />
-                <span>Сообщение Deyla…</span>
-              </div>
-            </div>
-
-          </Card>
-        </div>
       </div>
 
       {/* ─── Подпись под сценой ───────────────────────────── */}
       <div className="mt-12 md:mt-16 max-w-2xl mx-auto text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
           <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-          Deyla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
+          Dayla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
         </p>
+      </div>
+    </div>
+  </section>
+);
+
+// ─── Mockup Excel-таблицы (финансовый отчёт) ───
+
+const ExcelPreview: React.FC = () => (
+  <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
+    {/* Шапка файла */}
+    <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-100 dark:border-emerald-900/60">
+      <div className="w-6 h-6 rounded bg-emerald-500 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+        X
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
+          Финансовый_отчёт_Q4.xlsx
+        </p>
+        <p className="text-[9px] text-gray-500 dark:text-gray-400">
+          Excel · 24 КБ
+        </p>
+      </div>
+    </div>
+
+    {/* Таблица */}
+    <div className="p-2.5">
+      <table className="w-full text-[15px] leading-tight">
+        <thead>
+          <tr className="text-left text-gray-500 dark:text-gray-400">
+            <th className="pb-1 font-medium">Статья</th>
+            <th className="pb-1 text-right font-medium">План</th>
+            <th className="pb-1 text-right font-medium">Факт</th>
+            <th className="pb-1 text-right font-medium">Δ</th>
+          </tr>
+        </thead>
+        <tbody className="text-gray-800 dark:text-gray-200">
+          <tr>
+            <td className="py-0.5">Выручка</td>
+            <td className="py-0.5 text-right tabular-nums">2 400</td>
+            <td className="py-0.5 text-right tabular-nums text-emerald-600 dark:text-emerald-400">2 580</td>
+            <td className="py-0.5 text-right tabular-nums text-emerald-600 dark:text-emerald-400">+7,5%</td>
+          </tr>
+          <tr>
+            <td className="py-0.5">Себестоимость</td>
+            <td className="py-0.5 text-right tabular-nums">1 100</td>
+            <td className="py-0.5 text-right tabular-nums text-red-500 dark:text-red-400">1 240</td>
+            <td className="py-0.5 text-right tabular-nums text-red-500 dark:text-red-400">+12,7%</td>
+          </tr>
+          <tr className="border-t border-gray-100 dark:border-gray-800">
+            <td className="py-1 font-medium">Маржа</td>
+            <td className="py-1 text-right tabular-nums font-medium">1 300</td>
+            <td className="py-1 text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">1 340</td>
+            <td className="py-1 text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">+3,1%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
+
+// ─────────────────────────────────────────────────────────────
+// MonitorScene — единый канвас для PNG монитора.
+// Внутри — чат с сообщением «Не забудь подать», preview Excel
+// и меню «Переслать». Всё трансформируется через matrix3d, как у iPhone.
+// ─────────────────────────────────────────────────────────────
+
+// ⚠️ ПОДСТАВЬ РЕАЛЬНЫЕ РАЗМЕРЫ Monitor.png (в пикселях)
+const MON_IMG_W = 1144;
+const MON_IMG_H = 938;
+
+// Логический размер UI на экране монитора.
+const MON_UI_W = 800;
+const MON_UI_H = 400;
+
+// ⚠️ Углы экрана монитора на PNG — в % от (MON_IMG_W, MON_IMG_H).
+// Порядок TL → TR → BR → BL (по часовой).
+const MONITOR_SCREEN_CORNERS: [Point, Point, Point, Point] = [
+  [1, 1.7],     // TL
+  [99, 3],     // TR
+  [94, 74],    // BR
+  [7.2, 60],    // BL
+];
+
+const MonitorScene: React.FC = () => {
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const [scale, setScale] = React.useState(0.5);
+
+  React.useLayoutEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.clientWidth;
+      if (w > 0) setScale(w / MON_IMG_W);
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const matrix = React.useMemo(() => {
+    const dst = MONITOR_SCREEN_CORNERS.map(([px, py]) => [
+      (px / 100) * MON_IMG_W,
+      (py / 100) * MON_IMG_H,
+    ]) as [Point, Point, Point, Point];
+
+    return getPerspectiveMatrix(
+      [
+        [0, 0],
+        [MON_UI_W, 0],
+        [MON_UI_W, MON_UI_H],
+        [0, MON_UI_H],
+      ],
+      dst
+    );
+  }, []);
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="relative w-full"
+      style={{ height: MON_IMG_H * scale }}
+    >
+      <div
+        className="absolute top-0 left-0 origin-top-left"
+        style={{
+          width: MON_IMG_W,
+          height: MON_IMG_H,
+          transform: `scale(${scale})`,
+          WebkitMaskImage:
+            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.25) 70%, transparent 87%, transparent 100%)",
+            maskImage:
+            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.25) 70%, transparent 87%, transparent 100%)",
+        }}
+      >
+        {/* 1. PNG монитора */}
+        <img
+          src="/images/Monitor.png"
+          alt="Монитор с финансовым отчётом"
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+          loading="lazy"
+          draggable={false}
+        />
+
+        {/* 2. UI на экране монитора */}
+        <div
+          className="absolute top-0 left-0 overflow-hidden pointer-events-none select-none"
+          style={{
+            width: MON_UI_W,
+            height: MON_UI_H,
+            transformOrigin: "0 0",
+            transform: matrix,
+            borderRadius: 16,
+          }}
+        >
+          <div className="absolute inset-0 flex flex-col bg-white dark:bg-gray-950">
+            {/* Шапка чата с Сергеем */}
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                СН
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
+                  Сергей Ненашев
+                </p>
+                <p className="text-[16px] text-emerald-500">онлайн</p>
+              </div>
+            </div>
+
+            {/* Лента */}
+            <div className="flex-1 p-5 space-y-3 overflow-hidden">
+
+              {/* ─── System-pill: Dayla в диалоге ─────────── */}
+              <div className="flex justify-center">
+                <div
+                  className="
+                    px-3 py-1 rounded-full
+                    bg-blue-50 dark:bg-blue-950/50
+                    ring-1 ring-blue-100 dark:ring-blue-900/60
+                    text-blue-700 dark:text-blue-300
+                    text-[14px] font-medium
+                    flex items-center gap-1.5
+                  "
+                >
+                  <Sparkles size={13} aria-hidden="true" />
+                  В этом диалоге сидит Dayla
+                </div>
+              </div>
+
+              {/* ─── Сообщение Сергея + Excel ─────────────── */}
+              <div className="flex justify-start">
+                <div className="max-w-[60%] space-y-2.5">
+                  <div className="rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-3.5 py-2">
+                    <p className="text-[20px] text-gray-800 dark:text-gray-200">
+                      Не забудьте подать отчётность к концу квартала
+                    </p>
+                  </div>
+
+                  <ExcelPreview />
+                </div>
+              </div>
+
+              {/* ─── Ответ Dayla ──────────────────────────── */}
+              <div className="flex items-end gap-2">
+                <div
+                  aria-hidden="true"
+                  className="w-8 h-8 rounded-full shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm"
+                >
+                  <Sparkles size={14} />
+                </div>
+                <div className="max-w-[70%] min-w-0">
+                  <div className="rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-3.5 py-2">
+                    <p className="text-[18px] text-gray-900 dark:text-white leading-snug">
+                      Зафиксировала задачу <strong className="font-semibold">«Подать фин отчёт»</strong> на 30.09.2027 (конец квартала). Собираю ваши документы к концу отчётного периода.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const UserCaseFinance: React.FC = () => (
+  <section
+    id="usecase-finance"
+    className="relative py-20 md:py-28 overflow-hidden"
+  >
+    <div className="max-w-5xl mx-auto px-4 md:px-6">
+      {/* Заголовок */}
+      <div className="max-w-2xl mb-12 md:mb-16">
+        <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Прислали файл? Dayla превратит его в задачу
+        </h2>
+        <p className="mt-3 text-gray-600 dark:text-gray-400">
+          Добавьте Dayla в чат.
+          Она распознает, что к чему и когда это надо сдать.
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-[2fr_1fr] gap-12 lg:gap-20 items-center">
+        {/* Левая колонка: монитор */}
+        <div className="relative flex justify-center">
+          <div className="relative w-full max-w-[2000px]">
+            <MonitorScene />
+          </div>
+        </div>
+
+        {/* Правая колонка: чат Dayla */}
+        <div className="relative">
+        <DaylaChatCard
+            daylaMessage={
+            <>
+                Подтянула Финансовый_отчёт_Q4.xlsx
+                Зафиксировала задачу{' '}
+                <strong className="font-semibold">«Подать фин отчёт»</strong>{' '}
+                на 30.09.2027 (конец квартала). Собираю ваши документы к концу
+                отчётного периода.
+            </>
+            }
+        />
+        </div>
       </div>
     </div>
   </section>
@@ -1003,7 +1577,7 @@ const HeroScene: React.FC = () => {
       ref={wrapperRef}
       className="relative w-full"
       style={{ height: HERO_SCENE_H * scale }}
-      aria-label="Календарь и голосовой ассистент Deyla"
+      aria-label="Календарь и голосовой ассистент Dayla"
       role="img"
     >
       <div
@@ -1030,7 +1604,7 @@ const HeroScene: React.FC = () => {
         >
         <img
             src="/images/MaskotWB.png"
-            alt="Ассистент Deyla говорит по телефону"
+            alt="Ассистент Dayla говорит по телефону"
             className="w-full h-full object-contain select-none pointer-events-none"
             draggable={false}
             loading="lazy"
@@ -1076,7 +1650,7 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
         </h1>
 
         <p className="mt-5 text-lg text-gray-600 dark:text-gray-400 max-w-xl">
-          Скажите о своих планах — Deyla найдёт время в календаре, расставит
+          Скажите о своих планах — Dayla найдёт время в календаре, расставит
           приоритеты и напомнит. Вам не нужно вручную собирать задачи из
           заметок и чатов.
         </p>
@@ -1115,66 +1689,6 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
   </section>
 );
 
-// ---------- Голосовой сценарий ----------
-
-//const VoiceQuery: React.FC = () => (
-//  <section className="relative z-10 -mt-6 md:-mt-10 lg:-mt-16">
-//    <div className="max-w-6xl mx-auto px-4 md:px-6">
-//      <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-//        {/* Левая колонка: заголовок + пояснения */}
-//        <div className="space-y-5 lg:pt-24 xl:pt-28">
-//          <div>
-//            <Badge variant="default" className="mb-3">
-//              <Mic size={12} className="mr-1" aria-hidden="true" />
-//              Голосом — проще
-//            </Badge>
-//            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-//              Спросите — и Deyla подскажет, что делать дальше
-//            </h2>
-//            <p className="mt-3 text-gray-600 dark:text-gray-400">
-//              Пока идёт день, планы меняются. Просто скажите, что сдвинулось, —
-//              и получите конкретное действие вместо пустого слота.
-//            </p>
-//          </div>
-//
-//          <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-//            <li className="flex gap-3">
-//              <Sparkles size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-//              <span>Понимает свободный текст: перестроит план, если тренировка отменилась.</span>
-//            </li>
-//            <li className="flex gap-3">
-//              <Sparkles size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-//              <span>Предлагает реальное действие под ваши цели, а не абстрактный совет.</span>
-//            </li>
-//            <li className="flex gap-3">
-//              <Sparkles size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-//              <span>Ничего не меняет без подтверждения — вы решаете, что оставить в плане.</span>
-//            </li>
-//          </ul>
-//        </div>
-//
-//        <div className="relative flex flex-col items-center">     
-//          <div
-//            className="relative z-20 w-full max-w-[340px]
-//                       -mt-40 md:-mt-56 lg:-mt-72 xl:-mt-80
-//                       lg:-ml-[130%]"                                    
-//          >
-//            <div
-//              aria-hidden="true"
-//              className="absolute inset-0 -z-10 rounded-full bg-gradient-to-br from-blue-400/35 via-indigo-400/25 to-purple-400/35 blur-3xl"
-//            />
-//            <MascotWithPhone />
-//          </div>
-//
-//          <div className="mt-6 w-full max-w-[440px]">   
-//            <SpeechBubble />
-//          </div>
-//        </div>
-//      </div>
-//    </div>
-//  </section>
-//);
-
 // ---------- Речевой бабл ----------
 
 const SpeechBubble: React.FC = () => (
@@ -1193,10 +1707,10 @@ const SpeechBubble: React.FC = () => (
             Голосовой запрос
           </p>
           <p className="text-base md:text-lg leading-snug text-gray-900 dark:text-white">
-            «Deyla, тренировка отменилась»
+            «Dayla, тренировка отменилась»
           </p>
           <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-            Deyla подберёт альтернативу под ваши цели.
+            Dayla подберёт альтернативу под ваши цели.
           </p>
         </div>
       </div>
@@ -1388,9 +1902,9 @@ const HeroMockup: React.FC = () => (
 );
 // ---------- Возможности ----------
 const BENEFITS = [
-  { icon: Mic, title: "Говорите как человеку", text: "Опишите задачу текстом или голосом — Deyla сам разберётся, куда её поставить." },
+  { icon: Mic, title: "Говорите как человеку", text: "Опишите задачу текстом или голосом — Dayla сам разберётся, куда её поставить." },
   { icon: Send, title: "Telegram-бот", text: "Перешлите сообщение в бот — задача появится в календаре." },
-  { icon: Calendar, title: "Умные рекомендации", text: "Deyla находит свободные окна и подсказывает, что в них можно сделать." },
+  { icon: Calendar, title: "Умные рекомендации", text: "Dayla находит свободные окна и подсказывает, что в них можно сделать." },
   { icon: BarChart3, title: "Анализ и прогресс", text: "Смотрите, куда уходит время и как вы справляетесь с планами." },
 ];
 
@@ -1515,7 +2029,7 @@ const FinalCTA: React.FC<{ onStart: () => void }> = ({ onStart }) => (
             <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
               Ваш день живёт в&nbsp;Google, Jira и&nbsp;блокноте.{" "}
               <span className="text-white/85">
-                Deyla собирает его в&nbsp;одну картину.
+                Dayla собирает его в&nbsp;одну картину.
               </span>
             </h2>
 
