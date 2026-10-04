@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Dayla — личный ИИ-ассистент: календарь, задачи и напоминания в Telegram. Планируйте день за минуту." />
+    <meta name="theme-color" content="#f7f8fc" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Dayla — планируйте день за минуту</title>
+    <script>
+      (function () {
+        var mode = "system";
+        try {
+          mode = localStorage.getItem("dayla-theme") || "system";
+        } catch (e) {}
+        var dark = mode === "dark" || (mode !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        var root = document.documentElement;
+        root.classList.add(dark ? "dark" : "light");
+        root.style.colorScheme = dark ? "dark" : "light";
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
