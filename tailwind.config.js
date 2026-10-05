@@ -17,6 +17,7 @@ export default {
           "Helvetica Neue",
           "Arial",
           "sans-serif",
+          'system-ui',
         ],
         mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
       },

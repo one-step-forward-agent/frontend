@@ -1,25 +1,54 @@
+// src/layouts/AuthLayout.tsx
 import React from "react";
 import { ArrowLeft, Check, Sparkles } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
 import { ThemeToggle } from "@/theme";
+import { MascotFade } from "@/components/MascotFade";
 import { cn } from "@/utils/cn";
 
+/* ─── Liquid Glass — единый стиль ────────────────────────── */
+const GLASS_BODY =
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "ring-1 ring-white/30 dark:ring-white/10 " +
+  "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
+  "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
+
+const GLASS_SHEEN_ROUND_3XL =
+  "pointer-events-none absolute inset-0 rounded-3xl " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
+
+const GLASS_SHEEN_PILL =
+  "pointer-events-none absolute inset-0 rounded-full " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
+
 const MascotWithPhone: React.FC = () => (
-  <div
-    className="relative w-full max-w-[380px] mx-auto"
-    style={{
-      WebkitMaskImage:
-        "linear-gradient(to bottom, black 0%, black 55%, rgba(0,0,0,0.35) 78%, transparent 95%)",
-      maskImage:
-        "linear-gradient(to bottom, black 0%, black 55%, rgba(0,0,0,0.35) 78%, transparent 95%)",
-    }}
-  >
-    <img
+  <div className="relative mt-10 mx-auto w-full max-w-[420px]"
+    style ={{
+      WebkitMaskImage: [
+      // 1. По вертикали: сохраняем затухание внизу
+      "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.5) 68%, transparent 90%)",
+      // 2. По горизонтали: мягко гасим к правому краю (там, где карточки)
+      "linear-gradient(to right, black 0%, black 55%, rgba(0,0,0,0.5) 78%, transparent 100%)",
+      // 3. Слева — лишь слегка, чтобы маскот не был «отрезан» у границы
+      "linear-gradient(to left, black 0%, black 85%, transparent 100%)",
+    ].join(", "),
+    maskImage: [
+      "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.5) 68%, transparent 90%)",
+      "linear-gradient(to right, black 0%, black 55%, rgba(0,0,0,0.5) 78%, transparent 100%)",
+      "linear-gradient(to left, black 0%, black 85%, transparent 100%)",
+    ].join(", "),
+
+    // ─── Складываем слои через intersect ───
+    WebkitMaskComposite: "source-in",
+    maskComposite: "intersect",
+    }}>
+    <MascotFade
       src="/images/MaskotWB.png"
       alt="Ассистент Dayla говорит по телефону"
-      className="w-full h-auto select-none pointer-events-none"
-      draggable={false}
-      loading="lazy"
+      fadeStart={48}
+      fadeLength={52}
+      blend
+      glow
     />
   </div>
 );
@@ -33,23 +62,35 @@ const AuthLayout: React.FC = () => {
         "dark:from-gray-950 dark:via-gray-950 dark:to-slate-950"
       )}
     >
+      {/* ─── Фоновые пятна ──────────────────────────── */}
       <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-40 -left-40 w-[36rem] h-[36rem] rounded-full bg-sky-400/20 blur-3xl" />
         <div className="absolute top-1/3 right-1/4 w-[28rem] h-[28rem] rounded-full bg-blue-400/15 blur-3xl" />
         <div className="absolute -bottom-40 left-1/3 w-[34rem] h-[34rem] rounded-full bg-slate-400/15 blur-3xl" />
       </div>
 
-      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 py-4 sm:px-6">
+      {/* ─── Верхняя навигация ──────────────────────── */}
+      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 px-4 py-4 sm:px-6">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-gray-600 hover:bg-white/60 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+          className={cn(
+            "relative inline-flex items-center gap-1.5 overflow-hidden",
+            "px-3 py-1.5 rounded-full",
+            "text-sm font-medium text-gray-700 dark:text-gray-300",
+            GLASS_BODY,
+            "transition-transform duration-200",
+            "hover:-translate-y-0.5",
+            "max-w-[60%]"
+          )}
         >
-          <ArrowLeft size={16} aria-hidden="true" />
-          На главную
+          <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
+          <ArrowLeft size={16} className="relative shrink-0" aria-hidden="true" />
+          <span className="relative truncate">На главную</span>
         </Link>
         <ThemeToggle />
       </div>
 
+      {/* ─── Левая колонка — брендинг и маскот ──────── */}
       <div className="relative hidden lg:flex flex-col justify-center items-center p-12">
         <div className="relative max-w-md w-full text-center">
           <div
@@ -119,22 +160,16 @@ const AuthLayout: React.FC = () => {
         </div>
       </div>
 
-      <div className="relative flex items-center justify-center p-6 lg:p-12">
+      {/* ─── Правая колонка — форма ─────────────────── */}
+      <div className="relative flex items-center justify-center px-4 py-20 sm:px-6 lg:p-12">
         <div
           className={cn(
             "relative w-full max-w-md overflow-hidden rounded-3xl",
-            "bg-white/10 dark:bg-white/[0.03]",
-            "backdrop-blur-2xl",
-            "ring-1 ring-white/40 dark:ring-white/10",
-            "shadow-[0_8px_32px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-1px_0_rgba(255,255,255,0.15)]",
-            "dark:shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_-1px_0_rgba(255,255,255,0.02)]",
-            "p-6 md:p-8"
+            GLASS_BODY,
+            "p-5 sm:p-6 md:p-8"
           )}
         >
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-8 top-1 h-1/3 rounded-full bg-gradient-to-b from-white/40 dark:from-white/[0.04] to-transparent opacity-70 blur-[1px]"
-          />
+          <span aria-hidden="true" className={GLASS_SHEEN_ROUND_3XL} />
 
           <div className="relative">
             <Outlet />

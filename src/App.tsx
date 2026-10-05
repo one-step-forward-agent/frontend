@@ -17,9 +17,7 @@ const ToneOfVoice = lazy(() => import("@/components/onboarding/ToneOfVoice").the
 const GoalsAndHabits = lazy(() => import("@/components/onboarding/GoalsAndHabits").then((module) => ({ default: module.GoalsAndHabits })));
 const ExistingPlans = lazy(() => import("@/components/onboarding/ExistingPlans").then((module) => ({ default: module.ExistingPlans })));
 const AppleAndGoogleLogging = lazy(() => import("@/components/onboarding/AppleAndGoogleLogging").then((module) => ({ default: module.AppleAndGoogleLogging })));
-const SourcesImport = lazy(() => import("@/components/onboarding/SourcesImport").then((module) => ({ default: module.SourcesImport })));
 const FastTasksEnter = lazy(() => import("@/components/onboarding/FastTasksEnter").then((module) => ({ default: module.FastTasksEnter })));
-const LetsPlanTomorrow = lazy(() => import("@/components/onboarding/LetsPlanTomorrow").then((module) => ({ default: module.LetsPlanTomorrow })));
 const SuccessAndLearning = lazy(() => import("@/components/onboarding/SuccessAndLearning").then((module) => ({ default: module.SuccessAndLearning })));
 const TermsOfUsePage = lazy(() => import("@/pages/Documents/TermsOfUsePage"));
 const PersonalDataConsentPage = lazy(() => import("@/pages/Documents/PersonalDataConsentPage"));
@@ -81,9 +79,7 @@ function Routing() {
           <Route path="/onboarding/goals-and-habits" element={<GoalsAndHabits />} />
           <Route path="/onboarding/existing-plans" element={<ExistingPlans />} />
           <Route path="/onboarding/apple-google-logging" element={<AppleAndGoogleLogging />} />
-          <Route path="/onboarding/sources-import" element={<SourcesImport />} />
           <Route path="/onboarding/fast-tasks-enter" element={<FastTasksEnter />} />
-          <Route path="/onboarding/lets-plan-tomorrow" element={<LetsPlanTomorrow />} />
           <Route path="/onboarding/success-and-learning" element={<SuccessAndLearning />} />
         </Route>
 
