@@ -1,18 +1,31 @@
+// src/components/onboarding/ExistingPlans.tsx
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  CalendarDays, Clock, Globe, Info, Sparkles, Copy,
+  CalendarDays, Clock, Globe, Sparkles, Copy,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding, type DayShort } from "./OnboardingContext";
 import { Input } from "@/components/ui/form-field";
 import { cn } from "@/utils/cn";
-import { glass } from "@/styles/glass";
 
 const TOTAL = 10;
 
-const G = glass.strong;
+/* ─── Liquid Glass — единый стиль ────────────────────────── */
+const GLASS_BODY =
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "ring-1 ring-white/30 dark:ring-white/10 " +
+  "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
+  "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
+
+const GLASS_SHEEN =
+  "pointer-events-none absolute inset-0 rounded-2xl " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
+
+const GLASS_SHEEN_PILL =
+  "pointer-events-none absolute inset-0 rounded-full " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
 const DAYS: { short: DayShort; full: string }[] = [
   { short: "Пн", full: "Понедельник" },
@@ -30,17 +43,13 @@ const PRESETS = [
   { id: "short",   label: "Сокращённый", days: ["Пн", "Вт", "Ср", "Чт"]       as DayShort[], from: "10:00", to: "18:00" },
 ];
 
-const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
-  <span aria-hidden="true" className={cn(G.specular, className)} />
-);
-
 const SectionDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex items-center gap-3">
-    <div className="h-px flex-1 bg-white/60 dark:bg-white/10" />
-    <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium">
+    <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
+    <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">
       {children}
     </span>
-    <div className="h-px flex-1 bg-white/60 dark:bg-white/10" />
+    <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
   </div>
 );
 
@@ -158,23 +167,25 @@ export const ExistingPlans: React.FC = () => {
       nextDisabled={days.length === 0}
       nextLabel={`Далее${weeklyHours > 0 ? ` · ${Math.round(weeklyHours)} ч/нед` : ""}`}
     >
-      <div className="relative space-y-5">
-        <div className="flex items-center gap-3">
+      <div className="relative space-y-4 sm:space-y-5">
+        {/* ─── Eyebrow ─────────────────────────────── */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <span
             className={cn(
-              "relative inline-flex items-center gap-1.5",
+              "relative inline-flex items-center gap-1.5 overflow-hidden",
               "px-2.5 py-1 rounded-full",
-              G.surface,
+              GLASS_BODY,
               "text-[11px] uppercase tracking-widest font-medium",
               "text-gray-600 dark:text-gray-300"
             )}
           >
-            <Sparkles size={11} aria-hidden="true" />
-            Ваш график
+            <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
+            <Sparkles size={11} aria-hidden="true" className="relative" />
+            <span className="relative">Ваш график</span>
           </span>
-
         </div>
 
+        {/* ─── Пресеты ─────────────────────────────── */}
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
             Быстрый выбор
@@ -194,31 +205,25 @@ export const ExistingPlans: React.FC = () => {
                   type="button"
                   onClick={() => applyPreset(p)}
                   className={cn(
-                    "group relative inline-flex items-center",
+                    "group relative inline-flex items-center overflow-hidden",
                     "px-3 py-1.5 rounded-full text-xs font-medium",
-                    "overflow-hidden transition-all duration-200",
-                    "backdrop-blur-md",
-                    active
-                      ? [
-                          "bg-blue-500/90 text-white",
-                          "ring-1 ring-blue-400/60",
-                          "shadow-[0_4px_14px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.4)]",
-                        ]
-                      : [
-                          "bg-white/50 dark:bg-white/[0.05]",
-                          "ring-1 ring-white/60 dark:ring-white/10",
-                          "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
-                          "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
-                          "text-gray-700 dark:text-gray-300",
-                          "hover:-translate-y-0.5 hover:bg-white/70 dark:hover:bg-white/[0.08]",
-                        ]
+                    "transition-transform duration-200",
+                    GLASS_BODY,
+                    "text-gray-700 dark:text-gray-300",
+                    "hover:-translate-y-0.5",
+                    "max-w-full"
                   )}
+                  style={
+                    active
+                      ? {
+                          boxShadow:
+                            "0 0 0 1.5px rgba(56,189,248,0.6), 0 4px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(15,23,42,0.06)",
+                        }
+                      : undefined
+                  }
                 >
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-2 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[1px]"
-                  />
-                  <span className="relative">
+                  <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
+                  <span className="relative truncate">
                     {p.label} · {p.from}–{p.to}
                   </span>
                 </button>
@@ -227,28 +232,24 @@ export const ExistingPlans: React.FC = () => {
           </div>
         </div>
 
-        <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-6 top-1 h-16 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-60 blur-md"
-          />
+        {/* ─── Карточка графика ─────────────────────── */}
+        <div className={cn("relative overflow-hidden rounded-2xl", GLASS_BODY)}>
+          <span aria-hidden="true" className={GLASS_SHEEN} />
 
-          <div className="relative p-5 space-y-5">
+          <div className="relative p-3.5 sm:p-5 space-y-4 sm:space-y-5">
+            {/* Заголовок блока */}
             <div className="flex items-start gap-3">
               <div
                 aria-hidden="true"
                 className={cn(
                   "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
-                  "bg-white/60 dark:bg-white/[0.06] text-blue-600 dark:text-blue-300",
-                  "ring-1 ring-white/70 dark:ring-white/10",
-                  "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
-                  "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]"
+                  "bg-white/[0.06] dark:bg-white/[0.02]",
+                  "backdrop-blur-3xl",
+                  "ring-1 ring-white/30 dark:ring-white/10",
+                  "text-blue-600 dark:text-blue-300",
+                  "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
                 )}
               >
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
-                />
                 <CalendarDays size={16} className="relative" />
               </div>
               <div>
@@ -258,7 +259,8 @@ export const ExistingPlans: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-1.5">
+            {/* Плитки дней: 7 на всех, но компактнее на мобильном */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
               {DAYS.map((d) => {
                 const active = days.includes(d.short);
                 return (
@@ -271,29 +273,26 @@ export const ExistingPlans: React.FC = () => {
                     title={d.full}
                     className={cn(
                       "group relative flex flex-col items-center justify-center overflow-hidden",
-                      "h-14 rounded-xl transition-all duration-200",
-                      "backdrop-blur-md",
-                      active
-                        ? [
-                            "bg-blue-500/90 text-white",
-                            "ring-1 ring-blue-400/60",
-                            "shadow-[0_6px_18px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.4)]",
-                          ]
-                        : [
-                            "bg-white/40 dark:bg-white/[0.04]",
-                            "ring-1 ring-white/60 dark:ring-white/10",
-                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
-                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
-                            "text-gray-500 dark:text-gray-400",
-                            "hover:-translate-y-0.5 hover:bg-white/60 dark:hover:bg-white/[0.08]",
-                          ]
+                      "h-12 sm:h-14 rounded-lg sm:rounded-xl transition-transform duration-200",
+                      GLASS_BODY,
+                      "text-gray-500 dark:text-gray-400",
+                      active && "text-white",
+                      "hover:-translate-y-0.5"
                     )}
+                    style={
+                      active
+                        ? {
+                            boxShadow:
+                              "0 0 0 1.5px rgba(56,189,248,0.6), 0 4px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(15,23,42,0.06)",
+                            backgroundColor: "rgba(56,189,248,0.22)",
+                          }
+                        : undefined
+                    }
                   >
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[1px]"
-                    />
-                    <span className="relative text-sm font-semibold">{d.short}</span>
+                    <span aria-hidden="true" className={GLASS_SHEEN} />
+                    <span className="relative text-xs sm:text-sm font-semibold">
+                      {d.short}
+                    </span>
                     <span
                       className={cn(
                         "relative mt-0.5 w-1 h-1 rounded-full transition-all",
@@ -308,7 +307,8 @@ export const ExistingPlans: React.FC = () => {
 
             <SectionDivider>Рабочие часы</SectionDivider>
 
-            <div className="flex items-center justify-between gap-3 px-1">
+            {/* Switch — на узких экранах переносится под текст */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
                   Одинаковое время во все дни
@@ -326,16 +326,17 @@ export const ExistingPlans: React.FC = () => {
                 onClick={() => setPerDay((v) => !v)}
                 className={cn(
                   "relative shrink-0 w-11 h-6 rounded-full overflow-hidden transition-colors duration-200",
-                  "ring-1",
+                  "ring-1 self-start sm:self-auto",
                   !perDay
                     ? [
-                        "bg-blue-500/90 ring-blue-400/60",
-                        "shadow-[0_4px_14px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.4)]",
+                        "bg-sky-500/50 ring-sky-400/60",
+                        "shadow-[0_4px_14px_rgba(56,189,248,0.35),inset_0_1px_0_rgba(255,255,255,0.4)]",
                       ]
                     : [
-                        "bg-white/40 dark:bg-white/[0.05]",
-                        "ring-white/60 dark:ring-white/10",
-                        "shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]",
+                        "bg-white/[0.06] dark:bg-white/[0.02]",
+                        "backdrop-blur-3xl",
+                        "ring-white/30 dark:ring-white/10",
+                        "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]",
                       ]
                 )}
               >
@@ -350,8 +351,9 @@ export const ExistingPlans: React.FC = () => {
               </button>
             </div>
 
+            {/* Одинаковое время: одна колонка на мобильном */}
             {!perDay && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block">
                   <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
                     <Clock size={12} aria-hidden="true" />
@@ -394,6 +396,7 @@ export const ExistingPlans: React.FC = () => {
               </div>
             )}
 
+            {/* Разное время по дням */}
             {perDay && (
               <div className="space-y-2">
                 {activeDays.length === 0 && (
@@ -408,79 +411,50 @@ export const ExistingPlans: React.FC = () => {
                     <div
                       key={d.short}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-xl",
-                        "bg-white/50 dark:bg-white/[0.03]",
-                        "backdrop-blur-md",
-                        "ring-1 ring-white/60 dark:ring-white/10",
-                        "shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,23,42,0.04)]",
-                        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]"
+                        "relative flex items-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl sm:rounded-2xl overflow-hidden",
+                        GLASS_BODY
                       )}
                     >
-                      <span className="shrink-0 w-9 text-xs font-semibold text-gray-700 dark:text-gray-200">
+                      <span aria-hidden="true" className={GLASS_SHEEN} />
+
+                      <span className="relative shrink-0 w-7 sm:w-9 text-xs font-semibold text-gray-700 dark:text-gray-200">
                         {d.short}
                       </span>
 
-                      <div className="relative flex-1">
+                      <div className="relative flex-1 min-w-0">
                         <Clock
                           size={13}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 hidden sm:block"
                           aria-hidden="true"
                         />
                         <Input
                           type="time"
                           value={t.from}
                           onChange={(e) => updateDayTime(d.short, "from", e.target.value)}
-                          className="pl-9"
+                          className="sm:pl-9"
                           aria-label={`Начало работы в ${d.full}`}
                         />
                       </div>
 
-                      <span className="text-gray-400 text-xs">–</span>
+                      <span className="relative text-gray-400 text-xs shrink-0">–</span>
 
-                      <div className="relative flex-1">
+                      <div className="relative flex-1 min-w-0">
                         <Clock
                           size={13}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 hidden sm:block"
                           aria-hidden="true"
                         />
                         <Input
                           type="time"
                           value={t.to}
                           onChange={(e) => updateDayTime(d.short, "to", e.target.value)}
-                          className="pl-9"
+                          className="sm:pl-9"
                           aria-label={`Конец работы в ${d.full}`}
                         />
                       </div>
                     </div>
                   );
                 })}
-
-                {activeDays.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={applyFirstToAll}
-                    className={cn(
-                      "group relative inline-flex items-center gap-1.5",
-                      "px-3 py-1.5 rounded-full text-xs font-medium",
-                      "overflow-hidden transition-all duration-200",
-                      "backdrop-blur-md",
-                      "bg-white/50 dark:bg-white/[0.05]",
-                      "ring-1 ring-white/60 dark:ring-white/10",
-                      "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
-                      "text-gray-700 dark:text-gray-300",
-                      "hover:-translate-y-0.5 hover:bg-white/70 dark:hover:bg-white/[0.08]"
-                    )}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-2 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[1px]"
-                    />
-                    <Copy size={12} className="relative" />
-                    <span className="relative">
-                      Применить время «{activeDays[0].short}» ко всем
-                    </span>
-                  </button>
-                )}
               </div>
             )}
 
@@ -503,7 +477,6 @@ export const ExistingPlans: React.FC = () => {
             </label>
           </div>
         </div>
-
       </div>
     </OnboardingLayout>
   );

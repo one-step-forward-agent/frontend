@@ -1,10 +1,21 @@
+// src/components/onboarding/OnboardingLayout.tsx
 import * as React from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ArrowRight, ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/theme";
 import { cn } from "@/utils/cn";
 import { PageBackdrop } from "@/components/onboarding/PageBackdrop";
+
+/* ─── Liquid Glass — единый стиль ────────────────────────── */
+const GLASS_BODY =
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "ring-1 ring-white/30 dark:ring-white/10 " +
+  "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
+  "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
+
+const GLASS_SHEEN =
+  "pointer-events-none absolute inset-0 rounded-full " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
 export interface OnboardingLayoutProps {
   step: number;
@@ -33,23 +44,66 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   nextDisabled,
   loading,
 }) => {
+  const progress = Math.min(100, Math.max(0, Math.round((step / totalSteps) * 100)));
+
   return (
     <div className="relative min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white overflow-x-hidden flex flex-col">
       <PageBackdrop />
 
+      {/* ─── Header ─────────────────────────────── */}
       <header className="relative z-20 flex items-center justify-between px-4 pt-4 md:px-6">
-        <Link to="/" className="inline-flex items-center gap-2 font-semibold text-gray-900 dark:text-white" aria-label="Dayla — на главную">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 text-white" aria-hidden="true">
-            <Sparkles size={15} strokeWidth={2} />
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 font-semibold text-gray-900 dark:text-white"
+          aria-label="Dayla — на главную"
+        >
+          <span
+            className={cn(
+              "relative inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg",
+              "bg-gradient-to-br from-sky-500 to-blue-600",
+              "ring-1 ring-white/40",
+              "shadow-[0_2px_8px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.5)]"
+            )}
+            aria-hidden="true"
+          >
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
+            />
+            <Sparkles size={15} strokeWidth={2} className="relative text-white" />
           </span>
           Dayla
         </Link>
         <ThemeToggle />
       </header>
 
+      {/* ─── Main ───────────────────────────────── */}
       <main className="relative z-10 flex-1 flex items-start md:items-center justify-center px-4 md:px-6 py-8 md:py-10">
         <div className="w-full max-w-2xl">
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white">
+          {/* Прогресс-бар — стеклянный трек + синяя заливка */}
+          <div
+            className={cn(
+              "mb-5 h-1 w-full overflow-hidden rounded-full",
+              "bg-white/[0.06] dark:bg-white/[0.02]",
+              "ring-1 ring-white/30 dark:ring-white/10",
+              "shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+            )}
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className={cn(
+                "h-full rounded-full",
+                "bg-gradient-to-r from-sky-400 to-blue-500",
+                "shadow-[0_0_8px_rgba(59,130,246,0.6)]"
+              )}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight">
             {title}
           </h1>
           {subtitle && (
@@ -59,34 +113,84 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
         </div>
       </main>
 
+      {/* ─── Footer ─────────────────────────────── */}
       <footer className="relative z-10 px-4 md:px-6 pb-6 md:pb-8">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
           {onBack && (
-            <Button
+            <button
               type="button"
-              variant="outline"
               onClick={onBack}
-              className="dark:text-white dark:border-gray-600"
+              className={cn(
+                "relative overflow-hidden inline-flex items-center gap-1.5",
+                "px-4 py-2.5 rounded-full",
+                "text-sm font-medium",
+                "text-gray-700 dark:text-gray-300",
+                GLASS_BODY,
+                "transition-transform duration-200",
+                "hover:-translate-y-0.5"
+              )}
             >
-              Назад
-            </Button>
+              <span aria-hidden="true" className={GLASS_SHEEN} />
+              <ChevronLeft size={16} className="relative" aria-hidden="true" />
+              <span className="relative">Назад</span>
+            </button>
           )}
+
           <div className="flex-1" />
+
           {onSkip && (
-            <Button type="button" variant="ghost" onClick={onSkip}>
+            <button
+              type="button"
+              onClick={onSkip}
+              className={cn(
+                "relative overflow-hidden inline-flex items-center",
+                "px-4 py-2.5 rounded-full",
+                "text-sm font-medium",
+                "text-gray-600 dark:text-gray-400",
+                "transition-colors duration-200",
+                "hover:text-gray-900 dark:hover:text-gray-100"
+              )}
+            >
               Пропустить
-            </Button>
+            </button>
           )}
+
           {onNext && (
-            <Button
+            <button
               type="button"
               onClick={onNext}
-              disabled={nextDisabled}
-              isLoading={loading}
-              className={cn(nextDisabled && "opacity-50")}
+              disabled={nextDisabled || loading}
+              className={cn(
+                "relative overflow-hidden inline-flex items-center gap-1.5",
+                "px-5 py-2.5 rounded-full",
+                "text-sm font-semibold",
+                "text-blue-700 dark:text-blue-300",
+                GLASS_BODY,
+                "transition-all duration-200",
+                "hover:-translate-y-0.5",
+                "disabled:opacity-50 disabled:pointer-events-none disabled:hover:translate-y-0"
+              )}
             >
-              {nextLabel}
-            </Button>
+              <span aria-hidden="true" className={GLASS_SHEEN} />
+              {loading ? (
+                <span className="relative inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className="w-3.5 h-3.5 rounded-full border-2 border-blue-500/40 border-t-blue-600 animate-spin"
+                  />
+                  <span>Подождите…</span>
+                </span>
+              ) : (
+                <span className="relative inline-flex items-center gap-1.5">
+                  {nextLabel}
+                  <ArrowRight
+                    size={14}
+                    className="transition-transform duration-200 group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </span>
+              )}
+            </button>
           )}
         </div>
       </footer>

@@ -1,3 +1,4 @@
+// src/components/onboarding/GoalsAndHabits.tsx
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,28 +12,39 @@ import { useOnboarding } from "./OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-field";
 import { cn } from "@/utils/cn";
-import { glass } from "@/styles/glass";
 
 const TOTAL = 10;
 
-const G = glass.strong;
+/* ─── Liquid Glass — единый стиль ────────────────────────── */
+const GLASS_BODY =
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "ring-1 ring-white/30 dark:ring-white/10 " +
+  "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
+  "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
+
+const GLASS_SHEEN =
+  "pointer-events-none absolute inset-0 rounded-2xl " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
+
+const GLASS_SHEEN_PILL =
+  "pointer-events-none absolute inset-0 rounded-full " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
 type GoalVisual = {
   icon: LucideIcon;
   tint: string;
-  tintSoft: string;
   tintRing: string;
 };
 
 const GOAL_VISUALS: GoalVisual[] = [
-  { icon: Target,   tint: "text-blue-600 dark:text-blue-300",       tintSoft: "bg-blue-100/55 dark:bg-blue-500/10",       tintRing: "ring-blue-200/60 dark:ring-blue-400/20" },
-  { icon: Sparkles, tint: "text-violet-600 dark:text-violet-300",   tintSoft: "bg-violet-100/55 dark:bg-violet-500/10",   tintRing: "ring-violet-200/60 dark:ring-violet-400/20" },
-  { icon: Trophy,   tint: "text-amber-600 dark:text-amber-300",     tintSoft: "bg-amber-100/55 dark:bg-amber-500/10",     tintRing: "ring-amber-200/60 dark:ring-amber-400/20" },
-  { icon: Rocket,   tint: "text-cyan-600 dark:text-cyan-300",       tintSoft: "bg-cyan-100/55 dark:bg-cyan-500/10",       tintRing: "ring-cyan-200/60 dark:ring-cyan-400/20" },
-  { icon: Heart,    tint: "text-pink-600 dark:text-pink-300",       tintSoft: "bg-pink-100/55 dark:bg-pink-500/10",       tintRing: "ring-pink-200/60 dark:ring-pink-400/20" },
-  { icon: Star,     tint: "text-yellow-600 dark:text-yellow-300",   tintSoft: "bg-yellow-100/55 dark:bg-yellow-500/10",   tintRing: "ring-yellow-200/60 dark:ring-yellow-400/20" },
-  { icon: Flag,     tint: "text-emerald-600 dark:text-emerald-300", tintSoft: "bg-emerald-100/55 dark:bg-emerald-500/10", tintRing: "ring-emerald-200/60 dark:ring-emerald-400/20" },
-  { icon: Flame,    tint: "text-rose-600 dark:text-rose-300",       tintSoft: "bg-rose-100/55 dark:bg-rose-500/10",       tintRing: "ring-rose-200/60 dark:ring-rose-400/20" },
+  { icon: Target,   tint: "text-blue-600 dark:text-blue-300",       tintRing: "ring-blue-400/40 dark:ring-blue-400/30" },
+  { icon: Sparkles, tint: "text-violet-600 dark:text-violet-300",   tintRing: "ring-violet-400/40 dark:ring-violet-400/30" },
+  { icon: Trophy,   tint: "text-amber-600 dark:text-amber-300",     tintRing: "ring-amber-400/40 dark:ring-amber-400/30" },
+  { icon: Rocket,   tint: "text-cyan-600 dark:text-cyan-300",       tintRing: "ring-cyan-400/40 dark:ring-cyan-400/30" },
+  { icon: Heart,    tint: "text-pink-600 dark:text-pink-300",       tintRing: "ring-pink-400/40 dark:ring-pink-400/30" },
+  { icon: Star,     tint: "text-yellow-600 dark:text-yellow-300",   tintRing: "ring-yellow-400/40 dark:ring-yellow-400/30" },
+  { icon: Flag,     tint: "text-emerald-600 dark:text-emerald-300", tintRing: "ring-emerald-400/40 dark:ring-emerald-400/30" },
+  { icon: Flame,    tint: "text-rose-600 dark:text-rose-300",       tintRing: "ring-rose-400/40 dark:ring-rose-400/30" },
 ];
 
 const visualForGoal = (text: string): GoalVisual => {
@@ -68,10 +80,6 @@ const move = (list: string[], index: number, delta: number): string[] => {
   next.splice(target, 0, moved);
   return next;
 };
-
-const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
-  <span aria-hidden="true" className={cn(G.specular, className)} />
-);
 
 export const GoalsAndHabits: React.FC = () => {
   const navigate = useNavigate();
@@ -143,21 +151,24 @@ export const GoalsAndHabits: React.FC = () => {
       nextLabel={`Далее${goals.length > 0 ? ` · ${goals.length}` : ""}`}
     >
       <div className="relative">
+        {/* ─── Eyebrow ─────────────────────────────── */}
         <div className="mb-5 flex items-center gap-3">
           <span
             className={cn(
-              "relative inline-flex items-center gap-1.5",
+              "relative inline-flex items-center gap-1.5 overflow-hidden",
               "px-2.5 py-1 rounded-full",
-              G.surface,
+              GLASS_BODY,
               "text-[11px] uppercase tracking-widest font-medium",
               "text-gray-600 dark:text-gray-300"
             )}
           >
-            <Sparkles size={11} aria-hidden="true" />
-            Намерения
+            <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
+            <Sparkles size={11} aria-hidden="true" className="relative" />
+            <span className="relative">Намерения</span>
           </span>
         </div>
 
+        {/* ─── Поле ввода ───────────────────────────── */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Target
@@ -185,6 +196,7 @@ export const GoalsAndHabits: React.FC = () => {
           </Button>
         </div>
 
+        {/* ─── Подсказки — стеклянные пилюли ────────── */}
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-2">
             <Lightbulb size={14} className="text-amber-500" aria-hidden="true" />
@@ -205,30 +217,24 @@ export const GoalsAndHabits: React.FC = () => {
                   onClick={() => add(s)}
                   disabled={already}
                   className={cn(
-                    "group relative inline-flex items-center gap-1.5",
+                    "group relative inline-flex items-center gap-1.5 overflow-hidden",
                     "px-3 py-1.5 rounded-full text-xs font-medium",
-                    "overflow-hidden transition-all duration-200",
-                    "backdrop-blur-md",
+                    "transition-transform duration-200",
                     !already && [
-                      "bg-white/50 dark:bg-white/[0.05]",
-                      "ring-1 ring-white/60 dark:ring-white/10",
-                      "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
-                      "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+                      GLASS_BODY,
                       "text-gray-700 dark:text-gray-300",
-                      "hover:-translate-y-0.5 hover:bg-white/70 dark:hover:bg-white/[0.08]",
+                      "hover:-translate-y-0.5",
                     ],
                     already && [
-                      "bg-emerald-500/15 dark:bg-emerald-500/15",
+                      "bg-emerald-500/[0.08] dark:bg-emerald-500/[0.08]",
+                      "backdrop-blur-3xl",
                       "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30",
                       "text-emerald-700 dark:text-emerald-300",
                       "cursor-default",
                     ]
                   )}
                 >
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-2 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[1px]"
-                  />
+                  <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
                   <Plus
                     size={12}
                     className={cn(
@@ -244,20 +250,22 @@ export const GoalsAndHabits: React.FC = () => {
           </div>
         </div>
 
+        {/* ─── Список с приоритетами ────────────────── */}
         {goals.length > 0 && (
           <div className="mt-8">
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
                 <span
                   className={cn(
-                    "relative inline-flex items-center gap-1.5",
+                    "relative inline-flex items-center gap-1.5 overflow-hidden",
                     "px-2.5 py-1 rounded-full",
-                    G.surface,
+                    GLASS_BODY,
                     "text-[11px] uppercase tracking-widest font-medium",
                     "text-gray-600 dark:text-gray-300"
                   )}
                 >
-                  Приоритеты
+                  <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
+                  <span className="relative">Приоритеты</span>
                 </span>
                 <h3 className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
                   Что для вас важнее всего
@@ -268,11 +276,8 @@ export const GoalsAndHabits: React.FC = () => {
               </span>
             </div>
 
-            <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-6 top-1 h-16 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-60 blur-md"
-              />
+            <div className={cn("relative overflow-hidden rounded-2xl", GLASS_BODY)}>
+              <span aria-hidden="true" className={GLASS_SHEEN} />
 
               <div className="relative p-3 sm:p-4">
                 <ul className="space-y-2">
@@ -293,62 +298,58 @@ export const GoalsAndHabits: React.FC = () => {
                         onDrop={(e) => onDrop(e, i)}
                         onDragEnd={onDragEnd}
                         className={cn(
-                          "group relative flex items-center gap-3 px-3 py-3 rounded-xl",
-                          "bg-white/50 dark:bg-white/[0.03]",
-                          "backdrop-blur-md",
-                          "ring-1 ring-white/60 dark:ring-white/10",
-                          "shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,23,42,0.04)]",
-                          "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+                          "group relative flex items-center gap-3 px-3 py-3 rounded-2xl overflow-hidden",
+                          GLASS_BODY,
                           "transition-all duration-200",
-                          "hover:bg-white/70 dark:hover:bg-white/[0.06]",
+                          "cursor-grab active:cursor-grabbing",
                           isDragging && "opacity-40 cursor-grabbing",
-                          isOver && "ring-2 ring-blue-500/60 -translate-y-1",
-                          "cursor-grab active:cursor-grabbing"
+                          isOver && "ring-2 ring-blue-400/60 -translate-y-1"
                         )}
                       >
+                        <span aria-hidden="true" className={GLASS_SHEEN} />
+
                         <GripVertical
                           size={16}
-                          className="shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500 transition-colors"
+                          className="relative shrink-0 text-gray-400 dark:text-gray-500"
                           aria-hidden="true"
                         />
 
+                        {/* Номер приоритета — стеклянный */}
                         <span
                           className={cn(
                             "relative shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-xs font-semibold tabular-nums",
-                            "bg-white/60 dark:bg-white/[0.06] text-gray-600 dark:text-gray-300",
-                            "ring-1 ring-white/70 dark:ring-white/10",
-                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.05)]",
-                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]"
+                            "bg-white/[0.06] dark:bg-white/[0.02]",
+                            "backdrop-blur-3xl",
+                            "ring-1 ring-white/30 dark:ring-white/10",
+                            "text-gray-600 dark:text-gray-300",
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
                           )}
                           aria-label={`Приоритет ${i + 1}`}
                         >
                           {i + 1}
                         </span>
 
+                        {/* Иконка-плашка — стекло + цветной ring/text */}
                         <div
                           className={cn(
                             "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
-                            "ring-1 backdrop-blur-md",
+                            "ring-1 backdrop-blur-3xl",
+                            "bg-white/[0.06] dark:bg-white/[0.02]",
                             visual.tint,
-                            visual.tintSoft,
                             visual.tintRing,
-                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
-                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]"
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
                           )}
                           aria-hidden="true"
                         >
-                          <span
-                            aria-hidden="true"
-                            className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
-                          />
                           <Icon size={16} className="relative" />
                         </div>
 
-                        <span className="flex-1 min-w-0 text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                        <span className="relative flex-1 min-w-0 text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
                           {g}
                         </span>
 
-                        <div className="shrink-0 flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                        {/* Стрелки */}
+                        <div className="relative shrink-0 flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
                           <button
                             type="button"
                             onClick={() => setGoals((prev) => move(prev, i, -1))}
@@ -356,8 +357,8 @@ export const GoalsAndHabits: React.FC = () => {
                             aria-label={`Поднять «${g}» выше`}
                             className={cn(
                               "w-7 h-7 rounded-lg flex items-center justify-center",
-                              "text-gray-400 hover:text-gray-800 hover:bg-white/60",
-                              "dark:hover:text-gray-100 dark:hover:bg-white/[0.08]",
+                              "text-gray-400 dark:text-gray-500",
+                              "hover:text-gray-700 dark:hover:text-gray-200",
                               "disabled:opacity-30 disabled:cursor-not-allowed",
                               "transition-colors"
                             )}
@@ -371,8 +372,8 @@ export const GoalsAndHabits: React.FC = () => {
                             aria-label={`Опустить «${g}» ниже`}
                             className={cn(
                               "w-7 h-7 rounded-lg flex items-center justify-center",
-                              "text-gray-400 hover:text-gray-800 hover:bg-white/60",
-                              "dark:hover:text-gray-100 dark:hover:bg-white/[0.08]",
+                              "text-gray-400 dark:text-gray-500",
+                              "hover:text-gray-700 dark:hover:text-gray-200",
                               "disabled:opacity-30 disabled:cursor-not-allowed",
                               "transition-colors"
                             )}
@@ -381,13 +382,13 @@ export const GoalsAndHabits: React.FC = () => {
                           </button>
                         </div>
 
+                        {/* Удалить */}
                         <button
                           type="button"
                           onClick={() => remove(g)}
                           className={cn(
-                            "shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+                            "relative shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
                             "text-gray-400 hover:text-red-500",
-                            "hover:bg-white/60 dark:hover:bg-white/[0.08]",
                             "transition-colors",
                             "opacity-0 group-hover:opacity-100 focus:opacity-100"
                           )}
@@ -401,7 +402,7 @@ export const GoalsAndHabits: React.FC = () => {
                   })}
                 </ul>
 
-                <div className="mt-3 flex items-center gap-2 px-2 text-[11px] text-gray-500 dark:text-gray-400">
+                <div className="relative mt-3 flex items-center gap-2 px-2 text-[11px] text-gray-500 dark:text-gray-400">
                   <Sparkles size={12} className="text-blue-500" aria-hidden="true" />
                   Первый в списке — главный приоритет. Я подскажу, если что-то
                   будет идти вразрез с ним.
@@ -411,24 +412,21 @@ export const GoalsAndHabits: React.FC = () => {
           </div>
         )}
 
+        {/* ─── Пустое состояние ─────────────────────── */}
         {goals.length === 0 && (
           <div className="mt-6 flex flex-col items-center text-center py-8">
             <div
               aria-hidden="true"
               className={cn(
-                "relative w-14 h-14 rounded-2xl flex items-center justify-center mb-3 overflow-hidden",
-                "bg-white/55 dark:bg-white/[0.05]",
-                "backdrop-blur-2xl",
-                "ring-1 ring-white/60 dark:ring-white/10",
-                "shadow-[0_8px_32px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.75)]",
-                "dark:shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                "relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden mb-3",
+                GLASS_BODY
               )}
             >
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[1px]"
+              <span aria-hidden="true" className={GLASS_SHEEN} />
+              <Target
+                size={24}
+                className="relative text-blue-500 dark:text-blue-400"
               />
-              <Target size={24} className="relative text-blue-500 dark:text-blue-400" />
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
               Добавьте хотя бы одно намерение — или пропустите шаг, если пока не готовы формулировать.

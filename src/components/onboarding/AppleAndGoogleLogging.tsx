@@ -1,24 +1,36 @@
+// src/components/onboarding/AppleAndGoogleLogging.tsx
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Sparkles, Check, ChevronDown, ChevronUp,
-  GraduationCap, Link2, Info, Loader2, ShieldCheck,
+  GraduationCap, Link2, Loader2,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
 import { cn } from "@/utils/cn";
-import { glass } from "@/styles/glass";
 
 const TOTAL = 10;
 const OAUTH_QUEUE_KEY = "onboarding:oauth-queue";
 const OAUTH_SELECTED_KEY = "onboarding:selected-integrations";
 
-const G = glass.strong;
+/* ─── Liquid Glass — единый стиль ────────────────────────── */
+const GLASS_BODY =
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "ring-1 ring-white/30 dark:ring-white/10 " +
+  "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
+  "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
 
-const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
-  <span aria-hidden="true" className={cn(G.specular, className)} />
-);
+const GLASS_SHEEN =
+  "pointer-events-none absolute inset-0 rounded-2xl " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
+
+const GLASS_SHEEN_PILL =
+  "pointer-events-none absolute inset-0 rounded-full " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
+
+const ACTIVE_RING_SKY =
+  "0 0 0 1.5px rgba(56,189,248,0.6), 0 4px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(15,23,42,0.06)";
 
 type IntegrationKind = "oauth" | "manual";
 
@@ -174,11 +186,11 @@ const buildOAuthUrl = (id: Integration["id"], state: string): string => {
 
 const SectionDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex items-center gap-3">
-    <div className="h-px flex-1 bg-white/60 dark:bg-white/10" />
-    <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium">
+    <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
+    <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">
       {children}
     </span>
-    <div className="h-px flex-1 bg-white/60 dark:bg-white/10" />
+    <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
   </div>
 );
 
@@ -300,23 +312,26 @@ export const AppleAndGoogleLogging: React.FC = () => {
             : "Далее"
         }
       >
-        <div className="relative space-y-5">
-          <div className="flex items-center gap-3">
+        <div className="relative space-y-4 sm:space-y-5">
+          {/* ─── Eyebrow ─────────────────────────────── */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <span
               className={cn(
-                "relative inline-flex items-center gap-1.5",
+                "relative inline-flex items-center gap-1.5 overflow-hidden",
                 "px-2.5 py-1 rounded-full",
-                G.surface,
+                GLASS_BODY,
                 "text-[11px] uppercase tracking-widest font-medium",
                 "text-gray-600 dark:text-gray-300"
               )}
             >
-              <Link2 size={11} aria-hidden="true" />
-              Интеграции
+              <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
+              <Link2 size={11} aria-hidden="true" className="relative" />
+              <span className="relative">Интеграции</span>
             </span>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-2.5">
+          {/* ─── Сетка интеграций ─────────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {INTEGRATIONS.map((i) => {
               const active = selected.includes(i.id);
 
@@ -328,52 +343,39 @@ export const AppleAndGoogleLogging: React.FC = () => {
                   disabled={phase === "connecting"}
                   aria-pressed={active}
                   className={cn(
-                    "group relative isolate overflow-hidden text-left",
-                    "rounded-2xl p-4",
-                    G.surface,
-                    active && [
-                      "ring-2 ring-blue-500/60 dark:ring-blue-400/60",
-                      "shadow-[0_12px_40px_rgba(59,130,246,0.20),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-1px_0_rgba(255,255,255,0.4)]",
-                    ],
-                    "transition-all duration-300",
+                    "group relative overflow-hidden text-left",
+                    "rounded-2xl p-3.5 sm:p-4",
+                    GLASS_BODY,
+                    "transition-transform duration-300",
                     "hover:-translate-y-0.5",
-                    "hover:bg-white/70 dark:hover:bg-gray-900/55",
                     "disabled:opacity-50 disabled:pointer-events-none"
                   )}
+                  style={active ? { boxShadow: ACTIVE_RING_SKY } : undefined}
                 >
-                  <SpecularHighlight className="opacity-90" />
-
-                  {active && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute -inset-4 -z-10 rounded-full blur-2xl opacity-25 bg-gradient-to-br from-blue-400/60 to-indigo-500/40"
-                    />
-                  )}
+                  <span aria-hidden="true" className={GLASS_SHEEN} />
 
                   <div className="relative flex items-start gap-3">
+                    {/* Иконка-плашка */}
                     <div
                       className={cn(
-                        "relative shrink-0 w-12 h-12 rounded-xl flex items-center justify-center",
+                        "relative shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center",
                         "overflow-hidden transition-all duration-300",
-                        "backdrop-blur-md ring-1",
+                        "backdrop-blur-3xl ring-1",
+                        "bg-white/[0.06] dark:bg-white/[0.02]",
                         active
-                          ? [
-                              "bg-blue-500/15 dark:bg-blue-500/15",
-                              "ring-blue-400/60",
-                              "shadow-[0_4px_14px_rgba(59,130,246,0.30),inset_0_1px_0_rgba(255,255,255,0.6)]",
-                            ]
-                          : [
-                              "bg-white/60 dark:bg-white/[0.06]",
-                              "ring-white/70 dark:ring-white/10",
-                              "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
-                              "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]",
-                            ]
+                          ? "ring-sky-400/60"
+                          : "ring-white/30 dark:ring-white/10"
                       )}
+                      style={
+                        active
+                          ? {
+                              backgroundColor: "rgba(56,189,248,0.15)",
+                              boxShadow:
+                                "0 4px 14px rgba(56,189,248,0.30), inset 0 1px 0 rgba(255,255,255,0.6)",
+                            }
+                          : undefined
+                      }
                     >
-                      <span
-                        aria-hidden="true"
-                        className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
-                      />
                       <img
                         src={i.src}
                         alt={i.name}
@@ -384,6 +386,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
                       />
                     </div>
 
+                    {/* Текст */}
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 dark:text-white leading-snug">
                         {i.name}
@@ -393,24 +396,25 @@ export const AppleAndGoogleLogging: React.FC = () => {
                       </p>
                     </div>
 
+                    {/* Индикатор */}
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "relative shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center",
-                        "transition-all duration-300",
+                        "relative shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center overflow-hidden",
+                        "ring-1 transition-all duration-300",
                         active
-                          ? [
-                              "bg-blue-500 border border-blue-400/70 text-white",
-                              "shadow-[0_2px_8px_rgba(59,130,246,0.4),inset_0_1px_0_rgba(255,255,255,0.5)]",
-                              "scale-100",
-                            ]
-                          : [
-                              "border border-white/70 dark:border-white/15",
-                              "bg-white/40 dark:bg-white/[0.05]",
-                              "backdrop-blur-sm",
-                              "scale-95",
-                            ]
+                          ? "text-white ring-white/40"
+                          : "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl ring-white/30 dark:ring-white/10"
                       )}
+                      style={
+                        active
+                          ? {
+                              backgroundColor: "rgba(56,189,248,0.7)",
+                              boxShadow:
+                                "0 2px 8px rgba(56,189,248,0.4), inset 0 1px 0 rgba(255,255,255,0.5)",
+                            }
+                          : undefined
+                      }
                     >
                       {active && (
                         <Check size={12} strokeWidth={3} className="relative" />
@@ -422,13 +426,11 @@ export const AppleAndGoogleLogging: React.FC = () => {
             })}
           </div>
 
-          <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-6 top-1 h-14 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-60 blur-md"
-            />
+          {/* ─── Гайд ВШЭ ─────────────────────────────── */}
+          <div className={cn("relative overflow-hidden rounded-2xl", GLASS_BODY)}>
+            <span aria-hidden="true" className={GLASS_SHEEN} />
 
-            <div className="relative p-4 md:p-5">
+            <div className="relative p-3.5 sm:p-5">
               <button
                 type="button"
                 onClick={() => setShowGuide((v) => !v)}
@@ -439,15 +441,13 @@ export const AppleAndGoogleLogging: React.FC = () => {
                   aria-hidden="true"
                   className={cn(
                     "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
-                    "bg-emerald-500/15 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+                    "bg-white/[0.06] dark:bg-white/[0.02]",
+                    "backdrop-blur-3xl",
                     "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30",
-                    "shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_1px_2px_rgba(15,23,42,0.05)]"
+                    "text-emerald-700 dark:text-emerald-300",
+                    "shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
                   )}
                 >
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[0.5px]"
-                  />
                   <GraduationCap size={16} className="relative" />
                 </div>
 
@@ -471,7 +471,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
               {showGuide && (
                 <ol
                   className={cn(
-                    "mt-4 ml-12 space-y-2 text-sm text-gray-600 dark:text-gray-400",
+                    "mt-4 sm:ml-12 space-y-2 text-sm text-gray-600 dark:text-gray-400",
                     "animate-in fade-in slide-in-from-top-1 duration-300"
                   )}
                 >
@@ -487,7 +487,8 @@ export const AppleAndGoogleLogging: React.FC = () => {
                         className={cn(
                           "shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
                           "text-[11px] font-semibold",
-                          "bg-emerald-500/15 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+                          "bg-emerald-500/15 dark:bg-emerald-500/15",
+                          "text-emerald-700 dark:text-emerald-300",
                           "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30"
                         )}
                       >
@@ -502,9 +503,9 @@ export const AppleAndGoogleLogging: React.FC = () => {
           </div>
 
           {selected.length === 0 && (
-            <div className="flex items-center justify-center gap-2">
-              <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              <Sparkles size={14} className="text-sky-500" aria-hidden="true" />
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                 Можно пропустить — подключите интеграции позже в настройках
               </p>
             </div>
@@ -512,44 +513,43 @@ export const AppleAndGoogleLogging: React.FC = () => {
         </div>
       </OnboardingLayout>
 
+      {/* ─── Оверлей подключения ─────────────────── */}
       {phase === "connecting" && currentProvider && (
         <div
           className={cn(
-            "fixed inset-0 z-50 flex items-center justify-center",
+            "fixed inset-0 z-50 flex items-center justify-center px-4",
             "bg-white/60 dark:bg-gray-950/70 backdrop-blur-xl"
           )}
           role="dialog"
           aria-modal="true"
           aria-labelledby="oauth-title"
         >
-          <div className={cn("relative max-w-sm w-full mx-4 overflow-hidden rounded-2xl", G.surface)}>
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-6 top-1 h-16 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-70 blur-md"
-            />
+          <div
+            className={cn(
+              "relative max-w-sm w-full overflow-hidden rounded-2xl",
+              GLASS_BODY
+            )}
+          >
+            <span aria-hidden="true" className={GLASS_SHEEN} />
 
             <div className="relative p-6 text-center">
               <div className="flex justify-center">
                 <div className="relative">
                   <span
                     aria-hidden="true"
-                    className="absolute -inset-3 rounded-3xl bg-blue-400/40 dark:bg-blue-500/30 blur-2xl"
+                    className="absolute -inset-3 rounded-3xl bg-sky-400/30 dark:bg-sky-500/25 blur-2xl"
                   />
 
                   <div
                     className={cn(
                       "relative w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden",
-                      "bg-white/60 dark:bg-white/[0.06]",
-                      "ring-1 ring-white/70 dark:ring-white/10",
-                      "backdrop-blur-md",
-                      "shadow-[0_8px_32px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.9)]",
-                      "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]"
+                      "bg-white/[0.06] dark:bg-white/[0.02]",
+                      "ring-1 ring-white/30 dark:ring-white/10",
+                      "backdrop-blur-3xl",
+                      "shadow-[0_8px_32px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)]",
+                      "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]"
                     )}
                   >
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/80 to-transparent blur-[1px]"
-                    />
                     <img
                       src={currentProvider.src}
                       alt={currentProvider.name}
@@ -574,15 +574,15 @@ export const AppleAndGoogleLogging: React.FC = () => {
               <div
                 className={cn(
                   "mt-5 h-1 w-full rounded-full overflow-hidden",
-                  "bg-white/40 dark:bg-white/[0.05]",
-                  "ring-1 ring-white/60 dark:ring-white/10",
+                  "bg-white/[0.06] dark:bg-white/[0.02]",
+                  "ring-1 ring-white/30 dark:ring-white/10",
                   "shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]"
                 )}
               >
                 <div
                   className={cn(
                     "h-full w-full origin-left",
-                    "bg-gradient-to-r from-blue-500 to-indigo-500",
+                    "bg-gradient-to-r from-sky-400 to-blue-500",
                     "animate-[oauth-progress_1.2s_ease-in-out]"
                   )}
                 />

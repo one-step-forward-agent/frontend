@@ -1,3 +1,4 @@
+// src/components/onboarding/FieldOfActivity.tsx
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,11 +14,19 @@ import { useOnboarding, Sphere } from "./OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-field";
 import { cn } from "@/utils/cn";
-import { glass } from "@/styles/glass";
 
 const TOTAL = 10;
 
-const G = glass.medium;
+/* ─── Liquid Glass — единый стиль ────────────────────────── */
+const GLASS_BODY =
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "ring-1 ring-white/30 dark:ring-white/10 " +
+  "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
+  "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
+
+const GLASS_SHEEN =
+  "pointer-events-none absolute inset-0 rounded-2xl " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
 type Preset = {
   name: string;
@@ -28,16 +37,16 @@ type Preset = {
 };
 
 const PRESETS: Preset[] = [
-  { name: "Работа",       icon: Briefcase,     tint: "text-slate-600 dark:text-slate-300",     tintSoft: "bg-slate-100/55 dark:bg-slate-500/10",     tintRing: "ring-slate-200/60 dark:ring-slate-400/20" },
-  { name: "Учёба",        icon: GraduationCap, tint: "text-teal-600 dark:text-teal-300",       tintSoft: "bg-teal-100/55 dark:bg-teal-500/10",       tintRing: "ring-teal-200/60 dark:ring-teal-400/20" },
-  { name: "Спорт",        icon: Dumbbell,      tint: "text-orange-600 dark:text-orange-300",   tintSoft: "bg-orange-100/55 dark:bg-orange-500/10",   tintRing: "ring-orange-200/60 dark:ring-orange-400/20" },
-  { name: "Языки",        icon: Languages,     tint: "text-violet-600 dark:text-violet-300",   tintSoft: "bg-violet-100/55 dark:bg-violet-500/10",   tintRing: "ring-violet-200/60 dark:ring-violet-400/20" },
-  { name: "Здоровье",     icon: HeartPulse,    tint: "text-rose-600 dark:text-rose-300",       tintSoft: "bg-rose-100/55 dark:bg-rose-500/10",       tintRing: "ring-rose-200/60 dark:ring-rose-400/20" },
-  { name: "Дом и быт",    icon: Home,          tint: "text-amber-600 dark:text-amber-300",     tintSoft: "bg-amber-100/55 dark:bg-amber-500/10",     tintRing: "ring-amber-200/60 dark:ring-amber-400/20" },
-  { name: "Отдых",        icon: Coffee,        tint: "text-cyan-600 dark:text-cyan-300",       tintSoft: "bg-cyan-100/55 dark:bg-cyan-500/10",       tintRing: "ring-cyan-200/60 dark:ring-cyan-400/20" },
-  { name: "Отношения",    icon: Users,         tint: "text-pink-600 dark:text-pink-300",       tintSoft: "bg-pink-100/55 dark:bg-pink-500/10",       tintRing: "ring-pink-200/60 dark:ring-pink-400/20" },
-  { name: "Саморазвитие", icon: BookOpen,      tint: "text-indigo-600 dark:text-indigo-300",   tintSoft: "bg-indigo-100/55 dark:bg-indigo-500/10",   tintRing: "ring-indigo-200/60 dark:ring-indigo-400/20" },
-  { name: "Хобби",        icon: Palette,       tint: "text-lime-600 dark:text-lime-300",       tintSoft: "bg-lime-100/55 dark:bg-lime-500/10",       tintRing: "ring-lime-200/60 dark:ring-lime-400/20" },
+  { name: "Работа",       icon: Briefcase,     tint: "text-slate-600 dark:text-slate-300",   tintSoft: "bg-slate-500/15 dark:bg-slate-400/15",   tintRing: "ring-slate-400/40 dark:ring-slate-400/30" },
+  { name: "Учёба",        icon: GraduationCap, tint: "text-teal-600 dark:text-teal-300",     tintSoft: "bg-teal-500/15 dark:bg-teal-400/15",     tintRing: "ring-teal-400/40 dark:ring-teal-400/30" },
+  { name: "Спорт",        icon: Dumbbell,      tint: "text-orange-600 dark:text-orange-300", tintSoft: "bg-orange-500/15 dark:bg-orange-400/15", tintRing: "ring-orange-400/40 dark:ring-orange-400/30" },
+  { name: "Языки",        icon: Languages,     tint: "text-violet-600 dark:text-violet-300", tintSoft: "bg-violet-500/15 dark:bg-violet-400/15", tintRing: "ring-violet-400/40 dark:ring-violet-400/30" },
+  { name: "Здоровье",     icon: HeartPulse,    tint: "text-rose-600 dark:text-rose-300",     tintSoft: "bg-rose-500/15 dark:bg-rose-400/15",     tintRing: "ring-rose-400/40 dark:ring-rose-400/30" },
+  { name: "Дом и быт",    icon: Home,          tint: "text-amber-600 dark:text-amber-300",   tintSoft: "bg-amber-500/15 dark:bg-amber-400/15",   tintRing: "ring-amber-400/40 dark:ring-amber-400/30" },
+  { name: "Отдых",        icon: Coffee,        tint: "text-cyan-600 dark:text-cyan-300",     tintSoft: "bg-cyan-500/15 dark:bg-cyan-400/15",     tintRing: "ring-cyan-400/40 dark:ring-cyan-400/30" },
+  { name: "Отношения",    icon: Users,         tint: "text-pink-600 dark:text-pink-300",     tintSoft: "bg-pink-500/15 dark:bg-pink-400/15",     tintRing: "ring-pink-400/40 dark:ring-pink-400/30" },
+  { name: "Саморазвитие", icon: BookOpen,      tint: "text-indigo-600 dark:text-indigo-300", tintSoft: "bg-indigo-500/15 dark:bg-indigo-400/15", tintRing: "ring-indigo-400/40 dark:ring-indigo-400/30" },
+  { name: "Хобби",        icon: Palette,       tint: "text-lime-600 dark:text-lime-300",     tintSoft: "bg-lime-500/15 dark:bg-lime-400/15",     tintRing: "ring-lime-400/40 dark:ring-lime-400/30" },
 ];
 
 const PALETTE = [
@@ -66,10 +75,6 @@ const moveByIndex = (list: Sphere[], id: string, delta: number): Sphere[] => {
   next.splice(target, 0, moved);
   return next.map((s, i) => ({ ...s, priority: i }));
 };
-
-const SpecularHighlight: React.FC<{ className?: string }> = ({ className }) => (
-  <span aria-hidden="true" className={cn(G.specular, className)} />
-);
 
 export const FieldOfActivity: React.FC = () => {
   const navigate = useNavigate();
@@ -166,27 +171,24 @@ export const FieldOfActivity: React.FC = () => {
       nextLabel={`Далее${spheres.length > 0 ? ` · ${spheres.length}` : ""}`}
     >
       <div className="relative">
+        {/* ─── Eyebrow ─────────────────────────────── */}
         <div className="mb-5 flex items-center gap-3">
           <span
             className={cn(
-              "relative inline-flex items-center gap-1.5",
+              "relative inline-flex items-center gap-1.5 overflow-hidden",
               "px-2.5 py-1 rounded-full",
-              G.surface,
+              GLASS_BODY,
               "text-[11px] uppercase tracking-widest font-medium",
               "text-gray-600 dark:text-gray-300"
             )}
           >
-            <Sparkles size={11} aria-hidden="true" />
-            Ваши сферы
-          </span>
-
-          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
-            {spheres.length > 0
-              ? `Выбрано: ${spheres.length}`
-              : "Ничего не выбрано"}
+            <span aria-hidden="true" className={cn(GLASS_SHEEN, "rounded-full")} />
+            <Sparkles size={11} aria-hidden="true" className="relative" />
+            <span className="relative">Ваши сферы</span>
           </span>
         </div>
 
+        {/* ─── Сетка пресетов ──────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {PRESETS.map((p) => {
             const sphere = spheres.find((s) => s.name === p.name);
@@ -199,63 +201,48 @@ export const FieldOfActivity: React.FC = () => {
                 type="button"
                 onClick={() => togglePreset(p.name)}
                 aria-pressed={active}
+                className={cn(
+                  "group relative overflow-hidden text-left",
+                  "rounded-2xl p-4",
+                  GLASS_BODY,
+                  "transition-all duration-300",
+                  "hover:-translate-y-0.5",
+                  active && sphere && `ring-[1.5px]`
+                )}
                 style={
                   active && sphere
-                    ? {
-                        boxShadow: `0 12px 40px ${sphere.color}26, 0 0 0 2px ${sphere.color}99, inset 0 1px 0 rgba(255,255,255,0.85), inset 0 -1px 0 rgba(255,255,255,0.4)`,
-                      }
+                    ? { boxShadow: `0 0 0 1.5px ${sphere.color}cc, 0 4px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(15,23,42,0.06)` }
                     : undefined
                 }
-                className={cn(
-                  "group relative isolate overflow-hidden text-left",
-                  "rounded-2xl p-4",
-                  G.surface,
-                  active && "ring-0",
-                  "transition-all duration-300",
-                  "hover:-translate-y-1",
-                  "hover:bg-white/70 dark:hover:bg-gray-900/55"
-                )}
               >
-                <SpecularHighlight className="opacity-90" />
-
-                {active && sphere && (
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      background: `radial-gradient(circle at center, ${sphere.color}55 0%, transparent 70%)`,
-                    }}
-                    className="absolute -inset-6 -z-10 blur-2xl"
-                  />
-                )}
+                <span aria-hidden="true" className={GLASS_SHEEN} />
 
                 <div className="relative flex items-center gap-3">
+                  {/* Иконка: тот же стиль, что у карточек */}
                   <div
                     className={cn(
                       "relative shrink-0 w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden",
-                      "ring-1 backdrop-blur-md transition-all duration-300",
+                      "ring-1 transition-all duration-300",
+                      "bg-white/[0.06] dark:bg-white/[0.02]",
+                      "backdrop-blur-3xl",
                       !active && [
                         p.tint,
-                        p.tintSoft,
+                        "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+                        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]",
                         p.tintRing,
-                        "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
-                        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]",
                       ],
                       active && "text-white ring-white/40"
                     )}
                     style={
                       active && sphere
                         ? {
-                            backgroundColor: sphere.color,
-                            boxShadow: `0 4px 14px ${sphere.color}66, inset 0 1px 0 rgba(255,255,255,0.5)`,
+                            backgroundColor: `${sphere.color}cc`,
+                            boxShadow: `0 4px 14px ${sphere.color}40, inset 0 1px 0 rgba(255,255,255,0.5)`,
                           }
                         : undefined
                     }
                     aria-hidden="true"
                   >
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
-                    />
                     <Icon size={18} className="relative" />
                   </div>
 
@@ -263,19 +250,21 @@ export const FieldOfActivity: React.FC = () => {
                     {p.name}
                   </span>
 
+                  {/* Индикатор — тот же стеклянный стиль */}
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "relative shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300",
+                      "relative shrink-0 w-6 h-6 rounded-full flex items-center justify-center overflow-hidden",
+                      "ring-1 transition-all duration-300",
                       active
-                        ? "text-white scale-100 border border-white/40"
-                        : "border border-white/70 dark:border-white/15 bg-white/40 dark:bg-white/[0.05] backdrop-blur-sm scale-90"
+                        ? "text-white ring-white/40"
+                        : "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl ring-white/30 dark:ring-white/10"
                     )}
                     style={
                       active && sphere
                         ? {
-                            backgroundColor: sphere.color,
-                            boxShadow: `0 2px 8px ${sphere.color}66, inset 0 1px 0 rgba(255,255,255,0.5)`,
+                            backgroundColor: `${sphere.color}cc`,
+                            boxShadow: `0 2px 8px ${sphere.color}40, inset 0 1px 0 rgba(255,255,255,0.5)`,
                           }
                         : undefined
                     }
@@ -287,29 +276,35 @@ export const FieldOfActivity: React.FC = () => {
             );
           })}
 
+          {/* «Своя сфера» — стекло + dashed ring */}
           <button
             type="button"
             onClick={() => setShowCustom((v) => !v)}
             aria-pressed={showCustom}
             className={cn(
               "group relative overflow-hidden text-left rounded-2xl p-4",
-              "border-2 border-dashed transition-all duration-300",
-              "hover:-translate-y-1",
+              "transition-all duration-300",
+              "hover:-translate-y-0.5",
+              "bg-white/[0.06] dark:bg-white/[0.02]",
+              "backdrop-blur-3xl",
+              "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+              "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]",
               showCustom
-                ? "border-blue-500/60 bg-blue-50/30 dark:bg-blue-950/20 backdrop-blur-md"
-                : "border-white/60 dark:border-white/15 hover:border-white/90 dark:hover:border-white/25 bg-white/30 dark:bg-white/[0.03] backdrop-blur-md"
+                ? "ring-2 ring-blue-400/60"
+                : "ring-1 ring-white/30 dark:ring-white/10"
             )}
           >
-            <SpecularHighlight className="opacity-60" />
+            <span aria-hidden="true" className={GLASS_SHEEN} />
 
             <div className="relative flex items-center gap-3">
               <div
                 className={cn(
                   "shrink-0 w-10 h-10 rounded-xl flex items-center justify-center",
-                  "bg-white/60 dark:bg-white/[0.06] text-gray-700 dark:text-gray-300",
-                  "ring-1 ring-white/70 dark:ring-white/10",
-                  "backdrop-blur-md",
-                  "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)]",
+                  "bg-white/[0.06] dark:bg-white/[0.02]",
+                  "backdrop-blur-3xl",
+                  "ring-1 ring-white/30 dark:ring-white/10",
+                  "text-gray-700 dark:text-gray-300",
+                  "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]",
                   "transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
                 )}
                 aria-hidden="true"
@@ -323,6 +318,7 @@ export const FieldOfActivity: React.FC = () => {
           </button>
         </div>
 
+        {/* ─── Ввод своей сферы ──────────────────── */}
         {showCustom && (
           <div className="mt-3 flex gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
             <Input
@@ -345,20 +341,22 @@ export const FieldOfActivity: React.FC = () => {
           </div>
         )}
 
+        {/* ─── Приоритеты ─────────────────────────── */}
         {spheres.length > 0 && (
           <div className="mt-8">
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
                 <span
                   className={cn(
-                    "relative inline-flex items-center gap-1.5",
+                    "relative inline-flex items-center gap-1.5 overflow-hidden",
                     "px-2.5 py-1 rounded-full",
-                    G.surface,
+                    GLASS_BODY,
                     "text-[11px] uppercase tracking-widest font-medium",
                     "text-gray-600 dark:text-gray-300"
                   )}
                 >
-                  Приоритеты
+                  <span aria-hidden="true" className={cn(GLASS_SHEEN, "rounded-full")} />
+                  <span className="relative">Приоритеты</span>
                 </span>
                 <h3 className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
                   Что для вас важнее всего
@@ -369,11 +367,8 @@ export const FieldOfActivity: React.FC = () => {
               </span>
             </div>
 
-            <div className={cn("relative overflow-hidden rounded-2xl", G.surface)}>
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-6 top-1 h-20 rounded-full bg-gradient-to-b from-white/60 to-transparent opacity-60 blur-md"
-              />
+            <div className={cn("relative overflow-hidden rounded-2xl", GLASS_BODY)}>
+              <span aria-hidden="true" className={GLASS_SHEEN} />
 
               <div className="relative p-3 sm:p-4">
                 <ul className="space-y-2">
@@ -391,62 +386,58 @@ export const FieldOfActivity: React.FC = () => {
                         onDrop={(e) => onDrop(e, s.id)}
                         onDragEnd={onDragEnd}
                         className={cn(
-                          "group relative flex items-center gap-3 px-3 py-3 rounded-2xl",
-                          "bg-white/50 dark:bg-white/[0.03]",
-                          "backdrop-blur-md",
-                          "ring-1 ring-white/60 dark:ring-white/10",
-                          "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.04)]",
-                          "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+                          "group relative flex items-center gap-3 px-3 py-3 rounded-2xl overflow-hidden",
+                          GLASS_BODY,
                           "transition-all duration-200",
-                          "hover:bg-white/70 dark:hover:bg-white/[0.06]",
+                          "cursor-grab active:cursor-grabbing",
                           isDragging && "opacity-40 cursor-grabbing",
-                          isOver && "ring-2 ring-blue-500/60 -translate-y-1",
-                          "cursor-grab active:cursor-grabbing"
+                          isOver && "ring-2 ring-blue-400/60 -translate-y-1"
                         )}
                       >
+                        <span aria-hidden="true" className={GLASS_SHEEN} />
+
+                        {/* Хват */}
                         <GripVertical
                           size={16}
-                          className="shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500 transition-colors"
+                          className="relative shrink-0 text-gray-400 dark:text-gray-500"
                           aria-hidden="true"
                         />
 
+                        {/* Номер — стеклянный */}
                         <span
                           className={cn(
                             "relative shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-xs font-semibold tabular-nums",
-                            "bg-white/60 dark:bg-white/[0.06] text-gray-600 dark:text-gray-300",
-                            "ring-1 ring-white/70 dark:ring-white/10",
-                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.05)]",
-                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]"
+                            "bg-white/[0.06] dark:bg-white/[0.02]",
+                            "backdrop-blur-3xl",
+                            "ring-1 ring-white/30 dark:ring-white/10",
+                            "text-gray-600 dark:text-gray-300",
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
                           )}
                           aria-label={`Приоритет ${i + 1}`}
                         >
                           {i + 1}
                         </span>
 
+                        {/* Кружок цвета — плоский, без блика */}
                         <button
                           type="button"
                           onClick={() => cycleColor(s.id)}
                           className={cn(
-                            "relative shrink-0 w-7 h-7 rounded-full overflow-hidden",
-                            "ring-2 ring-white/90 dark:ring-white/20",
-                            "shadow-[0_2px_6px_rgba(15,23,42,0.15),inset_0_1px_0_rgba(255,255,255,0.5)]",
+                            "relative shrink-0 w-7 h-7 rounded-full",
+                            "ring-1 ring-white/40 dark:ring-white/20",
                             "hover:scale-110 active:scale-95 transition-transform"
                           )}
                           style={{ backgroundColor: s.color }}
                           title="Сменить цвет"
                           aria-label={`Сменить цвет сферы ${s.name}`}
-                        >
-                          <span
-                            aria-hidden="true"
-                            className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/60 to-transparent blur-[0.5px]"
-                          />
-                        </button>
+                        />
 
-                        <span className="flex-1 min-w-0 text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
+                        <span className="relative flex-1 min-w-0 text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
                           {s.name}
                         </span>
 
-                        <div className="shrink-0 flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                        {/* Стрелки — стеклянные, без смены цвета */}
+                        <div className="relative shrink-0 flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
                           <button
                             type="button"
                             onClick={() => setSpheres((prev) => moveByIndex(prev, s.id, -1))}
@@ -454,8 +445,8 @@ export const FieldOfActivity: React.FC = () => {
                             aria-label={`Поднять ${s.name} выше`}
                             className={cn(
                               "w-7 h-7 rounded-lg flex items-center justify-center",
-                              "text-gray-400 hover:text-gray-800 hover:bg-white/60",
-                              "dark:hover:text-gray-100 dark:hover:bg-white/[0.08]",
+                              "text-gray-400 dark:text-gray-500",
+                              "hover:text-gray-700 dark:hover:text-gray-200",
                               "disabled:opacity-30 disabled:cursor-not-allowed",
                               "transition-colors"
                             )}
@@ -469,8 +460,8 @@ export const FieldOfActivity: React.FC = () => {
                             aria-label={`Опустить ${s.name} ниже`}
                             className={cn(
                               "w-7 h-7 rounded-lg flex items-center justify-center",
-                              "text-gray-400 hover:text-gray-800 hover:bg-white/60",
-                              "dark:hover:text-gray-100 dark:hover:bg-white/[0.08]",
+                              "text-gray-400 dark:text-gray-500",
+                              "hover:text-gray-700 dark:hover:text-gray-200",
                               "disabled:opacity-30 disabled:cursor-not-allowed",
                               "transition-colors"
                             )}
@@ -479,12 +470,13 @@ export const FieldOfActivity: React.FC = () => {
                           </button>
                         </div>
 
+                        {/* Удалить */}
                         <button
                           type="button"
                           onClick={() => removeSphere(s.id)}
                           className={cn(
-                            "shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-                            "text-gray-400 hover:text-red-500 hover:bg-red-50/60 dark:hover:bg-red-950/30",
+                            "relative shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+                            "text-gray-400 hover:text-red-500",
                             "transition-colors",
                             "opacity-0 group-hover:opacity-100 focus:opacity-100"
                           )}
@@ -498,7 +490,7 @@ export const FieldOfActivity: React.FC = () => {
                   })}
                 </ul>
 
-                <div className="mt-3 flex items-center gap-2 px-2 text-[11px] text-gray-500 dark:text-gray-400">
+                <div className="relative mt-3 flex items-center gap-2 px-2 text-[11px] text-gray-500 dark:text-gray-400">
                   <Sparkles size={12} className="text-blue-500" aria-hidden="true" />
                   Первый в списке — главный приоритет. Я подскажу, если что-то
                   будет идти вразрез с ним.

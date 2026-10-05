@@ -67,6 +67,17 @@ export const Start: React.FC = () => {
   );
 };
 
+/* ─── Liquid Glass — единый стиль ────────────────────────── */
+const GLASS_BODY =
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "ring-1 ring-white/30 dark:ring-white/10 " +
+  "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
+  "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
+
+const GLASS_SHEEN_PILL =
+  "pointer-events-none absolute inset-0 rounded-full " +
+  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
+
 type MenuItem = {
   label: string;
   icon: LucideIcon;
@@ -418,64 +429,9 @@ const SectionLabel: React.FC<{ tint: GlassTint; children: React.ReactNode }> = (
 const GTD_RESPONSE = (
   <div className="space-y-3">
     <p>
-      Собрала <strong className="font-semibold">12 задач</strong> за период 30.09–06.10
-      из <strong>Jira</strong>, <strong>TrueConf</strong> и <strong>Slack</strong>.
+      Собрала <strong className="font-semibold">12 задач</strong> за период 30.09–06.10.
       Разложила по GTD:
     </p>
-
-    <div>
-      <SectionLabel tint="red">Дедлайн сегодня</SectionLabel>
-      <ul className="space-y-1.5">
-        <li className="flex items-start gap-2">
-          <SourceBadge kind="jira" />
-          <span className="flex-1">Ревью PR #482 — до 18:00</span>
-        </li>
-        <li className="flex items-start gap-2">
-          <SourceBadge kind="slack" />
-          <span className="flex-1">Ответить клиенту по SSO — до 12:00</span>
-        </li>
-      </ul>
-    </div>
-
-    <div>
-      <SectionLabel tint="amber">На этой неделе</SectionLabel>
-      <ul className="space-y-1.5">
-        <li className="flex items-start gap-2">
-          <SourceBadge kind="jira" />
-          <span className="flex-1">Спринт-планирование Q4 — 03.10, 11:00</span>
-        </li>
-        <li className="flex items-start gap-2">
-          <SourceBadge kind="trueconf" />
-          <span className="flex-1">Созвон с продажами — 03.10, 15:00</span>
-        </li>
-        <li className="flex items-start gap-2">
-          <SourceBadge kind="slack" />
-          <span className="flex-1">Согласовать бюджет на ноябрь — 04.10, до 17:00</span>
-        </li>
-        <li className="flex items-start gap-2">
-          <SourceBadge kind="jira" />
-          <span className="flex-1">Закрыть 3 задачи из Sprint 24 — 04.10</span>
-        </li>
-      </ul>
-    </div>
-
-    <div>
-      <SectionLabel tint="slate">На следующей неделе</SectionLabel>
-      <ul className="space-y-1.5">
-        <li className="flex items-start gap-2">
-          <SourceBadge kind="jira" />
-          <span className="flex-1">Ретроспектива спринта — 08.10, 16:00</span>
-        </li>
-        <li className="flex items-start gap-2">
-          <SourceBadge kind="trueconf" />
-          <span className="flex-1">Демо для партнёров — 09.10, 14:00</span>
-        </li>
-        <li className="flex items-start gap-2">
-          <SourceBadge kind="slack" />
-          <span className="flex-1">Квартальный отчёт — 10.10</span>
-        </li>
-      </ul>
-    </div>
 
     <div
       className={cn(
@@ -1020,10 +976,10 @@ const MON_UI_W = 800;
 const MON_UI_H = 400;
 
 const MONITOR_SCREEN_CORNERS: [Point, Point, Point, Point] = [
-  [1, 1.7],
-  [99, 3],
-  [94, 74],
-  [7.2, 60],
+  [0.5, 1],
+  [99.5, 2.5],
+  [93.9, 74],
+  [6.7, 60.7],
 ];
 
 const MonitorScene: React.FC = () => {
@@ -1074,9 +1030,9 @@ const MonitorScene: React.FC = () => {
           height: MON_IMG_H,
           transform: `scale(${scale})`,
           WebkitMaskImage:
-            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.25) 70%, transparent 87%, transparent 100%)",
+            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.25) 60%, transparent 80%, transparent 100%)",
             maskImage:
-            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.25) 70%, transparent 87%, transparent 100%)",
+            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.25) 60%, transparent 80%, transparent 100%)",
         }}
       >
         <img
@@ -1094,7 +1050,7 @@ const MonitorScene: React.FC = () => {
             height: MON_UI_H,
             transformOrigin: "0 0",
             transform: matrix,
-            borderRadius: 16,
+            borderRadius: 1,
           }}
         >
           <div className="absolute inset-0 flex flex-col bg-white dark:bg-gray-950">
@@ -1150,7 +1106,7 @@ const MonitorScene: React.FC = () => {
                 <div className="max-w-[70%] min-w-0">
                   <div className="rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-3.5 py-2">
                     <p className="text-[18px] text-gray-900 dark:text-white leading-snug">
-                      Зафиксировала задачу <strong className="font-semibold">«Подать фин отчёт»</strong> на 30.09.2027 (конец квартала). Собираю ваши документы к концу отчётного периода.
+                      Зафиксировала <strong className="font-semibold">«Подать фин отчёт»</strong> на 30.09.2027. Собираю документы к концу отчётного периода.
                     </p>
                   </div>
                 </div>
@@ -1319,18 +1275,24 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
             <ArrowRight size={18} className="ml-1" aria-hidden="true" />
           </InteractiveButton>
 
-          <Button
+          <button
             type="button"
-            variant="outline"
             onClick={() =>
               document.getElementById("usecases")?.scrollIntoView({ behavior: "smooth" })
             }
-            className="dark:text-white dark"
+            className={cn(
+              "group relative overflow-hidden inline-flex items-center justify-center",
+              "px-2 py-2 rounded-full",
+              "text-base font-medium",
+              "text-gray-700 dark:text-gray-300",
+              GLASS_BODY,
+              "transition-transform duration-300",
+              "hover:-translate-y-0.5"
+            )}
           >
-            <p className="text-eyebrow text-blue-600 dark:text-blue-400 mb-2">
-                Как это работает
-            </p>
-          </Button>
+            <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
+            <span className="relative">Как это работает</span>
+          </button>
         </div>
 
       </div>
@@ -1855,18 +1817,16 @@ const FinalCTA: React.FC<{
                 "rounded-full",
                 "transition-all duration-300 ease-out",
                 "hover:-translate-y-0.5 active:translate-y-0",
-                "bg-white/70 dark:bg-white/20",
-                "backdrop-blur-xl",
-                "ring-1 ring-white/70 dark:ring-white/30",
-                "shadow-[0_8px_32px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(255,255,255,0.4)]",
-                "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(255,255,255,0.1)]",
-                "hover:bg-white/85 dark:hover:bg-white/25",
-                "hover:shadow-[0_12px_40px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.5)]"
+                // ─── Белое тело ───
+                "bg-white",
+                "ring-1 ring-white/80",
+                "shadow-[0_12px_40px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.5)]",
+                "hover:shadow-[0_16px_48px_rgba(15,23,42,0.28),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.6)]"
               )}
             >
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-x-3 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/80 to-transparent opacity-90 blur-[1px]"
+                className="pointer-events-none absolute inset-x-3 top-1 h-1/2 rounded-full bg-gradient-to-b from-white to-transparent opacity-90 blur-[1px]"
               />
               <span
                 aria-hidden="true"
