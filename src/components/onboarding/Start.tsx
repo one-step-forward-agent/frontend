@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
+import { MascotFade } from "@/components/MascotFade";
 import {
   Sparkles, Send, Calendar, BarChart3,
   Mic, Zap, Target, ArrowRight, Check,
@@ -1203,27 +1204,36 @@ const HeroScene: React.FC = () => {
         }}
       >
         <div
-        className="absolute z-0"
-        style={{
-            left: -80,
-            top: -170,
-            width: 825,
-            height: 1000,
-            WebkitMaskImage:
-            "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
-            maskImage:
-            "linear-gradient(to bottom, black 0%, black 50%, rgba(0,0,0,0.35) 72%, transparent 92%)",
-        }}
+          className="absolute z-0"
+          style={{ left: -80, top: -170, width: 825,
+            WebkitMaskImage: [
+            // 1. По вертикали: сохраняем затухание внизу
+            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.5) 68%, transparent 90%)",
+            // 2. По горизонтали: мягко гасим к правому краю (там, где карточки)
+            "linear-gradient(to right, black 0%, black 55%, rgba(0,0,0,0.5) 78%, transparent 100%)",
+            // 3. Слева — лишь слегка, чтобы маскот не был «отрезан» у границы
+            "linear-gradient(to left, black 0%, black 85%, transparent 100%)",
+          ].join(", "),
+          maskImage: [
+            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.5) 68%, transparent 90%)",
+            "linear-gradient(to right, black 0%, black 55%, rgba(0,0,0,0.5) 78%, transparent 100%)",
+            "linear-gradient(to left, black 0%, black 85%, transparent 100%)",
+          ].join(", "),
+
+          // ─── Складываем слои через intersect ───
+          WebkitMaskComposite: "source-in",
+          maskComposite: "intersect",
+          }}
         >
-        <img
+          <MascotFade
             src="/images/MaskotWB.png"
             alt="Ассистент Dayla говорит по телефону"
-            className="w-full h-full object-contain select-none pointer-events-none"
-            draggable={false}
-            loading="lazy"
-        />
+            fadeStart={40}
+            fadeLength={60}
+            blend
+            glow
+          />
         </div>
-
         <div
           className="absolute z-10"
           style={{ left: 250, top: 320, width: 500 }}
