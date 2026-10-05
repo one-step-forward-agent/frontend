@@ -275,14 +275,14 @@ export const AppleAndGoogleLogging: React.FC = () => {
 
       update("integrations", selected);
       update("googleConnected", selected.includes("google"));
-      navigate("/onboarding/sources-import");
+      navigate("/onboarding/fast-tasks-enter");
       return;
     }
 
     if (oauthQueue.length === 0) {
       update("integrations", selected);
       update("googleConnected", selected.includes("google"));
-      navigate("/onboarding/sources-import");
+      navigate("/onboarding/fast-tasks-enter");
       return;
     }
 
