@@ -2,8 +2,8 @@
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Sparkles, Check, ChevronDown, ChevronUp,
-  GraduationCap, Link2, Loader2,
+  Check, ChevronDown, ChevronUp,
+  GraduationCap, Link2,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
@@ -11,8 +11,7 @@ import { useOnboarding } from "./OnboardingContext";
 import { cn } from "@/utils/cn";
 
 const TOTAL = 10;
-const OAUTH_QUEUE_KEY = "onboarding:oauth-queue";
-const OAUTH_SELECTED_KEY = "onboarding:selected-integrations";
+const PENDING_KEY = "oauth:pending";
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -32,258 +31,248 @@ const GLASS_SHEEN_PILL =
 const ACTIVE_RING_SKY =
   "0 0 0 1.5px rgba(56,189,248,0.6), 0 4px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(15,23,42,0.06)";
 
-type IntegrationKind = "oauth" | "manual";
+/* ─── Провайдеры ─────────────────────────────────────────── */
+
+export type OAuthProvider =
+  | "google" | "apple" | "jira" | "notion" | "slack" | "telegram";
+
+export type ManualProvider = "obsidian" | "trueconf";
+export type Provider = OAuthProvider | ManualProvider;
 
 type Integration = {
-  id:
-    | "google" | "apple" | "jira" | "notion" | "obsidian"
-    | "telegram" | "slack" | "trueconf";
+  id: Provider;
   name: string;
   src: string;
   w: number;
-  kind: IntegrationKind;
+  kind: "oauth" | "manual";
 };
 
-/* ─── Все 8 интеграций ─────────────────────────────────── */
 const INTEGRATIONS: Integration[] = [
-  {
-    id: "google",
-    name: "Google Calendar",
-    src: "/images/google-calendar.png",
-    w: 40,
-    kind: "oauth",
-  },
-  {
-    id: "apple",
-    name: "Apple Calendar",
-    src: `/images/${encodeURIComponent("Календарь_для_macOS.png")}`,
-    w: 40,
-    kind: "oauth",
-  },
-  {
-    id: "jira",
-    name: "Jira",
-    src: "/images/Jira_Software_Logo.svg",
-    w: 36,
-    kind: "oauth",
-  },
-  {
-    id: "notion",
-    name: "Notion",
-    src: "/images/Notion.png",
-    w: 40,
-    kind: "oauth",
-  },
-  {
-    id: "obsidian",
-    name: "Obsidian",
-    src: "/images/Obsidian.png",
-    w: 40,
-    kind: "manual",
-  },
-  {
-    id: "telegram",
-    name: "Telegram",
-    src: "/images/TelegramWB.png",
-    w: 40,
-    // было "oauth", но buildOAuthUrl для него пустой → экран зависал
-    kind: "manual",
-  },
-  {
-    id: "slack",
-    name: "Slack",
-    src: "/images/slack.png",
-    w: 40,
-    kind: "oauth",
-  },
-  {
-    id: "trueconf",
-    name: "TrueConf",
-    src: "/images/tc_logo_square.png",
-    w: 40,
-    kind: "manual",
-  },
+  { id: "google",   name: "Google Calendar", src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
+  { id: "apple",    name: "Apple Calendar",  src: `/images/${encodeURIComponent("Календарь_для_macOS.png")}`, w: 40, kind: "oauth" },
+  { id: "jira",     name: "Jira",            src: "/images/Jira_Software_Logo.svg",  w: 36, kind: "oauth" },
+  { id: "notion",   name: "Notion",          src: "/images/Notion.png",              w: 40, kind: "oauth" },
+  { id: "slack",    name: "Slack",           src: "/images/slack.png",               w: 40, kind: "oauth" },
+  { id: "telegram", name: "Telegram",        src: "/images/TelegramWB.png",          w: 40, kind: "oauth" },
+  { id: "obsidian", name: "Obsidian",        src: "/images/Obsidian.png",            w: 40, kind: "manual" },
+  { id: "trueconf", name: "TrueConf",        src: "/images/tc_logo_square.png",      w: 40, kind: "manual" },
 ];
 
-const DEMO_MODE =
-  !import.meta.env.VITE_GOOGLE_CLIENT_ID &&
-  !import.meta.env.VITE_APPLE_CLIENT_ID &&
-  !import.meta.env.VITE_JIRA_CLIENT_ID &&
-  !import.meta.env.VITE_SLACK_CLIENT_ID;
+const isOAuthProvider = (id: Provider): id is OAuthProvider =>
+  INTEGRATIONS.find((i) => i.id === id)?.kind === "oauth";
 
-const REDIRECT_URI = () =>
-  `${window.location.origin}/onboarding/apple-google-logging`;
+/* ─── URL-строитель OAuth ────────────────────────────────── */
 
-const buildOAuthUrl = (id: Integration["id"], state: string): string => {
-  const redirect = REDIRECT_URI();
+const buildOAuthUrl = (
+  id: OAuthProvider,
+  state: string,
+  redirectUri: string
+): string => {
+  const params = (obj: Record<string, string>) =>
+    new URLSearchParams(obj).toString();
+
   switch (id) {
-    case "google": {
-      const params = new URLSearchParams({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "",
-        redirect_uri: redirect,
+    case "google":
+      return `https://accounts.google.com/o/oauth2/v2/auth?${params({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID!,
+        redirect_uri: redirectUri,
         response_type: "code",
         scope: "https://www.googleapis.com/auth/calendar.readonly",
         access_type: "offline",
         prompt: "consent",
         state,
-      });
-      return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-    }
-    case "apple": {
-      const params = new URLSearchParams({
-        client_id: import.meta.env.VITE_APPLE_CLIENT_ID ?? "",
-        redirect_uri: redirect,
+      })}`;
+
+    case "apple":
+      return `https://appleid.apple.com/auth/authorize?${params({
+        client_id: import.meta.env.VITE_APPLE_CLIENT_ID!,
+        redirect_uri: redirectUri,
         response_type: "code",
-        scope: "calendars",
+        scope: "name email",
+        response_mode: "form_post",
         state,
-      });
-      return `https://appleid.apple.com/auth/authorize?${params}`;
-    }
-    case "jira": {
-      const params = new URLSearchParams({
+      })}`;
+
+    case "jira":
+      return `https://auth.atlassian.com/authorize?${params({
         audience: "api.atlassian.com",
-        client_id: import.meta.env.VITE_JIRA_CLIENT_ID ?? "",
+        client_id: import.meta.env.VITE_JIRA_CLIENT_ID!,
         scope: "read:jira-work read:jira-user offline_access",
-        redirect_uri: redirect,
+        redirect_uri: redirectUri,
         state,
         response_type: "code",
         prompt: "consent",
-      });
-      return `https://auth.atlassian.com/authorize?${params}`;
-    }
-    case "notion": {
-      const params = new URLSearchParams({
-        client_id: import.meta.env.VITE_NOTION_CLIENT_ID ?? "",
-        redirect_uri: redirect,
+      })}`;
+
+    case "notion":
+      return `https://api.notion.com/v1/oauth/authorize?${params({
+        client_id: import.meta.env.VITE_NOTION_CLIENT_ID!,
+        redirect_uri: redirectUri,
         response_type: "code",
         owner: "user",
         state,
-      });
-      return `https://api.notion.com/v1/oauth/authorize?${params}`;
-    }
-    case "slack": {
-      const params = new URLSearchParams({
-        client_id: import.meta.env.VITE_SLACK_CLIENT_ID ?? "",
-        redirect_uri: redirect,
+      })}`;
+
+    case "slack":
+      return `https://slack.com/oauth/v2/authorize?${params({
+        client_id: import.meta.env.VITE_SLACK_CLIENT_ID!,
+        redirect_uri: redirectUri,
         scope: "channels:history,channels:read,users:read",
         state,
-      });
-      return `https://slack.com/oauth/v2/authorize?${params}`;
-    }
+      })}`;
+
     case "telegram":
-    case "obsidian":
-    case "trueconf":
-      return "";
+      return `https://oauth.telegram.org/auth?${params({
+        bot_id: import.meta.env.VITE_TELEGRAM_BOT_ID!,
+        origin: window.location.origin,
+        request_access: "write",
+        return_to: `${redirectUri}?state=${encodeURIComponent(state)}`,
+      })}`;
   }
 };
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const buildCallbackBase = (redirectUri: string) =>
+  redirectUri.replace(/\/onboarding\/.*$/, "/api/oauth/callback");
+
+/* ─── Pending-состояние OAuth-цепочки ───────────────────── */
+
+type PendingOAuth = {
+  selected: Provider[];
+  queue: OAuthProvider[];
+  startedAt: number;
+};
+
+/* ─── Компонент ─────────────────────────────────────────── */
 
 export const AppleAndGoogleLogging: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data, update } = useOnboarding();
 
-  const [selected, setSelected] = React.useState<string[]>(
-    () => data.integrations ?? []
+  // data.integrations — string[], но по факту это Provider[].
+  // Приводим через filter+type guard, чтобы не гадать.
+  const initialSelected: Provider[] = React.useMemo(
+    () =>
+      ((data.integrations ?? []) as string[]).filter((id): id is Provider =>
+        INTEGRATIONS.some((i) => i.id === id)
+      ),
+    [data.integrations]
   );
+
+  const [selected, setSelected] = React.useState<Provider[]>(initialSelected);
   const [showGuide, setShowGuide] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const [phase, setPhase] = React.useState<"idle" | "connecting">("idle");
-  const [currentProvider, setCurrentProvider] = React.useState<Integration | null>(null);
-
-  const toggle = (id: string) => {
+  const toggle = (id: Provider) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
+    setError(null);
   };
 
-  /* ─── Обработка OAuth-callback ─────────────────────── */
+  /* ─── Возврат с OAuth ─────────────────────────────── */
   React.useEffect(() => {
-    if (DEMO_MODE) return;
-
     const code = searchParams.get("code");
     const state = searchParams.get("state");
+    const provider = searchParams.get("provider") as OAuthProvider | null;
+
     if (!code && !state) return;
 
-    const queue: string[] = JSON.parse(
-      sessionStorage.getItem(OAUTH_QUEUE_KEY) ?? "[]"
-    );
+    const raw = sessionStorage.getItem(PENDING_KEY);
+    if (!raw) return;
 
-    if (queue.length === 0) {
-      const saved: string[] = JSON.parse(
-        sessionStorage.getItem(OAUTH_SELECTED_KEY) ?? "[]"
-      );
-      sessionStorage.removeItem(OAUTH_QUEUE_KEY);
-      sessionStorage.removeItem(OAUTH_SELECTED_KEY);
-      update("integrations", saved);
-      update("googleConnected", saved.includes("google"));
-      navigate("/onboarding/fast-tasks-enter", { replace: true });
+    const pending: PendingOAuth = JSON.parse(raw);
+
+    // CSRF-проверка: state должен совпадать с первым в очереди
+    const expected = pending.queue[0] ?? null;
+    if (!expected || state !== expected) {
+      setError("Ошибка авторизации: несовпадение state.");
+      sessionStorage.removeItem(PENDING_KEY);
       return;
     }
 
-    const [next, ...rest] = queue;
-    sessionStorage.setItem(OAUTH_QUEUE_KEY, JSON.stringify(rest));
-    const provider = INTEGRATIONS.find((i) => i.id === next);
-    if (!provider) return;
+    (async () => {
+      try {
+        const res = await fetch(
+          `${buildCallbackBase(import.meta.env.VITE_OAUTH_REDIRECT_URI!)}/${provider ?? "unknown"}`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code, state }),
+          }
+        );
+        if (!res.ok) throw new Error(await res.text());
+      } catch {
+        setError("Не удалось завершить подключение. Попробуйте ещё раз.");
+        sessionStorage.removeItem(PENDING_KEY);
+        return;
+      }
 
-    const url = buildOAuthUrl(provider.id, JSON.stringify({ provider: provider.id }));
-    if (url) window.location.href = url;
-    else {
-      // Страховка: следующий в очереди без OAuth-URL → не зависаем
-      sessionStorage.removeItem(OAUTH_QUEUE_KEY);
-      sessionStorage.removeItem(OAUTH_SELECTED_KEY);
-      update("integrations", INTEGRATIONS.map((i) => i.id));
-    }
+      const [, ...rest] = pending.queue;
+
+      if (rest.length === 0) {
+        // Все провайдеры подключены
+        sessionStorage.removeItem(PENDING_KEY);
+        update("integrations", pending.selected);
+        update("googleConnected", pending.selected.includes("google"));
+        navigate("/onboarding/sources-import", { replace: true });
+        return;
+      }
+
+      // Обновляем очередь и идём к следующему
+      sessionStorage.setItem(
+        PENDING_KEY,
+        JSON.stringify({ ...pending, queue: rest } satisfies PendingOAuth)
+      );
+
+      const nextId = rest[0];
+      const url = buildOAuthUrl(
+        nextId,
+        nextId,
+        import.meta.env.VITE_OAUTH_REDIRECT_URI!
+      );
+      window.location.href = url;
+    })();
   }, [searchParams, navigate, update]);
 
-  const handleNext = async () => {
+  /* ─── Старт OAuth-цепочки ─────────────────────────── */
+  const handleNext = () => {
+    setError(null);
+
     if (selected.length === 0) {
       update("integrations", []);
       update("googleConnected", false);
-      navigate("/onboarding/fast-tasks-enter");
+      navigate("/onboarding/sources-import");
       return;
     }
 
-    // В очередь — только те, у кого реально есть OAuth-URL
-    const oauthQueue = selected.filter((id) => {
-      const integration = INTEGRATIONS.find((i) => i.id === id);
-      if (!integration || integration.kind !== "oauth") return false;
-      return buildOAuthUrl(integration.id, "{}") !== "";
-    });
+    const oauthQueue = selected.filter(isOAuthProvider);
+    const manualOnly = selected.filter((id) => !isOAuthProvider(id));
 
-    if (DEMO_MODE) {
-      setPhase("connecting");
-      for (const id of selected) {
-        const provider = INTEGRATIONS.find((i) => i.id === id);
-        if (!provider) continue;
-        setCurrentProvider(provider);
-        await sleep(900);
-      }
-      setCurrentProvider(null);
-      setPhase("idle");
-
-      update("integrations", selected);
-      update("googleConnected", selected.includes("google"));
-      navigate("/onboarding/fast-tasks-enter");
-      return;
-    }
+    // manual-провайдеры сохраняются сразу — они подключаются в настройках
+    update("integrations", [...manualOnly, ...oauthQueue]);
+    update("googleConnected", selected.includes("google"));
 
     if (oauthQueue.length === 0) {
-      update("integrations", selected);
-      update("googleConnected", selected.includes("google"));
-      navigate("/onboarding/fast-tasks-enter");
+      navigate("/onboarding/sources-import");
       return;
     }
 
-    sessionStorage.setItem(OAUTH_SELECTED_KEY, JSON.stringify(selected));
-    sessionStorage.setItem(OAUTH_QUEUE_KEY, JSON.stringify(oauthQueue.slice(1)));
+    const pending: PendingOAuth = {
+      selected,
+      queue: oauthQueue,
+      startedAt: Date.now(),
+    };
+    sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending));
 
-    const first = INTEGRATIONS.find((i) => i.id === oauthQueue[0]);
-    if (!first) return;
-
-    const url = buildOAuthUrl(first.id, JSON.stringify({ provider: first.id }));
-    if (url) window.location.href = url;
+    const firstId = oauthQueue[0];
+    const url = buildOAuthUrl(
+      firstId,
+      firstId,
+      import.meta.env.VITE_OAUTH_REDIRECT_URI!
+    );
+    window.location.href = url;
   };
 
   return (
@@ -295,7 +284,6 @@ export const AppleAndGoogleLogging: React.FC = () => {
         onBack={() => navigate("/onboarding/existing-plans")}
         onNext={handleNext}
         onSkip={() => navigate("/onboarding/fast-tasks-enter")}
-        nextDisabled={phase === "connecting"}
         nextLabel={
           selected.length > 0
             ? `Подключить${selected.length > 1 ? ` (${selected.length})` : ""}`
@@ -320,6 +308,20 @@ export const AppleAndGoogleLogging: React.FC = () => {
             </span>
           </div>
 
+          {error && (
+            <div
+              role="alert"
+              className={cn(
+                "rounded-xl px-3 py-2 text-sm",
+                "bg-red-500/10 dark:bg-red-500/10",
+                "text-red-700 dark:text-red-300",
+                "ring-1 ring-red-400/40"
+              )}
+            >
+              {error}
+            </div>
+          )}
+
           {/* ─── Сетка интеграций ─────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {INTEGRATIONS.map((i) => {
@@ -330,31 +332,26 @@ export const AppleAndGoogleLogging: React.FC = () => {
                   key={i.id}
                   type="button"
                   onClick={() => toggle(i.id)}
-                  disabled={phase === "connecting"}
                   aria-pressed={active}
                   className={cn(
                     "group relative overflow-hidden text-left",
                     "rounded-2xl p-3.5 sm:p-4",
                     GLASS_BODY,
                     "transition-transform duration-300",
-                    "hover:-translate-y-0.5",
-                    "disabled:opacity-50 disabled:pointer-events-none"
+                    "hover:-translate-y-0.5"
                   )}
                   style={active ? { boxShadow: ACTIVE_RING_SKY } : undefined}
                 >
                   <span aria-hidden="true" className={GLASS_SHEEN} />
 
-                  <div className="relative flex items-center justify-center gap-3">
-                    {/* Иконка-плашка */}
+                  <div className="relative flex items-center gap-3">
                     <div
                       className={cn(
                         "relative shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center",
                         "overflow-hidden transition-all duration-300",
                         "backdrop-blur-3xl ring-1",
                         "bg-white/[0.06] dark:bg-white/[0.02]",
-                        active
-                          ? "ring-sky-400/60"
-                          : "ring-white/30 dark:ring-white/10"
+                        active ? "ring-sky-400/60" : "ring-white/30 dark:ring-white/10"
                       )}
                       style={
                         active
@@ -376,7 +373,6 @@ export const AppleAndGoogleLogging: React.FC = () => {
                       />
                     </div>
 
-                    {/* Текст */}
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 dark:text-white leading-snug">
                         {i.name}
@@ -403,8 +399,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
                   aria-hidden="true"
                   className={cn(
                     "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
-                    "bg-white/[0.06] dark:bg-white/[0.02]",
-                    "backdrop-blur-3xl",
+                    "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl",
                     "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30",
                     "text-emerald-700 dark:text-emerald-300",
                     "shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
@@ -431,12 +426,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
               </button>
 
               {showGuide && (
-                <ol
-                  className={cn(
-                    "mt-4 sm:ml-12 space-y-2 text-sm text-gray-600 dark:text-gray-400",
-                    "animate-in fade-in slide-in-from-top-1 duration-300"
-                  )}
-                >
+                <ol className="mt-4 sm:ml-12 space-y-2 text-sm text-gray-600 dark:text-gray-400 animate-in fade-in slide-in-from-top-1 duration-300">
                   {[
                     "Откройте личный кабинет ВШЭ → раздел «Расписание».",
                     "Выгрузите расписание в формате ICS.",
@@ -465,98 +455,6 @@ export const AppleAndGoogleLogging: React.FC = () => {
           </div>
         </div>
       </OnboardingLayout>
-
-      {/* ─── Оверлей подключения ─────────────────── */}
-      {phase === "connecting" && currentProvider && (
-        <div
-          className={cn(
-            "fixed inset-0 z-50 flex items-center justify-center px-4",
-            "bg-white/60 dark:bg-gray-950/70 backdrop-blur-xl"
-          )}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="oauth-title"
-        >
-          <div
-            className={cn(
-              "relative max-w-sm w-full overflow-hidden rounded-2xl",
-              GLASS_BODY
-            )}
-          >
-            <span aria-hidden="true" className={GLASS_SHEEN} />
-
-            <div className="relative p-6 text-center">
-              <div className="flex justify-center">
-                <div className="relative">
-                  <span
-                    aria-hidden="true"
-                    className="absolute -inset-3 rounded-3xl bg-sky-400/30 dark:bg-sky-500/25 blur-2xl"
-                  />
-
-                  <div
-                    className={cn(
-                      "relative w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden",
-                      "bg-white/[0.06] dark:bg-white/[0.02]",
-                      "ring-1 ring-white/30 dark:ring-white/10",
-                      "backdrop-blur-3xl",
-                      "shadow-[0_8px_32px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)]",
-                      "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]"
-                    )}
-                  >
-                    <img
-                      src={currentProvider.src}
-                      alt={currentProvider.name}
-                      style={{ width: currentProvider.w + 6, height: "auto" }}
-                      className="relative max-h-9 object-contain select-none pointer-events-none"
-                      draggable={false}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <p
-                id="oauth-title"
-                className="mt-5 font-medium text-gray-900 dark:text-white"
-              >
-                Подключаем {currentProvider.name}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Это займёт пару секунд
-              </p>
-
-              <div
-                className={cn(
-                  "mt-5 h-1 w-full rounded-full overflow-hidden",
-                  "bg-white/[0.06] dark:bg-white/[0.02]",
-                  "ring-1 ring-white/30 dark:ring-white/10",
-                  "shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]"
-                )}
-              >
-                <div
-                  className={cn(
-                    "h-full w-full origin-left",
-                    "bg-gradient-to-r from-sky-400 to-blue-500",
-                    "animate-[oauth-progress_1.2s_ease-in-out]"
-                  )}
-                />
-              </div>
-
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-                <Loader2 size={12} className="animate-spin" aria-hidden="true" />
-                <span>Не закрывайте вкладку</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes oauth-progress {
-          0%   { transform: scaleX(0); }
-          60%  { transform: scaleX(0.85); }
-          100% { transform: scaleX(1); }
-        }
-      `}</style>
     </>
   );
 };

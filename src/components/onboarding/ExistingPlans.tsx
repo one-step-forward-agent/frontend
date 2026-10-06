@@ -366,7 +366,7 @@ export const ExistingPlans: React.FC = () => {
                       type="time"
                       value={uniformFrom}
                       onChange={(e) => setUniformFrom(e.target.value)}
-                      className="pl-9"
+                      className="w-full min-w-0 pl-9"
                     />
                   </div>
                 </label>
@@ -408,46 +408,51 @@ export const ExistingPlans: React.FC = () => {
                     <div
                       key={d.short}
                       className={cn(
-                        "relative flex items-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl sm:rounded-2xl overflow-hidden",
+                        "relative overflow-hidden rounded-xl sm:rounded-2xl",
+                        "p-2.5 sm:p-3",
                         GLASS_BODY
                       )}
                     >
                       <span aria-hidden="true" className={GLASS_SHEEN} />
 
-                      <span className="relative shrink-0 w-7 sm:w-9 text-xs font-semibold text-gray-700 dark:text-gray-200">
-                        {d.short}
-                      </span>
+                      <div className="relative space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2">
+                        {/* День — на мобильном отдельной строкой, на sm+ — в начале ряда */}
+                        <span className="block sm:shrink-0 sm:w-9 text-xs font-semibold text-gray-700 dark:text-gray-200">
+                          {d.short}
+                        </span>
 
-                      <div className="relative flex-1 min-w-0">
-                        <Clock
-                          size={13}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 hidden sm:block"
-                          aria-hidden="true"
-                        />
-                        <Input
-                          type="time"
-                          value={t.from}
-                          onChange={(e) => updateDayTime(d.short, "from", e.target.value)}
-                          className="sm:pl-9"
-                          aria-label={`Начало работы в ${d.full}`}
-                        />
-                      </div>
+                        {/* Инпуты: сетка 2 колонки на мобильном, flex-1 на sm+ */}
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-1 sm:gap-2 sm:min-w-0">
+                          <div className="relative min-w-0 sm:flex-1">
+                            <Clock
+                              size={13}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 hidden sm:block"
+                              aria-hidden="true"
+                            />
+                            <Input
+                              type="time"
+                              value={t.from}
+                              onChange={(e) => updateDayTime(d.short, "from", e.target.value)}
+                              className="w-full min-w-0 sm:pl-9"
+                              aria-label={`Начало работы в ${d.full}`}
+                            />
+                          </div>
 
-                      <span className="relative text-gray-400 text-xs shrink-0">–</span>
-
-                      <div className="relative flex-1 min-w-0">
-                        <Clock
-                          size={13}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 hidden sm:block"
-                          aria-hidden="true"
-                        />
-                        <Input
-                          type="time"
-                          value={t.to}
-                          onChange={(e) => updateDayTime(d.short, "to", e.target.value)}
-                          className="sm:pl-9"
-                          aria-label={`Конец работы в ${d.full}`}
-                        />
+                          <div className="relative min-w-0 sm:flex-1">
+                            <Clock
+                              size={13}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 hidden sm:block"
+                              aria-hidden="true"
+                            />
+                            <Input
+                              type="time"
+                              value={t.to}
+                              onChange={(e) => updateDayTime(d.short, "to", e.target.value)}
+                              className="w-full min-w-0 sm:pl-9"
+                              aria-label={`Конец работы в ${d.full}`}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
