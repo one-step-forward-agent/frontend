@@ -27,7 +27,8 @@ export function TasksPage() {
   const tomorrowKey = dayKey(addDays(today, 1));
   const active = untimed.filter((event) => !event.completed_at);
   const groups = [
-    { title: "Просроченные", items: active.filter((event) => day(event) < todayKey), showDate: true },
+    // Missed days of a recurring task are not overdue — only one-off tasks are
+    { title: "Просроченные", items: active.filter((event) => day(event) < todayKey && !event.series_id), showDate: true },
     { title: "Сегодня", items: active.filter((event) => day(event) === todayKey) },
     { title: "Завтра", items: active.filter((event) => day(event) === tomorrowKey) },
     { title: "Позже", items: active.filter((event) => day(event) > tomorrowKey), showDate: true },

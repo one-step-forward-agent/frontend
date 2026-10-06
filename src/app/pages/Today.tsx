@@ -27,7 +27,7 @@ export function TodayPage() {
     [today.getTime()],
   );
   const stats = useAsync(() => api.stats(7), []);
-  const recommendations = useAsync(() => api.recommendations(), []);
+  const recommendations = useAsync(() => loadRecommendations(user.id), [user.id]);
   const telegram = useAsync(() => api.telegram.status(), []);
   const reloadAll = useCallback(() => {
     events.reload();
@@ -38,7 +38,8 @@ export function TodayPage() {
   const todays = (events.data ?? []).filter((event) => occursOn(event, today));
   const timed = todays.filter((event) => !event.all_day);
   const untimed = todays.filter((event) => event.all_day);
-  const overdue = (events.data ?? []).filter((event) => event.all_day && !event.completed_at && new Date(event.end_at) <= today);
+  // Overdue = a one-off task without time left from a past day; past meetings simply happened
+  const overdue = (events.data ?? []).filter((event) => event.all_day && !event.completed_at && !event.series_id && new Date(event.end_at) <= today);
   const next = timed.find((event) => !event.completed_at && new Date(event.end_at) > now) ?? null;
 
   return (
@@ -48,7 +49,7 @@ export function TodayPage() {
         subtitle={formatDate(now, { weekday: "long", day: "numeric", month: "long" })}
       />
 
-      <Recommendations items={recommendations.data} />
+      <Recommendations items={recommendations.data} userId={user.id} />
 
       {events.error && <ErrorNote message={events.error} onRetry={events.reload} />}
 
@@ -97,7 +98,31 @@ export function TodayPage() {
   );
 }
 
-function Recommendations({ items }: { items: Recommendation[] | undefined }) {
+const recommendationsKey = (userId: number) => `dayla-recommendations:${userId}`;
+
+/** Shows the last recommendations at once; the server reuses them until the plan changes. */
+function loadRecommendations(userId: number): Promise<Recommendation[]> {
+  return api.recommendations().then((items) => {
+    try {
+      sessionStorage.setItem(recommendationsKey(userId), JSON.stringify(items));
+    } catch {
+      // storage unavailable — only the instant display is lost
+    }
+    return items;
+  });
+}
+
+function storedRecommendations(userId: number): Recommendation[] | undefined {
+  try {
+    const raw = sessionStorage.getItem(recommendationsKey(userId));
+    return raw ? (JSON.parse(raw) as Recommendation[]) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function Recommendations({ items: loaded, userId }: { items: Recommendation[] | undefined; userId: number }) {
+  const items = loaded ?? storedRecommendations(userId);
   return (
     <section className="recommendations" aria-label="Рекомендации Dayla">
       <Icon name="assistant" />

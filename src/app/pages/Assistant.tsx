@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { api } from "../api/client";
-import type { AssistantEvent, AssistantReply, DraftItem } from "../api/types";
+import { ApiError, api } from "../api/client";
+import type { AssistantEvent, AssistantReply, DraftItem, HistoryMessage } from "../api/types";
 import { Icon } from "../components/icons";
 import { Button, PageHeader, useErrorToast } from "../components/ui";
 import { TEMPORARY_ERROR, errorText, formatTime, openPicker, parseDayKey, relativeDay } from "../lib/format";
@@ -21,6 +21,15 @@ const EXAMPLES: Record<Mode, string[]> = {
 
 let messageId = 0;
 
+/** Saved conversation (site and Telegram) as chat messages. */
+function fromHistory(items: HistoryMessage[]): Message[] {
+  return items.map((item) =>
+    item.role === "user"
+      ? { id: ++messageId, role: "user", text: item.text }
+      : { id: ++messageId, role: "assistant", reply: item.reply ?? { kind: "answer", text: item.text } },
+  );
+}
+
 export function AssistantPage() {
   useTitle("Ассистент");
   const { query } = useLocation();
@@ -28,11 +37,21 @@ export function AssistantPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
+  // The chat is stored on the server: reloading the page keeps the conversation
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, busy]);
+    api.assistant
+      .history()
+      .then((items) => setMessages((current) => [...fromHistory(items), ...current]))
+      .catch(() => undefined)
+      .finally(() => setLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: loaded ? "smooth" : "auto", block: "end" });
+  }, [messages, busy, loaded]);
 
   const push = (message: Message) => setMessages((items) => [...items, message]);
 
@@ -56,11 +75,11 @@ export function AssistantPage() {
   const initial = query.get("q");
   const handled = useRef<string | null>(null);
   useEffect(() => {
-    if (!initial || handled.current === initial) return;
+    if (!loaded || !initial || handled.current === initial) return;
     handled.current = initial;
     navigate("/assistant", { replace: true });
     send(initial);
-  }, [initial]);
+  }, [initial, loaded]);
 
   const replace = (id: number, reply: AssistantReply) =>
     setMessages((items) => items.map((item) => (item.id === id && item.role === "assistant" ? { ...item, reply } : item)));
@@ -83,7 +102,7 @@ export function AssistantPage() {
       />
 
       <div className="chat" aria-live="polite">
-        {messages.length === 0 && (
+        {loaded && messages.length === 0 && (
           <div className="chat-empty">
             <Icon name="assistant" size={32} />
             <p>{mode === "plan" ? "Что запланируем?" : "Что найти в календаре?"}</p>
@@ -197,8 +216,12 @@ function Proposal({ reply, onReply }: { reply: ProposalReply; onReply: (reply: A
       const result = await action();
       if (result.kind === "created") notifyTasksChanged();
       onReply(result);
-    } catch {
-      reportError(TEMPORARY_ERROR);
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 404 || error.status === 410)) {
+        onReply({ kind: "cancelled", text: "Этот черновик уже обработан или устарел." });
+      } else {
+        reportError(TEMPORARY_ERROR);
+      }
     } finally {
       setBusy(null);
     }

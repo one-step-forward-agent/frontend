@@ -7,6 +7,7 @@ import type {
   EventFile,
   EventLink,
   DraftItem,
+  HistoryMessage,
   Integration,
   IntegrationConnection,
   Recommendation,
@@ -153,6 +154,7 @@ export const api = {
   recommendations: () => request<{ items: Recommendation[] }>("/api/recommendations").then((result) => result.items),
   assistant: {
     chat: (text: string) => request<AssistantReply>("/api/assistant/chat", json("POST", { text }), "assistant_message"),
+    history: () => request<HistoryMessage[]>("/api/assistant/history?limit=60"),
     updateDraft: (draftId: number, items: Partial<DraftItem>[]) =>
       request<AssistantReply>(`/api/assistant/drafts/${draftId}`, json("PUT", { items }), "assistant_draft_edit"),
     confirmDraft: (draftId: number) =>

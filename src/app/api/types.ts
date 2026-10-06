@@ -119,6 +119,14 @@ export type AssistantReply =
   | { kind: "answer" | "not_found" | "edit_error" | "cancelled"; text: string }
   | { kind: "nothing" };
 
+export interface HistoryMessage {
+  id: number;
+  role: "user" | "assistant";
+  text: string;
+  reply: AssistantReply | null;
+  created_at: string;
+}
+
 export interface DayStats {
   date: string;
   total: number;
