@@ -351,12 +351,12 @@ export const ExistingPlans: React.FC = () => {
             {/* Одинаковое время: одна колонка на мобильном */}
             {!perDay && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="block">
+                <label className="block min-w-0">
                   <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
                     <Clock size={12} aria-hidden="true" />
                     Начало
                   </span>
-                  <div className="relative">
+                  <div className="relative min-w-0">
                     <Clock
                       size={14}
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
@@ -367,16 +367,17 @@ export const ExistingPlans: React.FC = () => {
                       value={uniformFrom}
                       onChange={(e) => setUniformFrom(e.target.value)}
                       className="w-full min-w-0 pl-9"
+                      style={{ width: "100%", minWidth: 0, maxWidth: "100%" }}
                     />
                   </div>
                 </label>
 
-                <label className="block">
+                <label className="block min-w-0">
                   <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
                     <Clock size={12} aria-hidden="true" />
                     Конец
                   </span>
-                  <div className="relative">
+                  <div className="relative min-w-0">
                     <Clock
                       size={14}
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
@@ -386,7 +387,8 @@ export const ExistingPlans: React.FC = () => {
                       type="time"
                       value={uniformTo}
                       onChange={(e) => setUniformTo(e.target.value)}
-                      className="pl-9"
+                      className="w-full min-w-0 pl-9"
+                      style={{ width: "100%", minWidth: 0, maxWidth: "100%" }}
                     />
                   </div>
                 </label>
@@ -415,43 +417,38 @@ export const ExistingPlans: React.FC = () => {
                     >
                       <span aria-hidden="true" className={GLASS_SHEEN} />
 
-                      <div className="relative space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2">
-                        {/* День — на мобильном отдельной строкой, на sm+ — в начале ряда */}
-                        <span className="block sm:shrink-0 sm:w-9 text-xs font-semibold text-gray-700 dark:text-gray-200">
+                      <div className="relative flex items-center gap-2 min-w-0">
+                        {/* День — фиксированная узкая метка */}
+                        <span className="shrink-0 w-7 text-xs font-semibold text-gray-700 dark:text-gray-200">
                           {d.short}
                         </span>
 
-                        {/* Инпуты: сетка 2 колонки на мобильном, flex-1 на sm+ */}
-                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-1 sm:gap-2 sm:min-w-0">
-                          <div className="relative min-w-0 sm:flex-1">
-                            <Clock
-                              size={13}
-                              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 hidden sm:block"
-                              aria-hidden="true"
-                            />
-                            <Input
-                              type="time"
-                              value={t.from}
-                              onChange={(e) => updateDayTime(d.short, "from", e.target.value)}
-                              className="w-full min-w-0 sm:pl-9"
-                              aria-label={`Начало работы в ${d.full}`}
-                            />
-                          </div>
-
-                          <div className="relative min-w-0 sm:flex-1">
-                            <Clock
-                              size={13}
-                              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 hidden sm:block"
-                              aria-hidden="true"
-                            />
-                            <Input
-                              type="time"
-                              value={t.to}
-                              onChange={(e) => updateDayTime(d.short, "to", e.target.value)}
-                              className="w-full min-w-0 sm:pl-9"
-                              aria-label={`Конец работы в ${d.full}`}
-                            />
-                          </div>
+                        {/* Два инпута: сетка 2 колонки, каждый сжимается */}
+                        <div className="flex-1 min-w-0 grid grid-cols-2 gap-1.5">
+                          <Input
+                            type="time"
+                            value={t.from}
+                            onChange={(e) => updateDayTime(d.short, "from", e.target.value)}
+                            aria-label={`Начало работы в ${d.full}`}
+                            className="w-full min-w-0 px-2 text-xs sm:text-sm tabular-nums"
+                            style={{
+                              width: "100%",
+                              minWidth: 0,
+                              maxWidth: "100%",
+                            }}
+                          />
+                          <Input
+                            type="time"
+                            value={t.to}
+                            onChange={(e) => updateDayTime(d.short, "to", e.target.value)}
+                            aria-label={`Конец работы в ${d.full}`}
+                            className="w-full min-w-0 px-2 text-xs sm:text-sm tabular-nums"
+                            style={{
+                              width: "100%",
+                              minWidth: 0,
+                              maxWidth: "100%",
+                            }}
+                          />
                         </div>
                       </div>
                     </div>

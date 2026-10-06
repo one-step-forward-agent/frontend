@@ -101,7 +101,7 @@ export const SuccessAndLearning: React.FC = () => {
       totalSteps={TOTAL}
       title="Всё готово!"
       subtitle="Дальше — только вы и ваш план. Я рядом."
-      onBack={() => navigate("/onboarding/fast-tasks-enter")}
+      onBack={() => navigate("/onboarding/apple-google-logging")}
     >
       <div className="relative space-y-4 sm:space-y-5">
         {/* ─── Праздничный блок ─────────────────────── */}

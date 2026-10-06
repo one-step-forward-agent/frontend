@@ -133,7 +133,7 @@ export const FieldOfActivity: React.FC = () => {
   const handleNext = () => {
     if (spheres.length === 0) return;
     update("spheres", spheres);
-    navigate("/onboarding/tone-of-voice");
+    navigate("/onboarding/goals-and-habits");
   };
 
   const onDragStart = (e: React.DragEvent, id: string) => {
@@ -165,7 +165,7 @@ export const FieldOfActivity: React.FC = () => {
       totalSteps={TOTAL}
       title="Отметьте важные для вас сферы"
       subtitle="Я учту их и помогу не потерять важное из виду."
-      onBack={() => navigate("/onboarding/for-what-using")}
+      onBack={() => navigate("/")}
       onNext={handleNext}
       nextDisabled={spheres.length === 0}
       nextLabel={`Далее${spheres.length > 0 ? ` · ${spheres.length}` : ""}`}

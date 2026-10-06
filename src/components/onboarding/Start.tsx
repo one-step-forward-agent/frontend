@@ -47,7 +47,7 @@ const PRIORITY_STYLES: Record<
 
 export const Start: React.FC = () => {
   const navigate = useNavigate();
-  const start = () => navigate("/onboarding/for-what-using");
+  const start = () => navigate("/onboarding/field-of-activity");
 
   const [finalCtaActive, setFinalCtaActive] = React.useState(false);
   const handleFinalCtaActive = React.useCallback((active: boolean) => {
@@ -1824,14 +1824,26 @@ const FinalCTA: React.FC<{
 };
 
 
+const SLIDE_DESIGN_WIDTH = 1280;
+const MOBILE_HEIGHT_CAP = 0.8; // 80vh
 
-const SLIDE_DESIGN_WIDTH = 1280; // ← больше max-w-6xl (1152) + padding (48) + запас
+interface ScaledSlideProps {
+  children: React.ReactNode;
+  /** Реальная (уже отмасштабированная) высота обёртки. Если не задана — обёртка берёт высоту по контенту. */
+  forcedHeight?: number;
+  /** Сообщает родителю натуральную высоту в дизайн-пикселях и текущий scale */
+  onMeasured?: (designHeight: number, scale: number) => void;
+}
 
-const ScaledSlide: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ScaledSlide: React.FC<ScaledSlideProps> = ({
+  children,
+  forcedHeight,
+  onMeasured,
+}) => {
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const innerRef = React.useRef<HTMLDivElement>(null);
   const [scale, setScale] = React.useState(1);
-  const [height, setHeight] = React.useState<number>(0);
+  const [naturalHeight, setNaturalHeight] = React.useState(0);
 
   React.useLayoutEffect(() => {
     const wrapper = wrapperRef.current;
@@ -1841,9 +1853,10 @@ const ScaledSlide: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const update = () => {
       const w = wrapper.clientWidth;
       const s = w > 0 ? Math.min(1, w / SLIDE_DESIGN_WIDTH) : 1;
-      const h = inner.offsetHeight * s;
+      const h = inner.offsetHeight;
       setScale(s);
-      setHeight(h);
+      setNaturalHeight(h);
+      onMeasured?.(h, s);
     };
 
     update();
@@ -1852,7 +1865,10 @@ const ScaledSlide: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     ro.observe(wrapper);
     ro.observe(inner);
     return () => ro.disconnect();
-  }, []);
+  }, [onMeasured]);
+
+  const height =
+    forcedHeight != null ? forcedHeight : naturalHeight * scale;
 
   return (
     <div
@@ -1879,127 +1895,121 @@ const AUTO_ADVANCE_MS = 8000;
 const MANUAL_PAUSE_MS = 25000;
 
 const SlideFlight: React.FC = () => (
-  <ScaledSlide>
-    <div className="py-16">
-      <div className="max-w-5xl mx-auto px-6">
-        <div className="max-w-2xl mb-14">
-          <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
-          <h2 className="text-4xl font-semibold tracking-tight">
-            Пересылайте события — Dayla всё спланирует
-          </h2>
-          <p className="mt-3 text-gray-600 dark:text-gray-400">
-            Не нужно вручную копировать дату, время и место. Отправьте сообщение
-            боту — Dayla разберётся сама.
-          </p>
-        </div>
+  <div className="py-16">
+    <div className="max-w-5xl mx-auto px-6">
+      <div className="max-w-2xl mb-14">
+        <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
+        <h2 className="text-4xl font-semibold tracking-tight">
+          Пересылайте события — Dayla всё спланирует
+        </h2>
+        <p className="mt-3 text-gray-600 dark:text-gray-400">
+          Не нужно вручную копировать дату, время и место. Отправьте сообщение
+          боту — Dayla разберётся сама.
+        </p>
+      </div>
 
-        <div className="grid grid-cols-2 gap-20 items-center">
-          <div className="relative flex justify-center">
-            <div className="relative w-full max-w-[400px]">
-              <IPhoneScene />
-            </div>
-          </div>
-          <div className="relative">
-            <DaylaChatCard
-              forwardedFrom="Переслано от Андрея Смирнова"
-              userMessage="Авиабилет PD-205 · VKO → LED"
-              daylaMessage={
-                <>
-                  Распознала авиабилет:{' '}
-                  <strong className="font-semibold">дата — 05 апреля, 21:55</strong>,{' '}
-                  <strong className="font-semibold">место посадки — Внуково, терминал A</strong>.
-                  Куда добавить событие?
-                </>
-              }
-            />
+      <div className="grid grid-cols-2 gap-20 items-center">
+        <div className="relative flex justify-center">
+          <div className="relative w-full max-w-[400px]">
+            <IPhoneScene />
           </div>
         </div>
-
-        <div className="mt-16 max-w-2xl mx-auto text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-            <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-            Dayla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
-          </p>
+        <div className="relative">
+          <DaylaChatCard
+            forwardedFrom="Переслано от Андрея Смирнова"
+            userMessage="Авиабилет PD-205 · VKO → LED"
+            daylaMessage={
+              <>
+                Распознала авиабилет:{' '}
+                <strong className="font-semibold">дата — 05 апреля, 21:55</strong>,{' '}
+                <strong className="font-semibold">место посадки — Внуково, терминал A</strong>.
+                Куда добавить событие?
+              </>
+            }
+          />
         </div>
       </div>
+
+      <div className="mt-16 max-w-2xl mx-auto text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+          Dayla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
+        </p>
+      </div>
     </div>
-  </ScaledSlide>
+  </div>
 );
 
 const SlideFinance: React.FC = () => (
-  <ScaledSlide>
-    <div className="py-16">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="max-w-2xl mb-14">
-          <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
-          <h2 className="text-4xl font-semibold tracking-tight">
-            Прислали файл? Dayla превратит его в задачу
-          </h2>
-          <p className="mt-3 text-gray-600 dark:text-gray-400">
-            Добавьте Dayla в чат. Она распознает, что к чему и когда это надо сдать.
-          </p>
-        </div>
+  <div className="py-16">
+    <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-2xl mb-14">
+        <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
+        <h2 className="text-4xl font-semibold tracking-tight">
+          Прислали файл? Dayla превратит его в задачу
+        </h2>
+        <p className="mt-3 text-gray-600 dark:text-gray-400">
+          Добавьте Dayla в чат. Она распознает, что к чему и когда это надо сдать.
+        </p>
+      </div>
 
-        <div className="grid grid-cols-[1fr_2fr] gap-16 items-center">
-          <div className="relative">
-            <DaylaChatCard
-              daylaMessage={
-                <>
-                  Подтянула Финансовый_отчёт_Q4.xlsx. Зафиксировала задачу{' '}
-                  <strong className="font-semibold">«Подать фин отчёт»</strong>{' '}
-                  на 30.09.2027 (конец квартала). Собираю ваши документы к концу
-                  отчётного периода.
-                </>
-              }
-            />
-          </div>
-          <div className="relative flex justify-center">
-            <div className="relative w-full">
-              <MonitorScene />
-            </div>
+      <div className="grid grid-cols-[1fr_2fr] gap-16 items-center">
+        <div className="relative">
+          <DaylaChatCard
+            daylaMessage={
+              <>
+                Подтянула Финансовый_отчёт_Q4.xlsx. Зафиксировала задачу{' '}
+                <strong className="font-semibold">«Подать фин отчёт»</strong>{' '}
+                на 30.09.2027 (конец квартала). Собираю ваши документы к концу
+                отчётного периода.
+              </>
+            }
+          />
+        </div>
+        <div className="relative flex justify-center">
+          <div className="relative w-full">
+            <MonitorScene />
           </div>
         </div>
       </div>
     </div>
-  </ScaledSlide>
+  </div>
 );
 
 const SlideGTD: React.FC = () => (
-  <ScaledSlide>
-    <div className="py-16">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="max-w-2xl mb-14">
-          <Badge className="text-eyebrow mb-3">Систематизация по GTD</Badge>
-          <h2 className="text-4xl font-semibold tracking-tight">
-            Одна фраза — и всё разложено по полочкам
-          </h2>
-          <p className="mt-3 text-gray-600 dark:text-gray-400">
-            Jira, TrueConf, Slack — Dayla соберёт задачи из всех источников,
-            расставит дедлайны и впишет их в ваш календарь.
-          </p>
-        </div>
+  <div className="py-16">
+    <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-2xl mb-14">
+        <Badge className="text-eyebrow mb-3">Систематизация по GTD</Badge>
+        <h2 className="text-4xl font-semibold tracking-tight">
+          Одна фраза — и всё разложено по полочкам
+        </h2>
+        <p className="mt-3 text-gray-600 dark:text-gray-400">
+          Jira, TrueConf, Slack — Dayla соберёт задачи из всех источников,
+          расставит дедлайны и впишет их в ваш календарь.
+        </p>
+      </div>
 
-        <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-16 items-center">
-          <div className="relative flex justify-center">
-            <GTDAggregation />
-          </div>
-          <div className="relative">
-            <DaylaChatCard
-              userMessage="Систематизируй задачи по Getting Things Done, которые мне прислали на этой неделе из Jira, TrueConf и Slack, в мой Гугл календарь"
-              daylaMessage={GTD_RESPONSE}
-            />
-          </div>
+      <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-16 items-center">
+        <div className="relative flex justify-center">
+          <GTDAggregation />
         </div>
-
-        <div className="mt-16 max-w-2xl mx-auto text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-            <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-            Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь
-          </p>
+        <div className="relative">
+          <DaylaChatCard
+            userMessage="Систематизируй задачи по Getting Things Done, которые мне прислали на этой неделе из Jira, TrueConf и Slack, в мой Гугл календарь"
+            daylaMessage={GTD_RESPONSE}
+          />
         </div>
       </div>
+
+      <div className="mt-16 max-w-2xl mx-auto text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+          Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь
+        </p>
+      </div>
     </div>
-  </ScaledSlide>
+  </div>
 );
 
 const USE_CASE_SLIDES: { id: string; render: () => React.ReactNode }[] = [
@@ -2013,6 +2023,52 @@ const UserCaseCarousel: React.FC<{ paused?: boolean }> = ({ paused = false }) =>
   const total = USE_CASE_SLIDES.length;
   const pausedUntil = React.useRef<number>(0);
 
+  /* ─── Измерения ──────────────────────────────── */
+  const measurementsRef = React.useRef<Record<number, { h: number; s: number }>>({});
+  const [measureVersion, setMeasureVersion] = React.useState(0);
+  const [viewportH, setViewportH] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => setViewportH(window.innerHeight);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const handleMeasured = React.useCallback(
+    (idx: number, designHeight: number, scale: number) => {
+      const prev = measurementsRef.current[idx];
+      if (prev && prev.h === designHeight && prev.s === scale) return;
+      measurementsRef.current[idx] = { h: designHeight, s: scale };
+      setMeasureVersion((v) => v + 1);
+    },
+    []
+  );
+
+  /* Максимальная натуральная высота среди слайдов (дизайн-px) */
+  const maxDesignHeight = React.useMemo(() => {
+    const heights = Object.values(measurementsRef.current).map((m) => m.h);
+    return heights.length ? Math.max(...heights) : 0;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [measureVersion]);
+
+  /* Текущий scale (одинаковый для всех слайдов, т.к. ширина контейнера одна) */
+  const currentScale = React.useMemo(() => {
+    const first = Object.values(measurementsRef.current)[0];
+    return first ? first.s : 1;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [measureVersion]);
+
+  /* Финальная высота обёртки: max в реальных px, но не больше 80vh */
+  const forcedHeight = React.useMemo(() => {
+    if (!maxDesignHeight || !viewportH) return undefined;
+    const naturalReal = maxDesignHeight * currentScale;
+    const mobileCap = viewportH * MOBILE_HEIGHT_CAP;
+    return Math.min(naturalReal, mobileCap);
+  }, [maxDesignHeight, currentScale, viewportH]);
+
+  /* ─── Логика карусели ───────────────────────── */
   const goTo = React.useCallback(
     (next: number) => {
       setIndex(((next % total) + total) % total);
@@ -2034,108 +2090,110 @@ const UserCaseCarousel: React.FC<{ paused?: boolean }> = ({ paused = false }) =>
   }, [total, paused]);
 
   return (
-  <section
-    id="usecases"
-    className="relative py-12 md:py-20 overflow-hidden"
-    aria-roledescription="carousel"
-  >
-    {/* Все слайды — в одной grid-ячейке.
-        Высота секции = высота самого высокого слайда, поэтому
-        переключение только меняет opacity — размеры не меняются. */}
-    <div className="relative grid grid-cols-1 min-w-0">
-      {USE_CASE_SLIDES.map((slide, i) => {
-        const isActive = i === index;
-        return (
-          <div
+    <section
+      id="usecases"
+      className="relative py-12 md:py-20 overflow-hidden"
+      aria-roledescription="carousel"
+    >
+      <div className="relative grid grid-cols-1 min-w-0">
+        {USE_CASE_SLIDES.map((slide, i) => {
+          const isActive = i === index;
+          return (
+            <div
+              key={slide.id}
+              aria-hidden={!isActive}
+              className={cn(
+                "col-start-1 row-start-1 min-w-0",
+                "transition-opacity duration-700",
+                isActive
+                  ? "opacity-100 z-10"
+                  : "opacity-0 z-0 pointer-events-none"
+              )}
+            >
+              <ScaledSlide
+                forcedHeight={forcedHeight}
+                onMeasured={(h, s) => handleMeasured(i, h, s)}
+              >
+                {slide.render()}
+              </ScaledSlide>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={prev}
+        aria-label="Предыдущий сценарий"
+        className={cn(
+          "absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20",
+          "w-11 h-11 md:w-12 md:h-12 rounded-full",
+          "flex items-center justify-center",
+          "bg-white/40 dark:bg-white/[0.06]",
+          "backdrop-blur-xl",
+          "ring-1 ring-white/60 dark:ring-white/10",
+          "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
+          "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
+          "text-gray-700 dark:text-gray-200",
+          "hover:bg-white/60 dark:hover:bg-white/[0.1]",
+          "hover:scale-105 active:scale-95",
+          "transition-all duration-200"
+        )}
+      >
+        <svg
+          width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5"
+          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        onClick={next}
+        aria-label="Следующий сценарий"
+        className={cn(
+          "absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20",
+          "w-11 h-11 md:w-12 md:h-12 rounded-full",
+          "flex items-center justify-center",
+          "bg-white/40 dark:bg-white/[0.06]",
+          "backdrop-blur-xl",
+          "ring-1 ring-white/60 dark:ring-white/10",
+          "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
+          "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
+          "text-gray-700 dark:text-gray-200",
+          "hover:bg-white/60 dark:hover:bg-white/[0.1]",
+          "hover:scale-105 active:scale-95",
+          "transition-all duration-200"
+        )}
+      >
+        <svg
+          width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5"
+          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+        >
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
+
+      <div className="mt-6 flex items-center justify-center gap-2">
+        {USE_CASE_SLIDES.map((slide, i) => (
+          <button
             key={slide.id}
-            aria-hidden={!isActive}
+            type="button"
+            onClick={() => goTo(i)}
+            aria-label={`Перейти к сценарию ${i + 1}`}
+            aria-current={i === index}
             className={cn(
-              "col-start-1 row-start-1",
-              "transition-opacity duration-700",
-              isActive
-                ? "opacity-100 z-10"
-                : "opacity-0 z-0 pointer-events-none"
+              "h-2 rounded-full transition-all duration-300",
+              i === index
+                ? "w-8 bg-gray-800/70 dark:bg-white/70"
+                : "w-2 bg-gray-400/50 dark:bg-white/30 hover:bg-gray-500/70"
             )}
-          >
-            {slide.render()}
-          </div>
-        );
-      })}
-    </div>
-
-    <button
-      type="button"
-      onClick={prev}
-      aria-label="Предыдущий сценарий"
-      className={cn(
-        "absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20",
-        "w-11 h-11 md:w-12 md:h-12 rounded-full",
-        "flex items-center justify-center",
-        "bg-white/40 dark:bg-white/[0.06]",
-        "backdrop-blur-xl",
-        "ring-1 ring-white/60 dark:ring-white/10",
-        "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
-        "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
-        "text-gray-700 dark:text-gray-200",
-        "hover:bg-white/60 dark:hover:bg-white/[0.1]",
-        "hover:scale-105 active:scale-95",
-        "transition-all duration-200",
-      )}
-    >
-      <svg
-        width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2.5"
-        strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-      >
-        <path d="M15 18l-6-6 6-6" />
-      </svg>
-    </button>
-
-    <button
-      type="button"
-      onClick={next}
-      aria-label="Следующий сценарий"
-      className={cn(
-        "absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20",
-        "w-11 h-11 md:w-12 md:h-12 rounded-full",
-        "flex items-center justify-center",
-        "bg-white/40 dark:bg-white/[0.06]",
-        "backdrop-blur-xl",
-        "ring-1 ring-white/60 dark:ring-white/10",
-        "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
-        "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
-        "text-gray-700 dark:text-gray-200",
-        "hover:bg-white/60 dark:hover:bg-white/[0.1]",
-        "hover:scale-105 active:scale-95",
-        "transition-all duration-200",
-      )}
-    >
-      <svg
-        width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2.5"
-        strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-      >
-        <path d="M9 18l6-6-6-6" />
-      </svg>
-    </button>
-
-    <div className="mt-6 flex items-center justify-center gap-2">
-      {USE_CASE_SLIDES.map((slide, i) => (
-        <button
-          key={slide.id}
-          type="button"
-          onClick={() => goTo(i)}
-          aria-label={`Перейти к сценарию ${i + 1}`}
-          aria-current={i === index}
-          className={cn(
-            "h-2 rounded-full transition-all duration-300",
-            i === index
-              ? "w-8 bg-gray-800/70 dark:bg-white/70"
-              : "w-2 bg-gray-400/50 dark:bg-white/30 hover:bg-gray-500/70"
-          )}
-        />
-      ))}
-    </div>
-  </section>
-);
+          />
+        ))}
+      </div>
+    </section>
+  );
 };

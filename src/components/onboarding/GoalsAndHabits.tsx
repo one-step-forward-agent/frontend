@@ -150,7 +150,7 @@ export const GoalsAndHabits: React.FC = () => {
       step={4}
       totalSteps={TOTAL}
       title="Что вы хотите встроить в свою жизнь?"
-      onBack={() => navigate("/onboarding/tone-of-voice")}
+      onBack={() => navigate("/onboarding/field-of-activity")}
       onNext={handleNext}
       onSkip={handleSkip}
       nextLabel={`Далее${goals.length > 0 ? ` · ${goals.length}` : ""}`}

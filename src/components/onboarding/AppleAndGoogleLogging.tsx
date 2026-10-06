@@ -47,7 +47,7 @@ type Integration = {
   kind: "oauth" | "manual";
 };
 
-const INTEGRATIONS: Integration[] = [
+const futureINTEGRATIONS: Integration[] = [
   { id: "google",   name: "Google Calendar", src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
   { id: "apple",    name: "Apple Calendar",  src: `/images/${encodeURIComponent("Календарь_для_macOS.png")}`, w: 40, kind: "oauth" },
   { id: "jira",     name: "Jira",            src: "/images/Jira_Software_Logo.svg",  w: 36, kind: "oauth" },
@@ -56,6 +56,10 @@ const INTEGRATIONS: Integration[] = [
   { id: "telegram", name: "Telegram",        src: "/images/TelegramWB.png",          w: 40, kind: "oauth" },
   { id: "obsidian", name: "Obsidian",        src: "/images/Obsidian.png",            w: 40, kind: "manual" },
   { id: "trueconf", name: "TrueConf",        src: "/images/tc_logo_square.png",      w: 40, kind: "manual" },
+];
+
+const INTEGRATIONS: Integration[] = [
+  { id: "google",   name: "Google Calendar", src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
 ];
 
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
@@ -216,7 +220,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
         sessionStorage.removeItem(PENDING_KEY);
         update("integrations", pending.selected);
         update("googleConnected", pending.selected.includes("google"));
-        navigate("/onboarding/sources-import", { replace: true });
+        navigate("/onboarding/success-and-learning", { replace: true });
         return;
       }
 
@@ -243,7 +247,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
     if (selected.length === 0) {
       update("integrations", []);
       update("googleConnected", false);
-      navigate("/onboarding/sources-import");
+      navigate("/onboarding/success-and-learning");
       return;
     }
 
@@ -255,7 +259,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
     update("googleConnected", selected.includes("google"));
 
     if (oauthQueue.length === 0) {
-      navigate("/onboarding/sources-import");
+      navigate("/onboarding/success-and-learning");
       return;
     }
 
@@ -283,7 +287,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
         title="Что подключим?"
         onBack={() => navigate("/onboarding/existing-plans")}
         onNext={handleNext}
-        onSkip={() => navigate("/onboarding/fast-tasks-enter")}
+        onSkip={() => navigate("/onboarding/success-and-learning")}
         nextLabel={
           selected.length > 0
             ? `Подключить${selected.length > 1 ? ` (${selected.length})` : ""}`
