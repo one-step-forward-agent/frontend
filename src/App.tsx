@@ -7,6 +7,7 @@ import { Start } from "@/components/onboarding/Start";
 import AuthLayout from "@/layouts/AuthLayout";
 import LoginPage from "@/pages/Auth/LoginPage";
 import RegisterPage from "@/pages/Auth/RegisterPage";
+import { YandexMetrika } from "@/components/YandexMetrika";
 import { useAuthStore } from "@/store/authStore";
 import { ThemeProvider, ThemeToggle } from "@/theme";
 
@@ -105,6 +106,7 @@ export default function App() {
     <ThemeProvider>
       <ToastProvider>
         <BrowserRouter>
+          <YandexMetrika />
           <Routing />
         </BrowserRouter>
       </ToastProvider>

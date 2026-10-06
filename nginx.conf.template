@@ -31,8 +31,8 @@ server {
     gzip_min_length 1024;
     gzip_types text/css application/javascript application/json image/svg+xml text/plain text/markdown;
 
-    set $csp "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
-
+    set $csp "default-src 'self'; script-src 'self' https://mc.yandex.ru https://yandex.ru https://an.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru https://mc.yandex.com wss://mc.yandex.ru; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+    
     # Inherited by every location below that doesn't set its own add_header
     add_header Content-Security-Policy $csp always;
     add_header X-Content-Type-Options "nosniff" always;
