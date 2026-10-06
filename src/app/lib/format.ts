@@ -63,7 +63,7 @@ export function relativeDay(date: Date, now = new Date()): string {
 }
 
 export function eventTimeRange(event: CalendarEvent): string {
-  if (event.all_day) return "Весь день";
+  if (event.all_day) return "Без времени";
   const start = new Date(event.start_at);
   const end = new Date(event.end_at);
   if (sameDay(start, end)) return `${formatTime(start)}–${formatTime(end)}`;
@@ -104,8 +104,48 @@ export const SOURCE_LABELS: Record<string, string> = {
   apple: "Apple",
   jira: "Jira",
   notion: "Notion",
-  obsidian: "Obsidian",
 };
+
+export const RECURRENCE_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "Не повторять" },
+  { value: "FREQ=DAILY", label: "Каждый день" },
+  { value: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", label: "По будням" },
+  { value: "WEEKLY", label: "Каждую неделю" },
+  { value: "FREQ=MONTHLY", label: "Каждый месяц" },
+];
+
+const RRULE_DAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+
+/** «Каждую неделю» повторяется в день недели первой даты. */
+export function recurrenceRule(option: string, day: Date): string | null {
+  if (!option) return null;
+  if (option === "WEEKLY") return `FREQ=WEEKLY;BYDAY=${RRULE_DAYS[(day.getDay() + 6) % 7]}`;
+  return option;
+}
+
+/** Начало и конец задачи; задача без времени занимает весь день. */
+export function taskBounds(date: string, time: string | null, endTime: string | null): { start: string; end: string } {
+  const day = parseDayKey(date) ?? startOfDay(new Date());
+  if (!time) return { start: day.toISOString(), end: addDays(day, 1).toISOString() };
+  const at = (value: string) => {
+    const [hours, minutes] = value.split(":").map(Number);
+    return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hours, minutes);
+  };
+  const start = at(time);
+  const end = endTime && at(endTime) > start ? at(endTime) : new Date(start.getTime() + 60 * MINUTE);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
+/** Открывает системный выбор даты или времени по клику на любую часть поля. */
+export function openPicker(input: HTMLInputElement) {
+  try {
+    input.showPicker?.();
+  } catch {
+    // старый браузер или iframe — остаётся обычный ввод
+  }
+}
+
+export const TEMPORARY_ERROR = "Временная ошибка — попробуйте ещё раз через минуту.";
 
 export const stripTags = (text: string) =>
   text.replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");

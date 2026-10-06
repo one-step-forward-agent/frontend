@@ -11,7 +11,6 @@ const LOGOS: Record<string, string> = {
   apple: "/images/Календарь_для_macOS.png",
   jira: "/images/Jira_Software_Logo.svg",
   notion: "/images/Notion.png",
-  obsidian: "/images/Obsidian.png",
 };
 
 export function IntegrationsPage() {

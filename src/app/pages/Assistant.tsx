@@ -1,22 +1,22 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { api } from "../api/client";
-import type { CalendarEvent, ProposedEvent } from "../api/types";
-import { EventList } from "../components/events";
+import type { AssistantEvent, AssistantReply, DraftItem } from "../api/types";
 import { Icon } from "../components/icons";
 import { Button, PageHeader, useErrorToast } from "../components/ui";
-import { errorText, formatDate, formatTime } from "../lib/format";
-import { navigate, useLocation, useTitle } from "../router";
+import { TEMPORARY_ERROR, errorText, formatTime, openPicker, parseDayKey, relativeDay } from "../lib/format";
+import { notifyTasksChanged } from "../lib/hooks";
+import { Link, navigate, useLocation, useTitle } from "../router";
 
 type Mode = "plan" | "search";
 
 type Message =
   | { id: number; role: "user"; text: string }
-  | { id: number; role: "assistant"; text: string | null; proposed?: ProposedEvent[]; created?: CalendarEvent[]; found?: CalendarEvent[] }
+  | { id: number; role: "assistant"; reply: AssistantReply }
   | { id: number; role: "error"; text: string };
 
 const EXAMPLES: Record<Mode, string[]> = {
-  plan: ["Созвон с командой завтра в 11:00 на час", "Каждую пятницу в 18:00 спортзал, напомни за 30 минут", "Сдать отчёт 15 числа"],
-  search: ["Что у меня на этой неделе?", "Когда встреча с Олей?", "Все созвоны в октябре"],
+  plan: ["Созвон с командой завтра в 11:00 на час", "Каждую пятницу в 18:00 спортзал, напомни за 30 минут", "Купить продукты послезавтра"],
+  search: ["Что у меня на этой неделе?", "Когда встреча с Олей?", "Что у меня в следующую пятницу?"],
 };
 
 let messageId = 0;
@@ -43,20 +43,11 @@ export function AssistantPage() {
     push({ id: ++messageId, role: "user", text: value });
     setBusy(true);
     try {
-      if (mode === "search") {
-        const result = await api.assistant.search(value);
-        push({ id: ++messageId, role: "assistant", text: result.events.length ? `Нашёл событий: ${result.events.length}` : "Ничего не нашлось.", found: result.events });
-      } else {
-        const result = await api.assistant.message(value);
-        push({
-          id: ++messageId,
-          role: "assistant",
-          text: result.answer ?? (result.proposed_events.length ? "Вот что я понял — проверьте и добавьте:" : "Не нашёл событий в запросе."),
-          proposed: result.proposed_events,
-        });
-      }
-    } catch (error) {
-      push({ id: ++messageId, role: "error", text: errorText(error) });
+      // В режиме поиска запрос всегда понимается как вопрос о расписании
+      const reply = await api.assistant.chat(mode === "search" ? `найди ${value}` : value);
+      push({ id: ++messageId, role: "assistant", reply });
+    } catch {
+      push({ id: ++messageId, role: "error", text: TEMPORARY_ERROR });
     } finally {
       setBusy(false);
     }
@@ -71,14 +62,14 @@ export function AssistantPage() {
     send(initial);
   }, [initial]);
 
-  const onConfirmed = (messageIndex: number, created: CalendarEvent[]) =>
-    setMessages((items) => items.map((item) => (item.id === messageIndex && item.role === "assistant" ? { ...item, proposed: [], created } : item)));
+  const replace = (id: number, reply: AssistantReply) =>
+    setMessages((items) => items.map((item) => (item.id === id && item.role === "assistant" ? { ...item, reply } : item)));
 
   return (
     <div className="page assistant-page">
       <PageHeader
         title="Ассистент"
-        subtitle="Опишите планы своими словами, голосом или документом — GigaChat превратит их в события."
+        subtitle="Опишите планы своими словами, голосом или документом — Dayla превратит их в задачи. Перед добавлением всё можно поправить."
         actions={
           <div className="segmented" role="tablist" aria-label="Режим">
             <button role="tab" aria-selected={mode === "plan"} className={mode === "plan" ? "active" : ""} onClick={() => setMode("plan")}>
@@ -106,10 +97,10 @@ export function AssistantPage() {
           </div>
         )}
         {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} onConfirmed={onConfirmed} />
+          <ChatMessage key={message.id} message={message} onReply={replace} />
         ))}
         {busy && (
-          <div className="bubble bubble-assistant typing" aria-label="Ассистент думает">
+          <div className="bubble bubble-assistant typing" aria-label="Dayla думает">
             <i />
             <i />
             <i />
@@ -123,66 +114,152 @@ export function AssistantPage() {
   );
 }
 
-function ChatMessage({ message, onConfirmed }: { message: Message; onConfirmed: (id: number, created: CalendarEvent[]) => void }) {
+function ChatMessage({ message, onReply }: { message: Message; onReply: (id: number, reply: AssistantReply) => void }) {
   if (message.role === "user") return <div className="bubble bubble-user">{message.text}</div>;
   if (message.role === "error") return <div className="bubble bubble-error" role="alert">{message.text}</div>;
+  const reply = message.reply;
   return (
     <div className="bubble bubble-assistant">
-      {message.text && <p>{message.text}</p>}
-      {message.proposed && message.proposed.length > 0 && <Proposal events={message.proposed} onConfirmed={(created) => onConfirmed(message.id, created)} />}
-      {message.created && message.created.length > 0 && (
+      {reply.kind === "proposal" && <Proposal reply={reply} onReply={(next) => onReply(message.id, next)} />}
+      {reply.kind === "created" && (
         <>
           <p className="ok">
-            <Icon name="check" size={16} /> Добавлено в календарь
+            <Icon name="check" size={16} /> Добавила в календарь
           </p>
-          <EventList events={message.created} showDate />
+          <AssistantEvents events={reply.events} />
         </>
       )}
-      {message.found && message.found.length > 0 && <EventList events={message.found} showDate />}
+      {reply.kind === "agenda" && (
+        <>
+          <p>{reply.days.length ? reply.title : "Ничего не запланировано."}</p>
+          {reply.days.map((day) => (
+            <div key={day.date} className="day-group">
+              <h3>{day.label}</h3>
+              <AssistantEvents events={day.events} />
+            </div>
+          ))}
+        </>
+      )}
+      {(reply.kind === "answer" || reply.kind === "not_found" || reply.kind === "edit_error" || reply.kind === "cancelled") && <p>{reply.text}</p>}
+      {reply.kind === "nothing" && <p>Не нашла в сообщении задач. Напишите, что и когда, — например: «созвон с Олей завтра в 15:00».</p>}
     </div>
   );
 }
 
-function Proposal({ events, onConfirmed }: { events: ProposedEvent[]; onConfirmed: (created: CalendarEvent[]) => void }) {
-  const [selected, setSelected] = useState(() => events.map(() => true));
-  const [busy, setBusy] = useState(false);
-  const reportError = useErrorToast();
-  const chosen = events.filter((_, index) => selected[index]);
+function AssistantEvents({ events }: { events: AssistantEvent[] }) {
+  return (
+    <ul className="event-list">
+      {events.map((event) => (
+        <li key={event.id} className="event-item">
+          <Link to={`/events/${event.id}`} className={`event-row priority-${event.priority ?? "medium"} ${event.completed ? "done" : ""}`}>
+            <span className="event-time">
+              <span className="event-date">{relativeDay(new Date(event.start))}</span>
+              {event.all_day ? "без времени" : formatTime(new Date(event.start))}
+            </span>
+            <span className="event-main">
+              <span className="event-title">{event.title}</span>
+              {(event.recurrence || event.location) && (
+                <span className="event-meta">
+                  {event.recurrence && (
+                    <span>
+                      <Icon name="sync" size={13} /> {event.recurrence}
+                    </span>
+                  )}
+                  {event.location && (
+                    <span>
+                      <Icon name="location" size={13} /> {event.location}
+                    </span>
+                  )}
+                </span>
+              )}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-  const confirm = async () => {
-    setBusy(true);
+type ProposalReply = Extract<AssistantReply, { kind: "proposal" }>;
+
+/** Черновик: название, дату и время можно поправить до добавления. */
+function Proposal({ reply, onReply }: { reply: ProposalReply; onReply: (reply: AssistantReply) => void }) {
+  const [items, setItems] = useState<DraftItem[]>(reply.events);
+  const [busy, setBusy] = useState<"confirm" | "cancel" | null>(null);
+  const reportError = useErrorToast();
+  const dirty = JSON.stringify(items) !== JSON.stringify(reply.events);
+  const patch = (index: number, values: Partial<DraftItem>) =>
+    setItems((current) => current.map((item, position) => (position === index ? { ...item, ...values } : item)));
+
+  const run = async (kind: "confirm" | "cancel", action: () => Promise<AssistantReply>) => {
+    setBusy(kind);
     try {
-      const result = await api.assistant.confirm(chosen);
-      onConfirmed(result.created_events);
-    } catch (error) {
-      reportError(errorText(error));
+      const result = await action();
+      if (result.kind === "created") notifyTasksChanged();
+      onReply(result);
+    } catch {
+      reportError(TEMPORARY_ERROR);
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
+  const confirm = () =>
+    run("confirm", async () => {
+      if (dirty) {
+        const saved = await api.assistant.updateDraft(reply.draft_id, items);
+        if (saved.kind !== "proposal") return saved;
+      }
+      return api.assistant.confirmDraft(reply.draft_id);
+    });
+
   return (
     <div className="proposal">
-      {events.map((event, index) => {
-        const start = new Date(event.starts_at);
-        const valid = !Number.isNaN(start.getTime());
-        return (
-          <label key={index} className="proposal-item">
-            <input type="checkbox" checked={selected[index]} onChange={(e) => setSelected((items) => items.map((value, i) => (i === index ? e.target.checked : value)))} />
-            <span>
-              <strong>{event.title}</strong>
-              <span className="muted">
-                {valid ? `${formatDate(start, { weekday: "short", day: "numeric", month: "long" })}, ${formatTime(start)}` : event.starts_at}
-                {event.location ? ` · ${event.location}` : ""}
-              </span>
-              {event.description && <span className="muted small">{event.description}</span>}
-            </span>
-          </label>
-        );
-      })}
-      <Button variant="primary" size="sm" icon="plus" busy={busy} disabled={!chosen.length} onClick={confirm}>
-        Добавить {chosen.length > 1 ? `(${chosen.length})` : ""}
-      </Button>
+      <p>{reply.answer ?? (items.length > 1 ? "Вот что я поняла — проверьте задачи и добавьте:" : "Вот что я поняла — проверьте и добавьте:")}</p>
+      {items.map((item, index) => (
+        <div key={index} className="proposal-item proposal-edit">
+          <input value={item.title} onChange={(e) => patch(index, { title: e.target.value })} aria-label="Название" maxLength={300} />
+          <div className="proposal-when">
+            <label className="field picker-field">
+              <span className="field-label">Дата</span>
+              <input type="date" value={item.date} required onChange={(e) => e.target.value && patch(index, { date: e.target.value })} onClick={(e) => openPicker(e.currentTarget)} />
+            </label>
+            <label className="field picker-field">
+              <span className="field-label">Время</span>
+              <input type="time" value={item.time ?? ""} onChange={(e) => patch(index, { time: e.target.value || null, end_time: e.target.value ? item.end_time : null })} onClick={(e) => openPicker(e.currentTarget)} />
+            </label>
+            {item.time ? (
+              <Button variant="ghost" size="sm" onClick={() => patch(index, { time: null, end_time: null })}>
+                Без времени
+              </Button>
+            ) : (
+              <span className="muted small">без времени</span>
+            )}
+          </div>
+          {(item.recurrence || items.length > 1) && (
+            <div className="proposal-foot">
+              {item.recurrence && (
+                <span className="muted small">
+                  <Icon name="sync" size={13} /> {item.recurrence}, с {relativeDay(parseDayKey(item.date) ?? new Date()).toLowerCase()}
+                </span>
+              )}
+              {items.length > 1 && (
+                <Button variant="ghost" size="sm" icon="trash" onClick={() => setItems(items.filter((_, position) => position !== index))}>
+                  Убрать
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+      <div className="button-row">
+        <Button variant="primary" size="sm" icon="plus" busy={busy === "confirm"} disabled={!items.length || items.some((item) => !item.title.trim())} onClick={confirm}>
+          Добавить {items.length > 1 ? `(${items.length})` : ""}
+        </Button>
+        <Button variant="ghost" size="sm" busy={busy === "cancel"} onClick={() => run("cancel", () => api.assistant.cancelDraft(reply.draft_id))}>
+          Отмена
+        </Button>
+      </div>
     </div>
   );
 }

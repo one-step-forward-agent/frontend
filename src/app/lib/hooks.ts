@@ -39,6 +39,20 @@ export function useAsync<T>(load: () => Promise<T>, deps: DependencyList): Async
   return { data, error, loading, reload, setData };
 }
 
+const TASKS_CHANGED = "dayla:tasks-changed";
+
+/** Tells every screen that tasks changed (created, completed, moved), so lists and stats reload. */
+export function notifyTasksChanged() {
+  window.dispatchEvent(new Event(TASKS_CHANGED));
+}
+
+export function useTasksChanged(reload: () => void) {
+  useEffect(() => {
+    window.addEventListener(TASKS_CHANGED, reload);
+    return () => window.removeEventListener(TASKS_CHANGED, reload);
+  }, [reload]);
+}
+
 export function useAction(onError: (message: string) => void) {
   const [pending, setPending] = useState<string | null>(null);
   const run = useCallback(

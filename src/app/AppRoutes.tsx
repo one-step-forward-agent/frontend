@@ -8,6 +8,7 @@ import { CalendarPage } from "./pages/CalendarPage";
 import { EventPage, NewEventPage } from "./pages/EventPage";
 import { IntegrationsPage } from "./pages/Integrations";
 import { SettingsPage } from "./pages/Settings";
+import { TasksPage } from "./pages/Tasks";
 import { TodayPage } from "./pages/Today";
 import { Link, match, useLocation, useTitle } from "./router";
 import "./app.css";
@@ -15,6 +16,7 @@ import "./app.css";
 const ROUTES: [string, (params: Record<string, string>) => ReactNode][] = [
   ["/", () => <TodayPage />],
   ["/calendar", () => <CalendarPage />],
+  ["/tasks", () => <TasksPage />],
   ["/events/new", () => <NewEventPage />],
   ["/events/:id", ({ id }) => (/^\d+$/.test(id) ? <EventPage key={id} id={Number(id)} /> : <NotFound />)],
   ["/assistant", () => <AssistantPage />],

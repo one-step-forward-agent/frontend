@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { api } from "../api/client";
 import type { Calendar, CalendarEvent, EventCreate, Priority } from "../api/types";
 import { useAuth } from "../auth";
 import {
   DAY,
   PRIORITIES,
+  RECURRENCE_OPTIONS,
   SOURCE_LABELS,
   addDays,
   browserTimezone,
@@ -12,27 +13,63 @@ import {
   errorText,
   formatLead,
   formatTime,
+  openPicker,
   parseDayKey,
+  recurrenceRule,
   startOfDay,
   toLocalInput,
 } from "../lib/format";
+import { notifyTasksChanged } from "../lib/hooks";
 import { Link } from "../router";
 import { Icon } from "./icons";
 import { Badge, Button, Field, Switch } from "./ui";
 
-export function EventRow({ event, showDate = false }: { event: CalendarEvent; showDate?: boolean }) {
+export function EventRow({ event, showDate = false, extra }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode }) {
   const start = new Date(event.start_at);
+  const [done, setDone] = useState(!!event.completed_at);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setDone(!!event.completed_at), [event.completed_at]);
+
+  const toggle = async () => {
+    setBusy(true);
+    setDone(!done);
+    try {
+      await api.events.complete(event.id, !done);
+      notifyTasksChanged();
+    } catch {
+      setDone(done);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
-    <li>
-      <Link to={`/events/${event.id}`} className={`event-row priority-${event.priority}`}>
+    <li className="event-item">
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={done}
+        aria-label={done ? `Снять отметку: ${event.title}` : `Выполнено: ${event.title}`}
+        className={`event-check ${done ? "checked" : ""}`}
+        disabled={busy}
+        onClick={toggle}
+      >
+        {done && <Icon name="check" size={14} />}
+      </button>
+      <Link to={`/events/${event.id}`} className={`event-row priority-${event.priority} ${done ? "done" : ""}`}>
         <span className="event-time">
           {showDate && <span className="event-date">{start.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</span>}
-          {event.all_day ? "весь день" : formatTime(start)}
+          {event.all_day ? "без времени" : formatTime(start)}
         </span>
         <span className="event-main">
           <span className="event-title">{event.title}</span>
-          {(event.location || event.source !== "local") && (
+          {(event.location || event.source !== "local" || event.series_id) && (
             <span className="event-meta">
+              {event.series_id && (
+                <span>
+                  <Icon name="sync" size={13} /> повторяется
+                </span>
+              )}
               {event.location && (
                 <span>
                   <Icon name="location" size={13} /> {event.location}
@@ -46,15 +83,16 @@ export function EventRow({ event, showDate = false }: { event: CalendarEvent; sh
           <Badge tone={event.priority === "urgent" ? "bad" : "warn"}>{event.priority === "urgent" ? "срочно" : "важно"}</Badge>
         )}
       </Link>
+      {extra}
     </li>
   );
 }
 
-export function EventList({ events, showDate }: { events: CalendarEvent[]; showDate?: boolean }) {
+export function EventList({ events, showDate, extra }: { events: CalendarEvent[]; showDate?: boolean; extra?: (event: CalendarEvent) => ReactNode }) {
   return (
     <ul className="event-list">
       {events.map((event) => (
-        <EventRow key={event.id} event={event} showDate={showDate} />
+        <EventRow key={event.id} event={event} showDate={showDate} extra={extra?.(event)} />
       ))}
     </ul>
   );
@@ -72,9 +110,10 @@ interface FormState {
   location: string;
   description: string;
   reminder: string;
+  repeat: string;
 }
 
-function initialState(event?: CalendarEvent, day?: string | null): FormState {
+function initialState(event?: CalendarEvent, day?: string | null, untimed = false): FormState {
   if (event) {
     const start = new Date(event.start_at);
     const end = new Date(event.end_at);
@@ -88,6 +127,7 @@ function initialState(event?: CalendarEvent, day?: string | null): FormState {
       location: event.location ?? "",
       description: event.description ?? "",
       reminder: event.reminder_minutes == null ? "" : String(event.reminder_minutes),
+      repeat: "",
     };
   }
   const base = parseDayKey(day ?? null) ?? new Date();
@@ -96,14 +136,15 @@ function initialState(event?: CalendarEvent, day?: string | null): FormState {
   const start = new Date(base.getFullYear(), base.getMonth(), base.getDate(), hour);
   return {
     title: "",
-    allDay: false,
-    start: toLocalInput(start),
-    end: toLocalInput(new Date(start.getTime() + 3_600_000)),
+    allDay: untimed,
+    start: untimed ? dayKey(base) : toLocalInput(start),
+    end: untimed ? dayKey(base) : toLocalInput(new Date(start.getTime() + 3_600_000)),
     calendarId: "",
     priority: "medium",
     location: "",
     description: "",
     reminder: "",
+    repeat: "",
   };
 }
 
@@ -130,24 +171,27 @@ function toPayload(state: FormState, timezone: string): EventCreate {
     location: state.location.trim() || null,
     description: state.description.trim() || null,
     reminder_minutes: state.reminder === "" ? null : Number(state.reminder),
+    recurrence_rule: recurrenceRule(state.repeat, start),
   };
 }
 
 export function EventForm({
   event,
   day,
+  untimed,
   calendars = [],
   onSaved,
   onCancel,
 }: {
   event?: CalendarEvent;
   day?: string | null;
+  untimed?: boolean;
   calendars?: Calendar[];
   onSaved: (event: CalendarEvent) => void;
   onCancel?: () => void;
 }) {
   const { user } = useAuth();
-  const [state, setState] = useState(() => initialState(event, day));
+  const [state, setState] = useState(() => initialState(event, day, untimed));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setState((current) => ({ ...current, [key]: value }));
@@ -181,9 +225,11 @@ export function EventForm({
     setError("");
     setSaving(true);
     try {
+      const { recurrence_rule, ...changes } = payload;
       const saved = event
-        ? await api.events.update(event.id, payload)
-        : await api.events.create({ ...payload, ...(state.calendarId ? { calendar_id: Number(state.calendarId) } : {}) });
+        ? await api.events.update(event.id, changes)
+        : await api.events.create({ ...changes, recurrence_rule, ...(state.calendarId ? { calendar_id: Number(state.calendarId) } : {}) });
+      notifyTasksChanged();
       onSaved(saved);
     } catch (err) {
       setError(errorText(err));
@@ -203,16 +249,28 @@ export function EventForm({
         <input value={state.title} onChange={(e) => set("title", e.target.value)} placeholder="Встреча с командой" maxLength={300} autoFocus required />
       </Field>
 
-      <Switch checked={state.allDay} onChange={toggleAllDay} label="Весь день" />
+      <Switch checked={state.allDay} onChange={toggleAllDay} label="Без времени" hint={state.allDay ? "Задача попадёт в раздел «Задачи» на выбранный день" : undefined} />
 
       <div className="form-row">
-        <Field label="Начало">
-          <input type={state.allDay ? "date" : "datetime-local"} value={state.start} onChange={(e) => changeStart(e.target.value)} required />
+        <Field label={state.allDay ? "Дата" : "Начало"} className="picker-field">
+          <input type={state.allDay ? "date" : "datetime-local"} value={state.start} onChange={(e) => changeStart(e.target.value)} onClick={(e) => openPicker(e.currentTarget)} required />
         </Field>
-        <Field label={state.allDay ? "Последний день" : "Окончание"} hint={state.allDay && durationDays > 1 ? `${durationDays} дн.` : undefined}>
-          <input type={state.allDay ? "date" : "datetime-local"} value={state.end} min={state.start} onChange={(e) => set("end", e.target.value)} required />
+        <Field label={state.allDay ? "Последний день" : "Окончание"} hint={state.allDay && durationDays > 1 ? `${durationDays} дн.` : undefined} className="picker-field">
+          <input type={state.allDay ? "date" : "datetime-local"} value={state.end} min={state.start} onChange={(e) => set("end", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} required />
         </Field>
       </div>
+
+      {!event && (
+        <Field label="Повтор">
+          <select value={state.repeat} onChange={(e) => set("repeat", e.target.value)}>
+            {RECURRENCE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
 
       <div className="form-row">
         <Field label="Приоритет">

@@ -7,7 +7,7 @@ import { Icon } from "../components/icons";
 import { Badge, Button, Card, ConfirmButton, ErrorNote, Field, Loading, PageHeader, Switch, useErrorToast, useToast } from "../components/ui";
 import { SOURCE_LABELS, browserTimezone, errorText, formatDateTime, formatLead, stripTags } from "../lib/format";
 import { useAction, useAsync } from "../lib/hooks";
-import { useTitle } from "../router";
+import { Link, useTitle } from "../router";
 
 const SECTIONS = [
   { id: "profile", label: "Профиль" },
@@ -15,6 +15,7 @@ const SECTIONS = [
   { id: "reminders", label: "Напоминания" },
   { id: "telegram", label: "Telegram" },
   { id: "calendars", label: "Календари" },
+  { id: "services", label: "Сервисы" },
   { id: "security", label: "Безопасность" },
 ];
 
@@ -43,6 +44,7 @@ export function SettingsPage() {
       <RemindersSection />
       <TelegramSection />
       <CalendarsSection />
+      <ServicesSection />
       <SecuritySection />
     </div>
   );
@@ -120,7 +122,7 @@ function AppearanceSection() {
 }
 
 const LEAD_PRESETS = [0, 5, 10, 15, 30, 60, 120, 1440];
-const SOURCES: Source[] = ["local", "ai", "google", "apple", "jira", "notion", "obsidian"];
+const SOURCES: Source[] = ["local", "ai", "google", "apple", "jira", "notion"];
 
 function RemindersSection() {
   const settings = useAsync(() => api.reminders.get(), []);
@@ -144,6 +146,7 @@ function RemindersSection() {
         ...draft,
         lead_times: [...draft.lead_times].sort((a, b) => a - b),
         daily_digest_time: draft.daily_digest_time.slice(0, 5),
+        checkin_time: draft.checkin_time.slice(0, 5),
         quiet_hours_start: draft.quiet_hours_start.slice(0, 5),
         quiet_hours_end: draft.quiet_hours_end.slice(0, 5),
       });
@@ -193,6 +196,18 @@ function RemindersSection() {
               </Field>
             )}
 
+            <Switch
+              checked={draft.checkin_enabled}
+              onChange={(value) => update({ checkin_enabled: value })}
+              label="Проверка в середине дня"
+              hint="Спрошу, успеваете ли вы, и предложу перенести часть задач на менее загруженный день"
+            />
+            {draft.checkin_enabled && (
+              <Field label="Время проверки" className="field-inline">
+                <input type="time" value={draft.checkin_time.slice(0, 5)} onChange={(e) => update({ checkin_time: e.target.value })} />
+              </Field>
+            )}
+
             <Switch checked={draft.quiet_hours_enabled} onChange={(value) => update({ quiet_hours_enabled: value })} label="Тихие часы" hint="Ничего не присылать в это время" />
             {draft.quiet_hours_enabled && (
               <div className="form-row">
@@ -230,6 +245,16 @@ function RemindersSection() {
             </div>
           </div>
         )}
+      </Card>
+    </div>
+  );
+}
+
+function ServicesSection() {
+  return (
+    <div id="services" className="anchor">
+      <Card title="Сервисы" actions={<Link to="/integrations" className="btn btn-secondary btn-sm">Открыть</Link>}>
+        <p className="muted">Google Calendar, Apple Calendar, Jira и Notion: подключение, импорт и отправка задач.</p>
       </Card>
     </div>
   );

@@ -1,17 +1,18 @@
 import { reachGoal } from "@/app/lib/metrics";
 import type {
-  AssistantResponse,
+  AssistantReply,
   Calendar,
   CalendarEvent,
   EventCreate,
   EventFile,
   EventLink,
+  DraftItem,
   Integration,
   IntegrationConnection,
-  ProposedEvent,
+  Recommendation,
   ReminderHistoryItem,
   ReminderSettings,
-  SearchResponse,
+  Stats,
   SyncResult,
   TelegramLink,
   TelegramStatus,
@@ -89,8 +90,6 @@ const upload = (field: string, file: Blob, filename?: string): RequestInit => {
   return { method: "POST", body: form };
 };
 
-const timezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
-
 export const api = {
   auth: {
     register: (body: { email: string; password: string; name?: string | null; timezone?: string }) =>
@@ -104,6 +103,8 @@ export const api = {
     get: () => request<User>("/api/me"),
     update: (body: { name?: string | null; timezone?: string }) =>
       request<User>("/api/me", json("PATCH", body), "me_update"),
+    saveOnboarding: (profile: Record<string, unknown>) =>
+      request<User>("/api/me/onboarding", json("PUT", profile), "onboarding_save"),
   },
   calendars: {
     list: () => request<Calendar[]>("/api/calendars"),
@@ -126,8 +127,12 @@ export const api = {
       request<CalendarEvent>("/api/events", json("POST", body), "event_create"),
     update: (id: number, body: Partial<EventCreate>) =>
       request<CalendarEvent>(`/api/events/${id}`, json("PUT", body), "event_update"),
-    remove: (id: number) =>
-      request<void>(`/api/events/${id}`, { method: "DELETE" }, "event_delete"),
+    remove: (id: number, scope: "one" | "series" = "one") =>
+      request<void>(`/api/events/${id}?scope=${scope}`, { method: "DELETE" }, "event_delete"),
+    complete: (id: number, completed: boolean) =>
+      request<CalendarEvent>(`/api/events/${id}/complete`, json("POST", { completed }), completed ? "event_complete" : "event_uncomplete"),
+    move: (eventIds: number[], date: string) =>
+      request<{ moved: number }>("/api/events/move", json("POST", { event_ids: eventIds, date }), "event_move"),
     syncGoogle: (id: number) =>
       request<CalendarEvent>(`/api/events/${id}/sync/google`, { method: "POST" }, "event_sync_google"),
     links: (id: number) => request<EventLink[]>(`/api/events/${id}/links`),
@@ -144,13 +149,16 @@ export const api = {
     text: (id: number) =>
       request<{ file_id: number; text: string }>(`/api/files/${id}/text`, { method: "POST" }, "file_text_extract"),
   },
+  stats: (days = 7) => request<Stats>(`/api/stats?days=${days}`),
+  recommendations: () => request<{ items: Recommendation[] }>("/api/recommendations").then((result) => result.items),
   assistant: {
-    message: (text: string) =>
-      request<AssistantResponse>("/api/assistant/message", json("POST", { text, timezone: timezone() }), "assistant_message"),
-    confirm: (events: ProposedEvent[]) =>
-      request<AssistantResponse>("/api/assistant/confirm", json("POST", { events, timezone: timezone() }), "assistant_confirm"),
-    search: (text: string) =>
-      request<SearchResponse>("/api/assistant/search", json("POST", { text, timezone: timezone() }), "assistant_search"),
+    chat: (text: string) => request<AssistantReply>("/api/assistant/chat", json("POST", { text }), "assistant_message"),
+    updateDraft: (draftId: number, items: Partial<DraftItem>[]) =>
+      request<AssistantReply>(`/api/assistant/drafts/${draftId}`, json("PUT", { items }), "assistant_draft_edit"),
+    confirmDraft: (draftId: number) =>
+      request<AssistantReply>(`/api/assistant/drafts/${draftId}/confirm`, { method: "POST" }, "assistant_confirm"),
+    cancelDraft: (draftId: number) =>
+      request<AssistantReply>(`/api/assistant/drafts/${draftId}`, { method: "DELETE" }, "assistant_cancel"),
     transcribe: (audio: Blob) =>
       request<{ text: string }>("/api/assistant/transcribe", upload("audio", audio, "voice.webm"), "assistant_transcribe"),
     readFile: (file: File) =>

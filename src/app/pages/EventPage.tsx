@@ -5,25 +5,26 @@ import { EventForm } from "../components/events";
 import { Icon } from "../components/icons";
 import { Badge, Button, Card, ConfirmButton, Dialog, ErrorNote, Loading, PageHeader, useErrorToast, useToast } from "../components/ui";
 import { PRIORITIES, SOURCE_LABELS, dayKey, eventTimeRange, formatDate, formatLead, formatSize } from "../lib/format";
-import { useAction, useAsync } from "../lib/hooks";
+import { notifyTasksChanged, useAction, useAsync } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
 
 const FILE_TYPES = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
 
 export function NewEventPage() {
-  useTitle("Новое событие");
+  useTitle("Новая задача");
   const { query } = useLocation();
   const calendars = useAsync(() => api.calendars.list(), []);
   const toast = useToast();
   return (
     <div className="page page-narrow">
-      <PageHeader title="Новое событие" />
+      <PageHeader title="Новая задача" />
       <Card>
         <EventForm
           day={query.get("day")}
+          untimed={query.get("untimed") === "1"}
           calendars={calendars.data}
           onSaved={(event) => {
-            toast("Событие создано");
+            toast("Задача создана");
             navigate(`/events/${event.id}`, { replace: true });
           }}
           onCancel={() => window.history.back()}
@@ -51,11 +52,18 @@ export function EventPage({ id }: { id: number }) {
   if (!event.data) return <Loading />;
   const item = event.data;
 
-  const remove = () =>
-    run("delete", async () => {
-      await api.events.remove(item.id);
-      toast("Событие удалено");
+  const remove = (scope: "one" | "series" = "one") =>
+    run(scope === "series" ? "delete-series" : "delete", async () => {
+      await api.events.remove(item.id, scope);
+      notifyTasksChanged();
+      toast(scope === "series" ? "Серия удалена" : "Удалено");
       navigate("/calendar", { replace: true });
+    });
+
+  const toggleDone = () =>
+    run("done", async () => {
+      event.setData(await api.events.complete(item.id, !item.completed_at));
+      notifyTasksChanged();
     });
 
   if (editing) {
@@ -89,12 +97,20 @@ export function EventPage({ id }: { id: number }) {
         title={item.title}
         actions={
           <>
+            <Button icon="check" variant={item.completed_at ? "primary" : "secondary"} busy={pending === "done"} onClick={toggleDone}>
+              {item.completed_at ? "Выполнено" : "Отметить выполненной"}
+            </Button>
             <Button icon="settings" onClick={() => setEditing(true)}>
               Изменить
             </Button>
-            <ConfirmButton icon="trash" confirmLabel="Удалить?" busy={pending === "delete"} onConfirm={remove}>
-              Удалить
+            <ConfirmButton icon="trash" confirmLabel="Удалить?" busy={pending === "delete"} onConfirm={() => remove()}>
+              {item.series_id ? "Удалить эту" : "Удалить"}
             </ConfirmButton>
+            {item.series_id && (
+              <ConfirmButton icon="trash" confirmLabel="Удалить серию?" busy={pending === "delete-series"} onConfirm={() => remove("series")}>
+                Удалить серию
+              </ConfirmButton>
+            )}
           </>
         }
       />

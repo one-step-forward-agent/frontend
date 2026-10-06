@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { api } from "../api/client";
 import type { CalendarEvent } from "../api/types";
 import { EventList } from "../components/events";
@@ -16,27 +16,37 @@ import {
   startOfMonth,
   startOfWeek,
 } from "../lib/format";
-import { useAsync } from "../lib/hooks";
+import { useAsync, useTasksChanged } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
 
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const MAX_CHIPS = 3;
+type View = "week" | "month";
+
+function weekTitle(start: Date): string {
+  const end = addDays(start, 6);
+  const left = start.getMonth() === end.getMonth() ? String(start.getDate()) : formatDate(start, { day: "numeric", month: "long" });
+  return `${left} – ${formatDate(end, { day: "numeric", month: "long" })}`;
+}
 
 export function CalendarPage() {
   useTitle("Календарь");
   const { query } = useLocation();
   const today = startOfDay(new Date());
+  const view: View = query.get("view") === "week" ? "week" : "month";
   const selected = parseDayKey(query.get("day")) ?? today;
   const month = parseDayKey(`${query.get("month") ?? ""}-01`) ?? startOfMonth(selected);
 
-  const gridStart = startOfWeek(month);
-  const days = useMemo(() => Array.from({ length: 42 }, (_, index) => addDays(gridStart, index)), [gridStart.getTime()]);
-  const gridEnd = addDays(gridStart, 42);
+  const gridStart = view === "week" ? startOfWeek(selected) : startOfWeek(month);
+  const length = view === "week" ? 7 : 42;
+  const days = useMemo(() => Array.from({ length }, (_, index) => addDays(gridStart, index)), [gridStart.getTime(), length]);
+  const gridEnd = addDays(gridStart, length);
 
   const events = useAsync(
     () => api.events.list({ start: gridStart.toISOString(), end: gridEnd.toISOString(), limit: 1000 }),
-    [gridStart.getTime()],
+    [gridStart.getTime(), length],
   );
+  useTasksChanged(useCallback(() => events.reload(), [events.reload]));
 
   const byDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -44,34 +54,52 @@ export function CalendarPage() {
     return map;
   }, [days, events.data]);
 
-  const go = (nextMonth: Date, day?: Date) => {
+  const go = (nextMonth: Date, day?: Date, nextView: View = view) => {
     const monthKey = dayKey(nextMonth).slice(0, 7);
-    navigate(`/calendar?month=${monthKey}${day ? `&day=${dayKey(day)}` : ""}`, { replace: true });
+    navigate(`/calendar?${nextView === "week" ? "view=week&" : ""}month=${monthKey}${day ? `&day=${dayKey(day)}` : ""}`, { replace: true });
   };
-  const shiftMonth = (delta: number) => go(new Date(month.getFullYear(), month.getMonth() + delta, 1));
-  const selectDay = (day: Date) => go(day.getMonth() === month.getMonth() ? month : startOfMonth(day), day);
+  const shift = (delta: number) => {
+    if (view === "week") {
+      const day = addDays(selected, 7 * delta);
+      go(startOfMonth(day), day);
+    } else {
+      go(new Date(month.getFullYear(), month.getMonth() + delta, 1));
+    }
+  };
+  const selectDay = (day: Date) => go(view === "week" || day.getMonth() !== month.getMonth() ? startOfMonth(day) : month, day);
+  const switchView = (next: View) => go(startOfMonth(selected), selected, next);
 
   const selectedEvents = byDay.get(dayKey(selected)) ?? (events.data ?? []).filter((event) => occursOn(event, selected));
 
   return (
     <div className="page page-wide">
       <PageHeader
-        title={formatMonth(month)}
+        title={view === "week" ? weekTitle(gridStart) : formatMonth(month)}
         actions={
-          <div className="segmented">
-            <Button variant="ghost" icon="left" aria-label="Предыдущий месяц" onClick={() => shiftMonth(-1)} />
-            <Button variant="ghost" size="sm" onClick={() => selectDay(today)}>
-              Сегодня
-            </Button>
-            <Button variant="ghost" icon="right" aria-label="Следующий месяц" onClick={() => shiftMonth(1)} />
-          </div>
+          <>
+            <div className="segmented" role="tablist" aria-label="Вид календаря">
+              <button role="tab" aria-selected={view === "week"} className={view === "week" ? "active" : ""} onClick={() => switchView("week")}>
+                Неделя
+              </button>
+              <button role="tab" aria-selected={view === "month"} className={view === "month" ? "active" : ""} onClick={() => switchView("month")}>
+                Месяц
+              </button>
+            </div>
+            <div className="segmented">
+              <Button variant="ghost" icon="left" aria-label={view === "week" ? "Предыдущая неделя" : "Предыдущий месяц"} onClick={() => shift(-1)} />
+              <Button variant="ghost" size="sm" onClick={() => selectDay(today)}>
+                Сегодня
+              </Button>
+              <Button variant="ghost" icon="right" aria-label={view === "week" ? "Следующая неделя" : "Следующий месяц"} onClick={() => shift(1)} />
+            </div>
+          </>
         }
       />
 
       {events.error && <ErrorNote message={events.error} onRetry={events.reload} />}
 
       <div className="calendar-layout">
-        <div className={`month ${events.loading ? "is-loading" : ""}`} role="grid" aria-label={formatMonth(month)}>
+        <div className={`month ${view === "week" ? "week" : ""} ${events.loading ? "is-loading" : ""}`} role="grid" aria-label={view === "week" ? weekTitle(gridStart) : formatMonth(month)}>
           <div className="month-head" role="row">
             {WEEKDAYS.map((name) => (
               <span key={name} role="columnheader">
@@ -84,7 +112,7 @@ export function CalendarPage() {
               const items = byDay.get(dayKey(day)) ?? [];
               const classes = [
                 "day-cell",
-                day.getMonth() !== month.getMonth() && "other-month",
+                view === "month" && day.getMonth() !== month.getMonth() && "other-month",
                 sameDay(day, today) && "today",
                 sameDay(day, selected) && "selected",
               ]
@@ -102,12 +130,12 @@ export function CalendarPage() {
                 >
                   <span className="day-number">{day.getDate()}</span>
                   <span className="day-chips">
-                    {items.slice(0, MAX_CHIPS).map((event) => (
-                      <span key={event.id} className={`chip priority-${event.priority}`}>
+                    {items.slice(0, view === "week" ? items.length : MAX_CHIPS).map((event) => (
+                      <span key={event.id} className={`chip priority-${event.priority} ${event.completed_at ? "chip-done" : ""}`}>
                         {!event.all_day && <b>{new Date(event.start_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</b>} {event.title}
                       </span>
                     ))}
-                    {items.length > MAX_CHIPS && <span className="chip-more">+{items.length - MAX_CHIPS}</span>}
+                    {view === "month" && items.length > MAX_CHIPS && <span className="chip-more">+{items.length - MAX_CHIPS}</span>}
                   </span>
                   {items.length > 0 && (
                     <span className="day-dots" aria-hidden="true">

@@ -5,6 +5,7 @@ export interface User {
   timezone: string | null;
   telegram_username: string | null;
   telegram_linked_at: string | null;
+  profile?: Record<string, unknown>;
 }
 
 export interface TokenResponse {
@@ -15,7 +16,7 @@ export interface TokenResponse {
 }
 
 export type Priority = "low" | "medium" | "high" | "urgent";
-export type Source = "local" | "ai" | "google" | "apple" | "jira" | "notion" | "obsidian";
+export type Source = "local" | "ai" | "google" | "apple" | "jira" | "notion";
 
 export interface Calendar {
   id: number;
@@ -46,6 +47,8 @@ export interface CalendarEvent {
   source: Source | string;
   sync_status: string;
   external_id: string | null;
+  series_id: string | null;
+  completed_at: string | null;
 }
 
 export interface EventCreate {
@@ -59,6 +62,7 @@ export interface EventCreate {
   location?: string | null;
   all_day?: boolean;
   reminder_minutes?: number | null;
+  recurrence_rule?: string | null;
 }
 
 export interface EventFile {
@@ -77,24 +81,64 @@ export interface EventLink {
   provider: string;
 }
 
-export interface ProposedEvent {
+/** A task the assistant proposes; it is saved only after the user confirms the draft. */
+export interface DraftItem {
+  index: number;
   title: string;
-  starts_at: string;
-  ends_at?: string | null;
-  description?: string | null;
-  location?: string | null;
-  reminder_minutes?: number | null;
+  date: string;
+  time: string | null;
+  end_time: string | null;
+  rrule: string | null;
+  recurrence: string | null;
+  location: string | null;
+  description: string | null;
+  reminder_minutes: number | null;
+  start: string;
+  end: string;
+  all_day: boolean;
 }
 
-export interface AssistantResponse {
-  answer: string | null;
-  created_events: CalendarEvent[];
-  proposed_events: ProposedEvent[];
+/** A task as the assistant shows it in answers. */
+export interface AssistantEvent {
+  id: number;
+  title: string;
+  start: string;
+  end: string;
+  time: string | null;
+  all_day: boolean;
+  completed: boolean;
+  location: string | null;
+  recurrence: string | null;
+  priority: Priority;
 }
 
-export interface SearchResponse {
-  filters: { date_from?: string; date_to?: string; keywords?: string[] };
-  events: CalendarEvent[];
+export type AssistantReply =
+  | { kind: "proposal"; draft_id: number; events: DraftItem[]; answer: string | null; note: string | null }
+  | { kind: "created"; events: AssistantEvent[]; event_ids: number[] }
+  | { kind: "agenda"; title: string; days: { date: string; label: string; events: AssistantEvent[] }[] }
+  | { kind: "answer" | "not_found" | "edit_error" | "cancelled"; text: string }
+  | { kind: "nothing" };
+
+export interface DayStats {
+  date: string;
+  total: number;
+  done: number;
+  percent: number;
+}
+
+export interface Stats {
+  today: DayStats;
+  days: DayStats[];
+  total: number;
+  done: number;
+  percent: number;
+  streak: number;
+}
+
+export interface Recommendation {
+  kind: "info" | "warning" | "success";
+  title: string;
+  text: string;
 }
 
 export interface IntegrationField {
@@ -144,6 +188,8 @@ export interface ReminderSettings {
   quiet_hours_start: string;
   quiet_hours_end: string;
   sources: Source[];
+  checkin_enabled: boolean;
+  checkin_time: string;
 }
 
 export interface ReminderHistoryItem {

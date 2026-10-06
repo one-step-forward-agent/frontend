@@ -125,6 +125,19 @@ export async function applyOnboarding(): Promise<void> {
   }
   try {
     if (data.timezone) await api.me.update({ timezone: data.timezone });
+    // Answers feed the midday check-in and the recommendations (work days and hours, goals, tone)
+    await api.me.saveOnboarding({
+      purpose: data.purpose,
+      spheres: data.spheres,
+      toneOfVoice: data.toneOfVoice,
+      goals: data.goals,
+      workDays: data.workDays,
+      workHoursFrom: data.workHoursFrom,
+      workHoursTo: data.workHoursTo,
+      perDayWorkHours: data.perDayWorkHours ?? {},
+      timezone: data.timezone,
+      integrations: data.integrations,
+    });
     const title = data.firstTask.title.trim();
     if (title) {
       const [hours, minutes] = (data.workHoursFrom || "09:00").split(":").map(Number);

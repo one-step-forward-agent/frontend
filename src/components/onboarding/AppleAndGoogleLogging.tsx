@@ -36,7 +36,7 @@ const ACTIVE_RING_SKY =
 export type OAuthProvider =
   | "google" | "apple" | "jira" | "notion" | "slack" | "telegram";
 
-export type ManualProvider = "obsidian" | "trueconf";
+export type ManualProvider = "trueconf";
 export type Provider = OAuthProvider | ManualProvider;
 
 type Integration = {
@@ -54,7 +54,6 @@ const futureINTEGRATIONS: Integration[] = [
   { id: "notion",   name: "Notion",          src: "/images/Notion.png",              w: 40, kind: "oauth" },
   { id: "slack",    name: "Slack",           src: "/images/slack.png",               w: 40, kind: "oauth" },
   { id: "telegram", name: "Telegram",        src: "/images/TelegramWB.png",          w: 40, kind: "oauth" },
-  { id: "obsidian", name: "Obsidian",        src: "/images/Obsidian.png",            w: 40, kind: "manual" },
   { id: "trueconf", name: "TrueConf",        src: "/images/tc_logo_square.png",      w: 40, kind: "manual" },
 ];
 
