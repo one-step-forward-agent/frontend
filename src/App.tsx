@@ -12,13 +12,10 @@ import { useAuthStore } from "@/store/authStore";
 import { ThemeProvider, ThemeToggle } from "@/theme";
 
 const AppRoutes = lazy(() => import("@/app/AppRoutes"));
-const ForWhatUsing = lazy(() => import("@/components/onboarding/ForWhatUsing").then((module) => ({ default: module.ForWhatUsing })));
 const FieldOfActivity = lazy(() => import("@/components/onboarding/FieldOfActivity").then((module) => ({ default: module.FieldOfActivity })));
-const ToneOfVoice = lazy(() => import("@/components/onboarding/ToneOfVoice").then((module) => ({ default: module.ToneOfVoice })));
 const GoalsAndHabits = lazy(() => import("@/components/onboarding/GoalsAndHabits").then((module) => ({ default: module.GoalsAndHabits })));
 const ExistingPlans = lazy(() => import("@/components/onboarding/ExistingPlans").then((module) => ({ default: module.ExistingPlans })));
 const AppleAndGoogleLogging = lazy(() => import("@/components/onboarding/AppleAndGoogleLogging").then((module) => ({ default: module.AppleAndGoogleLogging })));
-const FastTasksEnter = lazy(() => import("@/components/onboarding/FastTasksEnter").then((module) => ({ default: module.FastTasksEnter })));
 const SuccessAndLearning = lazy(() => import("@/components/onboarding/SuccessAndLearning").then((module) => ({ default: module.SuccessAndLearning })));
 const TermsOfUsePage = lazy(() => import("@/pages/Documents/TermsOfUsePage"));
 const PersonalDataConsentPage = lazy(() => import("@/pages/Documents/PersonalDataConsentPage"));
@@ -72,15 +69,12 @@ function Routing() {
         <Route path="/" element={<RootRoute />} />
 
         <Route element={<OnboardingRouteLayout />}>
-          <Route path="/onboarding" element={<Navigate to="/onboarding/for-what-using" replace />} />
+          <Route path="/onboarding" element={<Navigate to="/onboarding/field-of-activity" replace />} />
           <Route path="/onboarding/start" element={<Navigate to="/" replace />} />
-          <Route path="/onboarding/for-what-using" element={<ForWhatUsing />} />
           <Route path="/onboarding/field-of-activity" element={<FieldOfActivity />} />
-          <Route path="/onboarding/tone-of-voice" element={<ToneOfVoice />} />
           <Route path="/onboarding/goals-and-habits" element={<GoalsAndHabits />} />
           <Route path="/onboarding/existing-plans" element={<ExistingPlans />} />
           <Route path="/onboarding/apple-google-logging" element={<AppleAndGoogleLogging />} />
-          <Route path="/onboarding/fast-tasks-enter" element={<FastTasksEnter />} />
           <Route path="/onboarding/success-and-learning" element={<SuccessAndLearning />} />
         </Route>
 
