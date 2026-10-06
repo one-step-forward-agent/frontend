@@ -10,6 +10,8 @@ import {
 
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
+import { useAuthStore } from "@/store/authStore";
+import { syncOnboarding } from "@/utils/onboardingSync";
 import { cn } from "@/utils/cn";
 import { glass } from "@/styles/glass";
 
@@ -60,8 +62,10 @@ export const SuccessAndLearning: React.FC = () => {
   const navigate = useNavigate();
   const { data } = useOnboarding();
 
-  const finish = () => {
-    // TODO: await api.completeOnboarding(data);
+  const finish = async () => {
+    // Без входа ответы сохранятся в профиль сразу после логина (authStore → syncOnboarding)
+    const user = await syncOnboarding();
+    if (user) useAuthStore.getState().setUser(user);
     navigate("/dashboard", { replace: true });
   };
 

@@ -1,5 +1,6 @@
 // src/onboarding/OnboardingContext.tsx
 import * as React from "react";
+import { loadOnboarding, storeOnboarding } from "@/utils/onboardingSync";
 
 export interface Sphere {
   id: string;
@@ -63,7 +64,12 @@ interface OnboardingContextValue {
 const OnboardingContext = React.createContext<OnboardingContextValue | null>(null);
 
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [data, setData] = React.useState<OnboardingData>(defaultData);
+  // Ответы переживают перезагрузку и уходят в профиль после входа (utils/onboardingSync)
+  const [data, setData] = React.useState<OnboardingData>(() => ({ ...defaultData, ...loadOnboarding<OnboardingData>() }));
+
+  React.useEffect(() => {
+    storeOnboarding(data);
+  }, [data]);
 
   const update = React.useCallback(
     <K extends keyof OnboardingData>(key: K, value: OnboardingData[K]) => {

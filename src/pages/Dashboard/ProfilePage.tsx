@@ -66,7 +66,7 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      setFullName(user.full_name || '');
+      setFullName(user.name || '');
       setEmail(user.email || '');
     }
   }, [user]);
@@ -77,7 +77,7 @@ const ProfilePage: React.FC = () => {
     setError(null);
     setSuccess(null);
     try {
-      await updateProfile({ full_name: fullName, email });
+      await updateProfile({ name: fullName, email });
       setSuccess('Профиль успешно обновлён');
       setIsEditing(false);
     } catch (err) {
@@ -115,7 +115,7 @@ const ProfilePage: React.FC = () => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     if (user) {
-      setFullName(user.full_name || '');
+      setFullName(user.name || '');
       setEmail(user.email || '');
     }
   };

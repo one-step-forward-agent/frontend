@@ -7,6 +7,7 @@ import {
   logout as apiLogout,
   getCurrentUser,
 } from '@/api/auth';
+import { syncOnboarding } from '@/utils/onboardingSync';
 
 interface AuthState {
   user: User | null;
@@ -15,7 +16,7 @@ interface AuthState {
   isAuthenticated: boolean;
 
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
   clearError: () => void;
@@ -24,7 +25,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       isLoading: false,
       error: null,
@@ -56,6 +57,8 @@ export const useAuthStore = create<AuthState>()(
             error: null,
             isAuthenticated: true,
             });
+            // Ответы онбординга, пройденного до входа, сохраняем в профиль
+            syncOnboarding().then((updated) => updated && set({ user: updated }));
         } catch (error: any) {
             const detail = error.response?.data?.detail || error.message || 'Ошибка входа';
             set({
@@ -67,16 +70,14 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (username: string, email: string, password: string) => {
+      register: async (email: string, password: string, name?: string) => {
         set({ isLoading: true, error: null });
         try {
-          // 1. Регистрируем пользователя
-          await apiRegister({ username, email, password});
-          
-          // 2. Автоматически логинимся (используем уже существующую функцию login)
-          await get().login(username, password);
-          // После успешного логина состояние уже обновлено в login,
-          // поэтому здесь ничего дополнительно не делаем.
+          // Бэкенд сразу возвращает токены — отдельный логин не нужен
+          await apiRegister({ email, password, name });
+          const user = await getCurrentUser();
+          set({ user, isLoading: false, error: null, isAuthenticated: true });
+          syncOnboarding().then((updated) => updated && set({ user: updated }));
         } catch (error: any) {
           // Ошибка может быть как от регистрации, так и от логина
           const detail = error.response?.data?.detail || error.message || 'Ошибка регистрации';
@@ -120,6 +121,7 @@ export const useAuthStore = create<AuthState>()(
             error: null,
             isAuthenticated: true,
           });
+          syncOnboarding().then((updated) => updated && set({ user: updated }));
         } catch (error) {
           localStorage.removeItem('access_token');
           set({

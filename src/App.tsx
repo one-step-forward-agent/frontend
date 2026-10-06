@@ -50,6 +50,7 @@ import { AppleAndGoogleLogging } from './components/onboarding/AppleAndGoogleLog
 import { FastTasksEnter } from './components/onboarding/FastTasksEnter';
 import { LetsPlanTomorrow } from './components/onboarding/LetsPlanTomorrow';
 import { SuccessAndLearning } from './components/onboarding/SuccessAndLearning';
+import { SourcesImport } from './components/onboarding/SourcesImport';
 
 // ---------- Вспомогательные компоненты ----------
 
@@ -118,11 +119,17 @@ const NotFoundPage: React.FC = () => (
 // ---------- Корневой компонент ----------
 
 const App: React.FC = () => {
-  const { loadUser, isLoading } = useAuthStore();
+  const { loadUser, logout, isLoading } = useAuthStore();
 
   useEffect(() => {
     loadUser();
   }, [loadUser]);
+
+  // Сессия истекла и обновить её не удалось — выходим
+  useEffect(() => {
+    window.addEventListener('dayla:logout', logout);
+    return () => window.removeEventListener('dayla:logout', logout);
+  }, [logout]);
 
   // Звук клика по кнопкам
   useEffect(() => {
@@ -161,6 +168,7 @@ const App: React.FC = () => {
             path="/onboarding/apple-google-logging"
             element={<AppleAndGoogleLogging />}
           />
+          <Route path="/onboarding/sources-import" element={<SourcesImport />} />
           <Route path="/onboarding/fast-tasks-enter" element={<FastTasksEnter />} />
           <Route
             path="/onboarding/success-and-learning"

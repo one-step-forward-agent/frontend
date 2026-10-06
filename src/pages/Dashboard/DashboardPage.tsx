@@ -7,7 +7,6 @@ import {
   MessageCircle,
   ListTodo,
   BarChart3,
-  User as UserIcon,
   Plus,
   SlidersHorizontal,
   Menu,
@@ -30,7 +29,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/store/authStore";
+import { useTasksStore } from "@/store/tasksStore";
+import { getStats } from "@/api/dayla";
 import { cn } from "@/utils/cn";
+import { TaskDialog } from "./components/TaskDialog";
+import { useReload } from "./components/useEvents";
 
 // ---------- Навигация ----------
 
@@ -40,22 +43,22 @@ type NavItem = {
   icon: LucideIcon;
 };
 
+// Настройки аккаунта — в меню пользователя, не в основной навигации
 const NAV_ITEMS: NavItem[] = [
   { to: "/dashboard/today", label: "Сегодня", icon: Sun },
   { to: "/dashboard/calendar", label: "Календарь", icon: CalendarIcon },
-  { to: "/dashboard/chat", label: "Чат", icon: MessageCircle },
   { to: "/dashboard/tasks", label: "Задачи", icon: ListTodo },
+  { to: "/dashboard/chat", label: "Чат", icon: MessageCircle },
   { to: "/dashboard/analytics", label: "Аналитика", icon: BarChart3 },
-  { to: "/dashboard/account", label: "Аккаунт", icon: UserIcon },
 ];
 
 const SECTION_TITLES: Record<string, string> = {
   today: "Сегодня",
   calendar: "Календарь",
   chat: "Чат с Deyla",
-  tasks: "Задачи",
+  tasks: "Задачи без времени",
   analytics: "Аналитика",
-  account: "Аккаунт",
+  account: "Настройки",
 };
 
 const useCurrentSection = () => {
@@ -65,8 +68,8 @@ const useCurrentSection = () => {
 };
 
 const useCreateTask = () => {
-  const navigate = useNavigate();
-  return () => navigate("/dashboard/tasks?new=1");
+  const openNew = useTasksStore((state) => state.openNew);
+  return () => openNew();
 };
 
 // Форматирование даты в шапке
@@ -176,8 +179,9 @@ export const DashboardPage: React.FC = () => {
   // Закрытие mobile nav при смене раздела
   const closeMobileNav = () => setMobileNavOpen(false);
 
-  // Прогресс — заглушка
-  const progress = 0;
+  // Прогресс дня — доля выполненных задач на сегодня
+  const stats = useReload(() => getStats(1));
+  const progress = stats?.today.percent ?? 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
@@ -326,17 +330,27 @@ export const DashboardPage: React.FC = () => {
                 <span className="lg:hidden">Фильтр</span>
               </Button>
 
-              {/* Добавить задачу */}
-              <Button size="sm" onClick={createTask}>
-                <Plus size={16} className="sm:mr-1.5" />
-                <span className="hidden sm:inline">Добавить</span>
+              {/* Добавить задачу (на телефоне — плавающая кнопка внизу) */}
+              <Button size="sm" onClick={createTask} className="hidden md:inline-flex">
+                <Plus size={16} className="mr-1.5" />
+                Добавить задачу
               </Button>
             </div>
           </header>
 
-          <main className="flex-1 px-4 md:px-6 py-6">
+          <main className="flex-1 px-4 md:px-6 py-6 pb-24 md:pb-6">
             <Outlet />
           </main>
+
+          <button
+            type="button"
+            onClick={createTask}
+            aria-label="Добавить задачу"
+            className="md:hidden fixed right-5 bottom-5 z-30 h-14 w-14 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-500/30 bg-gradient-to-br from-blue-500 to-indigo-600 active:scale-95 transition-transform"
+          >
+            <Plus size={24} />
+          </button>
+          <TaskDialog />
         </div>
       </div>
     </div>

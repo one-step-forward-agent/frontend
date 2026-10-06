@@ -6,11 +6,13 @@
 // ---------- Пользователь ----------
 
 export interface User {
-  id: string;
+  id: number;
   email: string;
-  full_name?: string | null;
-  created_at?: string;
-  updated_at?: string;
+  name?: string | null;
+  timezone?: string | null;
+  telegram_username?: string | null;
+  telegram_linked_at?: string | null;
+  profile?: Record<string, unknown>;
 }
 
 // ---------- Аутентификация ----------

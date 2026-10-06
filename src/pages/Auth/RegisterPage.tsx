@@ -48,7 +48,7 @@ const RegisterPage: React.FC = () => {
     }
 
     try {
-      await register(email, password);
+      await register(email, password, username.trim() || undefined);
       sendMetricGoal("registration_success");
 
       const plan = searchParams.get("plan");

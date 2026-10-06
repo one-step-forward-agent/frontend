@@ -29,7 +29,7 @@ type IntegrationKind = "oauth" | "manual";
 
 type Integration = {
   id:
-    | "google" | "apple" | "jira" | "notion" | "obsidian"
+    | "google" | "apple" | "jira" | "notion"
     | "telegram" | "slack" | "trueconf";
   name: string;
   hint: string;
@@ -70,14 +70,6 @@ const INTEGRATIONS: Integration[] = [
     src: "/images/Notion.png",
     w: 40,
     kind: "oauth",
-  },
-  {
-    id: "obsidian",
-    name: "Obsidian",
-    hint: "Идеи и заметки, которые стоит превратить в действия",
-    src: "/images/Obsidian.png",
-    w: 40,
-    kind: "manual",
   },
   {
     id: "telegram",
@@ -180,10 +172,9 @@ const buildOAuthUrl = (id: Integration["id"], state: string): string => {
       return `https://slack.com/oauth/v2/authorize?${params}`;
     }
     case "telegram":
-    case "obsidian":
     case "trueconf":
       // В MVP не имеют классического OAuth-редиректа: Telegram — через bot-login,
-      // Obsidian и TrueConf — локальные / on-prem подключения.
+      // TrueConf — on-prem подключение.
       return "";
   }
 };

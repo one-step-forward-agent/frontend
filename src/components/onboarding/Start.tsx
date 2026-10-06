@@ -1701,7 +1701,6 @@ const INTEGRATIONS = [
   { src: "/images/Календарь_для_macOS.png",  alt: "Apple Calendar",  w: 44 },
   { src: "/images/Jira_Software_Logo.svg",   alt: "Jira",            w: 40 },
   { src: "/images/Notion.png",               alt: "Notion",          w: 44 },
-  { src: "/images/Obsidian.png",             alt: "Obsidian",        w: 44 },
   { src: "/images/TelegramWB.png",             alt: "Telegram",        w: 44 },
   { src: "/images/slack.png",             alt: "Slack",        w: 44 },
   { src: "/images/tc_logo_square.png",             alt: "TrueConf",        w: 44 },

@@ -67,15 +67,15 @@ const LoginPage: React.FC = () => {
 
       {/* ─── Форма ───────────────────────────── */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <FormField id="username" label="Имя пользователя" required>
+        <FormField id="username" label="Email" required>
           {(field) => (
             <Input
               {...field}
-              type="text"
+              type="email"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
-              placeholder="Введите имя пользователя"
+              placeholder="you@example.com"
               required
             />
           )}
