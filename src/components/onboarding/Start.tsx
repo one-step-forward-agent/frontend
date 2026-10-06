@@ -203,9 +203,6 @@ const GTDAggregation: React.FC = () => (
             />
           </div>
           <p className="text-sm font-medium text-gray-900 dark:text-white">{name}</p>
-          <span className="text-[11px] text-gray-500 dark:text-gray-400 tabular-nums">
-            {count} задач
-          </span>
         </div>
       ))}
     </div>
@@ -271,16 +268,13 @@ const GTDAggregation: React.FC = () => (
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Dayla разложила по GTD
-          </p>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">
-            12 задач · 4 проекта · 3 источника
+            Dayla
           </p>
         </div>
       </div>
     </div>
 
-    <div className="flex justify-center my-1 text-slate-300 dark:text-slate-700">
+    <div className="flex justify-center text-slate-300 dark:text-slate-700">
       <svg
         viewBox="0 0 40 40"
         className="w-10 h-10"
@@ -310,7 +304,7 @@ const GTDAggregation: React.FC = () => (
       </svg>
     </div>
 
-    <div className="flex justify-center">
+    <div className="flex justify-center -mt-7">
       <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-white dark:bg-gray-900 ring-1 ring-gray-200 dark:ring-gray-700 shadow-md">
         <img
           src="/images/google-calendar.png"
@@ -321,10 +315,7 @@ const GTDAggregation: React.FC = () => (
         />
         <div>
           <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Внести в Google Calendar
-          </p>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">
-            Слоты подобраны по вашему графику
+            Google Calendar
           </p>
         </div>
       </div>
@@ -429,21 +420,6 @@ const SectionLabel: React.FC<{ tint: GlassTint; children: React.ReactNode }> = (
 
 const GTD_RESPONSE = (
   <div className="space-y-3">
-    <p>
-      Собрала <strong className="font-semibold">12 задач</strong> за период 30.09–06.10.
-      Разложила по GTD:
-    </p>
-
-    <div
-      className={cn(
-        "rounded-xl p-3",
-        "bg-white/40 dark:bg-white/[0.03]",
-        "backdrop-blur-md",
-        "ring-1 ring-white/50 dark:ring-white/10",
-        "shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,23,42,0.04)]",
-        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
-      )}
-    >
       <SectionLabel tint="blue">
         План по вашему графику · Пн–Пт 09:00–18:00
       </SectionLabel>
@@ -468,11 +444,6 @@ const GTD_RESPONSE = (
           </p>
         </div>
       </div>
-
-      <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-        Добавила буферы 15 мин до и после каждого созвона. Обед 13:00–14:00 не тронут.
-      </p>
-    </div>
 
     <div className="pt-1 flex flex-wrap gap-1.5">
       <button
@@ -525,12 +496,6 @@ const UserCaseGTD: React.FC = () => (
         </div>
       </div>
 
-      <div className="mt-12 md:mt-16 max-w-2xl mx-auto text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-          Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь
-        </p>
-      </div>
     </div>
   </section>
 );
@@ -822,15 +787,35 @@ const PageBackdrop: React.FC = () => (
         0%, 100% { transform: scale(0.6); opacity: 0; }
         50%      { transform: scale(1.5); opacity: 1; }
       }
+
+      /* ─── Crossfade для AI-рекомендаций ─────────────── */
+      @keyframes ai-reco-a {
+        0%, 45%   { opacity: 1; }
+        55%, 95%  { opacity: 0; }
+        100%      { opacity: 1; }
+      }
+      @keyframes ai-reco-b {
+        0%, 45%   { opacity: 0; }
+        55%, 95%  { opacity: 1; }
+        100%      { opacity: 0; }
+      }
+
+      .ai-reco-a {
+        animation: ai-reco-a 8s ease-in-out infinite;
+      }
+      .ai-reco-b {
+        animation: ai-reco-b 8s ease-in-out infinite;
+      }
+
       @media (prefers-reduced-motion: reduce) {
-        .page-blob, .page-pulse { animation: none; }
+        .page-blob, .page-pulse, .ai-reco-a, .ai-reco-b { animation: none; }
+        /* если reduced-motion: показать только первую рекомендацию */
+        .ai-reco-a { opacity: 1; }
+        .ai-reco-b { opacity: 0; }
       }
     `}</style>
 
-    <div
-      aria-hidden="true"
-      className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
-    >
+    <div aria-hidden="true" className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
       {PAGE_BLOBS.map((b, i) => (
         <div
           key={`blob-${i}`}
@@ -1166,52 +1151,34 @@ const UserCaseFinance: React.FC = () => (
 const HERO_SCENE_W = 790;
 const HERO_SCENE_H = 600;
 
-const HeroScene: React.FC = () => {
-  const wrapperRef = React.useRef<HTMLDivElement>(null);
-  const [scale, setScale] = React.useState(0.5);
-
-  React.useLayoutEffect(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const w = el.clientWidth;
-      if (w > 0) setScale(w / HERO_SCENE_W);
-    };
-
-    update();
-
-    if (typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  return (
+const HeroScene: React.FC = () => (
+  <div
+    className="relative w-full min-w-0"
+    style={{
+      containerType: "inline-size",
+      aspectRatio: `${HERO_SCENE_W / HERO_SCENE_H}`,
+    }}
+    aria-label="Календарь и голосовой ассистент Dayla"
+    role="img"
+  >
     <div
-      ref={wrapperRef}
-      className="relative w-full"
-      style={{ height: HERO_SCENE_H * scale }}
-      aria-label="Календарь и голосовой ассистент Dayla"
-      role="img"
+      className="absolute top-0 left-0 origin-top-left"
+      style={{
+        width: HERO_SCENE_W,
+        height: HERO_SCENE_H,
+        transform: `scale(calc(100cqw / ${HERO_SCENE_W*1.1}px))`,
+      }}
     >
+      {/* ── Маскот ──────── */}
       <div
-        className="absolute top-0 left-0 origin-top-left"
+        className="absolute z-0"
         style={{
-          width: HERO_SCENE_W,
-          height: HERO_SCENE_H,
-          transform: `scale(${scale})`,
-        }}
-      >
-        <div
-          className="absolute z-0"
-          style={{ left: -80, top: -170, width: 825,
-            WebkitMaskImage: [
-            // 1. По вертикали: сохраняем затухание внизу
+          left: -80,
+          top: -70,
+          width: 825,
+          WebkitMaskImage: [
             "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.5) 68%, transparent 90%)",
-            // 2. По горизонтали: мягко гасим к правому краю (там, где карточки)
             "linear-gradient(to right, black 0%, black 55%, rgba(0,0,0,0.5) 78%, transparent 100%)",
-            // 3. Слева — лишь слегка, чтобы маскот не был «отрезан» у границы
             "linear-gradient(to left, black 0%, black 85%, transparent 100%)",
           ].join(", "),
           maskImage: [
@@ -1219,43 +1186,41 @@ const HeroScene: React.FC = () => {
             "linear-gradient(to right, black 0%, black 55%, rgba(0,0,0,0.5) 78%, transparent 100%)",
             "linear-gradient(to left, black 0%, black 85%, transparent 100%)",
           ].join(", "),
-
-          // ─── Складываем слои через intersect ───
           WebkitMaskComposite: "source-in",
           maskComposite: "intersect",
-          }}
-        >
-          <MascotFade
-            src="/images/MaskotWB.png"
-            alt="Ассистент Dayla говорит по телефону"
-            fadeStart={40}
-            fadeLength={60}
-            blend
-            glow
-          />
-        </div>
-        <div
-          className="absolute z-10"
-          style={{ left: 250, top: 320, width: 500 }}
-        >
-          <HeroMockup />
-        </div>
+        }}
+      >
+        <MascotFade
+          src="/images/MaskotWB.png"
+          alt="Ассистент Dayla говорит по телефону"
+          fadeStart={40}
+          fadeLength={60}
+          blend
+          glow
+        />
+      </div>
 
-        <div
-          className="absolute z-20"
-          style={{ left: 441, top: 155, width: 595 }}
-        >
-          <SpeechBubble />
-        </div>
+      <div
+        className="absolute z-10"
+        style={{ left: 335, top: 320, width: 500 }}
+      >
+        <HeroMockup />
+      </div>
+
+      <div
+        className="absolute z-20"
+        style={{ left: 441, top: 105, width: 390 }}
+      >
+        <SpeechBubble />
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
   <section className="relative">
-    <div className="max-w-6xl mx-auto px-4 md:px-6 pt-28 md:pt-40 lg:pt-52 pb-4 md:pb-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-      <div className="text-eyebrow min-w-0">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 pt-28 md:pt-40 lg:pt-52 pb-4 md:pb-6 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start min-w-0">
+    <div className="text-eyebrow min-w-0">
         <Badge variant="default" className="mb-4">
           <Sparkles size={12} className="mr-1" aria-hidden="true" />
           Бесплатный персональный ИИ-ассистент
@@ -1273,16 +1238,45 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
           приоритеты и напомнит
         </p>
 
-        <div className="mt-8 flex flex-col sm:flex-row gap-3">
-          <InteractiveButton
-            type="button"
-            onClick={onStart}
-            scaleAmount={1.2}
-            className="text-eyebrow px-8"
-          >
-            Начать бесплатно
-            <ArrowRight size={18} className="ml-1" aria-hidden="true" />
-          </InteractiveButton>
+        <div className="mt-2 flex flex-col sm:flex-row gap-3">
+          <button
+  type="button"
+  onClick={onStart}
+  className={cn(
+    "group relative inline-flex items-center justify-center",
+    "px-7 md:px-8 h-11 md:h-12",
+    "text-sm md:text-base font-semibold text-blue-700",
+    "rounded-full",
+    "transition-all duration-300 ease-out",
+    "hover:-translate-y-0.5 active:translate-y-0",
+    // ─── Белое тело ───
+    "bg-white",
+    "ring-1 ring-white/80",
+    "shadow-[0_8px_28px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.5)]",
+    "hover:shadow-[0_12px_36px_rgba(15,23,42,0.24),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.6)]"
+  )}
+>
+  {/* Спекулярный блик — верхняя половина */}
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-x-3 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white to-transparent opacity-90 blur-[1px]"
+  />
+
+  {/* Тонкая радужная кромка */}
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/60 mix-blend-overlay"
+  />
+
+  <span className="relative inline-flex items-center gap-1.5">
+    Начать бесплатно
+    <ArrowRight
+      size={16}
+      className="transition-transform duration-300 group-hover:translate-x-0.5"
+      aria-hidden="true"
+    />
+  </span>
+</button>
 
           <button
             type="button"
@@ -1314,24 +1308,24 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
 );
 
 const SpeechBubble: React.FC = () => (
-  <Card className="relative p-5 md:p-5 shadow-lg">
-    <CardContent className="p-0">
+  <Card className="relative p-5 md:p-6 shadow-lg">
+    <CardContent className="p-0 min-w-0">
       <div className="flex items-start gap-3">
         <div
           aria-hidden="true"
-          className="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
+          className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
         >
-          <Mic size={16} className="text-white" />
+          <Mic size={18} className="text-white" />
         </div>
 
         <div className="min-w-0">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
             Голосовой запрос
           </p>
-          <p className="text-base md:text-lg leading-snug text-gray-900 dark:text-white">
+          <p className="text-lg md:text-xl leading-snug text-gray-900 dark:text-white">
             «Dayla, тренировка отменилась»
           </p>
-          <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-3 text-base text-gray-600 dark:text-gray-400">
             Dayla подберёт альтернативу под ваши цели.
           </p>
         </div>
@@ -1340,7 +1334,7 @@ const SpeechBubble: React.FC = () => (
 
     <div
       aria-hidden="true"
-      className= "absolute -left-2 top-[40%] -translate-y-1/2 w-4 h-4 rotate-45 bg-white dark:bg-gray-800"
+      className="absolute -left-2 top-[70%] -translate-y-1/2 w-4 h-4 rotate-45 bg-white dark:bg-gray-800"
     />
   </Card>
 );
@@ -1348,18 +1342,14 @@ const SpeechBubble: React.FC = () => (
 const MOCK_TASKS: Array<{
   time: string;
   title: string;
-  tag: string;
-  color: string;
-  priority: Priority;
-  checkpoints: { done: number; total: number };
   done?: boolean;
 }> = [
-  { time: "09:00", title: "Встреча с командой",        tag: "Работа", color: "#1a73e8", priority: "B", checkpoints: { done: 0, total: 1 } },
-  { time: "11:30", title: "Ответить на письма",        tag: "Работа", color: "#1a73e8", priority: "D", checkpoints: { done: 3, total: 4 } },
-  { time: "13:00", title: "Обед",                      tag: "Личное", color: "#e91e63", priority: "F", checkpoints: { done: 0, total: 1 } },
-  { time: "15:00", title: "Тренировка",                tag: "Спорт",  color: "#188038", priority: "C", checkpoints: { done: 1, total: 1 }, done: true },
-  { time: "18:30", title: "Лабораторная работа X",      tag: "Учёба",  color: "#bdfd46", priority: "A", checkpoints: { done: 2, total: 5 } },
-  { time: "18:30", title: "Созвон с контрагентом Y",   tag: "Работа", color: "#1a73e8", priority: "A", checkpoints: { done: 0, total: 1 } },
+  { time: "09:00", title: "Встреча с командой"},        
+  { time: "11:30", title: "Ответить на письма"},        
+  { time: "13:00", title: "Обед"},   
+  { time: "15:00", title: "Тренировка", done: true},                
+  { time: "18:30", title: "Лабораторная работа X"},     
+  { time: "18:30", title: "Созвон с контрагентом Y"},   
 ];
 
 const AI_RECOMMENDATION_STUDENT =
@@ -1373,17 +1363,15 @@ const HeroMockup: React.FC = () => (
     <Card className="relative w-full p-0 overflow-hidden shadow-xl">
       <div className="p-5 flex items-center justify-between">
         <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Сегодня</p>
-          <p className="font-medium">понедельник, 14 октября</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Сегодня</p>
+          <p className="text-base md:text-lg font-medium">
+            понедельник, 14 октября
+          </p>
         </div>
-        <Badge variant="success">Выполнено 60%</Badge>
       </div>
 
       <ul className="p-3 space-y-1.5">
         {MOCK_TASKS.map((t) => {
-          const pr = PRIORITY_STYLES[t.priority];
-          const pct = Math.round((t.checkpoints.done / t.checkpoints.total) * 100);
-
           return (
             <li
               key={t.time + t.title}
@@ -1392,116 +1380,83 @@ const HeroMockup: React.FC = () => (
                 t.done && "opacity-60",
               )}
             >
-              <span className="text-xs text-gray-400 w-11 tabular-nums shrink-0">
+              <span className="text-sm text-gray-400 w-14 tabular-nums shrink-0">
                 {t.time}
               </span>
 
               <span
                 className="w-1 self-stretch rounded shrink-0"
-                style={{ backgroundColor: t.color }}
                 aria-hidden="true"
               />
 
               <span
                 className={cn(
-                  "text-sm flex-1 min-w-0 truncate",
+                  "text-base flex-1 min-w-0 truncate",
                   t.done && "line-through text-gray-400",
                 )}
               >
                 {t.title}
-              </span>
-
-              <span
-                className={cn(
-                  "shrink-0 inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold ring-1",
-                  pr.bg,
-                  pr.text,
-                  pr.ring,
-                )}
-                title={`Приоритет ${t.priority}`}
-                aria-label={`Приоритет ${t.priority}`}
-              >
-                {t.priority}
-              </span>
-
-              <span
-                className="hidden sm:flex shrink-0 items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 tabular-nums"
-                title={`Чекпоинты: ${t.checkpoints.done} из ${t.checkpoints.total}`}
-                aria-label={`Чекпоинты: ${t.checkpoints.done} из ${t.checkpoints.total}`}
-              >
-                <span className="relative h-1 w-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                  <span
-                    className="absolute inset-y-0 left-0 rounded-full bg-green-500"
-                    style={{ width: `${pct}%` }}
-                  />
-                </span>
-                <span>{t.checkpoints.done}/{t.checkpoints.total}</span>
-              </span>
-
-              <span className="hidden md:inline-block shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500">
-                {t.tag}
               </span>
             </li>
           );
         })}
 
         <li className="relative flex flex-col gap-2.5 p-3 rounded bg-blue-50/70 dark:bg-blue-900/20">
-        <div className="flex items-center gap-3">
-
+          <div className="flex items-center gap-3">
             <span className="relative shrink-0">
-            <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-            <span
+              <Sparkles size={16} className="text-blue-500" aria-hidden="true" />
+              <span
                 aria-hidden="true"
                 className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"
-            />
+              />
             </span>
 
-            <div className="relative flex-1 min-w-0 h-5" aria-label="Рекомендация ИИ">
-            <span className="ai-reco-a absolute inset-0 flex items-center text-sm text-blue-800 dark:text-blue-200 whitespace-nowrap overflow-hidden text-ellipsis">
+            <div className="relative flex-1 min-w-0 h-6" aria-label="Рекомендация ИИ">
+              <span className="ai-reco-a absolute inset-0 flex items-center text-base text-blue-800 dark:text-blue-200 whitespace-nowrap overflow-hidden text-ellipsis">
                 {AI_RECOMMENDATION_STUDENT}
-            </span>
-            <span
-                className="ai-reco-b absolute inset-0 flex items-center text-sm text-blue-800 dark:text-blue-200 whitespace-nowrap overflow-hidden text-ellipsis"
+              </span>
+              <span
+                className="ai-reco-b absolute inset-0 flex items-center text-base text-blue-800 dark:text-blue-200 whitespace-nowrap overflow-hidden text-ellipsis"
                 aria-hidden="true"
-            >
+              >
                 {AI_RECOMMENDATION_PRO}
-            </span>
+              </span>
             </div>
-        </div>
+          </div>
 
-        <div className="flex items-center">
+          <div className="flex items-center gap-1">
             <button
-            type="button"
-            className="
-                inline-flex items-center gap-1 px-2.5 h-6 rounded text-[11px] font-medium
+              type="button"
+              className="
+                inline-flex items-center gap-1 px-3 h-7 rounded text-xs font-medium
                 bg-blue-600 text-white hover:bg-blue-700 transition-colors
-            "
+              "
             >
-            Подтвердить
+              Подтвердить
             </button>
 
             <button
-            type="button"
-            className="
-                inline-flex items-center gap-1 px-2.5 h-6 rounded text-[11px] font-medium
+              type="button"
+              className="
+                inline-flex items-center gap-1 px-3 h-7 rounded text-xs font-medium
                 bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-300
                 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors
-            "
+              "
             >
-            Изменить
+              Изменить
             </button>
 
             <button
-            type="button"
-            className="
-                inline-flex items-center px-2 h-6 rounded text-[11px] font-medium
+              type="button"
+              className="
+                inline-flex items-center px-2.5 h-7 rounded text-xs font-medium
                 text-blue-700/70 dark:text-blue-300/70 hover:text-blue-900 dark:hover:text-blue-100
                 transition-colors
-            "
+              "
             >
-            Позже
+              Позже
             </button>
-        </div>
+          </div>
         </li>
       </ul>
     </Card>
@@ -1535,6 +1490,9 @@ const ROW_ICON_IMG_SIZE = 36;
 const ROW_GAP = 12;
 const ROW_Y_OFFSET = 140;
 
+const FINAL_CTA_MASK =
+  "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 26%, black 38%)";
+
 const FinalCTA: React.FC<{
   onStart: () => void;
   onActiveChange?: (active: boolean) => void;
@@ -1545,6 +1503,16 @@ const FinalCTA: React.FC<{
   const lastY = React.useRef(0);
 
   const iconRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+
+  const [isNarrow, setIsNarrow] = React.useState(false);
+
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const update = () => setIsNarrow(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   React.useEffect(() => {
     const el = sectionRef.current;
@@ -1722,14 +1690,12 @@ const FinalCTA: React.FC<{
         style={{
             background:
             "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
-            clipPath: active
-            ? "inset(0% 0% 0% 0% round 0px)"
-            : "inset(18% 12% 18% 12% round 32px)",
+            clipPath: isNarrow || active
+              ? "inset(0% 0% 0% 0% round 0px)"
+              : "inset(18% 12% 18% 12% round 32px)",
 
-            WebkitMaskImage:
-            "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 12%, black 28%)",
-            maskImage:
-            "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 12%, black 28%)",
+            WebkitMaskImage: FINAL_CTA_MASK,
+            maskImage: FINAL_CTA_MASK,
         }}
         />
 
@@ -1740,13 +1706,13 @@ const FinalCTA: React.FC<{
           active ? "opacity-25" : "opacity-0"
         )}
         style={{
-          clipPath: active
+          clipPath: isNarrow || active
             ? "inset(0% 0% 0% 0% round 0px)"
             : "inset(18% 12% 18% 12% round 32px)",
         }}
       >
-        <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-white blur-3xl" />
-        <div className="absolute -bottom-10 right-1/4 w-72 h-72 rounded-full bg-white blur-3xl" />
+        <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-white/40 dark:bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-10 right-1/4 w-72 h-72 rounded-full bg-white/40 dark:bg-white/10 blur-3xl" />
       </div>
 
       <div
@@ -1857,125 +1823,183 @@ const FinalCTA: React.FC<{
   );
 };
 
-const AUTO_ADVANCE_MS = 3000;
-const MANUAL_PAUSE_MS = 12000;
 
-const SlideFlight: React.FC = () => (
-  <div className="py-10 md:py-16">
-    <div className="max-w-5xl mx-auto px-4 md:px-6">
-      <div className="max-w-2xl mb-10 md:mb-14">
-        <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Пересылайте события — Dayla всё спланирует
-        </h2>
-        <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Не нужно вручную копировать дату, время и место. Отправьте сообщение
-          боту — Dayla разберётся сама.
-        </p>
-      </div>
 
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-        <div className="relative flex justify-center">
-          <div className="relative w-full max-w-[400px]">
-            <IPhoneScene />
-          </div>
-        </div>
-        <div className="relative">
-          <DaylaChatCard
-            forwardedFrom="Переслано от Андрея Смирнова"
-            userMessage="Авиабилет PD-205 · VKO → LED"
-            daylaMessage={
-              <>
-                Распознала авиабилет:{' '}
-                <strong className="font-semibold">дата — 05 апреля, 21:55</strong>,{' '}
-                <strong className="font-semibold">место посадки — Внуково, терминал A</strong>.
-                Куда добавить событие?
-              </>
-            }
-          />
-        </div>
-      </div>
+const SLIDE_DESIGN_WIDTH = 1280; // ← больше max-w-6xl (1152) + padding (48) + запас
 
-      <div className="mt-10 max-w-2xl mx-auto text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-          Dayla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
-        </p>
+const ScaledSlide: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const innerRef = React.useRef<HTMLDivElement>(null);
+  const [scale, setScale] = React.useState(1);
+  const [height, setHeight] = React.useState<number>(0);
+
+  React.useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    const inner = innerRef.current;
+    if (!wrapper || !inner) return;
+
+    const update = () => {
+      const w = wrapper.clientWidth;
+      const s = w > 0 ? Math.min(1, w / SLIDE_DESIGN_WIDTH) : 1;
+      const h = inner.offsetHeight * s;
+      setScale(s);
+      setHeight(h);
+    };
+
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(wrapper);
+    ro.observe(inner);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="w-full min-w-0 overflow-hidden"
+      style={{ height: height || undefined }}
+    >
+      <div
+        ref={innerRef}
+        className="min-w-0"
+        style={{
+          width: SLIDE_DESIGN_WIDTH,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }}
+      >
+        {children}
       </div>
     </div>
-  </div>
+  );
+};
+
+const AUTO_ADVANCE_MS = 8000;
+const MANUAL_PAUSE_MS = 25000;
+
+const SlideFlight: React.FC = () => (
+  <ScaledSlide>
+    <div className="py-16">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="max-w-2xl mb-14">
+          <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
+          <h2 className="text-4xl font-semibold tracking-tight">
+            Пересылайте события — Dayla всё спланирует
+          </h2>
+          <p className="mt-3 text-gray-600 dark:text-gray-400">
+            Не нужно вручную копировать дату, время и место. Отправьте сообщение
+            боту — Dayla разберётся сама.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-20 items-center">
+          <div className="relative flex justify-center">
+            <div className="relative w-full max-w-[400px]">
+              <IPhoneScene />
+            </div>
+          </div>
+          <div className="relative">
+            <DaylaChatCard
+              forwardedFrom="Переслано от Андрея Смирнова"
+              userMessage="Авиабилет PD-205 · VKO → LED"
+              daylaMessage={
+                <>
+                  Распознала авиабилет:{' '}
+                  <strong className="font-semibold">дата — 05 апреля, 21:55</strong>,{' '}
+                  <strong className="font-semibold">место посадки — Внуково, терминал A</strong>.
+                  Куда добавить событие?
+                </>
+              }
+            />
+          </div>
+        </div>
+
+        <div className="mt-16 max-w-2xl mx-auto text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+            <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+            Dayla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
+          </p>
+        </div>
+      </div>
+    </div>
+  </ScaledSlide>
 );
 
 const SlideFinance: React.FC = () => (
-  <div className="py-10 md:py-16">
-    <div className="max-w-6xl mx-auto px-4 md:px-6">
-      <div className="max-w-2xl mb-10 md:mb-14">
-        <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Прислали файл? Dayla превратит его в задачу
-        </h2>
-        <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Добавьте Dayla в чат. Она распознает, что к чему и когда это надо сдать.
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-center">
-        <div className="relative">
-          <DaylaChatCard
-            daylaMessage={
-              <>
-                Подтянула Финансовый_отчёт_Q4.xlsx. Зафиксировала задачу{' '}
-                <strong className="font-semibold">«Подать фин отчёт»</strong>{' '}
-                на 30.09.2027 (конец квартала). Собираю ваши документы к концу
-                отчётного периода.
-              </>
-            }
-          />
+  <ScaledSlide>
+    <div className="py-16">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-2xl mb-14">
+          <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
+          <h2 className="text-4xl font-semibold tracking-tight">
+            Прислали файл? Dayla превратит его в задачу
+          </h2>
+          <p className="mt-3 text-gray-600 dark:text-gray-400">
+            Добавьте Dayla в чат. Она распознает, что к чему и когда это надо сдать.
+          </p>
         </div>
-        <div className="relative flex justify-center">
-          <div className="relative w-full max-w-[2000px]">
-            <MonitorScene />
+
+        <div className="grid grid-cols-[1fr_2fr] gap-16 items-center">
+          <div className="relative">
+            <DaylaChatCard
+              daylaMessage={
+                <>
+                  Подтянула Финансовый_отчёт_Q4.xlsx. Зафиксировала задачу{' '}
+                  <strong className="font-semibold">«Подать фин отчёт»</strong>{' '}
+                  на 30.09.2027 (конец квартала). Собираю ваши документы к концу
+                  отчётного периода.
+                </>
+              }
+            />
+          </div>
+          <div className="relative flex justify-center">
+            <div className="relative w-full">
+              <MonitorScene />
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </ScaledSlide>
 );
 
 const SlideGTD: React.FC = () => (
-  <div className="py-10 md:py-16">
-    <div className="max-w-6xl mx-auto px-4 md:px-6">
-      <div className="max-w-2xl mb-10 md:mb-14">
-        <Badge className="text-eyebrow mb-3">Систематизация по GTD</Badge>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Одна фраза — и всё разложено по полочкам
-        </h2>
-        <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Jira, TrueConf, Slack — Dayla соберёт задачи из всех источников,
-          расставит дедлайны и впишет их в ваш календарь.
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-12 lg:gap-16 items-center">
-        <div className="relative flex justify-center">
-          <GTDAggregation />
+  <ScaledSlide>
+    <div className="py-16">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-2xl mb-14">
+          <Badge className="text-eyebrow mb-3">Систематизация по GTD</Badge>
+          <h2 className="text-4xl font-semibold tracking-tight">
+            Одна фраза — и всё разложено по полочкам
+          </h2>
+          <p className="mt-3 text-gray-600 dark:text-gray-400">
+            Jira, TrueConf, Slack — Dayla соберёт задачи из всех источников,
+            расставит дедлайны и впишет их в ваш календарь.
+          </p>
         </div>
-        <div className="relative">
-          <DaylaChatCard
-            userMessage="Систематизируй задачи по Getting Things Done, которые мне прислали на этой неделе из Jira, TrueConf и Slack, в мой Гугл календарь"
-            daylaMessage={GTD_RESPONSE}
-          />
-        </div>
-      </div>
 
-      <div className="mt-10 max-w-2xl mx-auto text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-          Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь
-        </p>
+        <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-16 items-center">
+          <div className="relative flex justify-center">
+            <GTDAggregation />
+          </div>
+          <div className="relative">
+            <DaylaChatCard
+              userMessage="Систематизируй задачи по Getting Things Done, которые мне прислали на этой неделе из Jira, TrueConf и Slack, в мой Гугл календарь"
+              daylaMessage={GTD_RESPONSE}
+            />
+          </div>
+        </div>
+
+        <div className="mt-16 max-w-2xl mx-auto text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+            <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+            Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь
+          </p>
+        </div>
       </div>
     </div>
-  </div>
+  </ScaledSlide>
 );
 
 const USE_CASE_SLIDES: { id: string; render: () => React.ReactNode }[] = [
@@ -2010,101 +2034,108 @@ const UserCaseCarousel: React.FC<{ paused?: boolean }> = ({ paused = false }) =>
   }, [total, paused]);
 
   return (
-    <section
-      id="usecases"
-      className="relative py-12 md:py-20 overflow-hidden"
-      aria-roledescription="carousel"
-    >
-      <div className="relative">
-        {USE_CASE_SLIDES.map((slide, i) => (
+  <section
+    id="usecases"
+    className="relative py-12 md:py-20 overflow-hidden"
+    aria-roledescription="carousel"
+  >
+    {/* Все слайды — в одной grid-ячейке.
+        Высота секции = высота самого высокого слайда, поэтому
+        переключение только меняет opacity — размеры не меняются. */}
+    <div className="relative grid grid-cols-1 min-w-0">
+      {USE_CASE_SLIDES.map((slide, i) => {
+        const isActive = i === index;
+        return (
           <div
             key={slide.id}
-            aria-hidden={i !== index}
+            aria-hidden={!isActive}
             className={cn(
+              "col-start-1 row-start-1",
               "transition-opacity duration-700",
-              i === index
-                ? "opacity-100 relative z-10"
-                : "opacity-0 absolute inset-0 z-0 pointer-events-none"
+              isActive
+                ? "opacity-100 z-10"
+                : "opacity-0 z-0 pointer-events-none"
             )}
           >
             {slide.render()}
           </div>
-        ))}
-      </div>
+        );
+      })}
+    </div>
 
-      <button
-        type="button"
-        onClick={prev}
-        aria-label="Предыдущий сценарий"
-        className={cn(
-          "absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20",
-          "w-11 h-11 md:w-12 md:h-12 rounded-full",
-          "flex items-center justify-center",
-          "bg-white/40 dark:bg-white/[0.06]",
-          "backdrop-blur-xl",
-          "ring-1 ring-white/60 dark:ring-white/10",
-          "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
-          "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
-          "text-gray-700 dark:text-gray-200",
-          "hover:bg-white/60 dark:hover:bg-white/[0.1]",
-          "hover:scale-105 active:scale-95",
-          "transition-all duration-200",
-        )}
+    <button
+      type="button"
+      onClick={prev}
+      aria-label="Предыдущий сценарий"
+      className={cn(
+        "absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20",
+        "w-11 h-11 md:w-12 md:h-12 rounded-full",
+        "flex items-center justify-center",
+        "bg-white/40 dark:bg-white/[0.06]",
+        "backdrop-blur-xl",
+        "ring-1 ring-white/60 dark:ring-white/10",
+        "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
+        "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
+        "text-gray-700 dark:text-gray-200",
+        "hover:bg-white/60 dark:hover:bg-white/[0.1]",
+        "hover:scale-105 active:scale-95",
+        "transition-all duration-200",
+      )}
+    >
+      <svg
+        width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2.5"
+        strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
       >
-        <svg
-          width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2.5"
-          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </button>
 
-      <button
-        type="button"
-        onClick={next}
-        aria-label="Следующий сценарий"
-        className={cn(
-          "absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20",
-          "w-11 h-11 md:w-12 md:h-12 rounded-full",
-          "flex items-center justify-center",
-          "bg-white/40 dark:bg-white/[0.06]",
-          "backdrop-blur-xl",
-          "ring-1 ring-white/60 dark:ring-white/10",
-          "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
-          "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
-          "text-gray-700 dark:text-gray-200",
-          "hover:bg-white/60 dark:hover:bg-white/[0.1]",
-          "hover:scale-105 active:scale-95",
-          "transition-all duration-200",
-        )}
+    <button
+      type="button"
+      onClick={next}
+      aria-label="Следующий сценарий"
+      className={cn(
+        "absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20",
+        "w-11 h-11 md:w-12 md:h-12 rounded-full",
+        "flex items-center justify-center",
+        "bg-white/40 dark:bg-white/[0.06]",
+        "backdrop-blur-xl",
+        "ring-1 ring-white/60 dark:ring-white/10",
+        "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
+        "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
+        "text-gray-700 dark:text-gray-200",
+        "hover:bg-white/60 dark:hover:bg-white/[0.1]",
+        "hover:scale-105 active:scale-95",
+        "transition-all duration-200",
+      )}
+    >
+      <svg
+        width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2.5"
+        strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
       >
-        <svg
-          width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2.5"
-          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-        >
-          <path d="M9 18l6-6-6-6" />
-        </svg>
-      </button>
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </button>
 
-      <div className="mt-6 flex items-center justify-center gap-2">
-        {USE_CASE_SLIDES.map((slide, i) => (
-          <button
-            key={slide.id}
-            type="button"
-            onClick={() => goTo(i)}
-            aria-label={`Перейти к сценарию ${i + 1}`}
-            aria-current={i === index}
-            className={cn(
-              "h-2 rounded-full transition-all duration-300",
-              i === index
-                ? "w-8 bg-gray-800/70 dark:bg-white/70"
-                : "w-2 bg-gray-400/50 dark:bg-white/30 hover:bg-gray-500/70"
-            )}
-          />
-        ))}
-      </div>
-    </section>
-  );
+    <div className="mt-6 flex items-center justify-center gap-2">
+      {USE_CASE_SLIDES.map((slide, i) => (
+        <button
+          key={slide.id}
+          type="button"
+          onClick={() => goTo(i)}
+          aria-label={`Перейти к сценарию ${i + 1}`}
+          aria-current={i === index}
+          className={cn(
+            "h-2 rounded-full transition-all duration-300",
+            i === index
+              ? "w-8 bg-gray-800/70 dark:bg-white/70"
+              : "w-2 bg-gray-400/50 dark:bg-white/30 hover:bg-gray-500/70"
+          )}
+        />
+      ))}
+    </div>
+  </section>
+);
 };
