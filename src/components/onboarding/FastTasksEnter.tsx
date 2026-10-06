@@ -3,7 +3,7 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
   PenLine, Sparkles, Bell, BellOff, Clock, AlarmClock,
-  Sunrise, Check, Tag,
+  Sunrise, Check, Tag, Plus,
   type LucideIcon,
 } from "lucide-react";
 
@@ -109,6 +109,8 @@ const REMINDER_OPTIONS: ReminderOption[] = [
 export const FastTasksEnter: React.FC = () => {
   const navigate = useNavigate();
   const { data, patch } = useOnboarding();
+  const [custom, setCustom] = React.useState("");
+  const [showCustom, setShowCustom] = React.useState(false);
 
   const [title, setTitle] = React.useState(data.firstTask.title);
   const [sphereId, setSphereId] = React.useState<string | null>(
@@ -225,18 +227,137 @@ export const FastTasksEnter: React.FC = () => {
                     <span className="relative text-gray-900 dark:text-white truncate">
                       {s.name}
                     </span>
-                    {active && (
-                      <Check
-                        size={13}
-                        strokeWidth={3}
-                        className="relative shrink-0 text-sky-600 dark:text-sky-300"
-                        aria-hidden="true"
-                      />
-                    )}
                   </button>
                 );
               })}
+
+              {/* + Своя сфера */}
+              <button
+                type="button"
+                onClick={() => setShowCustom((v) => !v)}
+                aria-pressed={showCustom}
+                className={cn(
+                  "group relative inline-flex items-center gap-2 overflow-hidden",
+                  "px-3 py-2 rounded-full text-sm font-medium",
+                  "transition-all duration-200",
+                  "bg-white/[0.06] dark:bg-white/[0.02]",
+                  "backdrop-blur-3xl",
+                  "border border-dashed",
+                  showCustom
+                    ? "border-sky-400/60 text-sky-700 dark:text-sky-300"
+                    : "border-white/30 dark:border-white/10 text-gray-700 dark:text-gray-300",
+                  "hover:-translate-y-0.5 hover:bg-white/10 dark:hover:bg-white/[0.05]"
+                )}
+              >
+                <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
+                <Plus
+                  size={13}
+                  className={cn(
+                    "relative transition-transform duration-200",
+                    showCustom && "rotate-45"
+                  )}
+                  aria-hidden="true"
+                />
+                <span className="relative">Своя сфера</span>
+              </button>
             </div>
+
+            {showCustom && (
+              <div className="mt-3 flex gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                <Input
+                  value={custom}
+                  onChange={(e) => setCustom(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const name = custom.trim();
+                      if (!name) return;
+                      if (
+                        data.spheres.some(
+                          (s) => s.name.toLowerCase() === name.toLowerCase()
+                        )
+                      ) {
+                        setCustom("");
+                        setShowCustom(false);
+                        return;
+                      }
+                      const PALETTE = [
+                        "#64748b", "#14b8a6", "#f97316", "#8b5cf6", "#f43f5e",
+                        "#f59e0b", "#06b6d4", "#ec4899", "#6366f1", "#84cc16",
+                      ];
+                      const used = new Set(data.spheres.map((s) => s.color));
+                      const color = PALETTE.find((c) => !used.has(c)) ?? PALETTE[0];
+                      const id = Math.random().toString(36).slice(2, 9);
+                      patch({
+                        spheres: [
+                          ...data.spheres,
+                          { id, name, color, priority: data.spheres.length },
+                        ],
+                      });
+                      setSphereId(id);
+                      setCustom("");
+                      setShowCustom(false);
+                    }
+                    if (e.key === "Escape") {
+                      setCustom("");
+                      setShowCustom(false);
+                    }
+                  }}
+                  placeholder="Например: Пилатес, Волонтёрство, Книги..."
+                  aria-label="Название новой сферы"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  disabled={!custom.trim()}
+                  onClick={() => {
+                    const name = custom.trim();
+                    if (!name) return;
+                    if (
+                      data.spheres.some(
+                        (s) => s.name.toLowerCase() === name.toLowerCase()
+                      )
+                    ) {
+                      setCustom("");
+                      setShowCustom(false);
+                      return;
+                    }
+                    const PALETTE = [
+                      "#64748b", "#14b8a6", "#f97316", "#8b5cf6", "#f43f5e",
+                      "#f59e0b", "#06b6d4", "#ec4899", "#6366f1", "#84cc16",
+                    ];
+                    const used = new Set(data.spheres.map((s) => s.color));
+                    const color = PALETTE.find((c) => !used.has(c)) ?? PALETTE[0];
+                    const id = Math.random().toString(36).slice(2, 9);
+                    patch({
+                      spheres: [
+                        ...data.spheres,
+                        { id, name, color, priority: data.spheres.length },
+                      ],
+                    });
+                    setSphereId(id);
+                    setCustom("");
+                    setShowCustom(false);
+                  }}
+                  className={cn(
+                    "group relative shrink-0 inline-flex items-center gap-1.5 overflow-hidden",
+                    "px-4 rounded-full text-sm font-medium",
+                    "text-sky-700 dark:text-sky-300",
+                    "bg-white/[0.06] dark:bg-white/[0.02]",
+                    "backdrop-blur-3xl",
+                    "ring-1 ring-white/30 dark:ring-white/10",
+                    "shadow-[0_2px_12px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.6)]",
+                    "dark:shadow-[0_2px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
+                    "transition-all duration-200",
+                    "hover:-translate-y-0.5 hover:bg-white/10 dark:hover:bg-white/[0.05]",
+                    "disabled:opacity-40 disabled:pointer-events-none"
+                  )}
+                >
+                  <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
+                  <Plus size={14} className="relative" aria-hidden="true" />
+                  <span className="relative">Добавить</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 

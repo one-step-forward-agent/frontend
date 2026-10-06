@@ -395,31 +395,6 @@ export const AppleAndGoogleLogging: React.FC = () => {
                         {i.hint}
                       </p>
                     </div>
-
-                    {/* Индикатор */}
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        "relative shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center overflow-hidden",
-                        "ring-1 transition-all duration-300",
-                        active
-                          ? "text-white ring-white/40"
-                          : "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl ring-white/30 dark:ring-white/10"
-                      )}
-                      style={
-                        active
-                          ? {
-                              backgroundColor: "rgba(56,189,248,0.7)",
-                              boxShadow:
-                                "0 2px 8px rgba(56,189,248,0.4), inset 0 1px 0 rgba(255,255,255,0.5)",
-                            }
-                          : undefined
-                      }
-                    >
-                      {active && (
-                        <Check size={12} strokeWidth={3} className="relative" />
-                      )}
-                    </span>
                   </div>
                 </button>
               );
@@ -501,15 +476,6 @@ export const AppleAndGoogleLogging: React.FC = () => {
               )}
             </div>
           </div>
-
-          {selected.length === 0 && (
-            <div className="flex items-center justify-center gap-2 flex-wrap">
-              <Sparkles size={14} className="text-sky-500" aria-hidden="true" />
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                Можно пропустить — подключите интеграции позже в настройках
-              </p>
-            </div>
-          )}
         </div>
       </OnboardingLayout>
 

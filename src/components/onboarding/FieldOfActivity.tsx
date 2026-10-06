@@ -164,7 +164,7 @@ export const FieldOfActivity: React.FC = () => {
       step={2}
       totalSteps={TOTAL}
       title="Отметьте важные для вас сферы"
-      subtitle="Я учту их и помогу не потерять важное из виду. Изменить сферы всегда можно в настройках."
+      subtitle="Я учту их и помогу не потерять важное из виду."
       onBack={() => navigate("/onboarding/for-what-using")}
       onNext={handleNext}
       nextDisabled={spheres.length === 0}
@@ -250,27 +250,6 @@ export const FieldOfActivity: React.FC = () => {
                     {p.name}
                   </span>
 
-                  {/* Индикатор — тот же стеклянный стиль */}
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "relative shrink-0 w-6 h-6 rounded-full flex items-center justify-center overflow-hidden",
-                      "ring-1 transition-all duration-300",
-                      active
-                        ? "text-white ring-white/40"
-                        : "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl ring-white/30 dark:ring-white/10"
-                    )}
-                    style={
-                      active && sphere
-                        ? {
-                            backgroundColor: `${sphere.color}cc`,
-                            boxShadow: `0 2px 8px ${sphere.color}40, inset 0 1px 0 rgba(255,255,255,0.5)`,
-                          }
-                        : undefined
-                    }
-                  >
-                    {active && <Check size={13} strokeWidth={3} className="relative" />}
-                  </span>
                 </div>
               </button>
             );
@@ -358,13 +337,7 @@ export const FieldOfActivity: React.FC = () => {
                   <span aria-hidden="true" className={cn(GLASS_SHEEN, "rounded-full")} />
                   <span className="relative">Приоритеты</span>
                 </span>
-                <h3 className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
-                  Что для вас важнее всего
-                </h3>
               </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
-                Перетащите или ▲▼
-              </span>
             </div>
 
             <div className={cn("relative overflow-hidden rounded-2xl", GLASS_BODY)}>
@@ -470,31 +443,10 @@ export const FieldOfActivity: React.FC = () => {
                           </button>
                         </div>
 
-                        {/* Удалить */}
-                        <button
-                          type="button"
-                          onClick={() => removeSphere(s.id)}
-                          className={cn(
-                            "relative shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-                            "text-gray-400 hover:text-red-500",
-                            "transition-colors",
-                            "opacity-0 group-hover:opacity-100 focus:opacity-100"
-                          )}
-                          title="Убрать сферу"
-                          aria-label={`Убрать сферу ${s.name}`}
-                        >
-                          <X size={15} />
-                        </button>
                       </li>
                     );
                   })}
                 </ul>
-
-                <div className="relative mt-3 flex items-center gap-2 px-2 text-[11px] text-gray-500 dark:text-gray-400">
-                  <Sparkles size={12} className="text-blue-500" aria-hidden="true" />
-                  Первый в списке — главный приоритет. Я подскажу, если что-то
-                  будет идти вразрез с ним.
-                </div>
               </div>
             </div>
           </div>

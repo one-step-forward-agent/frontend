@@ -114,8 +114,7 @@ const AuthLayout: React.FC = () => {
           </h1>
 
           <p className="mt-3 text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
-            Личный ИИ-ассистент, который планирует ваш день за минуту —
-            от первого «надо не забыть».
+            Личный ИИ-ассистент, который планирует ваш день за минуту.
           </p>
 
           <div className="mt-6 flex justify-center gap-x-5 gap-y-2 flex-wrap">

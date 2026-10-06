@@ -30,21 +30,26 @@ const GLASS_SHEEN_PILL =
   "pointer-events-none absolute inset-0 rounded-full " +
   "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
+const GLASS_SHEEN_SM =
+  "pointer-events-none absolute inset-x-2 top-0.5 h-1/2 rounded-full " +
+  "bg-gradient-to-b from-white/40 to-transparent blur-[1px]";
+
 type GoalVisual = {
   icon: LucideIcon;
   tint: string;
+  tintSoft: string;
   tintRing: string;
 };
 
 const GOAL_VISUALS: GoalVisual[] = [
-  { icon: Target,   tint: "text-blue-600 dark:text-blue-300",       tintRing: "ring-blue-400/40 dark:ring-blue-400/30" },
-  { icon: Sparkles, tint: "text-violet-600 dark:text-violet-300",   tintRing: "ring-violet-400/40 dark:ring-violet-400/30" },
-  { icon: Trophy,   tint: "text-amber-600 dark:text-amber-300",     tintRing: "ring-amber-400/40 dark:ring-amber-400/30" },
-  { icon: Rocket,   tint: "text-cyan-600 dark:text-cyan-300",       tintRing: "ring-cyan-400/40 dark:ring-cyan-400/30" },
-  { icon: Heart,    tint: "text-pink-600 dark:text-pink-300",       tintRing: "ring-pink-400/40 dark:ring-pink-400/30" },
-  { icon: Star,     tint: "text-yellow-600 dark:text-yellow-300",   tintRing: "ring-yellow-400/40 dark:ring-yellow-400/30" },
-  { icon: Flag,     tint: "text-emerald-600 dark:text-emerald-300", tintRing: "ring-emerald-400/40 dark:ring-emerald-400/30" },
-  { icon: Flame,    tint: "text-rose-600 dark:text-rose-300",       tintRing: "ring-rose-400/40 dark:ring-rose-400/30" },
+  { icon: Target,   tint: "text-blue-600 dark:text-blue-300",       tintSoft: "bg-blue-500/15 dark:bg-blue-400/15",       tintRing: "ring-blue-400/40 dark:ring-blue-400/30" },
+  { icon: Sparkles, tint: "text-violet-600 dark:text-violet-300",   tintSoft: "bg-violet-500/15 dark:bg-violet-400/15",   tintRing: "ring-violet-400/40 dark:ring-violet-400/30" },
+  { icon: Trophy,   tint: "text-amber-600 dark:text-amber-300",     tintSoft: "bg-amber-500/15 dark:bg-amber-400/15",     tintRing: "ring-amber-400/40 dark:ring-amber-400/30" },
+  { icon: Rocket,   tint: "text-cyan-600 dark:text-cyan-300",       tintSoft: "bg-cyan-500/15 dark:bg-cyan-400/15",       tintRing: "ring-cyan-400/40 dark:ring-cyan-400/30" },
+  { icon: Heart,    tint: "text-pink-600 dark:text-pink-300",       tintSoft: "bg-pink-500/15 dark:bg-pink-400/15",       tintRing: "ring-pink-400/40 dark:ring-pink-400/30" },
+  { icon: Star,     tint: "text-yellow-600 dark:text-yellow-300",   tintSoft: "bg-yellow-500/15 dark:bg-yellow-400/15",   tintRing: "ring-yellow-400/40 dark:ring-yellow-400/30" },
+  { icon: Flag,     tint: "text-emerald-600 dark:text-emerald-300", tintSoft: "bg-emerald-500/15 dark:bg-emerald-400/15", tintRing: "ring-emerald-400/40 dark:ring-emerald-400/30" },
+  { icon: Flame,    tint: "text-rose-600 dark:text-rose-300",       tintSoft: "bg-rose-500/15 dark:bg-rose-400/15",       tintRing: "ring-rose-400/40 dark:ring-rose-400/30" },
 ];
 
 const visualForGoal = (text: string): GoalVisual => {
@@ -151,7 +156,7 @@ export const GoalsAndHabits: React.FC = () => {
       nextLabel={`Далее${goals.length > 0 ? ` · ${goals.length}` : ""}`}
     >
       <div className="relative">
-        {/* ─── Eyebrow ─────────────────────────────── */}
+        {/* ─── Eyebrow ─────────────────────────── */}
         <div className="mb-5 flex items-center gap-3">
           <span
             className={cn(
@@ -162,13 +167,12 @@ export const GoalsAndHabits: React.FC = () => {
               "text-gray-600 dark:text-gray-300"
             )}
           >
-            <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
             <Sparkles size={11} aria-hidden="true" className="relative" />
             <span className="relative">Намерения</span>
           </span>
         </div>
 
-        {/* ─── Поле ввода ───────────────────────────── */}
+        {/* ─── Ввод ─────────────────────────────── */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Target
@@ -196,7 +200,7 @@ export const GoalsAndHabits: React.FC = () => {
           </Button>
         </div>
 
-        {/* ─── Подсказки — стеклянные пилюли ────────── */}
+        {/* ─── Подсказки ────────────────────────── */}
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-2">
             <Lightbulb size={14} className="text-amber-500" aria-hidden="true" />
@@ -219,22 +223,24 @@ export const GoalsAndHabits: React.FC = () => {
                   className={cn(
                     "group relative inline-flex items-center gap-1.5 overflow-hidden",
                     "px-3 py-1.5 rounded-full text-xs font-medium",
-                    "transition-transform duration-200",
+                    "transition-all duration-200",
+                    "backdrop-blur-3xl",
                     !already && [
-                      GLASS_BODY,
+                      "bg-white/[0.06] dark:bg-white/[0.02]",
+                      "ring-1 ring-white/30 dark:ring-white/10",
+                      "shadow-[0_2px_12px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.6)]",
+                      "dark:shadow-[0_2px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
                       "text-gray-700 dark:text-gray-300",
-                      "hover:-translate-y-0.5",
+                      "hover:-translate-y-0.5 hover:bg-white/10 dark:hover:bg-white/[0.05]",
                     ],
                     already && [
-                      "bg-emerald-500/[0.08] dark:bg-emerald-500/[0.08]",
-                      "backdrop-blur-3xl",
-                      "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30",
-                      "text-emerald-700 dark:text-emerald-300",
+                      "bg-blue-500/15 dark:bg-blue-400/15",
+                      "ring-1 ring-blue-400/40 dark:ring-blue-400/30",
+                      "text-blue-700 dark:text-blue-300",
                       "cursor-default",
                     ]
                   )}
                 >
-                  <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
                   <Plus
                     size={12}
                     className={cn(
@@ -250,7 +256,7 @@ export const GoalsAndHabits: React.FC = () => {
           </div>
         </div>
 
-        {/* ─── Список с приоритетами ────────────────── */}
+        {/* ─── Список с приоритетами ────────────── */}
         {goals.length > 0 && (
           <div className="mt-8">
             <div className="mb-3 flex items-end justify-between gap-3">
@@ -271,9 +277,6 @@ export const GoalsAndHabits: React.FC = () => {
                   Что для вас важнее всего
                 </h3>
               </div>
-              <span className="hidden sm:block text-xs text-gray-500 dark:text-gray-400">
-                Перетащите или ▲▼
-              </span>
             </div>
 
             <div className={cn("relative overflow-hidden rounded-2xl", GLASS_BODY)}>
@@ -298,12 +301,13 @@ export const GoalsAndHabits: React.FC = () => {
                         onDrop={(e) => onDrop(e, i)}
                         onDragEnd={onDragEnd}
                         className={cn(
-                          "group relative flex items-center gap-3 px-3 py-3 rounded-2xl overflow-hidden",
+                          "group relative flex items-center gap-3 px-3 py-3 rounded-xl overflow-hidden",
                           GLASS_BODY,
                           "transition-all duration-200",
-                          "cursor-grab active:cursor-grabbing",
+                          "hover:bg-white/10 dark:hover:bg-white/[0.05]",
                           isDragging && "opacity-40 cursor-grabbing",
-                          isOver && "ring-2 ring-blue-400/60 -translate-y-1"
+                          isOver && "ring-2 ring-sky-400/60 -translate-y-1",
+                          "cursor-grab active:cursor-grabbing"
                         )}
                       >
                         <span aria-hidden="true" className={GLASS_SHEEN} />
@@ -322,22 +326,23 @@ export const GoalsAndHabits: React.FC = () => {
                             "backdrop-blur-3xl",
                             "ring-1 ring-white/30 dark:ring-white/10",
                             "text-gray-600 dark:text-gray-300",
-                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+                            "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
                           )}
                           aria-label={`Приоритет ${i + 1}`}
                         >
                           {i + 1}
                         </span>
 
-                        {/* Иконка-плашка — стекло + цветной ring/text */}
+                        {/* Иконка — стеклянная, без градиента */}
                         <div
                           className={cn(
                             "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
                             "ring-1 backdrop-blur-3xl",
                             "bg-white/[0.06] dark:bg-white/[0.02]",
                             visual.tint,
-                            visual.tintRing,
-                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
+                            visual.tintSoft,
+                            visual.tintRing
                           )}
                           aria-hidden="true"
                         >
@@ -348,7 +353,6 @@ export const GoalsAndHabits: React.FC = () => {
                           {g}
                         </span>
 
-                        {/* Стрелки */}
                         <div className="relative shrink-0 flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
                           <button
                             type="button"
@@ -357,8 +361,8 @@ export const GoalsAndHabits: React.FC = () => {
                             aria-label={`Поднять «${g}» выше`}
                             className={cn(
                               "w-7 h-7 rounded-lg flex items-center justify-center",
-                              "text-gray-400 dark:text-gray-500",
-                              "hover:text-gray-700 dark:hover:text-gray-200",
+                              "text-gray-400 hover:text-gray-800 hover:bg-white/40",
+                              "dark:hover:text-gray-100 dark:hover:bg-white/[0.06]",
                               "disabled:opacity-30 disabled:cursor-not-allowed",
                               "transition-colors"
                             )}
@@ -372,8 +376,8 @@ export const GoalsAndHabits: React.FC = () => {
                             aria-label={`Опустить «${g}» ниже`}
                             className={cn(
                               "w-7 h-7 rounded-lg flex items-center justify-center",
-                              "text-gray-400 dark:text-gray-500",
-                              "hover:text-gray-700 dark:hover:text-gray-200",
+                              "text-gray-400 hover:text-gray-800 hover:bg-white/40",
+                              "dark:hover:text-gray-100 dark:hover:bg-white/[0.06]",
                               "disabled:opacity-30 disabled:cursor-not-allowed",
                               "transition-colors"
                             )}
@@ -382,13 +386,13 @@ export const GoalsAndHabits: React.FC = () => {
                           </button>
                         </div>
 
-                        {/* Удалить */}
                         <button
                           type="button"
                           onClick={() => remove(g)}
                           className={cn(
                             "relative shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
                             "text-gray-400 hover:text-red-500",
+                            "hover:bg-white/40 dark:hover:bg-white/[0.06]",
                             "transition-colors",
                             "opacity-0 group-hover:opacity-100 focus:opacity-100"
                           )}
@@ -401,32 +405,22 @@ export const GoalsAndHabits: React.FC = () => {
                     );
                   })}
                 </ul>
-
-                <div className="relative mt-3 flex items-center gap-2 px-2 text-[11px] text-gray-500 dark:text-gray-400">
-                  <Sparkles size={12} className="text-blue-500" aria-hidden="true" />
-                  Первый в списке — главный приоритет. Я подскажу, если что-то
-                  будет идти вразрез с ним.
-                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* ─── Пустое состояние ─────────────────────── */}
+        {/* ─── Пусто ────────────────────────────── */}
         {goals.length === 0 && (
           <div className="mt-6 flex flex-col items-center text-center py-8">
             <div
-              aria-hidden="true"
               className={cn(
-                "relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden mb-3",
+                "relative w-14 h-14 rounded-2xl flex items-center justify-center mb-3 overflow-hidden",
                 GLASS_BODY
               )}
             >
               <span aria-hidden="true" className={GLASS_SHEEN} />
-              <Target
-                size={24}
-                className="relative text-blue-500 dark:text-blue-400"
-              />
+              <Target size={24} className="relative text-sky-500 dark:text-sky-400" />
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
               Добавьте хотя бы одно намерение — или пропустите шаг, если пока не готовы формулировать.

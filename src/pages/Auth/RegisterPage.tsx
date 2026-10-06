@@ -96,28 +96,6 @@ const RegisterPage: React.FC = () => {
 
       {/* ─── Форма ───────────────────────────── */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <FormField id="fullName" label="Имя" required>
-          {(field) => (
-            <div className="relative">
-              <User
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
-                aria-hidden="true"
-              />
-              <Input
-                {...field}
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="name"
-                maxLength={200}
-                placeholder="Как к вам обращаться"
-                className="pl-9"
-                required
-              />
-            </div>
-          )}
-        </FormField>
 
         <FormField id="email" label="Email" required>
           {(field) => (
@@ -145,7 +123,6 @@ const RegisterPage: React.FC = () => {
           id="password"
           label="Пароль"
           required
-          hint="Минимум 8 символов"
         >
           {(field) => (
             <div className="relative">
@@ -160,7 +137,7 @@ const RegisterPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
-                placeholder="Придумайте пароль"
+                placeholder="Минимум 8 символов"
                 className="pl-9"
                 required
                 minLength={8}

@@ -1270,8 +1270,7 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
 
         <p className="mt-5 text-lg text-gray-600 dark:text-gray-400 max-w-xl">
           Скажите о своих планах — Dayla найдёт время в календаре, расставит
-          приоритеты и напомнит. Вам не нужно вручную собирать задачи из
-          заметок и чатов.
+          приоритеты и напомнит
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-3">

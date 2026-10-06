@@ -33,7 +33,6 @@ type Tone = NonNullable<OnboardingData["toneOfVoice"]>;
 type ToneOption = {
   id: Tone;
   label: string;
-  hint: string;
   icon: LucideIcon;
   tint: string;
   tintRing: string;
@@ -45,7 +44,6 @@ const OPTIONS: ToneOption[] = [
   {
     id: "supportive",
     label: "Мягкий, поддерживающий",
-    hint: "Бережно, с заботой о состоянии",
     icon: Heart,
     tint: "text-pink-600 dark:text-pink-300",
     tintRing: "ring-pink-400/40 dark:ring-pink-400/30",
@@ -55,7 +53,6 @@ const OPTIONS: ToneOption[] = [
   {
     id: "neutral",
     label: "Нейтральный",
-    hint: "По делу, без лишних эмоций",
     icon: Minus,
     tint: "text-slate-600 dark:text-slate-300",
     tintRing: "ring-slate-400/40 dark:ring-slate-400/30",
@@ -65,7 +62,6 @@ const OPTIONS: ToneOption[] = [
   {
     id: "motivating",
     label: "Мотивирующий",
-    hint: "Бодро, с драйвом и целями",
     icon: Flame,
     tint: "text-amber-600 dark:text-amber-300",
     tintRing: "ring-amber-400/40 dark:ring-amber-400/30",
@@ -75,7 +71,6 @@ const OPTIONS: ToneOption[] = [
   {
     id: "strict",
     label: "Строгий",
-    hint: "Чётко, дисциплинированно, без поблажек",
     icon: ShieldAlert,
     tint: "text-rose-600 dark:text-rose-300",
     tintRing: "ring-rose-400/40 dark:ring-rose-400/30",
@@ -186,46 +181,12 @@ export const ToneOfVoice: React.FC = () => {
                     <p className="font-medium text-gray-900 dark:text-white leading-snug">
                       {opt.label}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {opt.hint}
-                    </p>
                   </div>
-
-                  {/* ─── Индикатор ─── */}
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "relative shrink-0 w-5 h-5 rounded-full flex items-center justify-center overflow-hidden",
-                      "ring-1 transition-all duration-300",
-                      active
-                        ? "text-white ring-white/40"
-                        : "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl ring-white/30 dark:ring-white/10"
-                    )}
-                    style={
-                      active
-                        ? {
-                            backgroundColor: `${opt.tintActiveColor}cc`,
-                            boxShadow: `0 2px 8px ${opt.tintActiveGlow}, inset 0 1px 0 rgba(255,255,255,0.5)`,
-                          }
-                        : undefined
-                    }
-                  >
-                    {active && <Check size={12} strokeWidth={3} className="relative" />}
-                  </span>
                 </div>
               </button>
             );
           })}
         </div>
-
-        {selected && (
-          <div className="mt-5 flex items-center justify-center gap-2 animate-in fade-in duration-300">
-            <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Стиль общения можно поменять в настройках в любой момент
-            </p>
-          </div>
-        )}
       </div>
     </OnboardingLayout>
   );

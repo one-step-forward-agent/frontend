@@ -313,9 +313,6 @@ export const ExistingPlans: React.FC = () => {
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
                   Одинаковое время во все дни
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Выключите, чтобы задать расписание для каждого дня отдельно
-                </p>
               </div>
 
               <button
