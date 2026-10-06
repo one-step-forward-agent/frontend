@@ -1,3 +1,4 @@
+import { reachGoal } from "@/app/lib/metrics";
 import type {
   AssistantResponse,
   Calendar,
@@ -60,9 +61,18 @@ async function errorFrom(response: Response): Promise<ApiError> {
   return new ApiError(response.status, detail || response.statusText || "Ошибка запроса");
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+type Goal = string | { name: string; params?: Record<string, unknown> };
+
+function fireGoal(goal?: Goal): void {
+  if (!goal) return;
+  if (typeof goal === "string") reachGoal(goal);
+  else reachGoal(goal.name, goal.params);
+}
+
+async function request<T>(path: string, init: RequestInit = {}, goal?: Goal): Promise<T> {
   const response = await send(path, init);
   if (!response.ok) throw await errorFrom(response);
+  fireGoal(goal);
   if (response.status === 204) return undefined as T;
   return (await response.json().catch(() => undefined)) as T;
 }
@@ -84,22 +94,25 @@ const timezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const api = {
   auth: {
     register: (body: { email: string; password: string; name?: string | null; timezone?: string }) =>
-      request<TokenResponse>("/auth/register", json("POST", body)),
-    login: (email: string, password: string) => request<TokenResponse>("/auth/login", json("POST", { email, password })),
-    logout: () => request<{ status: string }>("/auth/logout", { method: "POST" }),
-    logoutAll: () => request<{ status: string }>("/auth/logout-all", { method: "POST" }),
+      request<TokenResponse>("/auth/register", json("POST", body), "register_success"),
+    login: (email: string, password: string) =>
+      request<TokenResponse>("/auth/login", json("POST", { email, password }), "login_success"),
+    logout: () => request<{ status: string }>("/auth/logout", { method: "POST" }, "logout"),
+    logoutAll: () => request<{ status: string }>("/auth/logout-all", { method: "POST" }, "logout_all"),
   },
   me: {
     get: () => request<User>("/api/me"),
-    update: (body: { name?: string | null; timezone?: string }) => request<User>("/api/me", json("PATCH", body)),
+    update: (body: { name?: string | null; timezone?: string }) =>
+      request<User>("/api/me", json("PATCH", body), "me_update"),
   },
   calendars: {
     list: () => request<Calendar[]>("/api/calendars"),
     create: (body: { name: string; description?: string | null; timezone?: string }) =>
-      request<Calendar>("/api/calendars", json("POST", { provider: "local", ...body })),
+      request<Calendar>("/api/calendars", json("POST", { provider: "local", ...body }), "calendar_create"),
     exportIcs: async () => {
       const response = await send("/api/calendar/export.ics");
       if (!response.ok) throw await errorFrom(response);
+      reachGoal("calendar_export");
       return response.blob();
     },
   },
@@ -109,24 +122,39 @@ export const api = {
       return request<CalendarEvent[]>(`/api/events?${query}`);
     },
     get: (id: number) => request<CalendarEvent>(`/api/events/${id}`),
-    create: (body: EventCreate) => request<CalendarEvent>("/api/events", json("POST", body)),
-    update: (id: number, body: Partial<EventCreate>) => request<CalendarEvent>(`/api/events/${id}`, json("PUT", body)),
-    remove: (id: number) => request<void>(`/api/events/${id}`, { method: "DELETE" }),
-    syncGoogle: (id: number) => request<CalendarEvent>(`/api/events/${id}/sync/google`, { method: "POST" }),
+    create: (body: EventCreate) =>
+      request<CalendarEvent>("/api/events", json("POST", body), "event_create"),
+    update: (id: number, body: Partial<EventCreate>) =>
+      request<CalendarEvent>(`/api/events/${id}`, json("PUT", body), "event_update"),
+    remove: (id: number) =>
+      request<void>(`/api/events/${id}`, { method: "DELETE" }, "event_delete"),
+    syncGoogle: (id: number) =>
+      request<CalendarEvent>(`/api/events/${id}/sync/google`, { method: "POST" }, "event_sync_google"),
     links: (id: number) => request<EventLink[]>(`/api/events/${id}/links`),
     files: (id: number) => request<EventFile[]>(`/api/events/${id}/files`),
-    uploadFile: (id: number, file: File) => request<{ id: number; filename: string; size: number }>(`/api/events/${id}/files`, upload("file", file)),
+    uploadFile: (id: number, file: File) =>
+      request<{ id: number; filename: string; size: number }>(
+        `/api/events/${id}/files`,
+        upload("file", file),
+        "event_file_upload",
+      ),
   },
   files: {
-    remove: (id: number) => request<void>(`/api/files/${id}`, { method: "DELETE" }),
-    text: (id: number) => request<{ file_id: number; text: string }>(`/api/files/${id}/text`, { method: "POST" }),
+    remove: (id: number) => request<void>(`/api/files/${id}`, { method: "DELETE" }, "file_delete"),
+    text: (id: number) =>
+      request<{ file_id: number; text: string }>(`/api/files/${id}/text`, { method: "POST" }, "file_text_extract"),
   },
   assistant: {
-    message: (text: string) => request<AssistantResponse>("/api/assistant/message", json("POST", { text, timezone: timezone() })),
-    confirm: (events: ProposedEvent[]) => request<AssistantResponse>("/api/assistant/confirm", json("POST", { events, timezone: timezone() })),
-    search: (text: string) => request<SearchResponse>("/api/assistant/search", json("POST", { text, timezone: timezone() })),
-    transcribe: (audio: Blob) => request<{ text: string }>("/api/assistant/transcribe", upload("audio", audio, "voice.webm")),
-    readFile: (file: File) => request<{ filename: string; text: string }>("/api/assistant/file", upload("file", file)),
+    message: (text: string) =>
+      request<AssistantResponse>("/api/assistant/message", json("POST", { text, timezone: timezone() }), "assistant_message"),
+    confirm: (events: ProposedEvent[]) =>
+      request<AssistantResponse>("/api/assistant/confirm", json("POST", { events, timezone: timezone() }), "assistant_confirm"),
+    search: (text: string) =>
+      request<SearchResponse>("/api/assistant/search", json("POST", { text, timezone: timezone() }), "assistant_search"),
+    transcribe: (audio: Blob) =>
+      request<{ text: string }>("/api/assistant/transcribe", upload("audio", audio, "voice.webm"), "assistant_transcribe"),
+    readFile: (file: File) =>
+      request<{ filename: string; text: string }>("/api/assistant/file", upload("file", file), "assistant_file_read"),
   },
   integrations: {
     list: () => request<Integration[]>("/api/integrations"),
@@ -134,26 +162,47 @@ export const api = {
       const result = await request<IntegrationConnection | { authorization_url: string }>(
         `/api/integrations/${slug}/connect`,
         json("POST", { values, return_to: returnTo }),
+        { name: "integration_connect", params: { integration: slug } },
       );
-      // The OAuth callback only accepts the session that started it; start with a fresh
-      // 15-minute session cookie so it doesn't expire on the provider's consent screen.
       if ("authorization_url" in result) await refreshSession();
       return result;
     },
-    test: (slug: string) => request<{ status: string; account: string }>(`/api/integrations/${slug}/test`, { method: "POST" }),
-    sync: (slug: string) => request<SyncResult>(`/api/integrations/${slug}/sync`, { method: "POST" }),
-    exportEvent: (slug: string, eventId: number) => request<EventLink>(`/api/integrations/${slug}/export/${eventId}`, { method: "POST" }),
-    disconnect: (slug: string, purge = false) => request<void>(`/api/integrations/${slug}?purge=${purge}`, { method: "DELETE" }),
+    test: (slug: string) =>
+      request<{ status: string; account: string }>(
+        `/api/integrations/${slug}/test`,
+        { method: "POST" },
+        { name: "integration_test", params: { integration: slug } },
+      ),
+    sync: (slug: string) =>
+      request<SyncResult>(
+        `/api/integrations/${slug}/sync`,
+        { method: "POST" },
+        { name: "integration_sync", params: { integration: slug } },
+      ),
+    exportEvent: (slug: string, eventId: number) =>
+      request<EventLink>(
+        `/api/integrations/${slug}/export/${eventId}`,
+        { method: "POST" },
+        { name: "integration_export", params: { integration: slug } },
+      ),
+    disconnect: (slug: string, purge = false) =>
+      request<void>(
+        `/api/integrations/${slug}?purge=${purge}`,
+        { method: "DELETE" },
+        { name: "integration_disconnect", params: { integration: slug } },
+      ),
   },
   reminders: {
     get: () => request<ReminderSettings>("/api/reminders/settings"),
-    update: (body: Partial<ReminderSettings>) => request<ReminderSettings>("/api/reminders/settings", json("PUT", body)),
-    test: () => request<{ id: number; status: string }>("/api/reminders/test", { method: "POST" }),
+    update: (body: Partial<ReminderSettings>) =>
+      request<ReminderSettings>("/api/reminders/settings", json("PUT", body), "reminder_settings_update"),
+    test: () =>
+      request<{ id: number; status: string }>("/api/reminders/test", { method: "POST" }, "reminder_test"),
     history: () => request<ReminderHistoryItem[]>("/api/reminders/history"),
   },
   telegram: {
     status: () => request<TelegramStatus>("/api/telegram"),
-    link: () => request<TelegramLink>("/api/telegram/link", { method: "POST" }),
-    unlink: () => request<void>("/api/telegram", { method: "DELETE" }),
+    link: () => request<TelegramLink>("/api/telegram/link", { method: "POST" }, "telegram_link"),
+    unlink: () => request<void>("/api/telegram", { method: "DELETE" }, "telegram_unlink"),
   },
 };

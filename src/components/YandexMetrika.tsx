@@ -1,24 +1,17 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-
-declare global {
-  interface Window {
-    ym?: (id: number, action: string, ...args: any[]) => void;
-  }
-}
-
-const COUNTER_ID = 113480066;
+import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
+import { hitPage } from "@/app/lib/metrics";
 
 export function YandexMetrika() {
   const location = useLocation();
+  const isFirst = useRef(true);
 
   useEffect(() => {
-    if (typeof window.ym === 'function') {
-      window.ym(COUNTER_ID, 'hit', window.location.href, {
-        title: document.title,
-        referer: document.referrer,
-      });
+    if (isFirst.current) {
+      isFirst.current = false;
+      return;
     }
+    hitPage(window.location.href, document.title, document.referrer);
   }, [location.pathname, location.search]);
 
   return null;
