@@ -217,7 +217,7 @@ export const ForWhatUsing: React.FC = () => {
                   </div>
 
                   {/* Название */}
-                  <span className="flex-1 min-w-0 text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="min-w-0 text-sm font-semibold text-gray-900 dark:text-white">
                     {opt.label}
                   </span>
 

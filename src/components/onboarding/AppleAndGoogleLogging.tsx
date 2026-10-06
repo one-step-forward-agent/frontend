@@ -39,17 +39,16 @@ type Integration = {
     | "google" | "apple" | "jira" | "notion" | "obsidian"
     | "telegram" | "slack" | "trueconf";
   name: string;
-  hint: string;
   src: string;
   w: number;
   kind: IntegrationKind;
 };
 
+/* ─── Все 8 интеграций ─────────────────────────────────── */
 const INTEGRATIONS: Integration[] = [
   {
     id: "google",
     name: "Google Calendar",
-    hint: "Учитываю занятые интервалы, когда предлагаю слоты",
     src: "/images/google-calendar.png",
     w: 40,
     kind: "oauth",
@@ -57,7 +56,6 @@ const INTEGRATIONS: Integration[] = [
   {
     id: "apple",
     name: "Apple Calendar",
-    hint: "События из macOS и iPhone — в одном плане дня",
     src: `/images/${encodeURIComponent("Календарь_для_macOS.png")}`,
     w: 40,
     kind: "oauth",
@@ -65,7 +63,6 @@ const INTEGRATIONS: Integration[] = [
   {
     id: "jira",
     name: "Jira",
-    hint: "Задачи из спринта попадают в календарь как обычные дела",
     src: "/images/Jira_Software_Logo.svg",
     w: 36,
     kind: "oauth",
@@ -73,7 +70,6 @@ const INTEGRATIONS: Integration[] = [
   {
     id: "notion",
     name: "Notion",
-    hint: "Страницы и чек-листы — в едином ритме с задачами",
     src: "/images/Notion.png",
     w: 40,
     kind: "oauth",
@@ -81,7 +77,6 @@ const INTEGRATIONS: Integration[] = [
   {
     id: "obsidian",
     name: "Obsidian",
-    hint: "Идеи и заметки, которые стоит превратить в действия",
     src: "/images/Obsidian.png",
     w: 40,
     kind: "manual",
@@ -89,15 +84,14 @@ const INTEGRATIONS: Integration[] = [
   {
     id: "telegram",
     name: "Telegram",
-    hint: "Сообщения и пересланные события — сразу в план дня",
     src: "/images/TelegramWB.png",
     w: 40,
-    kind: "oauth",
+    // было "oauth", но buildOAuthUrl для него пустой → экран зависал
+    kind: "manual",
   },
   {
     id: "slack",
     name: "Slack",
-    hint: "Рабочие обсуждения превращаю в задачи и напоминания",
     src: "/images/slack.png",
     w: 40,
     kind: "oauth",
@@ -105,7 +99,6 @@ const INTEGRATIONS: Integration[] = [
   {
     id: "trueconf",
     name: "TrueConf",
-    hint: "Созвоны и встречи попадают в календарь автоматически",
     src: "/images/tc_logo_square.png",
     w: 40,
     kind: "manual",
@@ -184,16 +177,6 @@ const buildOAuthUrl = (id: Integration["id"], state: string): string => {
   }
 };
 
-const SectionDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex items-center gap-3">
-    <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
-    <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">
-      {children}
-    </span>
-    <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
-  </div>
-);
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const AppleAndGoogleLogging: React.FC = () => {
@@ -215,6 +198,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
     );
   };
 
+  /* ─── Обработка OAuth-callback ─────────────────────── */
   React.useEffect(() => {
     if (DEMO_MODE) return;
 
@@ -234,7 +218,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
       sessionStorage.removeItem(OAUTH_SELECTED_KEY);
       update("integrations", saved);
       update("googleConnected", saved.includes("google"));
-      navigate("/onboarding/sources-import", { replace: true });
+      navigate("/onboarding/fast-tasks-enter", { replace: true });
       return;
     }
 
@@ -246,7 +230,10 @@ export const AppleAndGoogleLogging: React.FC = () => {
     const url = buildOAuthUrl(provider.id, JSON.stringify({ provider: provider.id }));
     if (url) window.location.href = url;
     else {
-      update("integrations", []);
+      // Страховка: следующий в очереди без OAuth-URL → не зависаем
+      sessionStorage.removeItem(OAUTH_QUEUE_KEY);
+      sessionStorage.removeItem(OAUTH_SELECTED_KEY);
+      update("integrations", INTEGRATIONS.map((i) => i.id));
     }
   }, [searchParams, navigate, update]);
 
@@ -258,9 +245,12 @@ export const AppleAndGoogleLogging: React.FC = () => {
       return;
     }
 
-    const oauthQueue = selected.filter(
-      (id) => INTEGRATIONS.find((i) => i.id === id)?.kind === "oauth"
-    );
+    // В очередь — только те, у кого реально есть OAuth-URL
+    const oauthQueue = selected.filter((id) => {
+      const integration = INTEGRATIONS.find((i) => i.id === id);
+      if (!integration || integration.kind !== "oauth") return false;
+      return buildOAuthUrl(integration.id, "{}") !== "";
+    });
 
     if (DEMO_MODE) {
       setPhase("connecting");
@@ -304,7 +294,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
         title="Что подключим?"
         onBack={() => navigate("/onboarding/existing-plans")}
         onNext={handleNext}
-        onSkip={() => navigate("/onboarding/sources-import")}
+        onSkip={() => navigate("/onboarding/fast-tasks-enter")}
         nextDisabled={phase === "connecting"}
         nextLabel={
           selected.length > 0
@@ -354,7 +344,7 @@ export const AppleAndGoogleLogging: React.FC = () => {
                 >
                   <span aria-hidden="true" className={GLASS_SHEEN} />
 
-                  <div className="relative flex items-start gap-3">
+                  <div className="relative flex items-center justify-center gap-3">
                     {/* Иконка-плашка */}
                     <div
                       className={cn(
@@ -390,9 +380,6 @@ export const AppleAndGoogleLogging: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 dark:text-white leading-snug">
                         {i.name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {i.hint}
                       </p>
                     </div>
                   </div>

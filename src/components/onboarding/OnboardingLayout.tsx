@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/theme";
 import { cn } from "@/utils/cn";
 import { PageBackdrop } from "@/components/onboarding/PageBackdrop";
+import LandingHeader from "@/components/landing/LandingHeader";
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -51,32 +52,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
       <PageBackdrop />
 
       {/* ─── Header ─────────────────────────────── */}
-      <header className="relative z-20 flex items-center justify-between px-4 pt-4 md:px-6">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 font-semibold text-gray-900 dark:text-white"
-          aria-label="Dayla — на главную"
-        >
-          <span
-            className={cn(
-              "relative inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg",
-              "bg-gradient-to-br from-sky-500 to-blue-600",
-              "ring-1 ring-white/40",
-              "shadow-[0_2px_8px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.5)]"
-            )}
-            aria-hidden="true"
-          >
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-1 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[0.5px]"
-            />
-            <Sparkles size={15} strokeWidth={2} className="relative text-white" />
-          </span>
-          Dayla
-        </Link>
-        <ThemeToggle />
-      </header>
-
+      <LandingHeader />
       {/* ─── Main ───────────────────────────────── */}
       <main className="relative z-10 flex-1 flex items-start md:items-center justify-center px-4 md:px-6 py-8 md:py-10">
         <div className="w-full max-w-2xl">
