@@ -1,6 +1,6 @@
 // src/layouts/AuthLayout.tsx
 import React from "react";
-import { ArrowLeft, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
 import { ThemeToggle } from "@/theme";
 import { MascotFade } from "@/components/MascotFade";
@@ -20,38 +20,6 @@ const GLASS_SHEEN_ROUND_3XL =
 const GLASS_SHEEN_PILL =
   "pointer-events-none absolute inset-0 rounded-full " +
   "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
-
-const MascotWithPhone: React.FC = () => (
-  <div className="relative mt-10 mx-auto w-full max-w-[420px]"
-    style ={{
-      WebkitMaskImage: [
-      // 1. По вертикали: сохраняем затухание внизу
-      "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.5) 68%, transparent 90%)",
-      // 2. По горизонтали: мягко гасим к правому краю (там, где карточки)
-      "linear-gradient(to right, black 0%, black 55%, rgba(0,0,0,0.5) 78%, transparent 100%)",
-      // 3. Слева — лишь слегка, чтобы маскот не был «отрезан» у границы
-      "linear-gradient(to left, black 0%, black 85%, transparent 100%)",
-    ].join(", "),
-    maskImage: [
-      "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.5) 68%, transparent 90%)",
-      "linear-gradient(to right, black 0%, black 55%, rgba(0,0,0,0.5) 78%, transparent 100%)",
-      "linear-gradient(to left, black 0%, black 85%, transparent 100%)",
-    ].join(", "),
-
-    // ─── Складываем слои через intersect ───
-    WebkitMaskComposite: "source-in",
-    maskComposite: "intersect",
-    }}>
-    <MascotFade
-      src="/images/MaskotWB.png"
-      alt="Ассистент Dayla говорит по телефону"
-      fadeStart={48}
-      fadeLength={52}
-      blend
-      glow
-    />
-  </div>
-);
 
 const AuthLayout: React.FC = () => {
   return (
@@ -93,23 +61,23 @@ const AuthLayout: React.FC = () => {
       {/* ─── Левая колонка — брендинг и маскот ──────── */}
       <div className="relative hidden lg:flex flex-col justify-center items-center p-12">
         <div className="relative max-w-md w-full text-center">
-          <div
-            className={cn(
-              "relative w-20 h-20 rounded-2xl mx-auto overflow-hidden",
-              "bg-gradient-to-br from-sky-500 to-blue-600",
-              "flex items-center justify-center text-white",
-              "ring-1 ring-white/50",
-              "shadow-[0_8px_32px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.5)]"
-            )}
-          >
-            <span
+          {/* ─── Маскот вместо квадратной иконки ─── */}
+          <div className="relative mx-auto w-full max-w-[420px]">
+            <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/70 to-transparent blur-[1px]"
+              className="absolute inset-0 -z-10 rounded-full bg-gradient-to-br from-sky-400/30 via-blue-400/20 to-slate-400/15 blur-3xl"
             />
-            <Sparkles size={34} className="relative" aria-hidden="true" />
+            <MascotFade
+              src="/images/MaskotWB.png"
+              alt="Ассистент Dayla говорит по телефону"
+              fadeStart={48}
+              fadeLength={38}
+              blend
+              glow
+            />
           </div>
 
-          <h1 className="mt-6 text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <h1 className="mt-2 text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
             Dayla
           </h1>
 
@@ -147,14 +115,6 @@ const AuthLayout: React.FC = () => {
               </span>
               Для жизни и работы
             </div>
-          </div>
-
-          <div className="relative mt-10 mx-auto w-full max-w-[420px]">
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 -z-10 rounded-full bg-gradient-to-br from-sky-400/30 via-blue-400/20 to-slate-400/15 blur-3xl"
-            />
-            <MascotWithPhone />
           </div>
         </div>
       </div>
