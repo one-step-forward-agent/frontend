@@ -58,7 +58,7 @@ export function TodayPage() {
 
       {events.error && <ErrorNote message={events.error} onRetry={events.reload} />}
 
-      {(overdue.length > 0 || leftToday.length > 0) && <MoveSuggestion overdue={overdue} leftToday={leftToday} />}
+      <MoveSuggestion overdue={overdue} leftToday={leftToday} userId={user.id} />
 
       <div className="grid-2">
         <Card
@@ -116,12 +116,40 @@ export function TodayPage() {
 }
 
 /** Предложение перенести незавершённое: оставшееся с прошлых дней — на сегодня или завтра, вечером — сегодняшнее на завтра. */
-function MoveSuggestion({ overdue, leftToday }: { overdue: CalendarEvent[]; leftToday: CalendarEvent[] }) {
-  const [busy, setBusy] = useState<"today" | "tomorrow" | null>(null);
+const dismissedKey = (userId: number) => `dayla-dismissed-leftovers:${userId}`;
+
+/** Задачи, по которым пользователь нажал «Не надо»: предложение о них больше не показывается. */
+function loadDismissed(userId: number): number[] {
+  try {
+    const raw = localStorage.getItem(dismissedKey(userId));
+    return raw ? (JSON.parse(raw) as number[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDismissed(userId: number, ids: number[]) {
+  try {
+    // Хватает последних — старые задачи всё равно выходят из окна в 7 дней
+    localStorage.setItem(dismissedKey(userId), JSON.stringify(ids.slice(-500)));
+  } catch {
+    // без хранилища предложение просто покажется снова
+  }
+}
+
+/** Предложение перенести незавершённое: оставшееся с прошлых дней — на сегодня или завтра, вечером — сегодняшнее на завтра.
+ * Список можно раскрыть и отметить сделанное; «Не надо» скрывает предложение для этих задач. */
+function MoveSuggestion({ overdue: allOverdue, leftToday: allLeftToday, userId }: { overdue: CalendarEvent[]; leftToday: CalendarEvent[]; userId: number }) {
+  const [busy, setBusy] = useState<"today" | "tomorrow" | "done" | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [dismissed, setDismissed] = useState(() => loadDismissed(userId));
   const toast = useToast();
   const reportError = useErrorToast();
+  const overdue = allOverdue.filter((event) => !dismissed.includes(event.id));
+  const leftToday = allLeftToday.filter((event) => !dismissed.includes(event.id));
   const items = [...overdue, ...leftToday];
   const today = startOfDay(new Date());
+  if (!items.length) return null;
 
   const move = async (target: "today" | "tomorrow") => {
     const moving = target === "today" ? overdue : items;
@@ -140,18 +168,63 @@ function MoveSuggestion({ overdue, leftToday }: { overdue: CalendarEvent[]; left
     }
   };
 
+  const markAll = async () => {
+    setBusy("done");
+    try {
+      await Promise.all(items.map((event) => api.events.complete(event.id, true)));
+      toast(`Отмечено выполненными: ${items.length}`);
+      notifyTasksChanged();
+    } catch (error) {
+      reportError(errorText(error));
+      notifyTasksChanged();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const dismiss = () => {
+    const next = [...dismissed, ...items.map((event) => event.id)];
+    saveDismissed(userId, next);
+    setDismissed(next);
+    toast("Хорошо, не напоминаю о них. Они остались в «Задачах».");
+  };
+
   return (
     <section className="move-suggestion" aria-label="Незавершённые задачи">
       <Icon name="clock" />
       <div className="move-suggestion-body">
         <strong>{overdue.length ? `Не завершено с прошлых дней: ${overdue.length}` : `Не успеваете? Осталось задач: ${leftToday.length}`}</strong>
-        <p className="muted small">
-          {items
-            .slice(0, 4)
-            .map((event) => event.title)
-            .join(" · ")}
-          {items.length > 4 ? ` и ещё ${items.length - 4}` : ""}
-        </p>
+        {expanded ? (
+          <>
+            <p className="muted small">Отметьте то, что уже сделано, — остальное можно перенести.</p>
+            <div className="move-suggestion-list">
+              <EventList events={items} showDate />
+            </div>
+          </>
+        ) : (
+          <p className="muted small">
+            {items
+              .slice(0, 4)
+              .map((event) => event.title)
+              .join(" · ")}
+            {items.length > 4 && (
+              <>
+                {" "}
+                <button type="button" className="link-button" onClick={() => setExpanded(true)}>
+                  и ещё {items.length - 4} — показать все
+                </button>
+              </>
+            )}
+            {items.length <= 4 && (
+              <>
+                {" "}
+                <button type="button" className="link-button" onClick={() => setExpanded(true)}>
+                  открыть список
+                </button>
+              </>
+            )}
+          </p>
+        )}
       </div>
       <div className="button-row">
         {overdue.length > 0 && (
@@ -162,6 +235,19 @@ function MoveSuggestion({ overdue, leftToday }: { overdue: CalendarEvent[]; left
         <Button size="sm" variant="primary" busy={busy === "tomorrow"} onClick={() => move("tomorrow")}>
           На завтра
         </Button>
+        {expanded && (
+          <Button size="sm" variant="secondary" icon="check" busy={busy === "done"} onClick={markAll}>
+            Всё сделано
+          </Button>
+        )}
+        <Button size="sm" variant="ghost" onClick={dismiss} title="Скрыть: задачи останутся в разделе «Задачи»">
+          Не надо
+        </Button>
+        {expanded && (
+          <Button size="sm" variant="ghost" onClick={() => setExpanded(false)}>
+            Свернуть
+          </Button>
+        )}
       </div>
     </section>
   );

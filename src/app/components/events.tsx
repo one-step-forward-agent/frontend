@@ -49,7 +49,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
     }
   };
 
-  const hasMeta = event.location || event.source !== "local" || event.series_id || multiDay || event.deadline_at || event.is_fixed || event.tag_ids?.length;
+  const hasMeta = !!(event.location || event.source !== "local" || event.series_id || multiDay || event.deadline_at || event.is_fixed || event.tag_ids?.length);
 
   return (
     <li className="event-item">

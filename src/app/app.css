@@ -434,6 +434,11 @@
 .fd-app .move-suggestion { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--radius); background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 25%, transparent); }
 .fd-app .move-suggestion > svg { color: var(--warn); flex: none; }
 .fd-app .move-suggestion-body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.fd-app .move-suggestion:has(.move-suggestion-list) { flex-wrap: wrap; align-items: flex-start; }
+.fd-app .move-suggestion:has(.move-suggestion-list) .move-suggestion-body { flex-basis: calc(100% - 40px); }
+.fd-app .move-suggestion:has(.move-suggestion-list) .button-row { margin-left: 38px; }
+.fd-app .move-suggestion-list { margin: 8px 0 0 -14px; max-height: 50vh; overflow-y: auto; padding-right: 4px; }
+.fd-app .link-button { border: 0; background: none; padding: 0; color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 560px) { .fd-app .move-suggestion { flex-wrap: wrap; } .fd-app .move-suggestion-body { flex-basis: calc(100% - 40px); } .fd-app .move-suggestion .button-row { margin-left: 38px; } }
 
 .fd-app .streak-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); font-weight: 650; font-size: 13px; white-space: nowrap; }
