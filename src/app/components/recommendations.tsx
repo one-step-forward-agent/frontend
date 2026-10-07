@@ -1,5 +1,6 @@
 import type { Recommendation } from "../api/types";
 import { Link } from "../router";
+import { RichText } from "./RichText";
 import { Badge } from "./ui";
 
 /** Ссылка в чат, которая передаёт ассистенту саму рекомендацию как тему разговора. */
@@ -25,7 +26,7 @@ export function RecommendationList({
         items.map((item, index) => (
           <div key={item.title} className="recommendation">
             <p>
-              <Badge tone={item.kind === "warning" ? "warn" : item.kind === "success" ? "ok" : "accent"}>{item.title}</Badge> {item.text}
+              <Badge tone={item.kind === "warning" ? "warn" : item.kind === "success" ? "ok" : "accent"}>{item.title}</Badge> <RichText text={item.text} inline />
             </p>
             {onDiscuss ? (
               <button type="button" className="btn btn-ghost btn-sm" aria-label={`Обсудить: ${item.title}`} onClick={() => onDiscuss(index)}>

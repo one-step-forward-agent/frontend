@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { ApiError, api } from "../api/client";
 import type { AgendaScope, AssistantEvent, AssistantReply, DraftItem, HistoryMessage, ReminderSettings } from "../api/types";
 import { RecommendationList } from "../components/recommendations";
+import { RichText } from "../components/RichText";
 import { Icon } from "../components/icons";
 import { Badge, Button, PageHeader, Switch, useErrorToast } from "../components/ui";
 import { TEMPORARY_ERROR, deadlineTone, errorText, formatDate, formatDeadline, formatTime, openPicker, parseDayKey, relativeDay } from "../lib/format";
@@ -218,7 +219,7 @@ function ChatMessage({
           <Icon name="assistant" size={14} /> Рекомендация
         </span>
         <p>
-          <strong>{reply.title}.</strong> {reply.text}
+          <strong>{reply.title}.</strong> <RichText text={reply.text} inline />
         </p>
         {onSend && (
           <div className="examples examples-left">
@@ -279,7 +280,7 @@ function ChatMessage({
       {reply.kind === "advice" && <AdviceReply items={reply.items} onAppend={onAppend} />}
       {reply.kind === "reminders" && <RemindersReply initial={reply.settings} />}
       {reply.kind === "agenda" && <AgendaReply reply={reply} onReply={(next) => onReply(message.id, next)} />}
-      {(reply.kind === "answer" || reply.kind === "not_found" || reply.kind === "edit_error" || reply.kind === "cancelled") && <p>{reply.text}</p>}
+      {(reply.kind === "answer" || reply.kind === "not_found" || reply.kind === "edit_error" || reply.kind === "cancelled") && <RichText text={reply.text} />}
       {reply.kind === "nothing" && <p>Не нашла в сообщении задач. Напишите, что и когда, — например: «созвон с Олей завтра в 15:00».</p>}
       {rating}
     </div>
@@ -520,7 +521,7 @@ function DeleteProposal({ reply, onReply }: { reply: DeleteReply; onReply: (repl
   };
   return (
     <div className="proposal">
-      <p>{reply.answer ?? `Удалить ${reply.count}?`}</p>
+      <RichText text={reply.answer ?? `Удалить ${reply.count}?`} />
       <AssistantEvents events={reply.events} />
       {reply.count > reply.events.length && <p className="muted small">…и ещё {reply.count - reply.events.length}</p>}
       <div className="button-row">
@@ -625,7 +626,7 @@ function Proposal({ reply, onReply }: { reply: ProposalReply; onReply: (reply: A
 
   return (
     <div className="proposal">
-      <p>{reply.answer ?? (items.length > 1 ? "Вот что я поняла — проверьте задачи и добавьте:" : "Вот что я поняла — проверьте и добавьте:")}</p>
+      <RichText text={reply.answer ?? (items.length > 1 ? "Вот что я поняла — проверьте задачи и добавьте:" : "Вот что я поняла — проверьте и добавьте:")} />
       {reply.note && <p className="muted small">{reply.note}</p>}
       {items.map((item, index) => (
         <div key={index} className="proposal-item proposal-edit">
