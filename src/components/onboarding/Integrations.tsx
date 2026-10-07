@@ -1,4 +1,4 @@
-// src/components/onboarding/AppleAndGoogleLogging.tsx
+// src/components/onboarding/Integrations.tsx
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -34,7 +34,7 @@ const ACTIVE_RING_SKY =
 /* ─── Провайдеры ─────────────────────────────────────────── */
 
 export type OAuthProvider =
-  | "google" | "apple" | "jira" | "notion" | "slack" | "telegram";
+  | "google" | "apple" | "jira" | "notion" | "slack" | "telegram" | "yandex";
 
 export type ManualProvider = "trueconf";
 export type Provider = OAuthProvider | ManualProvider;
@@ -49,6 +49,7 @@ type Integration = {
 
 const futureINTEGRATIONS: Integration[] = [
   { id: "google",   name: "Google Calendar", src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
+  { id: "yandex",   name: "Яндекс Календарь", src: "/images/yandex-calendar.png",    w: 40, kind: "oauth" },
   { id: "apple",    name: "Apple Calendar",  src: `/images/${encodeURIComponent("Календарь_для_macOS.png")}`, w: 40, kind: "oauth" },
   { id: "jira",     name: "Jira",            src: "/images/Jira_Software_Logo.svg",  w: 36, kind: "oauth" },
   { id: "notion",   name: "Notion",          src: "/images/Notion.png",              w: 40, kind: "oauth" },
@@ -58,7 +59,10 @@ const futureINTEGRATIONS: Integration[] = [
 ];
 
 const INTEGRATIONS: Integration[] = [
-  { id: "google",   name: "Google Calendar", src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
+  { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",  w: 40, kind: "oauth" },
+  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandex-calendar.png", w: 40, kind: "oauth" },
+  { id: "jira",     name: "Jira",            src: "/images/Jira_Software_Logo.svg",  w: 36, kind: "oauth" },
+  { id: "notion",   name: "Notion",          src: "/images/Notion.png",              w: 40, kind: "oauth" },
 ];
 
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
@@ -75,6 +79,16 @@ const buildOAuthUrl = (
     new URLSearchParams(obj).toString();
 
   switch (id) {
+    case "apple":
+      return `https://appleid.apple.com/auth/authorize?${params({
+        client_id: import.meta.env.VITE_APPLE_CLIENT_ID!,
+        redirect_uri: redirectUri,
+        response_type: "code",
+        scope: "name email",
+        response_mode: "form_post",
+        state,
+      })}`;
+
     case "google":
       return `https://accounts.google.com/o/oauth2/v2/auth?${params({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID!,
@@ -86,13 +100,12 @@ const buildOAuthUrl = (
         state,
       })}`;
 
-    case "apple":
-      return `https://appleid.apple.com/auth/authorize?${params({
-        client_id: import.meta.env.VITE_APPLE_CLIENT_ID!,
+    case "yandex":
+      return `https://oauth.yandex.ru/authorize?${params({
+        client_id: import.meta.env.VITE_YANDEX_CLIENT_ID!,
         redirect_uri: redirectUri,
         response_type: "code",
-        scope: "name email",
-        response_mode: "form_post",
+        scope: "calendar:read",
         state,
       })}`;
 
@@ -147,7 +160,7 @@ type PendingOAuth = {
 
 /* ─── Компонент ─────────────────────────────────────────── */
 
-export const AppleAndGoogleLogging: React.FC = () => {
+export const Integrations: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data, update } = useOnboarding();

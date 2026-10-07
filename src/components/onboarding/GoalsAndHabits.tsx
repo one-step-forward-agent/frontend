@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
-import { useOnboarding } from "./OnboardingContext";
+import { useOnboarding, type Sphere } from "./OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-field";
 import { cn } from "@/utils/cn";
@@ -60,13 +60,68 @@ const visualForGoal = (text: string): GoalVisual => {
   return GOAL_VISUALS[h % GOAL_VISUALS.length];
 };
 
-const SUGGESTIONS = [
-  "Заниматься спортом 3 раза в неделю",
-  "Учить английский по 20 минут",
-  "Читать каждый день",
+/* ─── Подсказки, привязанные к пресетам сфер ────────────── */
+const SUGGESTIONS_BY_SPHERE: Record<string, string[]> = {
+  "Работа": [
+    "Наладить work-life balance",
+    "Прокачать навык для карьеры",
+    "Вести рабочий дневник",
+  ],
+  "Учёба": [
+    "Учиться 1 час в день",
+    "Проходить новый курс каждую неделю",
+    "Конспектировать прочитанное",
+  ],
+  "Спорт": [
+    "Заниматься спортом 3 раза в неделю",
+    "Делать зарядку по утрам",
+    "Пробегать 5 км",
+  ],
+  "Языки": [
+    "Учить английский по 20 минут",
+    "Учить 10 новых слов в день",
+    "Смотреть сериалы в оригинале",
+  ],
+  "Здоровье": [
+    "Спать 8 часов",
+    "Пить 2 литра воды",
+    "Медитировать",
+  ],
+  "Дом и быт": [
+    "Убираться 15 минут в день",
+    "Готовить дома",
+    "Разобрать шкаф",
+  ],
+  "Отдых": [
+    "Больше гулять",
+    "Читать перед сном",
+    "Устраивать выходные без экрана",
+  ],
+  "Отношения": [
+    "Проводить время с близкими",
+    "Звонить родителям раз в неделю",
+    "Писать друзьям",
+  ],
+  "Саморазвитие": [
+    "Читать каждый день",
+    "Вести дневник",
+    "Рано вставать",
+  ],
+  "Хобби": [
+    "Рисовать",
+    "Играть на гитаре",
+    "Учиться фотографии",
+  ],
+};
+
+/* Фолбэк, если пользователь не выбрал ни одной сферы */
+const FALLBACK_SUGGESTIONS = [
   "Больше гулять",
+  "Читать каждый день",
   "Рано вставать",
   "Медитировать",
+  "Заниматься спортом 3 раза в неделю",
+  "Учить английский по 20 минут",
 ];
 
 const reorder = (list: string[], from: number, to: number): string[] => {
@@ -94,6 +149,28 @@ export const GoalsAndHabits: React.FC = () => {
 
   const [draggingIdx, setDraggingIdx] = React.useState<number | null>(null);
   const [overIdx, setOverIdx] = React.useState<number | null>(null);
+
+  /* ─── Подсказки под выбранные сферы ─────────────────── */
+  const selectedSpheres: Sphere[] = data.spheres ?? [];
+
+  const suggestions = React.useMemo<string[]>(() => {
+    const picked = selectedSpheres.flatMap(
+      (s: Sphere) => SUGGESTIONS_BY_SPHERE[s.name] ?? []
+    );
+
+    const pool = picked.length > 0 ? picked : FALLBACK_SUGGESTIONS;
+
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const s of pool) {
+      const key = s.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(s);
+      if (out.length >= 8) break;
+    }
+    return out;
+  }, [selectedSpheres]);
 
   const add = (value?: string) => {
     const v = (value ?? goal).trim();
@@ -205,12 +282,14 @@ export const GoalsAndHabits: React.FC = () => {
           <div className="flex items-center gap-2 mb-2">
             <Lightbulb size={14} className="text-amber-500" aria-hidden="true" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Или выберите из готовых
+              {selectedSpheres.length > 0
+                ? "Или выберите из готовых — под ваши сферы"
+                : "Или выберите из готовых"}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {SUGGESTIONS.map((s) => {
+            {suggestions.map((s) => {
               const already = goals.some(
                 (g) => g.toLowerCase() === s.toLowerCase()
               );
