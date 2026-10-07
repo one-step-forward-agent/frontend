@@ -3,29 +3,35 @@ import { api } from "../api/client";
 import type { Calendar, CalendarEvent, EventCreate, Priority } from "../api/types";
 import { useAuth } from "../auth";
 import {
-  DAY,
   PRIORITIES,
   RECURRENCE_OPTIONS,
   SOURCE_LABELS,
   addDays,
   browserTimezone,
   dayKey,
+  deadlineTone,
   errorText,
+  formatDate,
+  formatDeadline,
   formatLead,
   formatTime,
+  lastDay,
   openPicker,
   parseDayKey,
   recurrenceRule,
+  sameDay,
   startOfDay,
-  toLocalInput,
 } from "../lib/format";
 import { notifyTasksChanged } from "../lib/hooks";
 import { Link } from "../router";
 import { Icon } from "./icons";
+import { TagList, TagPicker } from "./tags";
 import { Badge, Button, Field, Switch } from "./ui";
 
 export function EventRow({ event, showDate = false, extra }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode }) {
   const start = new Date(event.start_at);
+  const last = lastDay(event);
+  const multiDay = !sameDay(last, start);
   const [done, setDone] = useState(!!event.completed_at);
   const [busy, setBusy] = useState(false);
   useEffect(() => setDone(!!event.completed_at), [event.completed_at]);
@@ -43,6 +49,8 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
     }
   };
 
+  const hasMeta = event.location || event.source !== "local" || event.series_id || multiDay || event.deadline_at || event.is_fixed || event.tag_ids?.length;
+
   return (
     <li className="event-item">
       <button
@@ -57,14 +65,25 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
         {done && <Icon name="check" size={14} />}
       </button>
       <Link to={`/events/${event.id}`} className={`event-row priority-${event.priority} ${done ? "done" : ""}`}>
-        <span className="event-time">
+        <span className={`event-time ${event.all_day ? "untimed" : ""}`}>
           {showDate && <span className="event-date">{start.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</span>}
           {event.all_day ? "без времени" : formatTime(start)}
         </span>
         <span className="event-main">
           <span className="event-title">{event.title}</span>
-          {(event.location || event.source !== "local" || event.series_id) && (
+          {hasMeta && (
             <span className="event-meta">
+              {multiDay && <span>по {formatDate(last, { day: "numeric", month: "short" })}</span>}
+              {event.deadline_at && !done && (
+                <span className={`deadline deadline-${deadlineTone(event.deadline_at)}`}>
+                  <Icon name="flag" size={13} /> {formatDeadline(event.deadline_at)}
+                </span>
+              )}
+              {event.is_fixed && (
+                <span title="Нельзя переносить">
+                  <Icon name="pin" size={13} /> не переносить
+                </span>
+              )}
               {event.series_id && (
                 <span>
                   <Icon name="sync" size={13} /> повторяется
@@ -76,6 +95,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
                 </span>
               )}
               {event.source !== "local" && <span>{SOURCE_LABELS[event.source] ?? event.source}</span>}
+              <TagList ids={event.tag_ids} />
             </span>
           )}
         </span>
@@ -100,11 +120,18 @@ export function EventList({ events, showDate, extra }: { events: CalendarEvent[]
 
 const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 1440];
 
+/** Дата и время — отдельные поля: пустое время — полноценная задача без времени, а не «весь день по умолчанию». */
 interface FormState {
   title: string;
-  allDay: boolean;
-  start: string;
-  end: string;
+  date: string;
+  time: string;
+  endTime: string;
+  endDate: string;
+  multiDay: boolean;
+  deadlineDate: string;
+  deadlineTime: string;
+  fixed: boolean;
+  tagIds: number[];
   calendarId: string;
   priority: Priority;
   location: string;
@@ -113,15 +140,25 @@ interface FormState {
   repeat: string;
 }
 
-function initialState(event?: CalendarEvent, day?: string | null, untimed = false): FormState {
+const clock = (date: Date) => formatTime(date);
+
+function initialState(event?: CalendarEvent, day?: string | null): FormState {
   if (event) {
     const start = new Date(event.start_at);
     const end = new Date(event.end_at);
+    const last = lastDay(event);
+    const deadline = event.deadline_at ? new Date(event.deadline_at) : null;
     return {
       title: event.title,
-      allDay: event.all_day,
-      start: event.all_day ? dayKey(start) : toLocalInput(start),
-      end: event.all_day ? dayKey(new Date(end.getTime() - 1)) : toLocalInput(end),
+      date: dayKey(start),
+      time: event.all_day ? "" : clock(start),
+      endTime: event.all_day ? "" : clock(end),
+      endDate: sameDay(last, start) ? "" : dayKey(last),
+      multiDay: !sameDay(last, start),
+      deadlineDate: deadline ? dayKey(deadline) : "",
+      deadlineTime: deadline && !(deadline.getHours() === 23 && deadline.getMinutes() === 59) ? clock(deadline) : "",
+      fixed: event.is_fixed,
+      tagIds: event.tag_ids ?? [],
       calendarId: String(event.calendar_id),
       priority: event.priority,
       location: event.location ?? "",
@@ -130,15 +167,18 @@ function initialState(event?: CalendarEvent, day?: string | null, untimed = fals
       repeat: "",
     };
   }
-  const base = parseDayKey(day ?? null) ?? new Date();
-  const now = new Date();
-  const hour = day && !sameLocalDay(base, now) ? 10 : now.getHours() + 1;
-  const start = new Date(base.getFullYear(), base.getMonth(), base.getDate(), hour);
+  // Новая задача не получает текущие дату и время автоматически: дата — только если её выбрали (день в календаре)
   return {
     title: "",
-    allDay: untimed,
-    start: untimed ? dayKey(base) : toLocalInput(start),
-    end: untimed ? dayKey(base) : toLocalInput(new Date(start.getTime() + 3_600_000)),
+    date: parseDayKey(day ?? null) ? (day as string) : "",
+    time: "",
+    endTime: "",
+    endDate: "",
+    multiDay: false,
+    deadlineDate: "",
+    deadlineTime: "",
+    fixed: false,
+    tagIds: [],
     calendarId: "",
     priority: "medium",
     location: "",
@@ -148,22 +188,32 @@ function initialState(event?: CalendarEvent, day?: string | null, untimed = fals
   };
 }
 
-const sameLocalDay = (a: Date, b: Date) => dayKey(a) === dayKey(b);
+function at(day: Date, value: string): Date {
+  const [hours, minutes] = value.split(":").map(Number);
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hours, minutes);
+}
 
-function toPayload(state: FormState, timezone: string): EventCreate {
+function toPayload(state: FormState, timezone: string): EventCreate | string {
+  const title = state.title.trim();
+  if (!title) return "Введите название";
+  const day = parseDayKey(state.date);
+  if (!day) return "Выберите дату";
+  const last = state.multiDay ? parseDayKey(state.endDate) ?? day : day;
+  if (last < day) return "Последний день раньше первого";
   let start: Date;
   let end: Date;
-  if (state.allDay) {
-    start = parseDayKey(state.start) ?? startOfDay(new Date());
-    const lastDay = parseDayKey(state.end) ?? start;
-    end = addDays(lastDay < start ? start : lastDay, 1);
+  if (!state.time) {
+    start = day;
+    end = addDays(last, 1);
   } else {
-    start = new Date(state.start);
-    end = new Date(state.end);
+    start = at(day, state.time);
+    end = state.endTime ? at(last, state.endTime) : new Date(at(last, state.time).getTime() + 3_600_000);
+    if (end <= start) return "Окончание должно быть позже начала";
   }
+  const deadlineDay = parseDayKey(state.deadlineDate);
   return {
-    title: state.title.trim(),
-    all_day: state.allDay,
+    title,
+    all_day: !state.time,
     start_at: start.toISOString(),
     end_at: end.toISOString(),
     timezone,
@@ -172,56 +222,53 @@ function toPayload(state: FormState, timezone: string): EventCreate {
     description: state.description.trim() || null,
     reminder_minutes: state.reminder === "" ? null : Number(state.reminder),
     recurrence_rule: recurrenceRule(state.repeat, start),
+    deadline_at: deadlineDay ? at(deadlineDay, state.deadlineTime || "23:59").toISOString() : null,
+    is_fixed: state.fixed,
+    tag_ids: state.tagIds,
   };
 }
 
 export function EventForm({
   event,
   day,
-  untimed,
   calendars = [],
   onSaved,
   onCancel,
 }: {
   event?: CalendarEvent;
   day?: string | null;
-  untimed?: boolean;
   calendars?: Calendar[];
   onSaved: (event: CalendarEvent) => void;
   onCancel?: () => void;
 }) {
   const { user } = useAuth();
-  const [state, setState] = useState(() => initialState(event, day, untimed));
+  const [state, setState] = useState(() => initialState(event, day));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setState((current) => ({ ...current, [key]: value }));
+  const today = startOfDay(new Date());
+  const quickDays = [
+    { label: "Сегодня", value: dayKey(today) },
+    { label: "Завтра", value: dayKey(addDays(today, 1)) },
+  ];
+  const hasDetails = !!(event && (event.deadline_at || event.is_fixed || event.location || event.description || event.reminder_minutes != null || event.priority !== "medium"));
 
-  const changeStart = (value: string) => {
+  const changeTime = (value: string) =>
     setState((current) => {
-      if (current.allDay) {
-        const end = current.end < value ? value : current.end;
-        return { ...current, start: value, end };
+      if (!value) return { ...current, time: "", endTime: "" };
+      // Длительность сохраняется при сдвиге начала
+      if (current.time && current.endTime && !current.multiDay) {
+        const shift = at(today, value).getTime() - at(today, current.time).getTime();
+        const end = new Date(at(today, current.endTime).getTime() + shift);
+        return { ...current, time: value, endTime: sameDay(end, today) ? clock(end) : "" };
       }
-      const duration = new Date(current.end).getTime() - new Date(current.start).getTime();
-      const start = new Date(value);
-      if (Number.isNaN(start.getTime())) return { ...current, start: value };
-      return { ...current, start: value, end: toLocalInput(new Date(start.getTime() + Math.max(duration, 15 * 60_000))) };
+      return { ...current, time: value };
     });
-  };
-
-  const toggleAllDay = (allDay: boolean) => {
-    setState((current) => {
-      const start = allDay ? current.start.slice(0, 10) : `${current.start.slice(0, 10)}T10:00`;
-      const end = allDay ? current.end.slice(0, 10) : `${current.start.slice(0, 10)}T11:00`;
-      return { ...current, allDay, start, end };
-    });
-  };
 
   const submit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
     const payload = toPayload(state, event?.timezone ?? user?.timezone ?? browserTimezone());
-    if (!payload.title) return setError("Введите название");
-    if (new Date(payload.end_at).getTime() <= new Date(payload.start_at).getTime()) return setError("Окончание должно быть позже начала");
+    if (typeof payload === "string") return setError(payload);
     setError("");
     setSaving(true);
     try {
@@ -239,81 +286,126 @@ export function EventForm({
   };
 
   const localCalendars = calendars.filter((calendar) => calendar.provider === "local");
-  const durationDays = state.allDay
-    ? Math.round(((parseDayKey(state.end)?.getTime() ?? 0) - (parseDayKey(state.start)?.getTime() ?? 0)) / DAY) + 1
-    : 0;
 
   return (
     <form className="form" onSubmit={submit}>
       <Field label="Название">
-        <input value={state.title} onChange={(e) => set("title", e.target.value)} placeholder="Встреча с командой" maxLength={300} autoFocus required />
+        <input value={state.title} onChange={(e) => set("title", e.target.value)} placeholder="Что сделать?" maxLength={300} autoFocus required />
       </Field>
 
-      <Switch checked={state.allDay} onChange={toggleAllDay} label="Без времени" hint={state.allDay ? "Задача попадёт в раздел «Задачи» на выбранный день" : undefined} />
-
-      <div className="form-row">
-        <Field label={state.allDay ? "Дата" : "Начало"} className="picker-field">
-          <input type={state.allDay ? "date" : "datetime-local"} value={state.start} onChange={(e) => changeStart(e.target.value)} onClick={(e) => openPicker(e.currentTarget)} required />
+      <div className="form-row form-row-when">
+        <Field label={state.multiDay ? "С" : "Дата"} className="picker-field">
+          <input type="date" value={state.date} onChange={(e) => set("date", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} required />
         </Field>
-        <Field label={state.allDay ? "Последний день" : "Окончание"} hint={state.allDay && durationDays > 1 ? `${durationDays} дн.` : undefined} className="picker-field">
-          <input type={state.allDay ? "date" : "datetime-local"} value={state.end} min={state.start} onChange={(e) => set("end", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} required />
-        </Field>
-      </div>
-
-      {!event && (
-        <Field label="Повтор">
-          <select value={state.repeat} onChange={(e) => set("repeat", e.target.value)}>
-            {RECURRENCE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-      )}
-
-      <div className="form-row">
-        <Field label="Приоритет">
-          <select value={state.priority} onChange={(e) => set("priority", e.target.value as Priority)}>
-            {PRIORITIES.map((item) => (
-              <option key={item.value} value={item.value}>
+        {state.multiDay ? (
+          <Field label="По" className="picker-field">
+            <input type="date" value={state.endDate} min={state.date} onChange={(e) => set("endDate", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} required />
+          </Field>
+        ) : (
+          <div className="quick-days" role="group" aria-label="Быстрый выбор даты">
+            {quickDays.map((item) => (
+              <button key={item.value} type="button" className={`chip-toggle ${state.date === item.value ? "active" : ""}`} aria-pressed={state.date === item.value} onClick={() => set("date", item.value)}>
                 {item.label}
-              </option>
+              </button>
             ))}
-          </select>
-        </Field>
-        <Field label="Напоминание">
-          <select value={state.reminder} onChange={(e) => set("reminder", e.target.value)}>
-            <option value="">По настройкам</option>
-            {REMINDER_OPTIONS.map((minutes) => (
-              <option key={minutes} value={minutes}>
-                {minutes === 0 ? "В момент начала" : `За ${formatLead(minutes)}`}
-              </option>
-            ))}
-          </select>
-        </Field>
+          </div>
+        )}
       </div>
 
-      {!event && localCalendars.length > 1 && (
-        <Field label="Календарь">
-          <select value={state.calendarId} onChange={(e) => set("calendarId", e.target.value)}>
-            <option value="">Основной</option>
-            {localCalendars.map((calendar) => (
-              <option key={calendar.id} value={calendar.id}>
-                {calendar.name}
-              </option>
-            ))}
-          </select>
+      <div className="form-row form-row-time">
+        <Field label="Время" className="picker-field">
+          <input type="time" value={state.time} onChange={(e) => changeTime(e.target.value)} onClick={(e) => openPicker(e.currentTarget)} aria-label="Время начала" />
         </Field>
-      )}
+        <Field label="До" className="picker-field">
+          <input type="time" value={state.endTime} disabled={!state.time} onChange={(e) => set("endTime", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} aria-label="Время окончания" />
+        </Field>
+        {state.time ? (
+          <Button variant="ghost" size="sm" onClick={() => changeTime("")}>
+            Без времени
+          </Button>
+        ) : (
+          <span className="muted small no-time">Без времени</span>
+        )}
+      </div>
 
-      <Field label="Место">
-        <input value={state.location} onChange={(e) => set("location", e.target.value)} placeholder="Офис, ссылка на звонок…" maxLength={500} />
+      <label className="check">
+        <input type="checkbox" checked={state.multiDay} onChange={(e) => setState((current) => ({ ...current, multiDay: e.target.checked, endDate: e.target.checked ? current.endDate || current.date : "" }))} />
+        Несколько дней
+      </label>
+
+      <Field label="Теги">
+        <TagPicker value={state.tagIds} onChange={(ids) => set("tagIds", ids)} />
       </Field>
 
-      <Field label="Описание">
-        <textarea value={state.description} onChange={(e) => set("description", e.target.value)} rows={4} placeholder="Заметки, повестка" />
-      </Field>
+      <details className="more" open={hasDetails}>
+        <summary>Дедлайн, повтор и детали</summary>
+        <div className="form">
+          <div className="form-row">
+            <Field label="Дедлайн" className="picker-field">
+              <input type="date" value={state.deadlineDate} onChange={(e) => set("deadlineDate", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} />
+            </Field>
+            <Field label="Время дедлайна" className="picker-field">
+              <input type="time" value={state.deadlineTime} disabled={!state.deadlineDate} onChange={(e) => set("deadlineTime", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} />
+            </Field>
+          </div>
+
+          <Switch checked={state.fixed} onChange={(value) => set("fixed", value)} label="Нельзя переносить" hint="Dayla будет планировать вокруг этой задачи" />
+
+          <div className="form-row">
+            {!event && (
+              <Field label="Повтор">
+                <select value={state.repeat} onChange={(e) => set("repeat", e.target.value)}>
+                  {RECURRENCE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+            <Field label="Приоритет">
+              <select value={state.priority} onChange={(e) => set("priority", e.target.value as Priority)}>
+                {PRIORITIES.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Напоминание">
+              <select value={state.reminder} onChange={(e) => set("reminder", e.target.value)}>
+                <option value="">По настройкам</option>
+                {REMINDER_OPTIONS.map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {minutes === 0 ? "В момент начала" : `За ${formatLead(minutes)}`}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+
+          {!event && localCalendars.length > 1 && (
+            <Field label="Календарь">
+              <select value={state.calendarId} onChange={(e) => set("calendarId", e.target.value)}>
+                <option value="">Основной</option>
+                {localCalendars.map((calendar) => (
+                  <option key={calendar.id} value={calendar.id}>
+                    {calendar.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+
+          <Field label="Место">
+            <input value={state.location} onChange={(e) => set("location", e.target.value)} placeholder="Адрес или ссылка" maxLength={500} />
+          </Field>
+
+          <Field label="Описание">
+            <textarea value={state.description} onChange={(e) => set("description", e.target.value)} rows={3} />
+          </Field>
+        </div>
+      </details>
 
       {error && <p className="form-error" role="alert">{error}</p>}
 

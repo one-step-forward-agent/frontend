@@ -27,6 +27,11 @@ const paths = {
   sync: "M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4",
   menu: "M4 7h16M4 12h16M4 17h16",
   tasks: "M10 6h10M10 12h10M10 18h10M4 6l1.2 1.2L7.5 5M4 12l1.2 1.2L7.5 11M4 18l1.2 1.2L7.5 17",
+  pin: "M9 4h6l-1 5 3 3v2H7v-2l3-3zM12 14v6",
+  flag: "M6 21V4M6 4h11l-2 4 2 4H6",
+  fire: "M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2-4.6.3 1.7 1.2 2.6 2 2.6-1-3.4.2-6 1-8z",
+  user: "M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4.5 20a7.5 7.5 0 0 1 15 0",
+  tag: "M3.5 12.5V4.5a1 1 0 0 1 1-1h8l8 8-9 9zM8 7.5h.01",
 } as const;
 
 export type IconName = keyof typeof paths;

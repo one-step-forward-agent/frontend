@@ -1,25 +1,30 @@
 import { Sparkles } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { ThemeToggle } from "@/theme";
+import type { User } from "../api/types";
 import { useAuth, useSignOut } from "../auth";
 import { Link, navigate, useLocation } from "../router";
 import { Icon, type IconName } from "./icons";
 import { ErrorBoundary, useToast } from "./ui";
 
-const NAV: { to: string; label: string; icon: IconName }[] = [
+type NavItem = { to: string; label: string; icon: IconName; main?: boolean };
+
+// Ассистент — главная функция: в середине нижнего меню и выделен в боковом
+const NAV: NavItem[] = [
   { to: "/", label: "Сегодня", icon: "today" },
   { to: "/calendar", label: "Календарь", icon: "calendar" },
+  { to: "/assistant", label: "Ассистент", icon: "assistant", main: true },
   { to: "/tasks", label: "Задачи", icon: "tasks" },
-  { to: "/assistant", label: "Ассистент", icon: "assistant" },
   { to: "/integrations", label: "Интеграции", icon: "integrations" },
-  { to: "/settings", label: "Настройки", icon: "settings" },
 ];
 
-// Нижнее меню на телефоне: настройки — в шапке, сервисы — в настройках; «＋» посередине, под большим пальцем
-const TABS_LEFT = NAV.slice(0, 2);
-const TABS_RIGHT = NAV.slice(2, 4);
+// Нижнее меню на телефоне: ассистент посередине, под большим пальцем; настройки — внутри аккаунта
+const TABS: NavItem[] = [NAV[0], NAV[1], NAV[2], NAV[3], { to: "/account", label: "Аккаунт", icon: "user" }];
+// Страницы, где плавающая «＋» мешала бы: у чата своя строка ввода, у формы — свои кнопки
+const NO_FAB = ["/assistant", "/events/new", "/account", "/settings"];
 
-const isActive = (to: string, path: string) => (to === "/" ? path === "/" : path === to || path.startsWith(`${to}/`));
+const isActive = (to: string, path: string) =>
+  to === "/" ? path === "/" : path === to || path.startsWith(`${to}/`) || (to === "/account" && path === "/settings");
 
 export function Brand({ to = "/" }: { to?: string }) {
   return (
@@ -32,11 +37,20 @@ export function Brand({ to = "/" }: { to?: string }) {
   );
 }
 
+export function Avatar({ user, size = 34 }: { user: User | null | undefined; size?: number }) {
+  return (
+    <span className="avatar" style={{ width: size, height: size }} aria-hidden="true">
+      {(user?.name || user?.email || "?").charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
 export function Layout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const signOut = useSignOut();
   const { path, query } = useLocation();
   const toast = useToast();
+  const accountActive = isActive("/account", path);
 
   const connected = query.get("connected");
   useEffect(() => {
@@ -55,20 +69,25 @@ export function Layout({ children }: { children: ReactNode }) {
         </Link>
         <nav aria-label="Разделы">
           {NAV.map((item) => (
-            <Link key={item.to} to={item.to} className={`nav-link ${isActive(item.to, path) ? "active" : ""}`} aria-current={isActive(item.to, path) ? "page" : undefined}>
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`nav-link ${item.main ? "nav-main" : ""} ${isActive(item.to, path) ? "active" : ""}`}
+              aria-current={isActive(item.to, path) ? "page" : undefined}
+            >
               <Icon name={item.icon} />
               {item.label}
             </Link>
           ))}
         </nav>
         <div className="sidebar-user">
-          <div className="avatar" aria-hidden="true">
-            {(user?.name || user?.email || "?").charAt(0).toUpperCase()}
-          </div>
-          <div className="sidebar-user-text">
-            <span className="truncate">{user?.name || "Без имени"}</span>
-            <span className="truncate muted">{user?.email}</span>
-          </div>
+          <Link to="/account" className={`sidebar-account ${accountActive ? "active" : ""}`} aria-current={accountActive ? "page" : undefined} title="Аккаунт и настройки">
+            <Avatar user={user} />
+            <span className="sidebar-user-text">
+              <span className="truncate">{user?.name || "Аккаунт"}</span>
+              <span className="truncate muted">{user?.email}</span>
+            </span>
+          </Link>
           <ThemeToggle />
           <button className="btn btn-ghost btn-sm btn-icon" onClick={() => signOut()} aria-label="Выйти" title="Выйти">
             <Icon name="logout" size={18} />
@@ -80,9 +99,6 @@ export function Layout({ children }: { children: ReactNode }) {
         <Brand />
         <div className="topbar-actions">
           <ThemeToggle />
-          <Link to="/settings" className={`btn btn-ghost btn-sm btn-icon ${isActive("/settings", path) ? "active" : ""}`} aria-label="Настройки">
-            <Icon name="settings" size={18} />
-          </Link>
         </div>
       </header>
 
@@ -90,18 +106,25 @@ export function Layout({ children }: { children: ReactNode }) {
         <ErrorBoundary key={path}>{children}</ErrorBoundary>
       </main>
 
-      <nav className="tabbar" aria-label="Разделы">
-        {TABS_LEFT.map((item) => (
-          <Tab key={item.to} {...item} active={isActive(item.to, path)} />
-        ))}
-        <Link to="/events/new" className="tab-add" aria-label="Новая задача">
-          <span>
-            <Icon name="plus" size={24} />
-          </span>
+      {!NO_FAB.some((prefix) => path === prefix || path.startsWith(`${prefix}/`)) && (
+        <Link to="/events/new" className="fab" aria-label="Новая задача">
+          <Icon name="plus" size={24} />
         </Link>
-        {TABS_RIGHT.map((item) => (
-          <Tab key={item.to} {...item} active={isActive(item.to, path)} />
-        ))}
+      )}
+
+      <nav className="tabbar" aria-label="Разделы">
+        {TABS.map((item) =>
+          item.main ? (
+            <Link key={item.to} to={item.to} className={`tab tab-main ${isActive(item.to, path) ? "active" : ""}`} aria-current={isActive(item.to, path) ? "page" : undefined}>
+              <span className="tab-main-icon">
+                <Icon name={item.icon} size={24} />
+              </span>
+              <span>{item.label}</span>
+            </Link>
+          ) : (
+            <Tab key={item.to} {...item} active={isActive(item.to, path)} />
+          ),
+        )}
       </nav>
     </div>
   );

@@ -1,5 +1,6 @@
 import { reachGoal } from "@/app/lib/metrics";
 import type {
+  AgendaScope,
   AssistantReply,
   Calendar,
   CalendarEvent,
@@ -15,6 +16,8 @@ import type {
   ReminderSettings,
   Stats,
   SyncResult,
+  Tag,
+  TagColor,
   TelegramLink,
   TelegramStatus,
   TokenResponse,
@@ -119,7 +122,7 @@ export const api = {
     },
   },
   events: {
-    list: (params: { start?: string; end?: string; limit?: number } = {}) => {
+    list: (params: { start?: string; end?: string; limit?: number; tag?: number } = {}) => {
       const query = new URLSearchParams(Object.entries(params).map(([key, value]) => [key, String(value)]));
       return request<CalendarEvent[]>(`/api/events?${query}`);
     },
@@ -151,10 +154,30 @@ export const api = {
       request<{ file_id: number; text: string }>(`/api/files/${id}/text`, { method: "POST" }, "file_text_extract"),
   },
   stats: (days = 7) => request<Stats>(`/api/stats?days=${days}`),
-  recommendations: () => request<{ items: Recommendation[] }>("/api/recommendations").then((result) => result.items),
+  recommendations: (scope: "today" | "week" | "month" = "today", day?: string) =>
+    request<{ items: Recommendation[] }>(`/api/recommendations?scope=${scope}${day ? `&day=${day}` : ""}`).then((result) => result.items),
+  tags: {
+    list: () => request<Tag[]>("/api/tags"),
+    create: (body: { name: string; color?: TagColor }) => request<Tag>("/api/tags", json("POST", body), "tag_create"),
+    update: (id: number, body: { name?: string; color?: TagColor }) => request<Tag>(`/api/tags/${id}`, json("PATCH", body), "tag_update"),
+    remove: (id: number) => request<void>(`/api/tags/${id}`, { method: "DELETE" }, "tag_delete"),
+  },
   assistant: {
-    chat: (text: string) => request<AssistantReply>("/api/assistant/chat", json("POST", { text }), "assistant_message"),
+    /** Ответ ассистента и id сообщения, по которому его можно оценить. */
+    chat: (text: string) =>
+      request<AssistantReply & { message_id?: number }>("/api/assistant/chat", json("POST", { text }), "assistant_message"),
+    /** Тот же план, что бот показывает под своими кнопками; mark — в виде списка для отметок. */
+    agenda: (scope: AgendaScope, mark = false) => request<AssistantReply>(`/api/assistant/agenda/${scope}?mark=${mark}`),
+    undo: (eventIds: number[]) => request<{ deleted: number }>("/api/assistant/undo", json("POST", { event_ids: eventIds }), "assistant_undo"),
+    rate: (messageId: number, value: -1 | 0 | 1) =>
+      request<{ id: number; rating: -1 | 1 | null }>(`/api/assistant/messages/${messageId}/rating`, json("POST", { value }), {
+        name: "assistant_rating",
+        params: { value },
+      }),
     history: () => request<HistoryMessage[]>("/api/assistant/history?limit=60"),
+    /** Открыть чат по рекомендации: ассистент запомнит её как контекст разговора. */
+    topic: (title: string, text: string) =>
+      request<AssistantReply>("/api/assistant/topic", json("POST", { title, text }), "assistant_topic"),
     updateDraft: (draftId: number, items: Partial<DraftItem>[]) =>
       request<AssistantReply>(`/api/assistant/drafts/${draftId}`, json("PUT", { items }), "assistant_draft_edit"),
     confirmDraft: (draftId: number) =>

@@ -2,9 +2,10 @@ import { useRef, useState } from "react";
 import { api } from "../api/client";
 import type { CalendarEvent, EventFile, Integration } from "../api/types";
 import { EventForm } from "../components/events";
+import { TagList } from "../components/tags";
 import { Icon } from "../components/icons";
 import { Badge, Button, Card, ConfirmButton, Dialog, ErrorNote, Loading, PageHeader, useErrorToast, useToast } from "../components/ui";
-import { PRIORITIES, SOURCE_LABELS, dayKey, eventTimeRange, formatDate, formatLead, formatSize } from "../lib/format";
+import { PRIORITIES, SOURCE_LABELS, dayKey, deadlineTone, eventTimeRange, formatDate, formatDeadline, formatLead, formatSize } from "../lib/format";
 import { notifyTasksChanged, useAction, useAsync } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
 
@@ -21,7 +22,6 @@ export function NewEventPage() {
       <Card>
         <EventForm
           day={query.get("day")}
-          untimed={query.get("untimed") === "1"}
           calendars={calendars.data}
           onSaved={(event) => {
             toast("Задача создана");
@@ -127,6 +127,16 @@ export function EventPage({ id }: { id: number }) {
               <span className="muted">{eventTimeRange(item)}</span>
             </dd>
           </div>
+          {item.deadline_at && (
+            <div>
+              <dt>
+                <Icon name="flag" size={16} /> Дедлайн
+              </dt>
+              <dd>
+                <Badge tone={item.completed_at ? "ok" : deadlineTone(item.deadline_at)}>{formatDeadline(item.deadline_at)}</Badge>
+              </dd>
+            </div>
+          )}
           {item.location && (
             <div>
               <dt>
@@ -146,6 +156,8 @@ export function EventPage({ id }: { id: number }) {
             <dd className="badges">
               <Badge tone={item.priority === "urgent" ? "bad" : item.priority === "high" ? "warn" : "neutral"}>{priority?.label ?? item.priority}</Badge>
               <Badge>{SOURCE_LABELS[item.source] ?? item.source}</Badge>
+              {item.is_fixed && <Badge tone="accent">нельзя переносить</Badge>}
+              <TagList ids={item.tag_ids} />
               {item.sync_status === "synced" && <Badge tone="ok">синхронизировано</Badge>}
               {item.sync_status === "error" && <Badge tone="bad">ошибка синхронизации</Badge>}
             </dd>

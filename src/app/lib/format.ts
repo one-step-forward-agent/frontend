@@ -54,6 +54,41 @@ export const formatMonth = (date: Date) => {
 };
 export const formatWeekday = (date: Date, style: "short" | "long" = "long") => date.toLocaleDateString(LOCALE, { weekday: style });
 
+/** «Сегодня, среда, 7 октября», «Завтра, четверг, 8 октября», дальше — «Пятница, 9 октября». */
+export function dayTitle(date: Date, now = new Date()): string {
+  const diff = Math.round((startOfDay(date).getTime() - startOfDay(now).getTime()) / DAY);
+  const options: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "long" };
+  if (date.getFullYear() !== now.getFullYear()) options.year = "numeric";
+  const base = formatDate(date, options).replace(/\s*г\.$/, "");
+  const relative = diff === 0 ? "Сегодня" : diff === 1 ? "Завтра" : diff === -1 ? "Вчера" : null;
+  return relative ? `${relative}, ${base}` : base.charAt(0).toUpperCase() + base.slice(1);
+}
+
+/** Последний день события: задача без времени заканчивается в полночь следующего дня. */
+export function lastDay(event: Pick<CalendarEvent, "start_at" | "end_at" | "all_day">): Date {
+  const start = startOfDay(new Date(event.start_at));
+  const end = new Date(event.end_at);
+  const midnight = end.getTime() === startOfDay(end).getTime();
+  const last = startOfDay(event.all_day || midnight ? new Date(end.getTime() - 1) : end);
+  return last < start ? start : last;
+}
+
+/** «до 9 окт», «до сегодня 18:00»; без времени дедлайн — конец дня. */
+export function formatDeadline(value: string, now = new Date()): string {
+  const moment = new Date(value);
+  const diff = Math.round((startOfDay(moment).getTime() - startOfDay(now).getTime()) / DAY);
+  const day = diff === 0 ? "сегодня" : diff === 1 ? "завтра" : formatDate(moment, { day: "numeric", month: "short" });
+  const endOfDay = moment.getHours() === 23 && moment.getMinutes() === 59;
+  return endOfDay ? `до ${day}` : `до ${day} ${formatTime(moment)}`;
+}
+
+/** Насколько близок дедлайн: прошёл, меньше суток, меньше трёх дней. */
+export function deadlineTone(value: string, now = new Date()): "bad" | "warn" | "neutral" {
+  const left = new Date(value).getTime() - now.getTime();
+  if (left < 0) return "bad";
+  return left < 3 * DAY ? "warn" : "neutral";
+}
+
 export function relativeDay(date: Date, now = new Date()): string {
   const diff = Math.round((startOfDay(date).getTime() - startOfDay(now).getTime()) / DAY);
   if (diff === 0) return "Сегодня";
@@ -63,7 +98,10 @@ export function relativeDay(date: Date, now = new Date()): string {
 }
 
 export function eventTimeRange(event: CalendarEvent): string {
-  if (event.all_day) return "Без времени";
+  if (event.all_day) {
+    const last = lastDay(event);
+    return sameDay(last, new Date(event.start_at)) ? "Без времени" : `Без времени, по ${formatDate(last, { day: "numeric", month: "long" })}`;
+  }
   const start = new Date(event.start_at);
   const end = new Date(event.end_at);
   if (sameDay(start, end)) return `${formatTime(start)}–${formatTime(end)}`;
@@ -143,6 +181,14 @@ export function openPicker(input: HTMLInputElement) {
   } catch {
     // старый браузер или iframe — остаётся обычный ввод
   }
+}
+
+export function plural(count: number, one: string, few: string, many: string): string {
+  const tail = count % 100;
+  if (tail >= 11 && tail <= 14) return many;
+  if (count % 10 === 1) return one;
+  if (count % 10 >= 2 && count % 10 <= 4) return few;
+  return many;
 }
 
 export const TEMPORARY_ERROR = "Временная ошибка — попробуйте ещё раз через минуту.";

@@ -49,6 +49,18 @@ export interface CalendarEvent {
   external_id: string | null;
   series_id: string | null;
   completed_at: string | null;
+  deadline_at: string | null;
+  /** Нельзя переносить: подсказки и автоперенос планируют вокруг такой задачи. */
+  is_fixed: boolean;
+  tag_ids: number[];
+}
+
+export type TagColor = "indigo" | "blue" | "green" | "amber" | "red" | "pink" | "violet" | "slate";
+
+export interface Tag {
+  id: number;
+  name: string;
+  color: TagColor;
 }
 
 export interface EventCreate {
@@ -63,6 +75,9 @@ export interface EventCreate {
   all_day?: boolean;
   reminder_minutes?: number | null;
   recurrence_rule?: string | null;
+  deadline_at?: string | null;
+  is_fixed?: boolean;
+  tag_ids?: number[];
 }
 
 export interface EventFile {
@@ -81,13 +96,20 @@ export interface EventLink {
   provider: string;
 }
 
-/** A task the assistant proposes; it is saved only after the user confirms the draft. */
+/** A task the assistant proposes; it is saved only after the user confirms the draft.
+ * With event_id it is a change of an existing task, and `before` is how that task looks now. */
 export interface DraftItem {
   index: number;
   title: string;
   date: string;
   time: string | null;
   end_time: string | null;
+  end_date: string | null;
+  deadline: string | null;
+  fixed: boolean;
+  tag_ids?: number[];
+  event_id?: number;
+  before?: { title: string; date: string; time: string | null; end_time: string | null; end_date: string | null };
   rrule: string | null;
   recurrence: string | null;
   location: string | null;
@@ -110,12 +132,31 @@ export interface AssistantEvent {
   location: string | null;
   recurrence: string | null;
   priority: Priority;
+  end_date?: string | null;
+  deadline?: string | null;
+  fixed?: boolean;
 }
+
+export type AgendaScope = "today" | "tomorrow" | "week";
 
 export type AssistantReply =
   | { kind: "proposal"; draft_id: number; events: DraftItem[]; answer: string | null; note: string | null }
-  | { kind: "created"; events: AssistantEvent[]; event_ids: number[] }
-  | { kind: "agenda"; title: string; days: { date: string; label: string; events: AssistantEvent[] }[] }
+  | { kind: "created" | "updated"; events: AssistantEvent[]; event_ids: number[] }
+  | { kind: "topic"; title: string; text: string }
+  | { kind: "delete_proposal"; draft_id: number; count: number; title: string; events: AssistantEvent[]; answer: string | null }
+  | { kind: "deleted"; count: number; text: string }
+  | { kind: "completed"; events: AssistantEvent[]; event_ids: number[]; text: string }
+  | {
+      kind: "agenda";
+      title: string;
+      scope?: AgendaScope;
+      mark?: boolean;
+      days: { date: string; label: string; events: AssistantEvent[] }[];
+    }
+  | ({ kind: "stats" } & Stats)
+  | { kind: "help"; sections: { title: string; examples: string[] }[] }
+  | { kind: "advice"; items: Recommendation[] }
+  | { kind: "reminders"; settings: ReminderSettings }
   | { kind: "answer" | "not_found" | "edit_error" | "cancelled"; text: string }
   | { kind: "nothing" };
 
@@ -124,6 +165,7 @@ export interface HistoryMessage {
   role: "user" | "assistant";
   text: string;
   reply: AssistantReply | null;
+  rating: -1 | 1 | null;
   created_at: string;
 }
 
@@ -141,6 +183,7 @@ export interface Stats {
   done: number;
   percent: number;
   streak: number;
+  best_streak: number;
 }
 
 export interface Recommendation {
@@ -198,6 +241,9 @@ export interface ReminderSettings {
   sources: Source[];
   checkin_enabled: boolean;
   checkin_time: string;
+  evening_enabled: boolean;
+  evening_time: string;
+  deadline_enabled: boolean;
 }
 
 export interface ReminderHistoryItem {

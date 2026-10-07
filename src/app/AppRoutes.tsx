@@ -7,7 +7,7 @@ import { AssistantPage } from "./pages/Assistant";
 import { CalendarPage } from "./pages/CalendarPage";
 import { EventPage, NewEventPage } from "./pages/EventPage";
 import { IntegrationsPage } from "./pages/Integrations";
-import { SettingsPage } from "./pages/Settings";
+import { AccountPage } from "./pages/Account";
 import { TasksPage } from "./pages/Tasks";
 import { TodayPage } from "./pages/Today";
 import { Link, match, useLocation, useTitle } from "./router";
@@ -21,7 +21,9 @@ const ROUTES: [string, (params: Record<string, string>) => ReactNode][] = [
   ["/events/:id", ({ id }) => (/^\d+$/.test(id) ? <EventPage key={id} id={Number(id)} /> : <NotFound />)],
   ["/assistant", () => <AssistantPage />],
   ["/integrations", () => <IntegrationsPage />],
-  ["/settings", () => <SettingsPage />],
+  ["/account", () => <AccountPage />],
+  // Старые ссылки (бот, письма) ведут в настройки — теперь это аккаунт
+  ["/settings", () => <AccountPage />],
 ];
 
 export default function AppRoutes() {

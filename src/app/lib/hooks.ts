@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type DependencyList } from "react";
+import { api } from "../api/client";
+import type { Tag } from "../api/types";
 import { errorText } from "./format";
 
 export interface AsyncState<T> {
@@ -81,4 +83,33 @@ export function useMediaQuery(query: string): boolean {
     return () => list.removeEventListener("change", update);
   }, [query]);
   return matches;
+}
+
+const TAGS_CHANGED = "dayla:tags-changed";
+let tagsCache: Tag[] | undefined;
+
+export function notifyTagsChanged(tags?: Tag[]) {
+  tagsCache = tags;
+  window.dispatchEvent(new Event(TAGS_CHANGED));
+}
+
+/** Теги пользователя: загружаются один раз и обновляются везде, когда их меняют в аккаунте или в форме задачи. */
+export function useTags(): { tags: Tag[]; byId: Map<number, Tag>; reload: () => Promise<void> } {
+  const [tags, setTags] = useState<Tag[]>(tagsCache ?? []);
+  const reload = useCallback(async () => {
+    try {
+      tagsCache = await api.tags.list();
+      setTags(tagsCache);
+    } catch {
+      // без тегов страница продолжает работать
+    }
+  }, []);
+  useEffect(() => {
+    if (tagsCache) setTags(tagsCache);
+    else reload();
+    const onChange = () => (tagsCache ? setTags(tagsCache) : reload());
+    window.addEventListener(TAGS_CHANGED, onChange);
+    return () => window.removeEventListener(TAGS_CHANGED, onChange);
+  }, [reload]);
+  return { tags, byId: new Map(tags.map((tag) => [tag.id, tag])), reload };
 }

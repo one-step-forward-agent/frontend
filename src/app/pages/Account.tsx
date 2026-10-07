@@ -1,26 +1,32 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api } from "../api/client";
-import type { ReminderSettings, Source, TelegramLink } from "../api/types";
+import type { ReminderSettings, Source, Tag, TagColor, TelegramLink } from "../api/types";
 import { ThemePicker } from "@/theme";
 import { useAuth, useSignOut, useUser } from "../auth";
 import { Icon } from "../components/icons";
-import { Badge, Button, Card, ConfirmButton, ErrorNote, Field, Loading, PageHeader, Switch, useErrorToast, useToast } from "../components/ui";
+import { Avatar } from "../components/Layout";
+import { TAG_COLORS, TagChip } from "../components/tags";
+import { Badge, Button, Card, ConfirmButton, ErrorNote, Field, Loading, Switch, useErrorToast, useToast } from "../components/ui";
 import { SOURCE_LABELS, browserTimezone, errorText, formatDateTime, formatLead, stripTags } from "../lib/format";
-import { useAction, useAsync } from "../lib/hooks";
+import { notifyTagsChanged, useAction, useAsync, useTags } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 
 const SECTIONS = [
   { id: "profile", label: "Профиль" },
-  { id: "appearance", label: "Оформление" },
-  { id: "reminders", label: "Напоминания" },
+  { id: "tags", label: "Теги" },
+  { id: "reminders", label: "Уведомления" },
   { id: "telegram", label: "Telegram" },
+  { id: "appearance", label: "Оформление" },
   { id: "calendars", label: "Календари" },
   { id: "services", label: "Сервисы" },
   { id: "security", label: "Безопасность" },
 ];
 
-export function SettingsPage() {
-  useTitle("Настройки");
+/** Аккаунт: профиль, теги и все настройки — раньше они были отдельным разделом «Настройки». */
+export function AccountPage() {
+  useTitle("Аккаунт");
+  const user = useUser();
+  const stats = useAsync(() => api.stats(7), []);
 
   useEffect(() => {
     const id = window.location.hash.slice(1);
@@ -31,8 +37,19 @@ export function SettingsPage() {
 
   return (
     <div className="page page-narrow">
-      <PageHeader title="Настройки" />
-      <nav className="section-nav" aria-label="Разделы настроек">
+      <header className="account-head">
+        <Avatar user={user} size={56} />
+        <div>
+          <h1>{user.name || "Аккаунт"}</h1>
+          <p className="muted">{user.email}</p>
+        </div>
+        {stats.data && stats.data.streak > 0 && (
+          <span className="streak-pill" title={`Лучшая серия: ${stats.data.best_streak} дн.`}>
+            <Icon name="fire" size={16} /> {stats.data.streak} дн.
+          </span>
+        )}
+      </header>
+      <nav className="section-nav" aria-label="Разделы аккаунта">
         {SECTIONS.map((section) => (
           <a key={section.id} href={`#${section.id}`}>
             {section.label}
@@ -40,9 +57,10 @@ export function SettingsPage() {
         ))}
       </nav>
       <ProfileSection />
-      <AppearanceSection />
+      <TagsSection />
       <RemindersSection />
       <TelegramSection />
+      <AppearanceSection />
       <CalendarsSection />
       <ServicesSection />
       <SecuritySection />
@@ -108,6 +126,79 @@ function ProfileSection() {
   );
 }
 
+function TagsSection() {
+  const { tags } = useTags();
+  const [name, setName] = useState("");
+  const [color, setColor] = useState<TagColor>("indigo");
+  const toast = useToast();
+  const { pending, run } = useAction(useErrorToast());
+
+  const create = (event: FormEvent) => {
+    event.preventDefault();
+    run("create", async () => {
+      const tag = await api.tags.create({ name: name.trim(), color });
+      notifyTagsChanged([...tags, tag]);
+      setName("");
+      setColor(TAG_COLORS[(tags.length + 1) % TAG_COLORS.length]);
+      toast("Тег создан");
+    });
+  };
+
+  const recolor = (tag: Tag, next: TagColor) =>
+    run(`color-${tag.id}`, async () => {
+      const saved = await api.tags.update(tag.id, { color: next });
+      notifyTagsChanged(tags.map((item) => (item.id === tag.id ? saved : item)));
+    });
+
+  const remove = (tag: Tag) =>
+    run(`delete-${tag.id}`, async () => {
+      await api.tags.remove(tag.id);
+      notifyTagsChanged(tags.filter((item) => item.id !== tag.id));
+      toast(`Тег «${tag.name}» удалён`);
+    });
+
+  return (
+    <div id="tags" className="anchor">
+      <Card title="Теги">
+        <p className="muted small">Отмечайте задачи тегами и фильтруйте по ним в «Задачах». В чате тег ставится так: «отчёт завтра #работа».</p>
+        {tags.length > 0 && (
+          <ul className="simple-list tag-manage">
+            {tags.map((tag) => (
+              <li key={tag.id}>
+                <TagChip tag={tag} />
+                <span className="color-dots" role="group" aria-label={`Цвет тега ${tag.name}`}>
+                  {TAG_COLORS.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className={`color-dot tag-${item} ${tag.color === item ? "active" : ""}`}
+                      aria-label={item}
+                      aria-pressed={tag.color === item}
+                      onClick={() => tag.color !== item && recolor(tag, item)}
+                    />
+                  ))}
+                </span>
+                <ConfirmButton size="sm" icon="trash" label={`Удалить тег ${tag.name}`} confirmLabel="Удалить?" busy={pending === `delete-${tag.id}`} onConfirm={() => remove(tag)} />
+              </li>
+            ))}
+          </ul>
+        )}
+        <form className="inline-form" onSubmit={create}>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Новый тег, например «работа»" maxLength={40} aria-label="Название тега" />
+          <span className="color-dots" role="group" aria-label="Цвет">
+            {TAG_COLORS.map((item) => (
+              <button key={item} type="button" className={`color-dot tag-${item} ${color === item ? "active" : ""}`} aria-label={item} aria-pressed={color === item} onClick={() => setColor(item)} />
+            ))}
+          </span>
+          <Button type="submit" icon="plus" busy={pending === "create"} disabled={!name.trim()}>
+            Создать
+          </Button>
+        </form>
+      </Card>
+    </div>
+  );
+}
+
 function AppearanceSection() {
   return (
     <div id="appearance" className="anchor">
@@ -147,11 +238,12 @@ function RemindersSection() {
         lead_times: [...draft.lead_times].sort((a, b) => a - b),
         daily_digest_time: draft.daily_digest_time.slice(0, 5),
         checkin_time: draft.checkin_time.slice(0, 5),
+        evening_time: draft.evening_time.slice(0, 5),
         quiet_hours_start: draft.quiet_hours_start.slice(0, 5),
         quiet_hours_end: draft.quiet_hours_end.slice(0, 5),
       });
       settings.setData(saved);
-      toast("Настройки напоминаний сохранены");
+      toast("Настройки уведомлений сохранены");
     } catch (error) {
       reportError(errorText(error));
     } finally {
@@ -163,7 +255,7 @@ function RemindersSection() {
 
   return (
     <div id="reminders" className="anchor">
-      <Card title="Напоминания">
+      <Card title="Уведомления">
         {settings.error && <ErrorNote message={settings.error} onRetry={settings.reload} />}
         {!draft ? (
           settings.loading && <Loading />
@@ -207,6 +299,20 @@ function RemindersSection() {
                 <input type="time" value={draft.checkin_time.slice(0, 5)} onChange={(e) => update({ checkin_time: e.target.value })} />
               </Field>
             )}
+
+            <Switch
+              checked={draft.evening_enabled}
+              onChange={(value) => update({ evening_enabled: value })}
+              label="Итоги дня вечером"
+              hint="Прогресс за день, план на завтра и перенос невыполненного"
+            />
+            {draft.evening_enabled && (
+              <Field label="Время итогов" className="field-inline">
+                <input type="time" value={draft.evening_time.slice(0, 5)} onChange={(e) => update({ evening_time: e.target.value })} />
+              </Field>
+            )}
+
+            <Switch checked={draft.deadline_enabled} onChange={(value) => update({ deadline_enabled: value })} label="Приближение дедлайнов" hint="За 3 дня, за день и за 2 часа до срока" />
 
             <Switch checked={draft.quiet_hours_enabled} onChange={(value) => update({ quiet_hours_enabled: value })} label="Тихие часы" hint="Ничего не присылать в это время" />
             {draft.quiet_hours_enabled && (
