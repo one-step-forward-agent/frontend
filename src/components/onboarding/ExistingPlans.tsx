@@ -140,7 +140,7 @@ export const ExistingPlans: React.FC = () => {
         perDayWorkHours: undefined,
       });
     }
-    navigate("/onboarding/apple-google-logging");
+    navigate("/onboarding/integrations");
   };
 
   const weeklyHours = React.useMemo(() => {
