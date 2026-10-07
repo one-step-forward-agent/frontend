@@ -1,25 +1,57 @@
+// src/pages/EventPage.tsx
 import { useRef, useState } from "react";
 import { api } from "../api/client";
 import type { CalendarEvent, EventFile, Integration } from "../api/types";
 import { EventForm } from "../components/events";
 import { TagList } from "../components/tags";
 import { Icon } from "../components/icons";
-import { Badge, Button, Card, ConfirmButton, Dialog, ErrorNote, Loading, PageHeader, useErrorToast, useToast } from "../components/ui";
-import { PRIORITIES, SOURCE_LABELS, dayKey, deadlineTone, eventTimeRange, formatDate, formatDeadline, formatLead, formatSize } from "../lib/format";
+import {
+  Badge,
+  Button,
+  ConfirmButton,
+  Dialog,
+  ErrorNote,
+  Loading,
+  PageHeader,
+  useErrorToast,
+  useToast,
+} from "../components/ui";
+import {
+  PRIORITIES,
+  SOURCE_LABELS,
+  dayKey,
+  deadlineTone,
+  eventTimeRange,
+  formatDate,
+  formatDeadline,
+  formatLead,
+  formatSize,
+} from "../lib/format";
 import { notifyTasksChanged, useAction, useAsync } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
+import { cn } from "@/utils/cn";
+import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
+
+const GLASS_BODY = GLASS_BODY_FLAT;
 
 const FILE_TYPES = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
+
+/* ─── Общий контейнер страницы ──────────────────────────── */
+
+const PAGE = "relative max-w-3xl mx-auto pt-[1.5vh]";
+
+/* ─── NewEventPage ──────────────────────────────────────── */
 
 export function NewEventPage() {
   useTitle("Новая задача");
   const { query } = useLocation();
   const calendars = useAsync(() => api.calendars.list(), []);
   const toast = useToast();
+
   return (
-    <div className="page page-narrow">
+    <div className={PAGE}>
       <PageHeader title="Новая задача" />
-      <Card>
+      <GlassCard>
         <EventForm
           day={query.get("day")}
           calendars={calendars.data}
@@ -29,10 +61,12 @@ export function NewEventPage() {
           }}
           onCancel={() => window.history.back()}
         />
-      </Card>
+      </GlassCard>
     </div>
   );
 }
+
+/* ─── EventPage ─────────────────────────────────────────── */
 
 export function EventPage({ id }: { id: number }) {
   const event = useAsync(() => api.events.get(id), [id]);
@@ -43,9 +77,19 @@ export function EventPage({ id }: { id: number }) {
 
   if (event.error) {
     return (
-      <div className="page page-narrow">
+      <div className={PAGE}>
         <ErrorNote message={event.error} onRetry={event.reload} />
-        <Link to="/calendar">← К календарю</Link>
+        <Link
+          to="/calendar"
+          className={cn(
+            "mt-4 inline-flex items-center gap-1.5 text-sm",
+            "text-sky-700 dark:text-sky-300",
+            "hover:text-sky-900 dark:hover:text-sky-100 transition-colors"
+          )}
+        >
+          <Icon name="left" size={14} />
+          К календарю
+        </Link>
       </div>
     );
   }
@@ -68,9 +112,9 @@ export function EventPage({ id }: { id: number }) {
 
   if (editing) {
     return (
-      <div className="page page-narrow">
+      <div className={PAGE}>
         <PageHeader title="Редактирование" />
-        <Card>
+        <GlassCard>
           <EventForm
             event={item}
             onSaved={(saved) => {
@@ -80,7 +124,7 @@ export function EventPage({ id }: { id: number }) {
             }}
             onCancel={() => setEditing(false)}
           />
-        </Card>
+        </GlassCard>
       </div>
     );
   }
@@ -89,25 +133,52 @@ export function EventPage({ id }: { id: number }) {
   const priority = PRIORITIES.find((entry) => entry.value === item.priority);
 
   return (
-    <div className="page page-narrow">
-      <Link to={`/calendar?day=${dayKey(start)}`} className="back-link">
-        <Icon name="left" size={16} /> Календарь
+    <div className={PAGE}>
+      <Link
+        to={`/calendar?day=${dayKey(start)}`}
+        className={cn(
+          "inline-flex items-center gap-1.5 mb-4 text-sm",
+          "text-gray-500 dark:text-gray-400",
+          "hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+        )}
+      >
+        <Icon name="left" size={14} />
+        Календарь
       </Link>
+
       <PageHeader
         title={item.title}
         actions={
           <>
-            <Button icon="check" variant={item.completed_at ? "primary" : "secondary"} busy={pending === "done"} onClick={toggleDone}>
+            <Button
+              size="sm"
+              icon="check"
+              variant={item.completed_at ? "primary" : "secondary"}
+              busy={pending === "done"}
+              onClick={toggleDone}
+            >
               {item.completed_at ? "Выполнено" : "Отметить выполненной"}
             </Button>
-            <Button icon="settings" onClick={() => setEditing(true)}>
+            <Button size="sm" icon="settings" onClick={() => setEditing(true)}>
               Изменить
             </Button>
-            <ConfirmButton icon="trash" confirmLabel="Удалить?" busy={pending === "delete"} onConfirm={() => remove()}>
+            <ConfirmButton
+              size="sm"
+              icon="trash"
+              confirmLabel="Удалить?"
+              busy={pending === "delete"}
+              onConfirm={() => remove()}
+            >
               {item.series_id ? "Удалить эту" : "Удалить"}
             </ConfirmButton>
             {item.series_id && (
-              <ConfirmButton icon="trash" confirmLabel="Удалить серию?" busy={pending === "delete-series"} onConfirm={() => remove("series")}>
+              <ConfirmButton
+                size="sm"
+                icon="trash"
+                confirmLabel="Удалить серию?"
+                busy={pending === "delete-series"}
+                onConfirm={() => remove("series")}
+              >
                 Удалить серию
               </ConfirmButton>
             )}
@@ -115,72 +186,133 @@ export function EventPage({ id }: { id: number }) {
         }
       />
 
-      <Card>
-        <dl className="details">
-          <div>
-            <dt>
-              <Icon name="calendar" size={16} /> Когда
-            </dt>
-            <dd>
-              {formatDate(start, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-              <br />
-              <span className="muted">{eventTimeRange(item)}</span>
-            </dd>
-          </div>
+      <GlassCard>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          <DetailRow icon="calendar" label="Когда">
+            {formatDate(start, {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+            <br />
+            <span className="text-gray-500 dark:text-gray-400">
+              {eventTimeRange(item)}
+            </span>
+          </DetailRow>
+
           {item.deadline_at && (
-            <div>
-              <dt>
-                <Icon name="flag" size={16} /> Дедлайн
-              </dt>
-              <dd>
-                <Badge tone={item.completed_at ? "ok" : deadlineTone(item.deadline_at)}>{formatDeadline(item.deadline_at)}</Badge>
-              </dd>
-            </div>
+            <DetailRow icon="flag" label="Дедлайн">
+              <Badge
+                tone={item.completed_at ? "ok" : deadlineTone(item.deadline_at)}
+              >
+                {formatDeadline(item.deadline_at)}
+              </Badge>
+            </DetailRow>
           )}
+
           {item.location && (
-            <div>
-              <dt>
-                <Icon name="location" size={16} /> Где
-              </dt>
-              <dd>{item.location}</dd>
-            </div>
+            <DetailRow icon="location" label="Где">
+              {item.location}
+            </DetailRow>
           )}
-          <div>
-            <dt>
-              <Icon name="bell" size={16} /> Напоминание
+
+          <DetailRow icon="bell" label="Напоминание">
+            {item.reminder_minutes == null
+              ? "По настройкам"
+              : item.reminder_minutes === 0
+              ? "В момент начала"
+              : `За ${formatLead(item.reminder_minutes)}`}
+          </DetailRow>
+
+          <div className="sm:col-span-2">
+            <dt className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
+              Детали
             </dt>
-            <dd>{item.reminder_minutes == null ? "По настройкам" : item.reminder_minutes === 0 ? "В момент начала" : `За ${formatLead(item.reminder_minutes)}`}</dd>
-          </div>
-          <div>
-            <dt>Детали</dt>
-            <dd className="badges">
-              <Badge tone={item.priority === "urgent" ? "bad" : item.priority === "high" ? "warn" : "neutral"}>{priority?.label ?? item.priority}</Badge>
+            <dd className="flex flex-wrap gap-1.5">
+              <Badge
+                tone={
+                  item.priority === "urgent"
+                    ? "bad"
+                    : item.priority === "high"
+                    ? "warn"
+                    : "neutral"
+                }
+              >
+                {priority?.label ?? item.priority}
+              </Badge>
               <Badge>{SOURCE_LABELS[item.source] ?? item.source}</Badge>
               {item.is_fixed && <Badge tone="accent">нельзя переносить</Badge>}
               <TagList ids={item.tag_ids} />
-              {item.sync_status === "synced" && <Badge tone="ok">синхронизировано</Badge>}
-              {item.sync_status === "error" && <Badge tone="bad">ошибка синхронизации</Badge>}
+              {item.sync_status === "synced" && (
+                <Badge tone="ok">синхронизировано</Badge>
+              )}
+              {item.sync_status === "error" && (
+                <Badge tone="bad">ошибка синхронизации</Badge>
+              )}
             </dd>
           </div>
         </dl>
-        {item.description && <p className="description">{item.description}</p>}
-      </Card>
 
-      <EventFiles eventId={item.id} />
-      <EventExport event={item} onChange={event.setData} />
+        {item.description && (
+          <p
+            className={cn(
+              "mt-5 text-sm leading-relaxed",
+              "text-gray-700 dark:text-gray-300",
+              "whitespace-pre-wrap"
+            )}
+          >
+            {item.description}
+          </p>
+        )}
+      </GlassCard>
+
+      <div className="mt-6 space-y-6">
+        <EventFiles eventId={item.id} />
+        <EventExport event={item} onChange={event.setData} />
+      </div>
     </div>
   );
 }
+
+/* ─── DetailRow — единый блок пары dt/dd ────────────────── */
+
+function DetailRow({
+  icon,
+  label,
+  children,
+}: {
+  icon?: Parameters<typeof Icon>[0]["name"];
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1.5">
+        {icon && <Icon name={icon} size={12} />}
+        {label}
+      </dt>
+      <dd className="text-sm text-gray-900 dark:text-white leading-snug">
+        {children}
+      </dd>
+    </div>
+  );
+}
+
+/* ─── EventFiles ────────────────────────────────────────── */
 
 function EventFiles({ eventId }: { eventId: number }) {
   const files = useAsync(() => api.events.files(eventId), [eventId]);
   const input = useRef<HTMLInputElement>(null);
   const { pending, run } = useAction(useErrorToast());
-  const [preview, setPreview] = useState<{ name: string; text: string } | null>(null);
+  const [preview, setPreview] = useState<{ name: string; text: string } | null>(
+    null
+  );
 
   const uploadFiles = (list: FileList | null) =>
     run("upload", async () => {
-      for (const file of Array.from(list ?? [])) await api.events.uploadFile(eventId, file);
+      for (const file of Array.from(list ?? []))
+        await api.events.uploadFile(eventId, file);
       await files.reload();
     }).finally(() => {
       if (input.current) input.current.value = "";
@@ -193,27 +325,63 @@ function EventFiles({ eventId }: { eventId: number }) {
     });
 
   return (
-    <Card
+    <GlassCard
       title="Файлы"
       actions={
         <>
-          <input ref={input} type="file" accept={FILE_TYPES} multiple hidden onChange={(e) => uploadFiles(e.target.files)} />
-          <Button size="sm" variant="ghost" icon="clip" busy={pending === "upload"} onClick={() => input.current?.click()}>
+          <input
+            ref={input}
+            type="file"
+            accept={FILE_TYPES}
+            multiple
+            hidden
+            onChange={(e) => uploadFiles(e.target.files)}
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            icon="clip"
+            busy={pending === "upload"}
+            onClick={() => input.current?.click()}
+          >
             Прикрепить
           </Button>
         </>
       }
     >
-      {files.error && <ErrorNote message={files.error} onRetry={files.reload} />}
+      {files.error && (
+        <ErrorNote message={files.error} onRetry={files.reload} />
+      )}
+
       {files.data?.length ? (
-        <ul className="file-list">
+        <ul className="space-y-1.5">
           {files.data.map((file) => (
-            <li key={file.id}>
-              <Icon name="file" size={18} />
-              <span className="truncate">{file.filename}</span>
-              <span className="muted">{formatSize(file.size)}</span>
+            <li
+              key={file.id}
+              className={cn(
+                "relative flex items-center gap-2 overflow-hidden",
+                "px-3 py-2 rounded-xl",
+                GLASS_BODY
+              )}
+            >
+              <Icon
+                name="file"
+                size={16}
+                className="shrink-0 text-gray-500 dark:text-gray-400"
+              />
+              <span className="truncate flex-1 min-w-0 text-sm text-gray-900 dark:text-white">
+                {file.filename}
+              </span>
+              <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+                {formatSize(file.size)}
+              </span>
               {/\.(pdf|docx)$/i.test(file.filename) && (
-                <Button size="sm" variant="ghost" busy={pending === `text-${file.id}`} onClick={() => showText(file)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  busy={pending === `text-${file.id}`}
+                  onClick={() => showText(file)}
+                >
                   Текст
                 </Button>
               )}
@@ -234,16 +402,41 @@ function EventFiles({ eventId }: { eventId: number }) {
           ))}
         </ul>
       ) : (
-        !files.loading && <p className="muted">PDF, Word, Excel или изображения — до 20 МБ.</p>
+        !files.loading && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            PDF, Word, Excel или изображения — до 20 МБ.
+          </p>
+        )
       )}
-      <Dialog open={preview !== null} title={preview?.name ?? ""} onClose={() => setPreview(null)}>
-        <pre className="text-preview">{preview?.text}</pre>
+
+      <Dialog
+        open={preview !== null}
+        title={preview?.name ?? ""}
+        onClose={() => setPreview(null)}
+      >
+        <pre
+          className={cn(
+            "text-xs leading-relaxed whitespace-pre-wrap break-words",
+            "text-gray-800 dark:text-gray-200",
+            "max-h-[60vh] overflow-y-auto"
+          )}
+        >
+          {preview?.text}
+        </pre>
       </Dialog>
-    </Card>
+    </GlassCard>
   );
 }
 
-function EventExport({ event, onChange }: { event: CalendarEvent; onChange: (event: CalendarEvent) => void }) {
+/* ─── EventExport ───────────────────────────────────────── */
+
+function EventExport({
+  event,
+  onChange,
+}: {
+  event: CalendarEvent;
+  onChange: (event: CalendarEvent) => void;
+}) {
   const integrations = useAsync(() => api.integrations.list(), []);
   const links = useAsync(() => api.events.links(event.id), [event.id]);
   const toast = useToast();
@@ -252,32 +445,58 @@ function EventExport({ event, onChange }: { event: CalendarEvent; onChange: (eve
   const connected = (integrations.data ?? []).filter((item) => item.connection);
   const google = connected.find((item) => item.slug === "google");
   const targets = connected.filter(
-    (item: Integration) => item.supports_push && item.slug !== "google" && item.slug !== event.source && !links.data?.some((link) => link.provider === item.slug),
+    (item: Integration) =>
+      item.supports_push &&
+      item.slug !== "google" &&
+      item.slug !== event.source &&
+      !links.data?.some((link) => link.provider === item.slug)
   );
 
   if (!connected.length && !links.data?.length) return null;
 
   return (
-    <Card title="Отправить в сервисы">
+    <GlassCard title="Отправить в сервисы">
       {links.data && links.data.length > 0 && (
-        <ul className="link-list">
+        <ul className="space-y-1.5 mb-4">
           {links.data.map((link) => (
-            <li key={link.id}>
-              <Badge tone="ok">{SOURCE_LABELS[link.provider] ?? link.provider}</Badge>
+            <li
+              key={link.id}
+              className={cn(
+                "relative flex items-center gap-2 overflow-hidden",
+                "px-3 py-2 rounded-xl",
+                GLASS_BODY
+              )}
+            >
+              <Badge tone="ok">
+                {SOURCE_LABELS[link.provider] ?? link.provider}
+              </Badge>
               {link.url ? (
-                <a href={link.url} target="_blank" rel="noreferrer noopener">
-                  Открыть <Icon name="external" size={14} />
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className={cn(
+                    "inline-flex items-center gap-1 text-sm",
+                    "text-sky-700 dark:text-sky-300",
+                    "hover:text-sky-900 dark:hover:text-sky-100 transition-colors"
+                  )}
+                >
+                  Открыть <Icon name="external" size={12} />
                 </a>
               ) : (
-                <span className="muted">экспортировано</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  экспортировано
+                </span>
               )}
             </li>
           ))}
         </ul>
       )}
-      <div className="button-row">
+
+      <div className="flex flex-wrap gap-1.5">
         {google && event.source !== "google" && (
           <Button
+            size="sm"
             icon="sync"
             busy={pending === "google"}
             onClick={() =>
@@ -287,12 +506,15 @@ function EventExport({ event, onChange }: { event: CalendarEvent; onChange: (eve
               })
             }
           >
-            {event.sync_status === "synced" ? "Обновить в Google" : "Google Calendar"}
+            {event.sync_status === "synced"
+              ? "Обновить в Google"
+              : "Google Calendar"}
           </Button>
         )}
         {targets.map((item) => (
           <Button
             key={item.slug}
+            size="sm"
             icon="external"
             busy={pending === item.slug}
             onClick={() =>
@@ -307,6 +529,6 @@ function EventExport({ event, onChange }: { event: CalendarEvent; onChange: (eve
           </Button>
         ))}
       </div>
-    </Card>
+    </GlassCard>
   );
 }

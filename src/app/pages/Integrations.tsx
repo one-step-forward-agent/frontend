@@ -1,11 +1,28 @@
+// src/pages/IntegrationsPage.tsx
 import { useState, type FormEvent } from "react";
 import { api } from "../api/client";
 import { Icon } from "../components/icons";
 import type { Integration } from "../api/types";
-import { Badge, Button, Card, ConfirmButton, Dialog, ErrorNote, Field, Loading, PageHeader, Switch, useErrorToast, useToast } from "../components/ui";
+import {
+  Badge,
+  Button,
+  ConfirmButton,
+  Dialog,
+  ErrorNote,
+  Field,
+  Loading,
+  PageHeader,
+  Switch,
+  useErrorToast,
+  useToast,
+} from "../components/ui";
 import { errorText, formatDateTime } from "../lib/format";
 import { useAction, useAsync } from "../lib/hooks";
 import { Link, useTitle } from "../router";
+import { cn } from "@/utils/cn";
+import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
+
+const GLASS_BODY = GLASS_BODY_FLAT;
 
 const LOGOS: Record<string, string> = {
   google: "/images/google-calendar.png",
@@ -14,28 +31,61 @@ const LOGOS: Record<string, string> = {
   notion: "/images/Notion.png",
 };
 
+/* ─── Общие стили ───────────────────────────────────────── */
+
+const PAGE = "relative max-w-5xl mx-auto pt-[1.5vh]";
+
+/* ─── Страница ──────────────────────────────────────────── */
+
 export function IntegrationsPage() {
   useTitle("Интеграции");
   const integrations = useAsync(() => api.integrations.list(), []);
   const [editing, setEditing] = useState<Integration | null>(null);
 
   return (
-    <div className="page">
-      <Link to="/account#integrations" className="back-link">
-        <Icon name="left" size={16} /> Аккаунт
+    <div className={PAGE}>
+      <Link
+        to="/account#integrations"
+        className={cn(
+          "inline-flex items-center gap-1.5 mb-4 text-sm",
+          "text-gray-500 dark:text-gray-400",
+          "hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+        )}
+      >
+        <Icon name="left" size={14} /> Аккаунт
       </Link>
-      <PageHeader title="Интеграции" subtitle="Импортируйте события и задачи из сервисов и отправляйте события Dayla обратно." />
-      {integrations.error && <ErrorNote message={integrations.error} onRetry={integrations.reload} />}
+
+      <PageHeader
+        title="Интеграции"
+        subtitle="Импортируйте события и задачи из сервисов и отправляйте события Dayla обратно."
+      />
+
+      {integrations.error && (
+        <div className="mb-4">
+          <ErrorNote message={integrations.error} onRetry={integrations.reload} />
+        </div>
+      )}
+
       {!integrations.data ? (
         integrations.loading && <Loading />
       ) : (
-        <div className="grid-cards">
+        <div className="grid gap-4 sm:grid-cols-2">
           {integrations.data.map((item) => (
-            <IntegrationCard key={item.slug} item={item} onEdit={() => setEditing(item)} onChanged={integrations.reload} />
+            <IntegrationCard
+              key={item.slug}
+              item={item}
+              onEdit={() => setEditing(item)}
+              onChanged={integrations.reload}
+            />
           ))}
         </div>
       )}
-      <Dialog open={editing !== null} title={editing ? `${editing.title}: подключение` : ""} onClose={() => setEditing(null)}>
+
+      <Dialog
+        open={editing !== null}
+        title={editing ? `${editing.title}: подключение` : ""}
+        onClose={() => setEditing(null)}
+      >
         {editing && (
           <ConnectForm
             item={editing}
@@ -50,7 +100,17 @@ export function IntegrationsPage() {
   );
 }
 
-function IntegrationCard({ item, onEdit, onChanged }: { item: Integration; onEdit: () => void; onChanged: () => void }) {
+/* ─── IntegrationCard ───────────────────────────────────── */
+
+function IntegrationCard({
+  item,
+  onEdit,
+  onChanged,
+}: {
+  item: Integration;
+  onEdit: () => void;
+  onChanged: () => void;
+}) {
   const connection = item.connection;
   const toast = useToast();
   const { pending, run } = useAction(useErrorToast());
@@ -59,7 +119,8 @@ function IntegrationCard({ item, onEdit, onChanged }: { item: Integration; onEdi
   const connectOAuth = () =>
     run("connect", async () => {
       const result = await api.integrations.connect(item.slug, {});
-      if ("authorization_url" in result) window.location.assign(result.authorization_url);
+      if ("authorization_url" in result)
+        window.location.assign(result.authorization_url);
     });
 
   const status = !connection ? (
@@ -71,37 +132,84 @@ function IntegrationCard({ item, onEdit, onChanged }: { item: Integration; onEdi
   );
 
   return (
-    <Card className="integration">
-      <div className="integration-head">
-        <span className={`integration-logo logo-${item.slug}`} aria-hidden="true">
-          {LOGOS[item.slug] ? <img src={LOGOS[item.slug]} alt="" /> : item.title.charAt(0)}
+    <GlassCard>
+      {/* ─── Шапка карточки ─────────────────────── */}
+      <div className="flex items-center gap-3 mb-3">
+        <span
+          aria-hidden="true"
+          className={cn(
+            "relative shrink-0 w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden",
+            "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-3xl",
+            "ring-1 ring-white/30 dark:ring-white/10"
+          )}
+        >
+          {LOGOS[item.slug] ? (
+            <img
+              src={LOGOS[item.slug]}
+              alt=""
+              className="w-6 h-6 object-contain select-none pointer-events-none"
+              loading="lazy"
+            />
+          ) : (
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              {item.title.charAt(0)}
+            </span>
+          )}
         </span>
-        <div>
-          <h2>{item.title}</h2>
-          {status}
+
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            {item.title}
+          </h2>
+          <div className="mt-1">{status}</div>
         </div>
       </div>
-      <p className="muted small">{item.description}</p>
 
+      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
+        {item.description}
+      </p>
+
+      {/* ─── Метаданные ─────────────────────────── */}
       {connection && (
-        <dl className="integration-meta">
+        <dl className="mb-3 space-y-1.5 text-xs">
           {connection.account_email && (
-            <div>
-              <dt>Аккаунт</dt>
-              <dd className="truncate">{connection.account_email}</dd>
+            <div className="flex gap-2 min-w-0">
+              <dt className="shrink-0 text-gray-500 dark:text-gray-400">
+                Аккаунт
+              </dt>
+              <dd className="truncate text-gray-900 dark:text-white">
+                {connection.account_email}
+              </dd>
             </div>
           )}
-          <div>
-            <dt>Синхронизация</dt>
-            <dd>{connection.last_sync_at ? formatDateTime(connection.last_sync_at) : "ещё не было"}</dd>
+          <div className="flex gap-2 min-w-0">
+            <dt className="shrink-0 text-gray-500 dark:text-gray-400">
+              Синхронизация
+            </dt>
+            <dd className="text-gray-900 dark:text-white">
+              {connection.last_sync_at
+                ? formatDateTime(connection.last_sync_at)
+                : "ещё не было"}
+            </dd>
           </div>
         </dl>
       )}
-      {connection?.last_sync_error && <p className="form-error small">{connection.last_sync_error}</p>}
 
-      <div className="button-row">
+      {connection?.last_sync_error && (
+        <p className="mb-3 text-xs text-red-600 dark:text-red-400">
+          {connection.last_sync_error}
+        </p>
+      )}
+
+      {/* ─── Действия ───────────────────────────── */}
+      <div className="flex flex-wrap gap-1.5">
         {!connection ? (
-          <Button variant="primary" size="sm" busy={pending === "connect"} onClick={item.auth_type === "oauth" ? connectOAuth : onEdit}>
+          <Button
+            variant="primary"
+            size="sm"
+            busy={pending === "connect"}
+            onClick={item.auth_type === "oauth" ? connectOAuth : onEdit}
+          >
             Подключить
           </Button>
         ) : (
@@ -113,7 +221,9 @@ function IntegrationCard({ item, onEdit, onChanged }: { item: Integration; onEdi
               onClick={() =>
                 run("sync", async () => {
                   const result = await api.integrations.sync(item.slug);
-                  toast(`Получено ${result.fetched}: новых ${result.created}, обновлено ${result.updated}`);
+                  toast(
+                    `Получено ${result.fetched}: новых ${result.created}, обновлено ${result.updated}`
+                  );
                   onChanged();
                 })
               }
@@ -135,7 +245,12 @@ function IntegrationCard({ item, onEdit, onChanged }: { item: Integration; onEdi
               Проверить
             </Button>
             {item.auth_type === "oauth" ? (
-              <Button size="sm" variant="ghost" busy={pending === "connect"} onClick={connectOAuth}>
+              <Button
+                size="sm"
+                variant="ghost"
+                busy={pending === "connect"}
+                onClick={connectOAuth}
+              >
                 Переподключить
               </Button>
             ) : (
@@ -147,11 +262,17 @@ function IntegrationCard({ item, onEdit, onChanged }: { item: Integration; onEdi
         )}
       </div>
 
+      {/* ─── Отключение ─────────────────────────── */}
       {connection && (
-        <div className="disconnect">
-          <label className="check small">
-            <input type="checkbox" checked={purge} onChange={(e) => setPurge(e.target.checked)} />
-            удалить импортированные события
+        <div className="mt-4 pt-3 border-t border-white/20 dark:border-white/10 flex items-center justify-between gap-2">
+          <label className="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={purge}
+              onChange={(e) => setPurge(e.target.checked)}
+              className="w-3.5 h-3.5 rounded accent-sky-500"
+            />
+            удалить импортированные
           </label>
           <ConfirmButton
             size="sm"
@@ -169,14 +290,31 @@ function IntegrationCard({ item, onEdit, onChanged }: { item: Integration; onEdi
           </ConfirmButton>
         </div>
       )}
-    </Card>
+    </GlassCard>
   );
 }
 
-function ConnectForm({ item, onDone }: { item: Integration; onDone: () => void }) {
+/* ─── ConnectForm ───────────────────────────────────────── */
+
+function ConnectForm({
+  item,
+  onDone,
+}: {
+  item: Integration;
+  onDone: () => void;
+}) {
   const config = item.connection?.config ?? {};
   const [values, setValues] = useState<Record<string, unknown>>(() =>
-    Object.fromEntries(item.fields.map((field) => [field.name, field.secret ? "" : config[field.name] ?? field.default ?? (field.type === "checkbox" ? false : "")])),
+    Object.fromEntries(
+      item.fields.map((field) => [
+        field.name,
+        field.secret
+          ? ""
+          : config[field.name] ??
+            field.default ??
+            (field.type === "checkbox" ? false : ""),
+      ])
+    )
   );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -198,8 +336,11 @@ function ConnectForm({ item, onDone }: { item: Integration; onDone: () => void }
   };
 
   return (
-    <form className="form" onSubmit={submit}>
-      <p className="muted small">{item.description}</p>
+    <form className="space-y-3" onSubmit={submit}>
+      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+        {item.description}
+      </p>
+
       {item.fields.map((field) =>
         field.type === "checkbox" ? (
           <Switch
@@ -207,24 +348,67 @@ function ConnectForm({ item, onDone }: { item: Integration; onDone: () => void }
             label={field.label}
             hint={field.help}
             checked={Boolean(values[field.name])}
-            onChange={(checked) => setValues((current) => ({ ...current, [field.name]: checked }))}
+            onChange={(checked) =>
+              setValues((current) => ({ ...current, [field.name]: checked }))
+            }
           />
         ) : (
-          <Field key={field.name} label={field.label + (field.required ? "" : " (необязательно)")} hint={field.help || undefined}>
+          <Field
+            key={field.name}
+            label={
+              field.label + (field.required ? "" : " (необязательно)")
+            }
+            hint={field.help || undefined}
+          >
             <input
-              type={field.type === "password" ? "password" : field.type === "url" ? "url" : "text"}
+              type={
+                field.type === "password"
+                  ? "password"
+                  : field.type === "url"
+                  ? "url"
+                  : "text"
+              }
               value={String(values[field.name] ?? "")}
-              placeholder={field.secret && item.connection ? "Сохранено — оставьте пустым, чтобы не менять" : field.placeholder}
+              placeholder={
+                field.secret && item.connection
+                  ? "Сохранено — оставьте пустым, чтобы не менять"
+                  : field.placeholder
+              }
               required={field.required && !(field.secret && item.connection)}
               autoComplete={field.secret ? "new-password" : "off"}
-              onChange={(e) => setValues((current) => ({ ...current, [field.name]: e.target.value }))}
+              onChange={(e) =>
+                setValues((current) => ({
+                  ...current,
+                  [field.name]: e.target.value,
+                }))
+              }
+              className={cn(
+                "w-full h-9 px-3 text-sm rounded-lg",
+                "bg-white/[0.05] dark:bg-white/[0.02]",
+                "ring-1 ring-white/20 dark:ring-white/10",
+                "outline-none focus:ring-sky-400/50",
+                "text-gray-900 dark:text-white",
+                "placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              )}
             />
           </Field>
-        ),
+        )
       )}
-      {error && <p className="form-error" role="alert">{error}</p>}
-      <div className="form-actions">
-        <Button type="submit" variant="primary" busy={busy} icon="check">
+
+      {error && (
+        <p className="text-xs text-red-600 dark:text-red-400" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="flex justify-end pt-2">
+        <Button
+          type="submit"
+          variant="primary"
+          size="sm"
+          busy={busy}
+          icon="check"
+        >
           {item.connection ? "Сохранить" : "Подключить"}
         </Button>
       </div>

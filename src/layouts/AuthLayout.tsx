@@ -68,7 +68,7 @@ const AuthLayout: React.FC = () => {
               className="absolute inset-0 -z-10 rounded-full bg-gradient-to-br from-sky-400/30 via-blue-400/20 to-slate-400/15 blur-3xl"
             />
             <MascotFade
-              src="/images/MaskotWB.png"
+              src="/images/MaskotGirl.pdf"
               alt="Ассистент Dayla говорит по телефону"
               fadeStart={48}
               fadeLength={38}

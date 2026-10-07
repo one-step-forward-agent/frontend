@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { api, ApiError, onUnauthorized } from "@/app/api/client";
 import type { User } from "@/app/api/types";
+import { DEV_AUTH_BYPASS, DEV_USER } from "@/config/devAuth";
 
 interface RegisterInput {
   email: string;
@@ -27,23 +28,41 @@ interface AuthState {
 const message = (error: unknown, fallback: string) => (error instanceof Error && error.message ? error.message : fallback);
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
-  user: null,
-  isLoading: true,
-  isAuthenticated: false,
+  // ─── Начальные значения ────────────────────────────────
+  // В dev-режиме сразу считаем пользователя залогиненным,
+  // чтобы RootRoute не мигал на /login.
+  user: DEV_AUTH_BYPASS ? DEV_USER : null,
+  isLoading: !DEV_AUTH_BYPASS,       // в dev нечего загружать
+  isAuthenticated: DEV_AUTH_BYPASS,
   isSubmitting: false,
   error: null,
 
   loadUser: async () => {
+    if (DEV_AUTH_BYPASS) {
+      set({ user: DEV_USER, isAuthenticated: true, isLoading: false });
+      return;
+    }
     try {
       const user = await api.me.get();
       set({ user, isAuthenticated: true, isLoading: false });
     } catch (error) {
-      if (!(error instanceof ApiError) || error.status !== 401) console.warn("Session check failed", error);
+      if (!(error instanceof ApiError) || error.status !== 401)
+        console.warn("Session check failed", error);
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 
   login: async (email, password) => {
+    if (DEV_AUTH_BYPASS) {
+      set({
+        user: DEV_USER,
+        isAuthenticated: true,
+        isLoading: false,
+        isSubmitting: false,
+        error: null,
+      });
+      return;
+    }
     set({ isSubmitting: true, error: null });
     try {
       await api.auth.login(email.trim().toLowerCase(), password);
@@ -57,9 +76,24 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   register: async ({ email, password, name, timezone }) => {
+    if (DEV_AUTH_BYPASS) {
+      set({
+        user: DEV_USER,
+        isAuthenticated: true,
+        isLoading: false,
+        isSubmitting: false,
+        error: null,
+      });
+      return;
+    }
     set({ isSubmitting: true, error: null });
     try {
-      await api.auth.register({ email: email.trim().toLowerCase(), password, name: name?.trim() || null, timezone });
+      await api.auth.register({
+        email: email.trim().toLowerCase(),
+        password,
+        name: name?.trim() || null,
+        timezone,
+      });
       await get().loadUser();
     } catch (error) {
       set({ error: message(error, "Ошибка регистрации") });
@@ -70,12 +104,30 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   logout: async (everywhere = false) => {
-    await (everywhere ? api.auth.logoutAll() : api.auth.logout()).catch(() => undefined);
+    if (DEV_AUTH_BYPASS) {
+      // В dev-режиме не разлогиниваем, иначе F5 на /dashboard
+      // выкинет на /login — начнёте гоняться за редиректами.
+      set({ user: DEV_USER, isAuthenticated: true, error: null });
+      return;
+    }
+    await (everywhere ? api.auth.logoutAll() : api.auth.logout()).catch(
+      () => undefined
+    );
     set({ user: null, isAuthenticated: false, error: null });
   },
 
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
+  setUser: (user) =>
+    set({
+      user: DEV_AUTH_BYPASS ? DEV_USER : user,
+      isAuthenticated: DEV_AUTH_BYPASS ? true : !!user,
+    }),
+
   clearError: () => set({ error: null }),
 }));
 
-onUnauthorized(() => useAuthStore.getState().setUser(null));
+onUnauthorized(() => {
+  // В dev-режиме не реагируем на 401 — токена нет, все запросы к API
+  // всё равно упадут, но UI останется в залогиненном состоянии.
+  if (DEV_AUTH_BYPASS) return;
+  useAuthStore.getState().setUser(null);
+});
