@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { api } from "../api/client";
+import { Icon } from "../components/icons";
 import type { Integration } from "../api/types";
 import { Badge, Button, Card, ConfirmButton, Dialog, ErrorNote, Field, Loading, PageHeader, Switch, useErrorToast, useToast } from "../components/ui";
 import { errorText, formatDateTime } from "../lib/format";
 import { useAction, useAsync } from "../lib/hooks";
-import { useTitle } from "../router";
+import { Link, useTitle } from "../router";
 
 const LOGOS: Record<string, string> = {
   google: "/images/google-calendar.png",
@@ -20,6 +21,9 @@ export function IntegrationsPage() {
 
   return (
     <div className="page">
+      <Link to="/account#integrations" className="back-link">
+        <Icon name="left" size={16} /> Аккаунт
+      </Link>
       <PageHeader title="Интеграции" subtitle="Импортируйте события и задачи из сервисов и отправляйте события Dayla обратно." />
       {integrations.error && <ErrorNote message={integrations.error} onRetry={integrations.reload} />}
       {!integrations.data ? (

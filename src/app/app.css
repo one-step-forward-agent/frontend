@@ -151,7 +151,7 @@
 .fd-app .sidebar-account { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: var(--radius-sm); text-decoration: none; }
 .fd-app .sidebar-account:hover { background: var(--surface-2); }
 .fd-app .sidebar-account.active { background: var(--accent-soft); }
-.fd-app .sidebar-user-text { display: grid; flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; }
+.fd-app .sidebar-user-text { flex: 1; min-width: 0; font-size: 14px; font-weight: 550; }
 .fd-app .avatar { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--gradient); color: #fff; font-weight: 600; }
 .fd-app .theme-toggle { width: 34px; height: 34px; }
 
@@ -655,6 +655,17 @@
 .fd-app .integration-meta dd { margin: 0; min-width: 0; }
 .fd-app .disconnect { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line); }
 
+.fd-app .account-page { max-width: 1040px; }
+.fd-app .account-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.fd-app .account-sections { display: grid; gap: 20px; min-width: 0; }
+.fd-app .account-select { display: grid; gap: 6px; }
+@media (min-width: 960px) {
+  .fd-app .account-layout { grid-template-columns: 200px minmax(0, 1fr); gap: 24px; }
+  .fd-app .account-menu { position: sticky; top: 24px; display: grid; gap: 2px; padding: 8px; border: 1px solid var(--glass-border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+  .fd-app .account-menu a { padding: 8px 12px; border-radius: var(--radius-sm); color: var(--muted); text-decoration: none; font-weight: 550; font-size: 14px; }
+  .fd-app .account-menu a:hover { background: var(--surface-2); color: var(--ink); }
+  .fd-app .account-menu a.active { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+}
 .fd-app .section-nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -4px 0 0; }
 .fd-app .section-nav a { flex: none; padding: 6px 13px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 550; }
 .fd-app .section-nav a:hover { color: var(--accent-text); border-color: var(--accent); }

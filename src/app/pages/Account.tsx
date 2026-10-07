@@ -8,7 +8,7 @@ import { Avatar } from "../components/Layout";
 import { TAG_COLORS, TagChip } from "../components/tags";
 import { Badge, Button, Card, ConfirmButton, ErrorNote, Field, Loading, Switch, useErrorToast, useToast } from "../components/ui";
 import { SOURCE_LABELS, browserTimezone, errorText, formatDateTime, formatLead, stripTags } from "../lib/format";
-import { notifyTagsChanged, useAction, useAsync, useTags } from "../lib/hooks";
+import { notifyTagsChanged, useAction, useAsync, useMediaQuery, useTags } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 
 const SECTIONS = [
@@ -17,26 +17,56 @@ const SECTIONS = [
   { id: "reminders", label: "Уведомления" },
   { id: "telegram", label: "Telegram" },
   { id: "appearance", label: "Оформление" },
+  { id: "integrations", label: "Интеграции" },
   { id: "calendars", label: "Календари" },
-  { id: "services", label: "Сервисы" },
   { id: "security", label: "Безопасность" },
 ];
+
+/** Раздел, который сейчас на экране: подсвечивается в меню. */
+function useActiveSection(): string {
+  const [active, setActive] = useState(SECTIONS[0].id);
+  useEffect(() => {
+    // The observer reports only sections whose visibility changed, so the state of all of them is kept here
+    const visible = new Set<string>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => (entry.isIntersecting ? visible.add(entry.target.id) : visible.delete(entry.target.id)));
+        const first = SECTIONS.find((section) => visible.has(section.id));
+        if (first) setActive(first.id);
+      },
+      { rootMargin: "-25% 0px -55% 0px" },
+    );
+    SECTIONS.forEach((section) => {
+      const element = document.getElementById(section.id);
+      if (element) observer.observe(element);
+    });
+    return () => observer.disconnect();
+  }, []);
+  return active;
+}
+
+function goTo(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  window.history.replaceState(null, "", `#${id}`);
+}
 
 /** Аккаунт: профиль, теги и все настройки — раньше они были отдельным разделом «Настройки». */
 export function AccountPage() {
   useTitle("Аккаунт");
   const user = useUser();
   const stats = useAsync(() => api.stats(7), []);
+  const active = useActiveSection();
+  const wide = useMediaQuery("(min-width: 960px)");
 
   useEffect(() => {
-    const id = window.location.hash.slice(1);
+    const id = window.location.hash.slice(1) === "services" ? "integrations" : window.location.hash.slice(1);
     if (!id) return;
     const timer = window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
     return () => window.clearTimeout(timer);
   }, []);
 
   return (
-    <div className="page page-narrow">
+    <div className="page account-page">
       <header className="account-head">
         <Avatar user={user} size={56} />
         <div>
@@ -49,21 +79,47 @@ export function AccountPage() {
           </span>
         )}
       </header>
-      <nav className="section-nav" aria-label="Разделы аккаунта">
-        {SECTIONS.map((section) => (
-          <a key={section.id} href={`#${section.id}`}>
-            {section.label}
-          </a>
-        ))}
-      </nav>
-      <ProfileSection />
-      <TagsSection />
-      <RemindersSection />
-      <TelegramSection />
-      <AppearanceSection />
-      <CalendarsSection />
-      <ServicesSection />
-      <SecuritySection />
+      <div className="account-layout">
+        {wide ? (
+          <nav className="account-menu" aria-label="Разделы аккаунта">
+            {SECTIONS.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className={active === section.id ? "active" : ""}
+                aria-current={active === section.id ? "true" : undefined}
+                onClick={(event) => {
+                  event.preventDefault();
+                  goTo(section.id);
+                }}
+              >
+                {section.label}
+              </a>
+            ))}
+          </nav>
+        ) : (
+          <label className="account-select">
+            <span className="field-label">Раздел</span>
+            <select value={active} onChange={(event) => goTo(event.target.value)}>
+              {SECTIONS.map((section) => (
+                <option key={section.id} value={section.id}>
+                  {section.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <div className="account-sections">
+          <ProfileSection />
+          <TagsSection />
+          <RemindersSection />
+          <TelegramSection />
+          <AppearanceSection />
+          <IntegrationsSection />
+          <CalendarsSection />
+          <SecuritySection />
+        </div>
+      </div>
     </div>
   );
 }
@@ -356,11 +412,30 @@ function RemindersSection() {
   );
 }
 
-function ServicesSection() {
+/** Интеграции теперь внутри аккаунта: статус каждого сервиса и переход к подключению. */
+function IntegrationsSection() {
+  const integrations = useAsync(() => api.integrations.list(), []);
   return (
-    <div id="services" className="anchor">
-      <Card title="Сервисы" actions={<Link to="/integrations" className="btn btn-secondary btn-sm">Открыть</Link>}>
-        <p className="muted">Google Calendar, Apple Calendar, Jira и Notion: подключение, импорт и отправка задач.</p>
+    <div id="integrations" className="anchor">
+      <Card title="Интеграции" actions={<Link to="/integrations" className="btn btn-secondary btn-sm">Управлять</Link>}>
+        <p className="muted small">Google Calendar, Apple Calendar, Jira и Notion: подключение, импорт и отправка задач.</p>
+        {integrations.error && <ErrorNote message={integrations.error} onRetry={integrations.reload} />}
+        {integrations.data && (
+          <ul className="simple-list">
+            {integrations.data.map((item) => (
+              <li key={item.slug}>
+                <span className="truncate">{item.title}</span>
+                {item.connection ? (
+                  <Badge tone={item.connection.status === "error" ? "bad" : "ok"}>{item.connection.status === "error" ? "ошибка" : "подключено"}</Badge>
+                ) : (
+                  <Link to="/integrations" className="btn btn-ghost btn-sm">
+                    Подключить
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
     </div>
   );

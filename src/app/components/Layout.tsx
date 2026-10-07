@@ -15,16 +15,17 @@ const NAV: NavItem[] = [
   { to: "/calendar", label: "Календарь", icon: "calendar" },
   { to: "/assistant", label: "Ассистент", icon: "assistant", main: true },
   { to: "/tasks", label: "Задачи", icon: "tasks" },
-  { to: "/integrations", label: "Интеграции", icon: "integrations" },
 ];
 
 // Нижнее меню на телефоне: ассистент посередине, под большим пальцем; настройки — внутри аккаунта
 const TABS: NavItem[] = [NAV[0], NAV[1], NAV[2], NAV[3], { to: "/account", label: "Аккаунт", icon: "user" }];
 // Страницы, где плавающая «＋» мешала бы: у чата своя строка ввода, у формы — свои кнопки
-const NO_FAB = ["/assistant", "/events/new", "/account", "/settings"];
+const NO_FAB = ["/assistant", "/events/new", "/account", "/settings", "/integrations"];
+// Настройки и интеграции живут внутри аккаунта
+const ACCOUNT_PATHS = ["/account", "/settings", "/integrations"];
 
 const isActive = (to: string, path: string) =>
-  to === "/" ? path === "/" : path === to || path.startsWith(`${to}/`) || (to === "/account" && path === "/settings");
+  to === "/" ? path === "/" : path === to || path.startsWith(`${to}/`) || (to === "/account" && ACCOUNT_PATHS.some((item) => path.startsWith(item)));
 
 export function Brand({ to = "/" }: { to?: string }) {
   return (
@@ -81,12 +82,9 @@ export function Layout({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="sidebar-user">
-          <Link to="/account" className={`sidebar-account ${accountActive ? "active" : ""}`} aria-current={accountActive ? "page" : undefined} title="Аккаунт и настройки">
-            <Avatar user={user} />
-            <span className="sidebar-user-text">
-              <span className="truncate">{user?.name || "Аккаунт"}</span>
-              <span className="truncate muted">{user?.email}</span>
-            </span>
+          <Link to="/account" className={`sidebar-account ${accountActive ? "active" : ""}`} aria-current={accountActive ? "page" : undefined} title="Профиль, настройки и интеграции">
+            <Avatar user={user} size={30} />
+            <span className="sidebar-user-text">Профиль</span>
           </Link>
           <ThemeToggle />
           <button className="btn btn-ghost btn-sm btn-icon" onClick={() => signOut()} aria-label="Выйти" title="Выйти">
