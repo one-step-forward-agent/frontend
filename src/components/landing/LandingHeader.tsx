@@ -32,7 +32,7 @@ export const LandingHeader: React.FC = () => {
 
   const goStart = () => {
     setMobileOpen(false);
-    navigate(isAuthenticated ? "/app" : "/onboarding/for-what-using");
+    navigate(isAuthenticated ? "/app" : "/onboarding/field-of-activity");
   };
 
   const closeMobile = () => setMobileOpen(false);
