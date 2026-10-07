@@ -17,6 +17,9 @@ const NAV: NavItem[] = [
   { to: "/tasks", label: "Задачи", icon: "tasks" },
 ];
 
+// В боковом меню ассистент — кнопка над списком, а создать задачу можно последним пунктом
+const SIDEBAR: NavItem[] = [...NAV.filter((item) => !item.main), { to: "/events/new", label: "Новая задача", icon: "plus" }];
+
 // Нижнее меню на телефоне: ассистент посередине, под большим пальцем; настройки — внутри аккаунта
 const TABS: NavItem[] = [NAV[0], NAV[1], NAV[2], NAV[3], { to: "/account", label: "Аккаунт", icon: "user" }];
 // Страницы, где плавающая «＋» мешала бы: у чата своя строка ввода, у формы — свои кнопки
@@ -65,11 +68,16 @@ export function Layout({ children }: { children: ReactNode }) {
     <div className="shell">
       <aside className="sidebar">
         <Brand />
-        <Link to="/events/new" className="btn btn-primary btn-md new-event">
-          <Icon name="plus" size={18} /> Новая задача
+        {/* Ассистент — главная функция и на компьютере: большая кнопка вместо «Новой задачи» */}
+        <Link
+          to="/assistant"
+          className={`btn btn-primary btn-md new-event ${isActive("/assistant", path) ? "is-current" : ""}`}
+          aria-current={isActive("/assistant", path) ? "page" : undefined}
+        >
+          <Icon name="assistant" size={18} /> Ассистент
         </Link>
         <nav aria-label="Разделы">
-          {NAV.map((item) => (
+          {SIDEBAR.map((item) => (
             <Link
               key={item.to}
               to={item.to}
