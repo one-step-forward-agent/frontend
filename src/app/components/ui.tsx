@@ -13,8 +13,21 @@ import {
 import { Icon, type IconName } from "./icons";
 
 /* ─── Мини-утилита для склейки классов ──────────────────── */
-const cx = (...parts: Array<string | false | null | undefined>) =>
-  parts.filter(Boolean).join(" ");
+type ClassValue = string | number | false | null | undefined;
+
+const cx = (...parts: (ClassValue | ClassValue[])[]): string => {
+  const out: string[] = [];
+  for (const part of parts) {
+    if (Array.isArray(part)) {
+      for (const p of part) {
+        if (p != null && p !== false && p !== "") out.push(String(p));
+      }
+    } else if (part != null && part !== false && part !== "") {
+      out.push(String(part));
+    }
+  }
+  return out.join(" ");
+};
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
