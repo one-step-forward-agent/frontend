@@ -226,7 +226,7 @@ export function PageHeader({
       )}
     >
       <span aria-hidden="true" className={GLASS_SHEEN} />
-      <div className="relative flex items-start justify-between gap-4 p-4 sm:p-5">
+      <div className="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-3 p-4 sm:p-5">
         <div className="min-w-0">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
             {title}
@@ -237,7 +237,7 @@ export function PageHeader({
             </p>
           )}
         </div>
-        {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
     </header>
   );

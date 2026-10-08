@@ -9,6 +9,7 @@ const paths = {
   plus: "M12 5v14M5 12h14",
   left: "M15 5l-7 7 7 7",
   right: "M9 5l7 7-7 7",
+  forward: "M4 12h13M12 6l6 6-6 6M20 5v14",
   close: "M6 6l12 12M18 6L6 18",
   check: "M5 12.5l4.5 4.5L19 7.5",
   trash: "M5 7h14M10 11v6M14 11v6M6.5 7l1 12.5a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5L17.5 7M9.5 7V4.5h5V7",

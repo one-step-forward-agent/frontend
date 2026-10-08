@@ -52,7 +52,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
   const hasMeta = !!(event.location || event.source !== "local" || event.series_id || multiDay || event.deadline_at || event.is_fixed || event.tag_ids?.length);
 
   return (
-    <li className="event-item">
+    <li className={`event-item prio-${event.priority}`}>
       <button
         type="button"
         role="checkbox"
@@ -65,9 +65,9 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
         {done && <Icon name="check" size={14} />}
       </button>
       <Link to={`/events/${event.id}`} className={`event-row priority-${event.priority} ${done ? "done" : ""}`}>
-        <span className={`event-time ${event.all_day ? "untimed" : ""}`}>
+        <span className={`event-time ${event.all_day ? "untimed" : ""} ${showDate ? "with-date" : ""}`}>
           {showDate && <span className="event-date">{start.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</span>}
-          {event.all_day ? "без времени" : formatTime(start)}
+          <span className="event-clock">{event.all_day ? "без времени" : formatTime(start)}</span>
         </span>
         <span className="event-main">
           <span className="event-title">{event.title}</span>
@@ -100,7 +100,9 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
           )}
         </span>
         {(event.priority === "high" || event.priority === "urgent") && (
-          <Badge tone={event.priority === "urgent" ? "bad" : "warn"}>{event.priority === "urgent" ? "срочно" : "важно"}</Badge>
+          <span className="event-badge">
+            <Badge tone={event.priority === "urgent" ? "bad" : "warn"}>{event.priority === "urgent" ? "срочно" : "важно"}</Badge>
+          </span>
         )}
       </Link>
       {extra}

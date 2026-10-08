@@ -5,11 +5,10 @@ import type { CalendarEvent } from "../api/types";
 import { EventList } from "../components/events";
 import { RecommendationList } from "../components/recommendations";
 import { Icon } from "../components/icons";
-import { Button, Empty, ErrorNote, PageHeader } from "../components/ui";
+import { Button, Empty, ErrorNote } from "../components/ui";
 import {
   addDays,
   dayKey,
-  dayTitle,
   formatDate,
   formatMonth,
   occursOn,
@@ -46,7 +45,16 @@ const STEP_LABELS: Record<View, [string, string]> = {
 const SEGMENTED =
   "relative inline-flex items-center gap-1 p-1 rounded-full overflow-hidden " + GLASS_BODY;
 const SEGMENTED_TAB =
-  "relative px-3.5 h-7 rounded-full text-xs font-medium transition-colors duration-200 outline-none";
+  "relative flex-1 sm:flex-none px-2 sm:px-3.5 h-8 rounded-full text-sm font-medium transition-colors duration-200 outline-none";
+const NAV_BUTTON =
+  "relative shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full " +
+  "text-gray-700 dark:text-gray-200 hover:bg-white/[0.12] dark:hover:bg-white/[0.06] transition-colors " +
+  GLASS_BODY;
+const TODAY_BUTTON =
+  "relative shrink-0 inline-flex items-center h-10 px-3 sm:px-4 rounded-full text-sm font-medium " +
+  "text-gray-700 dark:text-gray-200 transition-colors " +
+  "disabled:opacity-40 disabled:pointer-events-none " +
+  GLASS_BODY;
 const SEGMENTED_TAB_ACTIVE =
   "bg-sky-500/20 text-sky-800 dark:text-sky-100 ring-1 ring-sky-400/40";
 const SEGMENTED_TAB_IDLE =
@@ -205,18 +213,51 @@ export function CalendarPage() {
   );
   const title =
     view === "day"
-      ? dayTitle(selected)
+      ? formatDate(selected, { weekday: "short", day: "numeric", month: "long" })
       : view === "week"
       ? weekTitle(gridStart)
       : formatMonth(month);
+  // "Сегодня" does nothing when today is already on the screen
+  const showsToday =
+    view === "month" ? sameDay(month, startOfMonth(today)) : days.some((day) => sameDay(day, today));
 
   return (
     <div className="relative max-w-4xl mx-auto pt-[1.5vh]">
-      <PageHeader
-        title={title}
-        actions={
-          <>
-            <div className={SEGMENTED} role="tablist" aria-label="Вид календаря">
+      {/* ─── Шапка: где мы (← заголовок →) и как смотрим (Сегодня, вид) ─── */}
+      <header className={cn("relative rounded-2xl mb-6 p-3 sm:p-4", GLASS_BODY)}>
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <button
+              type="button"
+              className={NAV_BUTTON}
+              aria-label={STEP_LABELS[view][0]}
+              title={STEP_LABELS[view][0]}
+              onClick={() => shift(-1)}
+            >
+              <Icon name="left" size={18} />
+            </button>
+            <button
+              type="button"
+              className={NAV_BUTTON}
+              aria-label={STEP_LABELS[view][1]}
+              title={STEP_LABELS[view][1]}
+              onClick={() => shift(1)}
+            >
+              <Icon name="right" size={18} />
+            </button>
+            <h1 className="ml-1.5 min-w-0 truncate !text-[22px] sm:!text-[28px] capitalize-first">{title}</h1>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              className={TODAY_BUTTON}
+              disabled={showsToday}
+              onClick={() => go(today, view, startOfMonth(today))}
+            >
+              Сегодня
+            </button>
+            <div className={cn(SEGMENTED, "flex-1 min-w-0 sm:flex-none")} role="tablist" aria-label="Вид календаря">
               {VIEWS.map((item) => (
                 <button
                   key={item.value}
@@ -232,33 +273,9 @@ export function CalendarPage() {
                 </button>
               ))}
             </div>
-
-            <div className={SEGMENTED}>
-              <Button
-                variant="ghost"
-                icon="left"
-                aria-label={STEP_LABELS[view][0]}
-                title={STEP_LABELS[view][0]}
-                onClick={() => shift(-1)}
-              />
-              <button
-                type="button"
-                className={cn(SEGMENTED_TAB, SEGMENTED_TAB_IDLE)}
-                onClick={() => go(today, view, startOfMonth(today))}
-              >
-                Сегодня
-              </button>
-              <Button
-                variant="ghost"
-                icon="right"
-                aria-label={STEP_LABELS[view][1]}
-                title={STEP_LABELS[view][1]}
-                onClick={() => shift(1)}
-              />
-            </div>
-          </>
-        }
-      />
+          </div>
+        </div>
+      </header>
 
       {events.error && <ErrorNote message={events.error} onRetry={events.reload} />}
 
@@ -323,9 +340,7 @@ export function CalendarPage() {
             <div
               className={cn(
                 "relative grid gap-1.5",
-                view === "week"
-                  ? "grid-cols-7 grid-rows-1 min-h-[280px]"
-                  : "grid-cols-7 grid-rows-6"
+                view === "week" ? "grid-cols-7 grid-rows-1" : "grid-cols-7 grid-rows-6"
               )}
             >
               {days.map((day) => {
@@ -349,7 +364,7 @@ export function CalendarPage() {
                     })}, событий: ${items.length}`}
                     className={cn(
                       "group relative overflow-hidden rounded-xl",
-                      "aspect-square",
+                      view === "week" ? "min-h-[140px] sm:min-h-[260px]" : "aspect-square",
                       "transition-colors duration-200",
                       "bg-white/[0.04] dark:bg-white/[0.02]",
                       "ring-1 ring-white/20 dark:ring-white/10",
@@ -378,7 +393,7 @@ export function CalendarPage() {
                         </span>
                       </span>
 
-                      <span className="flex flex-col gap-0.5 min-w-0">
+                      <span className="hidden sm:flex flex-col gap-0.5 min-w-0">
                         {items.slice(0, cellsToShow).map((event) => (
                           <span
                             key={event.id}
@@ -422,16 +437,16 @@ export function CalendarPage() {
                         )}
                       </span>
 
-                      {items.length > 0 && view === "month" && (
+                      {items.length > 0 && (
                         <span
-                          className="mt-auto flex items-center gap-0.5"
+                          className="sm:hidden mt-auto flex flex-wrap items-center gap-0.5"
                           aria-hidden="true"
                         >
-                          {items.slice(0, 3).map((event) => (
+                          {items.slice(0, view === "week" ? 8 : 3).map((event) => (
                             <i
                               key={event.id}
                               className={cn(
-                                "w-1 h-1 rounded-full",
+                                "w-1.5 h-1.5 rounded-full",
                                 PRIORITY_TINT[event.priority ?? "medium"] ?? "bg-sky-500"
                               )}
                             />
@@ -456,8 +471,10 @@ export function CalendarPage() {
                 title="Предыдущий день"
                 onClick={() => shiftDay(-1)}
               />
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {dayTitle(selected)}
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate capitalize-first">
+                {sameDay(selected, today)
+                  ? `Сегодня, ${formatDate(selected, { day: "numeric", month: "long" })}`
+                  : formatDate(selected, { weekday: "long", day: "numeric", month: "long" })}
               </h2>
               <Button
                 variant="ghost"

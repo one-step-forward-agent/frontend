@@ -94,6 +94,7 @@
 .fd-app h2 { font-size: 16px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; }
 .fd-app h3 { font-size: 13px; line-height: 1.3; font-weight: 600; letter-spacing: 0; }
 .fd-app h3::first-letter { text-transform: uppercase; }
+.fd-app .capitalize-first::first-letter { text-transform: uppercase; }
 .fd-app button, .fd-app input, .fd-app select, .fd-app textarea { font: inherit; color: inherit; }
 .fd-app :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 8px; box-shadow: none; }
 .fd-app [hidden] { display: none !important; }
@@ -369,24 +370,22 @@
   .fd-app .dialog-body { padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
 }
 
-.fd-app .event-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+/* A task row lays out by the width of its list, not of the screen: the same list sits in a wide page
+   and in the narrow day panel of the calendar */
+.fd-app .event-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; container: events / inline-size; }
 .fd-app .event-row {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 12px 10px 14px;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
   text-decoration: none;
   position: relative;
 }
-.fd-app .event-row::before { content: ""; position: absolute; left: 4px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--line-strong); }
 .fd-app .event-row:hover { background: var(--surface-2); }
-.fd-app .event-row.priority-medium::before { background: linear-gradient(#60a5fa, #818cf8); }
-.fd-app .event-row.priority-high::before { background: #f59e0b; }
-.fd-app .event-row.priority-urgent::before { background: #ef4444; }
-.fd-app .event-time { flex: none; min-width: 74px; white-space: nowrap; display: grid; font: 500 13px var(--mono); color: var(--muted); }
-.fd-app .event-time.untimed { font: 500 12px var(--font); }
-@media (max-width: 400px) { .fd-app .event-row { gap: 10px; padding-left: 12px; } .fd-app .event-time { min-width: 62px; } }
+.fd-app .event-time { flex: none; min-width: 74px; white-space: nowrap; display: grid; font: 500 13px var(--font); font-variant-numeric: tabular-nums; color: var(--muted); }
+.fd-app .event-time.untimed .event-clock { font-size: 12px; }
+.fd-app .event-badge { flex: none; display: inline-flex; }
 .fd-app .deadline-warn { color: var(--warn); }
 .fd-app .deadline-bad { color: var(--bad); font-weight: 600; }
 .fd-app .event-date { color: var(--ink); font-family: var(--font); font-weight: 600; }
@@ -395,13 +394,27 @@
 .fd-app .event-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--muted); }
 .fd-app .event-meta span { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
 
-.fd-app .event-item { display: flex; align-items: center; gap: 2px; }
+/* Priority is the colour of the check circle, the way to-do apps show it */
+.fd-app .event-item { --prio: var(--line-strong); display: flex; align-items: center; gap: 2px; }
+.fd-app .event-item.prio-high { --prio: #f59e0b; }
+.fd-app .event-item.prio-urgent { --prio: #ef4444; }
 .fd-app .event-item > .event-row { flex: 1; min-width: 0; }
-.fd-app .event-check { flex: none; width: 22px; height: 22px; margin-left: 4px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--line-strong); border-radius: 50%; background: var(--surface-solid); color: #fff; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.fd-app .event-check { flex: none; width: 22px; height: 22px; margin-left: 4px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--prio); border-radius: 50%; background: color-mix(in srgb, var(--prio) 10%, var(--surface-solid)); color: #fff; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
 .fd-app .event-check:hover { border-color: var(--accent); }
 .fd-app .event-check.checked { background: var(--gradient); border-color: transparent; }
 .fd-app .event-row.done .event-title { text-decoration: line-through; color: var(--muted); }
-.fd-app .event-row.done::before { opacity: 0.4; }
+.fd-app .move-tomorrow { flex: none; }
+
+/* Narrow list: time above the title, no "без времени" filler, the badge on the right, icon-only buttons */
+@container events (max-width: 480px) {
+  .fd-app .event-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 1px; padding: 8px 10px; }
+  .fd-app .event-time { grid-column: 1; min-width: 0; display: flex; gap: 6px; font-size: 12px; }
+  .fd-app .event-time.untimed:not(.with-date) { display: none; }
+  .fd-app .event-time.untimed.with-date .event-clock { display: none; }
+  .fd-app .event-main { grid-column: 1; }
+  .fd-app .event-badge { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .fd-app .move-tomorrow .move-label { display: none; }
+}
 .fd-app .picker-field input { cursor: pointer; }
 
 .fd-app .day-group + .day-group { margin-top: 14px; }
@@ -458,6 +471,7 @@
 .fd-app .tag-slate { --tag-bg: rgba(100, 116, 139, 0.14); --tag-ink: #334155; --dot: #64748b; }
 :root.dark .fd-app .tag { --tag-ink: color-mix(in srgb, var(--dot) 55%, #fff); }
 .fd-app .tag-list { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.fd-app .tag-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--dot); }
 .fd-app .tag-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .fd-app .tag-toggle { cursor: pointer; padding: 4px 11px; font-size: 13px; opacity: 0.6; }
 .fd-app .tag-toggle.active { opacity: 1; border-color: var(--dot); }

@@ -3,7 +3,6 @@ import { useCallback, useState, type FormEvent } from "react";
 import { api } from "../api/client";
 import type { CalendarEvent } from "../api/types";
 import { EventList } from "../components/events";
-import { TagChip } from "../components/tags";
 import {
   Button,
   Empty,
@@ -135,8 +134,8 @@ export function TasksPage() {
   return (
     <div className={PAGE}>
       <PageHeader
-        title=
-        {
+        title="Задачи"
+        actions={
           <div className={SEGMENTED} role="tablist" aria-label="Список">
             {(
               [
@@ -185,15 +184,13 @@ export function TasksPage() {
           <button
             key={tag.id}
             type="button"
-            className={cn(
-              CHIP,
-              "pr-3.5",
-              tagId === tag.id && CHIP_ACTIVE
-            )}
+            className={cn(CHIP, `tag-${tag.color}`, tagId === tag.id && CHIP_ACTIVE)}
             aria-pressed={tagId === tag.id}
             onClick={() => setTagId(tagId === tag.id ? null : tag.id)}
           >
-            <TagChip tag={tag} />
+            {/* One pill per filter: the tag colour is a dot, not a chip inside the chip */}
+            <i aria-hidden="true" className="tag-dot" />
+            {tag.name}
           </button>
         ))}
       </div>
@@ -347,11 +344,14 @@ function MoveTomorrow({ event }: { event: CalendarEvent }) {
     <Button
       variant="ghost"
       size="sm"
+      icon="forward"
       busy={busy}
       onClick={move}
+      className="move-tomorrow"
       aria-label={`Перенести «${event.title}» на завтра`}
+      title="На завтра"
     >
-      На завтра
+      <span className="move-label">На завтра</span>
     </Button>
   );
 }
