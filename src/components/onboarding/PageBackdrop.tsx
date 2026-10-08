@@ -72,7 +72,6 @@ export const PageBackdrop: React.FC = () => (
             width: b.size,
             height: b.size,
             borderRadius: b.shape,
-            animation: `page-blob-drift ${b.duration} ease-in-out ${b.delay} infinite`,
           }}
         />
       ))}

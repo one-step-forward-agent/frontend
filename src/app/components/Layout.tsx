@@ -53,14 +53,14 @@ const GLASS_MOBILE =
 
 /** Очень прозрачное тело стекла. Сквозь него видно фон страницы, размытый. */
 const GLASS_SURFACE =
-  "bg-white/[0.03] dark:bg-white/[0.015] backdrop-blur-3xl " +
+  "bg-white/[0.03] dark:bg-white/[0.015] backdrop-blur-xl " +
   "ring-1 ring-white/20 dark:ring-white/10 " +
   "shadow-[0_8px_32px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.55)] " +
   "dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]";
 
 /** Активный пункт — чуть плотнее, но всё ещё прозрачный. */
 const GLASS_ACTIVE =
-  "bg-white/[0.06] dark:bg-white/[0.03] backdrop-blur-3xl " +
+  "bg-white/[0.06] dark:bg-white/[0.03] backdrop-blur-xl " +
   "ring-1 ring-white/30 dark:ring-white/12 " +
   "shadow-[0_4px_20px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.6)] " +
   "dark:shadow-[0_4px_20px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]";
@@ -68,7 +68,7 @@ const GLASS_ACTIVE =
 /** Маленькая круглая кнопка (тема, выход). */
 const GLASS_ICON_BTN =
   "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center " +
-  "bg-white/[0.03] dark:bg-white/[0.015] backdrop-blur-3xl " +
+  "bg-white/[0.03] dark:bg-white/[0.015] backdrop-blur-xl " +
   "ring-1 ring-white/20 dark:ring-white/10 " +
   "shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_2px_8px_rgba(15,23,42,0.04)] " +
   "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_2px_8px_rgba(0,0,0,0.35)] " +
@@ -405,7 +405,7 @@ export function Layout({ children }: { children: ReactNode }) {
             className={cn(
               "lg:hidden fixed right-5 z-30 bottom-[5.5rem]",
               "w-12 h-12 rounded-full flex items-center justify-center",
-              "bg-white/[0.06] dark:bg-white/[0.03] backdrop-blur-3xl",
+              "bg-white/[0.06] dark:bg-white/[0.03] backdrop-blur-xl",
               "ring-1 ring-sky-400/40 dark:ring-sky-400/30",
               "text-sky-800 dark:text-sky-100",
               "shadow-[0_8px_24px_rgba(56,189,248,0.20),inset_0_1px_0_rgba(255,255,255,0.55)]",

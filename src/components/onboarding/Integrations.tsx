@@ -15,7 +15,7 @@ const TOTAL = 10;
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
-  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl " +
   "ring-1 ring-white/30 dark:ring-white/10 " +
   "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
   "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
@@ -49,9 +49,9 @@ type Integration = {
 
 const INTEGRATIONS: Integration[] = [
   { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
-  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandexcalendar.png",      w: 40, kind: "oauth" },
+  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandexcalendar.webp",      w: 40, kind: "oauth" },
   { id: "jira",   name: "Jira",             src: "/images/Jira_Software_Logo.svg", w: 36, kind: "oauth" },
-  { id: "notion", name: "Notion",           src: "/images/Notion.png",             w: 40, kind: "oauth" },
+  { id: "notion", name: "Notion",           src: "/images/Notion.webp",             w: 40, kind: "oauth" },
 ];
 
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
@@ -246,7 +246,7 @@ export const Integrations: React.FC = () => {
                       className={cn(
                         "relative shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center",
                         "overflow-hidden transition-all duration-300",
-                        "backdrop-blur-3xl ring-1",
+                        "backdrop-blur-xl ring-1",
                         "bg-white/[0.06] dark:bg-white/[0.02]",
                         active ? "ring-sky-400/60" : "ring-white/30 dark:ring-white/10"
                       )}
@@ -302,7 +302,7 @@ export const Integrations: React.FC = () => {
                   aria-hidden="true"
                   className={cn(
                     "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
-                    "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl",
+                    "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl",
                     "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30",
                     "text-emerald-700 dark:text-emerald-300",
                     "shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"

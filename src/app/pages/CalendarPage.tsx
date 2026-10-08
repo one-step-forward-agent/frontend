@@ -269,7 +269,7 @@ export function CalendarPage() {
               aria-hidden="true"
               className={cn(
                 "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
-                "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-3xl",
+                "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl",
                 "ring-1 ring-white/30 dark:ring-white/10",
                 "text-sky-600 dark:text-sky-300"
               )}

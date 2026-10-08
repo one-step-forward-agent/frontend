@@ -70,7 +70,7 @@ export const Start: React.FC = () => {
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
-  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl " +
   "ring-1 ring-white/30 dark:ring-white/10 " +
   "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
   "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
@@ -176,8 +176,8 @@ const ChatContextMenu: React.FC = () => (
 
 const GTD_SOURCES = [
   { id: "jira",     name: "Jira",     src: "/images/Jira_Software_Logo.svg", count: 6 },
-  { id: "trueconf", name: "TrueConf", src: "/images/tc_logo_square.png",    count: 3 },
-  { id: "slack",    name: "Slack",    src: "/images/slack.png",            count: 3 },
+  { id: "trueconf", name: "TrueConf", src: "/images/tc_logo_square.webp",    count: 3 },
+  { id: "slack",    name: "Slack",    src: "/images/slack.webp",            count: 3 },
 ];
 
 const GTDAggregation: React.FC = () => (
@@ -567,7 +567,7 @@ const IPhoneScene: React.FC = () => {
         }}
       >
         <img
-          src="/images/iPhone.png"
+          src="/images/iPhone.webp"
           alt="iPhone"
           className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
           loading="lazy"
@@ -609,7 +609,7 @@ const IPhoneScene: React.FC = () => {
           </div>
 
           <img
-            src="/images/airplaneTicketWB-mes.png"
+            src="/images/airplaneTicketWB-mes.webp"
             alt="Сообщение с авиабилетом"
             className="
               absolute left-[3%] top-[27%] z-20
@@ -826,7 +826,6 @@ const PageBackdrop: React.FC = () => (
             width: b.size,
             height: b.size,
             borderRadius: b.shape,
-            animation: `page-blob-drift ${b.duration} ease-in-out ${b.delay} infinite`,
           }}
         />
       ))}
@@ -1022,7 +1021,7 @@ const MonitorScene: React.FC = () => {
         }}
       >
         <img
-          src="/images/Monitor.png"
+          src="/images/Monitor.webp"
           alt="Монитор с финансовым отчётом"
           className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
           loading="lazy"
@@ -1191,7 +1190,7 @@ const HeroScene: React.FC = () => (
         }}
       >
         <MascotFade
-          src="/images/MaskotWB.png"
+          src="/images/MaskotWB.webp"
           alt="Ассистент Dayla говорит по телефону"
           fadeStart={40}
           fadeLength={60}
@@ -1471,21 +1470,21 @@ const WHITE_GRADIENT_STOPS = [
 
 const futureINTEGRATIONS = [
   { src: "/images/google-calendar.png",       alt: "Google Calendar", w: 44 },
-  { src: "/images/Календарь_для_macOS.png",   alt: "Apple Calendar",  w: 44 },
-  { src: "/images/yandexcalendar.png",        alt: "Yandex Calendar", w: 44 },
+  { src: "/images/apple-calendar.webp",   alt: "Apple Calendar",  w: 44 },
+  { src: "/images/yandexcalendar.webp",        alt: "Yandex Calendar", w: 44 },
   { src: "/images/Jira_Software_Logo.svg",    alt: "Jira",            w: 40 },
-  { src: "/images/Notion.png",                alt: "Notion",          w: 44 },
-  { src: "/images/TelegramWB.png",            alt: "Telegram",        w: 44 },
-  { src: "/images/slack.png",                 alt: "Slack",           w: 44 },
-  { src: "/images/tc_logo_square.png",        alt: "TrueConf",        w: 44 },
+  { src: "/images/Notion.webp",                alt: "Notion",          w: 44 },
+  { src: "/images/TelegramWB.webp",            alt: "Telegram",        w: 44 },
+  { src: "/images/slack.webp",                 alt: "Slack",           w: 44 },
+  { src: "/images/tc_logo_square.webp",        alt: "TrueConf",        w: 44 },
 ];
 
 const INTEGRATIONS = [
   { src: "/images/google-calendar.png",      alt: "Google Calendar", w: 44 },
-  { src: "/images/yandexcalendar.png",        alt: "Yandex Calendar", w: 44 },
+  { src: "/images/yandexcalendar.webp",        alt: "Yandex Calendar", w: 44 },
   { src: "/images/Jira_Software_Logo.svg",   alt: "Jira",            w: 40 },
-  { src: "/images/Notion.png",               alt: "Notion",          w: 44 },
-  { src: "/images/TelegramWB.png",             alt: "Telegram",        w: 44 },
+  { src: "/images/Notion.webp",               alt: "Notion",          w: 44 },
+  { src: "/images/TelegramWB.webp",             alt: "Telegram",        w: 44 },
 ];
 
 const FINAL_CTA_OVERLAP_TOP_VH = 10;
@@ -1494,9 +1493,12 @@ const FINAL_CTA_EXTRA_BOTTOM_VH = 55;
 const ORBIT_PERIOD_MS = 24000;
 const ORBIT_TRANSITION_MS = 700;
 const ROW_ICON_SIZE = 56;
-const ROW_ICON_IMG_SIZE = 36;
 const ROW_GAP = 12;
 const ROW_Y_OFFSET = 140;
+// Иконка рисуется в максимальном размере орбиты и уменьшается через scale():
+// анимация меняет только transform/opacity — без layout на каждом кадре.
+const ORBIT_ICON_BASE = 96;
+const ORBIT_ICON_IMG_BASE = 58;
 
 const FINAL_CTA_MASK =
   "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 26%, black 38%)";
@@ -1577,7 +1579,6 @@ const FinalCTA: React.FC<{
         y,
         opacity: 0.1 + 0.9 * t,
         outerSize: 80 + 16 * sf,
-        imgSize: 44 + 12 * sf,
       };
     };
 
@@ -1597,46 +1598,25 @@ const FinalCTA: React.FC<{
         y: ROW_Y_OFFSET + rowIdx * (ROW_ICON_SIZE + ROW_GAP),
         opacity: 1,
         outerSize: ROW_ICON_SIZE,
-        imgSize: ROW_ICON_IMG_SIZE,
       };
     };
 
     const writeIcon = (
       el: HTMLDivElement,
-      v: { x: number; y: number; opacity: number; outerSize: number; imgSize: number }
+      v: { x: number; y: number; opacity: number; outerSize: number }
     ) => {
-      el.style.transform = `translate(-50%, -50%) translate(${v.x}px, ${v.y}px)`;
+      const scale = v.outerSize / ORBIT_ICON_BASE;
+      el.style.transform = `translate(-50%, -50%) translate(${v.x.toFixed(1)}px, ${v.y.toFixed(1)}px) scale(${scale.toFixed(3)})`;
       el.style.opacity = v.opacity.toFixed(3);
-
-      const inner = el.firstElementChild as HTMLElement | null;
-      if (inner) {
-        inner.style.width = `${v.outerSize}px`;
-        inner.style.height = `${v.outerSize}px`;
-        const img = inner.querySelector("img") as HTMLImageElement | null;
-        if (img) {
-          img.style.width = `${v.imgSize}px`;
-          img.style.height = `${v.imgSize}px`;
-        }
-      }
     };
 
     const setTransition = (on: boolean) => {
       const tr = on
         ? `transform ${ORBIT_TRANSITION_MS}ms cubic-bezier(0.4,0,0.2,1), opacity ${ORBIT_TRANSITION_MS}ms ease-out`
         : "none";
-      const trSize = on
-        ? `width ${ORBIT_TRANSITION_MS}ms cubic-bezier(0.4,0,0.2,1), height ${ORBIT_TRANSITION_MS}ms cubic-bezier(0.4,0,0.2,1)`
-        : "none";
 
       icons.forEach((el) => {
-        if (!el) return;
-        el.style.transition = tr;
-        const inner = el.firstElementChild as HTMLElement | null;
-        if (inner) {
-          inner.style.transition = trSize;
-          const img = inner.querySelector("img") as HTMLImageElement | null;
-          if (img) img.style.transition = trSize;
-        }
+        if (el) el.style.transition = tr;
       });
 
       void (icons[0]?.offsetWidth ?? 0);
@@ -1776,13 +1756,13 @@ const FinalCTA: React.FC<{
                 >
                   <div
                     className="rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/30 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_6px_20px_rgba(0,0,0,0.2)]"
-                    style={{ width: ROW_ICON_SIZE, height: ROW_ICON_SIZE }}
+                    style={{ width: ORBIT_ICON_BASE, height: ORBIT_ICON_BASE }}
                   >
                     <img
                       src={i.src}
                       alt=""
                       className="object-contain"
-                      style={{ width: ROW_ICON_IMG_SIZE, height: ROW_ICON_IMG_SIZE }}
+                      style={{ width: ORBIT_ICON_IMG_BASE, height: ORBIT_ICON_IMG_BASE }}
                       loading="lazy"
                     />
                   </div>

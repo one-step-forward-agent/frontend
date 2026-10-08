@@ -19,7 +19,7 @@ const TOTAL = 10;
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
-  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl " +
   "ring-1 ring-white/30 dark:ring-white/10 " +
   "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
   "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
@@ -224,7 +224,7 @@ export const FieldOfActivity: React.FC = () => {
                       "relative shrink-0 w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden",
                       "ring-1 transition-all duration-300",
                       "bg-white/[0.06] dark:bg-white/[0.02]",
-                      "backdrop-blur-3xl",
+                      "backdrop-blur-xl",
                       !active && [
                         p.tint,
                         "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
@@ -265,7 +265,7 @@ export const FieldOfActivity: React.FC = () => {
               "transition-all duration-300",
               "hover:-translate-y-0.5",
               "bg-white/[0.06] dark:bg-white/[0.02]",
-              "backdrop-blur-3xl",
+              "backdrop-blur-xl",
               "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
               "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]",
               showCustom
@@ -280,7 +280,7 @@ export const FieldOfActivity: React.FC = () => {
                 className={cn(
                   "shrink-0 w-10 h-10 rounded-xl flex items-center justify-center",
                   "bg-white/[0.06] dark:bg-white/[0.02]",
-                  "backdrop-blur-3xl",
+                  "backdrop-blur-xl",
                   "ring-1 ring-white/30 dark:ring-white/10",
                   "text-gray-700 dark:text-gray-300",
                   "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]",
@@ -381,7 +381,7 @@ export const FieldOfActivity: React.FC = () => {
                           className={cn(
                             "relative shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-xs font-semibold tabular-nums",
                             "bg-white/[0.06] dark:bg-white/[0.02]",
-                            "backdrop-blur-3xl",
+                            "backdrop-blur-xl",
                             "ring-1 ring-white/30 dark:ring-white/10",
                             "text-gray-600 dark:text-gray-300",
                             "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"

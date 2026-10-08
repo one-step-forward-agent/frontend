@@ -17,7 +17,7 @@ const TOTAL = 10;
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
-  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl " +
   "ring-1 ring-white/30 dark:ring-white/10 " +
   "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
   "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
@@ -303,7 +303,7 @@ export const GoalsAndHabits: React.FC = () => {
                     "group relative inline-flex items-center gap-1.5 overflow-hidden",
                     "px-3 py-1.5 rounded-full text-xs font-medium",
                     "transition-all duration-200",
-                    "backdrop-blur-3xl",
+                    "backdrop-blur-xl",
                     !already && [
                       "bg-white/[0.06] dark:bg-white/[0.02]",
                       "ring-1 ring-white/30 dark:ring-white/10",
@@ -402,7 +402,7 @@ export const GoalsAndHabits: React.FC = () => {
                           className={cn(
                             "relative shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-xs font-semibold tabular-nums",
                             "bg-white/[0.06] dark:bg-white/[0.02]",
-                            "backdrop-blur-3xl",
+                            "backdrop-blur-xl",
                             "ring-1 ring-white/30 dark:ring-white/10",
                             "text-gray-600 dark:text-gray-300",
                             "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
@@ -417,7 +417,7 @@ export const GoalsAndHabits: React.FC = () => {
                         <div
                           className={cn(
                             "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
-                            "ring-1 backdrop-blur-3xl",
+                            "ring-1 backdrop-blur-xl",
                             "bg-white/[0.06] dark:bg-white/[0.02]",
                             visual.tint,
                             visual.tintSoft,

@@ -47,13 +47,13 @@ const OAUTH_INTEGRATIONS: Record<
     title: "Яндекс Календарь",
     description:
       "Импорт событий Яндекс Календаря в Dayla и экспорт обратно.",
-    src: "/images/yandexcalendar.png",
+    src: "/images/yandexcalendar.webp",
   },
   notion: {
     title: "Notion",
     description:
       "Импорт страниц и баз Notion в Dayla и синхронизация задач.",
-    src: "/images/Notion.png",
+    src: "/images/Notion.webp",
   },
   jira: {
     title: "Jira",
@@ -263,7 +263,7 @@ function IntegrationCard({
           aria-hidden="true"
           className={cn(
             "relative shrink-0 w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden",
-            "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-3xl",
+            "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl",
             "ring-1 ring-white/30 dark:ring-white/10",
           )}
         >

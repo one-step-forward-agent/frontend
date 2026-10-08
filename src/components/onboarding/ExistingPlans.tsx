@@ -14,7 +14,7 @@ const TOTAL = 10;
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
-  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl " +
   "ring-1 ring-white/30 dark:ring-white/10 " +
   "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
   "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
@@ -244,7 +244,7 @@ export const ExistingPlans: React.FC = () => {
                 className={cn(
                   "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
                   "bg-white/[0.06] dark:bg-white/[0.02]",
-                  "backdrop-blur-3xl",
+                  "backdrop-blur-xl",
                   "ring-1 ring-white/30 dark:ring-white/10",
                   "text-blue-600 dark:text-blue-300",
                   "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
@@ -331,7 +331,7 @@ export const ExistingPlans: React.FC = () => {
                       ]
                     : [
                         "bg-white/[0.06] dark:bg-white/[0.02]",
-                        "backdrop-blur-3xl",
+                        "backdrop-blur-xl",
                         "ring-white/30 dark:ring-white/10",
                         "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]",
                       ]

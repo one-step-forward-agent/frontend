@@ -22,20 +22,17 @@ export const DashboardBackdrop: React.FC = () => (
     <div
       className="absolute -top-40 -left-40 w-[40rem] h-[40rem] rounded-full
                  bg-sky-400/10 dark:bg-sky-500/[0.07]
-                 blur-[120px]
-                 animate-[blob-drift-1_28s_ease-in-out_infinite]"
+                 blur-[120px]"
     />
     <div
       className="absolute -top-20 right-[-10rem] w-[36rem] h-[36rem] rounded-full
                  bg-violet-400/10 dark:bg-violet-500/[0.07]
-                 blur-[120px]
-                 animate-[blob-drift-2_32s_ease-in-out_infinite]"
+                 blur-[120px]"
     />
     <div
       className="absolute bottom-[-12rem] left-1/3 w-[42rem] h-[42rem] rounded-full
                  bg-blue-400/[0.08] dark:bg-blue-500/[0.06]
-                 blur-[130px]
-                 animate-[blob-drift-3_36s_ease-in-out_infinite]"
+                 blur-[130px]"
     />
 
     {/* ─── 3. Шум (grain) ─── */}

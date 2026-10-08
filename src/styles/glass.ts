@@ -31,7 +31,7 @@ export const glass: Record<"subtle" | "medium" | "strong", GlassPreset> = {
   strong: {
     surface:
       "bg-white/40 dark:bg-gray-900/25 " +
-      "backdrop-blur-3xl " +
+      "backdrop-blur-xl " +
       "ring-1 ring-white/70 dark:ring-white/15 " +
       "shadow-[0_12px_40px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.85)] " +
       "dark:shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)]",

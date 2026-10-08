@@ -31,13 +31,13 @@ const cx = (...parts: (ClassValue | ClassValue[])[]): string => {
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
-  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl " +
   "ring-1 ring-white/30 dark:ring-white/10 " +
   "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
   "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
 
 const GLASS_BODY_ERROR =
-  "bg-red-500/[0.08] dark:bg-red-500/[0.05] backdrop-blur-3xl " +
+  "bg-red-500/[0.08] dark:bg-red-500/[0.05] backdrop-blur-xl " +
   "ring-1 ring-red-400/40 dark:ring-red-400/30 " +
   "shadow-[0_4px_24px_rgba(220,38,38,0.12),inset_0_1px_0_rgba(255,255,255,0.6)] " +
   "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]";
@@ -128,7 +128,7 @@ const BUTTON_VARIANT: Record<ButtonVariant, string> = {
   // ─── Стеклянное тело с лёгким голубым оттенком ───
   "text-sky-800 dark:text-sky-100",
   "bg-sky-500/20 dark:bg-sky-400/15",
-  "backdrop-blur-3xl",
+  "backdrop-blur-xl",
   "ring-1 ring-sky-400/40 dark:ring-sky-400/30",
   "shadow-[0_4px_14px_rgba(56,189,248,0.15),inset_0_1px_0_rgba(255,255,255,0.6)]",
   "dark:shadow-[0_4px_14px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]",
@@ -305,7 +305,7 @@ export function Empty({
         aria-hidden="true"
         className={cx(
           "relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden mb-3",
-          "bg-white/[0.03] dark:bg-white/[0.01] backdrop-blur-3xl",
+          "bg-white/[0.03] dark:bg-white/[0.01] backdrop-blur-xl",
           "ring-1 ring-white/30 dark:ring-white/10",
           "text-sky-600 dark:text-sky-300",
           "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
@@ -475,7 +475,7 @@ export function Switch({
               ]
             : [
                 "bg-white/[0.06] dark:bg-white/[0.02]",
-                "backdrop-blur-3xl",
+                "backdrop-blur-xl",
                 "ring-white/30 dark:ring-white/10",
                 "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]",
               ]

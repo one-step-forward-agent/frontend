@@ -29,6 +29,11 @@ server {
     gzip on;
     gzip_comp_level 6;
     gzip_min_length 1024;
+    # Behind the host nginx every request is proxied: compress those too, and tell caches it varies
+    gzip_proxied any;
+    gzip_vary on;
+    open_file_cache max=1000 inactive=60s;
+    open_file_cache_valid 60s;
     gzip_types text/css application/javascript application/json image/svg+xml text/plain text/markdown;
 
     set $csp "default-src 'self'; script-src 'self' https://mc.yandex.ru https://yandex.ru https://an.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru https://mc.yandex.com wss://mc.yandex.ru; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";

@@ -13,7 +13,7 @@ import { cn } from "@/utils/cn";
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
-  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl " +
+  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl " +
   "ring-1 ring-white/30 dark:ring-white/10 " +
   "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
   "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
@@ -342,7 +342,7 @@ const ConsentCheckbox: React.FC<ConsentCheckboxProps> = ({
         "ring-1 transition-all duration-200",
         checked
           ? "text-white ring-white/40"
-          : "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-3xl ring-white/30 dark:ring-white/10"
+          : "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl ring-white/30 dark:ring-white/10"
       )}
       style={
         checked

@@ -214,7 +214,7 @@ export function AssistantPage() {
               aria-hidden="true"
               className={cn(
                 "relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden mb-3",
-                "bg-white/[0.03] dark:bg-white/[0.01] backdrop-blur-3xl",
+                "bg-white/[0.03] dark:bg-white/[0.01] backdrop-blur-xl",
                 "ring-1 ring-white/30 dark:ring-white/10",
                 "text-sky-600 dark:text-sky-300",
                 "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
