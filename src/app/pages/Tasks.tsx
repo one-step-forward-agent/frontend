@@ -58,7 +58,6 @@ const CHIP_ACTIVE =
 /* ─── TasksPage ─────────────────────────────────────────── */
 
 export function TasksPage() {
-  useTitle("Задачи");
   const today = startOfDay(new Date());
   const [tab, setTab] = useState<"active" | "done">("active");
   const [filter, setFilter] = useState<Filter>("all");
@@ -136,8 +135,8 @@ export function TasksPage() {
   return (
     <div className={PAGE}>
       <PageHeader
-        title="Задачи"
-        actions={
+        title=
+        {
           <div className={SEGMENTED} role="tablist" aria-label="Список">
             {(
               [
