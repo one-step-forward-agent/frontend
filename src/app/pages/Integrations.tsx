@@ -1,5 +1,6 @@
 // src/pages/IntegrationsPage.tsx
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { Icon } from "../components/icons";
 import type { Integration } from "../api/types";
@@ -41,6 +42,32 @@ export function IntegrationsPage() {
   useTitle("Интеграции");
   const integrations = useAsync(() => api.integrations.list(), []);
   const [editing, setEditing] = useState<Integration | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const toast = useToast();
+
+  const labelOf = (slug: string) =>
+  ({ google: "Google Calendar", yandex: "Яндекс Календарь",
+     notion: "Notion", jira: "Jira" }[slug] ?? slug);
+
+  useEffect(() => {
+    const connected = searchParams.get("connected");
+    const error = searchParams.get("error");
+
+    if (connected) {
+      toast(`${labelOf(connected)} подключён`);
+      integrations.reload();
+    }
+    if (error) {
+      toast(decodeURIComponent(error));
+    }
+
+    if (connected || error) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("connected");
+      next.delete("error");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams]);
 
   return (
     <div className={PAGE}>
@@ -118,7 +145,7 @@ function IntegrationCard({
 
   const connectOAuth = () =>
     run("connect", async () => {
-      const result = await api.integrations.connect(item.slug, {});
+      const result = await api.integrations.connect(item.slug, {}, window.location.pathname);
       if ("authorization_url" in result)
         window.location.assign(result.authorization_url);
     });
