@@ -15,6 +15,7 @@ import { Icon } from "../components/icons";
 import { Badge, Button, PageHeader, Switch, useErrorToast } from "../components/ui";
 import {
   TEMPORARY_ERROR,
+  dayKey,
   deadlineTone,
   errorText,
   formatDate,
@@ -418,9 +419,12 @@ function ChatMessage({
             <>
               <p className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
                 <Icon name="check" size={16} />{" "}
-                {reply.kind === "updated" ? "Изменила" : "Добавила в календарь"}
+                {reply.kind === "updated" ? reply.text ?? "Изменила" : "Добавила в календарь"}
               </p>
               <AssistantEvents events={reply.events} />
+              {reply.kind === "updated" && reply.moved && (
+                <MoveBackButton moved={reply.moved} onDone={(next) => onReply(message.id, next)} />
+              )}
               {reply.kind === "created" && reply.event_ids.length > 0 && (
                 <UndoButton
                   eventIds={reply.event_ids}
@@ -460,7 +464,7 @@ function ChatMessage({
           {reply.kind === "advice" && <AdviceReply items={reply.items} onAppend={onAppend} />}
           {reply.kind === "reminders" && <RemindersReply initial={reply.settings} />}
           {reply.kind === "agenda" && (
-            <AgendaReply reply={reply} onReply={(next) => onReply(message.id, next)} />
+            <AgendaReply reply={reply} onReply={(next) => onReply(message.id, next)} onAppend={onAppend} />
           )}
           {(reply.kind === "answer" ||
             reply.kind === "not_found" ||
@@ -486,11 +490,14 @@ type AgendaReplyData = Extract<AssistantReply, { kind: "agenda" }>;
 function AgendaReply({
   reply,
   onReply,
+  onAppend,
 }: {
   reply: AgendaReplyData;
   onReply: (reply: AssistantReply) => void;
+  onAppend: (reply: AssistantReply) => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [moving, setMoving] = useState(false);
   const reportError = useErrorToast();
 
   const show = async (scope: AgendaScope, mark = false) => {
@@ -512,7 +519,9 @@ function AgendaReply({
         {count
           ? reply.mark
             ? `Отметьте выполненное · ${reply.title}`
-            : reply.title
+            : moving
+              ? `Что перенести? · ${reply.title}`
+              : reply.title
           : "Ничего не запланировано."}
       </p>
       {reply.days.map((day) => (
@@ -520,7 +529,13 @@ function AgendaReply({
           <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
             {day.label}
           </h3>
-          {reply.mark ? <MarkList events={day.events} /> : <AssistantEvents events={day.events} />}
+          {reply.mark ? (
+            <MarkList events={day.events} />
+          ) : moving ? (
+            <MoveList events={day.events} onMoved={onAppend} />
+          ) : (
+            <AssistantEvents events={day.events} />
+          )}
         </div>
       ))}
       {reply.scope && (
@@ -556,6 +571,11 @@ function AgendaReply({
               onClick={() => show(reply.scope ?? "today", true)}
             >
               Отметить выполненные
+            </Button>
+          )}
+          {count > 0 && !reply.mark && (
+            <Button variant="ghost" size="sm" icon={moving ? "left" : "sync"} disabled={busy} onClick={() => setMoving((value) => !value)}>
+              {moving ? "Готово" : "Перенести"}
             </Button>
           )}
         </div>
@@ -618,6 +638,128 @@ function MarkList({ events }: { events: AssistantEvent[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/* ─── MoveList: «Перенести» под планом ───────────────────── */
+
+const addDays = (date: Date, days: number) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+
+function MoveList({ events, onMoved }: { events: AssistantEvent[]; onMoved: (reply: AssistantReply) => void }) {
+  const [movedTo, setMovedTo] = useState<Record<number, string>>({});
+  const [busy, setBusy] = useState<number | null>(null);
+  const reportError = useErrorToast();
+  const today = new Date();
+  const quick = [
+    { label: "Сегодня", day: dayKey(today) },
+    { label: "Завтра", day: dayKey(addDays(today, 1)) },
+    { label: "Послезавтра", day: dayKey(addDays(today, 2)) },
+  ];
+
+  const move = async (event: AssistantEvent, day: string) => {
+    if (!day) return;
+    setBusy(event.id);
+    try {
+      const { message_id: _ignored, ...reply } = await api.assistant.move(event.id, day);
+      if (reply.kind === "updated") {
+        setMovedTo((current) => ({ ...current, [event.id]: day }));
+        notifyTasksChanged();
+      }
+      onMoved(reply as AssistantReply);
+    } catch (error) {
+      reportError(errorText(error));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const open = events.filter((event) => !event.completed);
+  if (!open.length) return <p className="text-sm text-gray-500 dark:text-gray-400">Переносить нечего.</p>;
+
+  return (
+    <ul className="space-y-2">
+      {open.map((event) => {
+        const current = event.start.slice(0, 10);
+        const done = movedTo[event.id];
+        return (
+          <li key={event.id} className={cn("relative rounded-xl px-3 py-2 space-y-1.5", GLASS_BODY)}>
+            <span className="flex items-baseline gap-2 text-sm">
+              <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums shrink-0">
+                {event.all_day ? "без времени" : formatTime(new Date(event.start))}
+              </span>
+              <span className={cn("truncate text-gray-900 dark:text-white", done && "text-gray-400 dark:text-gray-500")}>
+                {event.title}
+              </span>
+            </span>
+            {done ? (
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                Перенесено на {relativeDay(parseDayKey(done) ?? today).toLowerCase()}
+              </p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {quick
+                  .filter((option) => option.day !== current)
+                  .map((option) => (
+                    <button
+                      key={option.label}
+                      type="button"
+                      disabled={busy !== null}
+                      onClick={() => move(event, option.day)}
+                      className={cn("relative px-2.5 h-7 rounded-full text-xs font-medium disabled:opacity-50", GLASS_CHIP)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                <label className={cn("relative inline-flex items-center gap-1 px-2.5 h-7 rounded-full text-xs font-medium cursor-pointer", GLASS_CHIP)}>
+                  <Icon name="calendar" size={12} /> Другой день
+                  <input
+                    type="date"
+                    aria-label={`Другой день для «${event.title}»`}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    min={dayKey(today)}
+                    disabled={busy !== null}
+                    onChange={(change) => move(event, change.target.value)}
+                    onClick={(click) => openPicker(click.currentTarget)}
+                  />
+                </label>
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function MoveBackButton({
+  moved,
+  onDone,
+}: {
+  moved: { event_id: number; from: string; from_label: string };
+  onDone: (reply: AssistantReply) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const reportError = useErrorToast();
+
+  const back = async () => {
+    setBusy(true);
+    try {
+      const { message_id: _ignored, ...reply } = await api.assistant.move(moved.event_id, moved.from);
+      notifyTasksChanged();
+      onDone(reply as AssistantReply);
+    } catch (error) {
+      reportError(errorText(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      <Button variant="ghost" size="sm" icon="left" busy={busy} onClick={back}>
+        Вернуть на {moved.from_label}
+      </Button>
+    </div>
   );
 }
 

@@ -179,6 +179,9 @@ export const api = {
       request<AssistantReply & { message_id?: number }>("/api/assistant/chat", json("POST", { text }), "assistant_message"),
     /** Тот же план, что бот показывает под своими кнопками; mark — в виде списка для отметок. */
     agenda: (scope: AgendaScope, mark = false) => request<AssistantReply>(`/api/assistant/agenda/${scope}?mark=${mark}`),
+    /** «Перенести» в списке задач: задача получает выбранный день и сохраняет время. */
+    move: (eventId: number, date: string) =>
+      request<AssistantReply & { message_id?: number }>(`/api/assistant/events/${eventId}/move`, json("POST", { date }), "assistant_move"),
     undo: (eventIds: number[]) => request<{ deleted: number }>("/api/assistant/undo", json("POST", { event_ids: eventIds }), "assistant_undo"),
     rate: (messageId: number, value: -1 | 0 | 1) =>
       request<{ id: number; rating: -1 | 1 | null }>(`/api/assistant/messages/${messageId}/rating`, json("POST", { value }), {

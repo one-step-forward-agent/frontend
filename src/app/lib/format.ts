@@ -192,7 +192,7 @@ export function plural(count: number, one: string, few: string, many: string): s
   return many;
 }
 
-export const TEMPORARY_ERROR = "Временная ошибка — попробуйте ещё раз через минуту.";
+export const TEMPORARY_ERROR = "Ошибка сервера. Попробуйте ещё раз позже.";
 
 export const stripTags = (text: string) =>
   text.replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");

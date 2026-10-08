@@ -141,7 +141,15 @@ export type AgendaScope = "today" | "tomorrow" | "week";
 
 export type AssistantReply =
   | { kind: "proposal"; draft_id: number; events: DraftItem[]; answer: string | null; note: string | null }
-  | { kind: "created" | "updated"; events: AssistantEvent[]; event_ids: number[] }
+  | {
+      kind: "created" | "updated";
+      events: AssistantEvent[];
+      event_ids: number[];
+      /** "Перенесла «…» на …" after the move buttons */
+      text?: string;
+      /** A task moved with the buttons: "Вернуть" moves it back to `from` */
+      moved?: { event_id: number; from: string; to: string; from_label: string };
+    }
   | { kind: "topic"; title: string; text: string }
   | { kind: "delete_proposal"; draft_id: number; count: number; title: string; events: AssistantEvent[]; answer: string | null }
   | { kind: "deleted"; count: number; text: string }
