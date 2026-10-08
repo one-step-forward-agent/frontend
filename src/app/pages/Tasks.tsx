@@ -94,11 +94,13 @@ export function TasksPage() {
     title: string;
     items: CalendarEvent[];
     showDate?: boolean;
+    overdue?: boolean;
   }[] = [
     {
       title: "Просроченные",
       items: active.filter((event) => day(event) < todayKey),
       showDate: true,
+      overdue: true,
     },
   ];
 
@@ -211,6 +213,7 @@ export function TasksPage() {
               <GlassCard
                 key={group.title}
                 title={`${group.title} · ${group.items.length}`}
+                actions={group.overdue && group.items.length > 1 ? <CompleteAll events={group.items} /> : undefined}
               >
                 <EventList
                   events={group.items}
@@ -319,6 +322,32 @@ function QuickAdd({ day, tagId }: { day: string; tagId: number | null }) {
         disabled={!title.trim()}
       />
     </form>
+  );
+}
+
+/* ─── CompleteAll ──────────────────────────────────────── */
+
+// Done but never marked: the usual reason for a long overdue list
+function CompleteAll({ events }: { events: CalendarEvent[] }) {
+  const [busy, setBusy] = useState(false);
+  const reportError = useErrorToast();
+
+  const complete = async () => {
+    setBusy(true);
+    try {
+      await Promise.all(events.map((event) => api.events.complete(event.id, true)));
+    } catch (error) {
+      reportError(errorText(error));
+    } finally {
+      notifyTasksChanged();
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Button variant="ghost" size="sm" icon="check" busy={busy} onClick={complete}>
+      Всё сделано
+    </Button>
   );
 }
 

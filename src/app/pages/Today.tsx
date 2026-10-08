@@ -39,13 +39,6 @@ const EVENING_HOUR = 18;
 
 const PAGE = "relative max-w-5xl mx-auto pt-[1.5vh]";
 
-function greeting(hour: number) {
-  if (hour < 5) return "Доброй ночи";
-  if (hour < 12) return "Доброе утро";
-  if (hour < 18) return "Добрый день";
-  return "Добрый вечер";
-}
-
 const movable = (event: CalendarEvent) =>
   event.all_day && !event.completed_at && !event.series_id && !event.is_fixed;
 
@@ -70,10 +63,12 @@ export function TodayPage() {
   const recommendations = useAsync(() => loadRecommendations(user.id), [user.id]);
   const telegram = useAsync(() => api.telegram.status(), []);
 
+  // Tips change with the tasks too: "Незакрытые задачи" goes away once they are done
   const reloadAll = useCallback(() => {
     events.reload();
     stats.reload();
-  }, [events.reload, stats.reload]);
+    recommendations.reload();
+  }, [events.reload, stats.reload, recommendations.reload]);
   useTasksChanged(reloadAll);
 
   const todays = (events.data ?? []).filter((event) => occursOn(event, today));
@@ -94,14 +89,11 @@ export function TodayPage() {
     <div className={PAGE}>
       <PageHeader
         title={
-          <span className="first-letter:uppercase">
+          <span className="inline-block first-letter:uppercase">
             {dayTitle(now).replace(/^Сегодня,?\s*/i, "")}
           </span>
         }
-        subtitle={`${greeting(now.getHours())}${user.name ? `, ${user.name}` : ""}`}
       />
-
-      <Recommendations items={recommendations.data} userId={user.id} />
 
       {events.error && (
         <div className="mb-4">
@@ -116,7 +108,8 @@ export function TodayPage() {
       />
 
       <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
-        {/* ─── Задачи на сегодня ─────────────────── */}
+        {/* ─── Задачи на сегодня, под ними советы ─── */}
+        <div className="min-w-0">
         <GlassCard
           title={
             todays.length
@@ -164,6 +157,9 @@ export function TodayPage() {
             </Empty>
           )}
         </GlassCard>
+
+        <Recommendations items={recommendations.data} userId={user.id} />
+        </div>
 
         {/* ─── Правая колонка ───────────────────── */}
         <div className="space-y-6">
@@ -343,7 +339,7 @@ function MoveSuggestion({
           {expanded ? (
             <>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Отметьте то, что уже сделано, — остальное можно перенести.
+                Отметьте сделанное галочкой — или всё сразу кнопкой «Всё сделано». Остальное можно перенести.
               </p>
               <div className="mt-3">
                 <EventList events={items} showDate />
@@ -384,6 +380,15 @@ function MoveSuggestion({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
+        <Button
+          size="sm"
+          variant="primary"
+          icon="check"
+          busy={busy === "done"}
+          onClick={markAll}
+        >
+          {items.length > 1 ? `Всё сделано (${items.length})` : "Сделано"}
+        </Button>
         {overdue.length > 0 && (
           <Button
             size="sm"
@@ -396,23 +401,12 @@ function MoveSuggestion({
         )}
         <Button
           size="sm"
-          variant="primary"
+          variant="secondary"
           busy={busy === "tomorrow"}
           onClick={() => move("tomorrow")}
         >
           На завтра
         </Button>
-        {expanded && (
-          <Button
-            size="sm"
-            variant="secondary"
-            icon="check"
-            busy={busy === "done"}
-            onClick={markAll}
-          >
-            Всё сделано
-          </Button>
-        )}
         <Button
           size="sm"
           variant="ghost"
@@ -465,7 +459,7 @@ function Recommendations({
   const items = loaded ?? storedRecommendations(userId);
 
   return (
-    <div className="mb-6">
+    <div className="mt-6">
       <GlassCard>
         <div className="flex items-start gap-3">
           <span
