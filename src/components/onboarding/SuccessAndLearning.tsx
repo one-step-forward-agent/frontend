@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
-import { useAuthStore } from "@/store/authStore";
 import { applyOnboarding, useOnboarding } from "./OnboardingContext";
 import { cn } from "@/utils/cn";
 
@@ -58,14 +57,9 @@ export const SuccessAndLearning: React.FC = () => {
   const navigate = useNavigate();
   const { data } = useOnboarding();
 
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const finish = async () => {
-    if (isAuthenticated) {
-      await applyOnboarding();
-      navigate("/app", { replace: true });
-    } else {
-      navigate("/register", { replace: true });
-    }
+    await applyOnboarding();
+    navigate("/app", { replace: true });
   };
 
   const summary = React.useMemo(() => {

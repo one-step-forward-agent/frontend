@@ -35,7 +35,11 @@ function RootRoute() {
   return isAuthenticated ? <Navigate to={`/app${search}`} replace /> : <Start />;
 }
 
+// Onboarding runs after registration: the integrations step needs a session to start OAuth.
 function OnboardingRouteLayout() {
+  const { isAuthenticated, isLoading } = useAuthStore();
+  if (isLoading) return <FullScreenLoader />;
+  if (!isAuthenticated) return <Navigate to="/register" replace />;
   return (
     <OnboardingProvider>
       <Outlet />

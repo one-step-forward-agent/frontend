@@ -2,7 +2,7 @@
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  ChevronDown, ChevronUp,
+  Check, ChevronDown, ChevronUp,
   GraduationCap, Link2,
 } from "lucide-react";
 
@@ -57,6 +57,16 @@ const INTEGRATIONS: Integration[] = [
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
   INTEGRATIONS.find((i) => i.id === id)?.kind === "oauth";
 
+const loadConnected = (): Promise<Provider[]> =>
+  api.integrations
+    .list()
+    .then((items) =>
+      items
+        .filter((i) => i.connection && INTEGRATIONS.some((x) => x.id === i.slug))
+        .map((i) => i.slug as Provider)
+    )
+    .catch(() => []);
+
 /* ─── Компонент ─────────────────────────────────────────── */
 
 export const Integrations: React.FC = () => {
@@ -76,6 +86,16 @@ export const Integrations: React.FC = () => {
   const [showGuide, setShowGuide] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Провайдеры, у которых OAuth уже прошёл (по данным бэкенда и по ?connected=).
+  const [connected, setConnected] = React.useState<Provider[]>([]);
+  const [busy, setBusy] = React.useState(false);
+
+  React.useEffect(() => {
+    if (searchParams.has("connected")) return; // загрузит обработчик возврата с OAuth
+    loadConnected().then(setConnected);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toggle = (id: Provider) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -83,79 +103,71 @@ export const Integrations: React.FC = () => {
     setError(null);
   };
 
+  /* ─── Старт OAuth у следующего неподключённого провайдера ─── */
+  // URL с правильными client_id, scope, redirect_uri и подписанным
+  // state генерирует бэкенд — фронт только редиректит.
+  const connectNext = async (queue: Provider[], done: Provider[]) => {
+    const next = queue.filter(isOAuthProvider).find((id) => !done.includes(id));
+    if (!next) {
+      navigate("/onboarding/success-and-learning");
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await api.integrations.connect(next, {}, window.location.pathname);
+      if ("authorization_url" in result) {
+        window.location.assign(result.authorization_url);
+        return;
+      }
+      await connectNext(queue, [...done, next]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось начать подключение");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   /* ─── Возврат с OAuth ─────────────────────────────── */
   // Бэкенд сам обменивает code на токен и редиректит сюда
   // с ?connected=<provider> или ?error=<сообщение>.
   React.useEffect(() => {
-    const connected = searchParams.get("connected");
+    const connectedParam = searchParams.get("connected") as Provider | null;
     const errorParam = searchParams.get("error");
-    if (!connected && !errorParam) return;
-
-    if (connected) {
-      setSelected((prev) =>
-        prev.includes(connected as Provider)
-          ? prev
-          : [...prev, connected as Provider]
-      );
-      // Объединяем уже сохранённые интеграции с новым провайдером,
-      // чтобы не потерять предыдущие подключения.
-      const existing = (data.integrations ?? []) as string[];
-      if (!existing.includes(connected)) {
-        update("integrations", [...existing, connected]);
-      }
-    }
-    if (errorParam) {
-      setError(decodeURIComponent(errorParam));
-    }
+    if (!connectedParam && !errorParam) return;
 
     const next = new URLSearchParams(searchParams);
     next.delete("connected");
     next.delete("error");
     setSearchParams(next, { replace: true });
+
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+      return;
+    }
+    if (connectedParam) {
+      const queue = selected.includes(connectedParam) ? selected : [...selected, connectedParam];
+      setSelected(queue);
+      update("integrations", queue);
+      setBusy(true);
+      // Сверяемся с бэкендом, чтобы не запускать OAuth повторно для уже подключённых,
+      // и продолжаем цепочку: подключаем следующий выбранный сервис.
+      void loadConnected().then((fromServer) => {
+        const done = [...new Set([...fromServer, connectedParam])];
+        setConnected(done);
+        return connectNext(queue, done);
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  /* ─── Старт OAuth-цепочки ─────────────────────────── */
   const handleNext = async () => {
     setError(null);
-
-    if (selected.length === 0) {
-      update("integrations", []);
-      navigate("/onboarding/success-and-learning");
-      return;
-    }
-
-    const oauthQueue = selected.filter(isOAuthProvider);
-    const manualOnly = selected.filter((id) => !isOAuthProvider(id));
-
     // manual-провайдеры сохраняются сразу — они подключаются в настройках
-    update("integrations", [...manualOnly, ...oauthQueue]);
-
-    if (oauthQueue.length === 0) {
-      navigate("/onboarding/success-and-learning");
-      return;
-    }
-
-    // Запускаем OAuth у первого провайдера из очереди.
-    // URL с правильными client_id, scope, redirect_uri и подписанным
-    // state генерирует бэкенд — фронт только редиректит.
-    const firstSlug = oauthQueue[0];
-    try {
-      const result = await api.integrations.connect(
-        firstSlug,
-        {},
-        window.location.pathname,
-      );
-      if ("authorization_url" in result) {
-        window.location.assign(result.authorization_url);
-        return;
-      }
-      // manual-ответ (не должно случиться, т.к. первый — oauth)
-      navigate("/onboarding/success-and-learning");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось начать подключение");
-    }
+    update("integrations", selected);
+    await connectNext(selected, connected);
   };
+
+  const pending = selected.filter((id) => isOAuthProvider(id) && !connected.includes(id));
 
   return (
     <>
@@ -165,11 +177,14 @@ export const Integrations: React.FC = () => {
         title="Что подключим?"
         onBack={() => navigate("/onboarding/existing-plans")}
         onNext={handleNext}
+        nextDisabled={busy}
         onSkip={() => navigate("/onboarding/success-and-learning")}
         nextLabel={
-          selected.length > 0
-            ? `Подключить${selected.length > 1 ? ` (${selected.length})` : ""}`
-            : "Далее"
+          busy
+            ? "Подключаем…"
+            : pending.length > 0
+              ? `Подключить${pending.length > 1 ? ` (${pending.length})` : ""}`
+              : "Далее"
         }
       >
         <div className="relative space-y-4 sm:space-y-5">
@@ -259,6 +274,12 @@ export const Integrations: React.FC = () => {
                       <p className="font-medium text-gray-900 dark:text-white leading-snug">
                         {i.name}
                       </p>
+                      {connected.includes(i.id) && (
+                        <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-300">
+                          <Check size={12} aria-hidden="true" />
+                          Подключено
+                        </p>
+                      )}
                     </div>
                   </div>
                 </button>

@@ -7,7 +7,6 @@ import {
 
 import { useAuthStore } from "@/store/authStore";
 import { Alert, FormField, Input } from "@/components/ui";
-import { applyOnboarding } from "@/components/onboarding/OnboardingContext";
 import { sendMetricGoal } from "@/utils/metrics";
 import { safeNext } from "./LoginPage";
 import { cn } from "@/utils/cn";
@@ -67,8 +66,9 @@ const RegisterPage: React.FC = () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       await register({ email, password, name: username, timezone });
       sendMetricGoal("registration_success");
-      await applyOnboarding();
-      navigate(safeNext(searchParams.get("next")), { replace: true });
+      // A fresh account goes through onboarding, which is applied at its last step.
+      const next = searchParams.get("next");
+      navigate(next ? safeNext(next) : "/onboarding/field-of-activity", { replace: true });
     } catch {
     }
   };
