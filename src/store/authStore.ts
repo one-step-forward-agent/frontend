@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api, ApiError, onUnauthorized } from "@/app/api/client";
+import { errorText } from "@/app/lib/format";
 import type { User } from "@/app/api/types";
 import { DEV_AUTH_BYPASS, DEV_USER } from "@/config/devAuth";
 
@@ -25,7 +26,7 @@ interface AuthState {
   clearError: () => void;
 }
 
-const message = (error: unknown, fallback: string) => (error instanceof Error && error.message ? error.message : fallback);
+const message = (error: unknown, fallback: string) => (error instanceof ApiError ? errorText(error) : fallback);
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
   // ─── Начальные значения ────────────────────────────────

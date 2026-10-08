@@ -1,3 +1,4 @@
+import { ApiError, SERVER_ERROR } from "../api/client";
 import type { CalendarEvent, Priority } from "../api/types";
 
 const LOCALE = "ru-RU";
@@ -196,4 +197,5 @@ export const TEMPORARY_ERROR = "Временная ошибка — попроб
 export const stripTags = (text: string) =>
   text.replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
 
-export const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
+/** Text for the user: the server's message, never a JavaScript error ("Cannot read properties of undefined"). */
+export const errorText = (error: unknown) => (error instanceof ApiError && error.message ? error.message : SERVER_ERROR);

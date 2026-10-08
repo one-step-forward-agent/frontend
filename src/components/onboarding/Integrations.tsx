@@ -10,6 +10,7 @@ import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
 import { cn } from "@/utils/cn";
 import { api } from "@/app/api/client";
+import { errorText } from "@/app/lib/format";
 
 const TOTAL = 10;
 
@@ -121,7 +122,7 @@ export const Integrations: React.FC = () => {
       }
       await connectNext(queue, [...done, next]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось начать подключение");
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }

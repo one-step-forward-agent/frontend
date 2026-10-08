@@ -33,6 +33,11 @@ export class ApiError extends Error {
   }
 }
 
+// What the user sees when a request fails: never status texts, HTML of a proxy page or English internals
+export const SERVER_ERROR = "Ошибка сервера. Попробуйте ещё раз позже.";
+const NO_CONNECTION = "Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.";
+const TOO_MANY_REQUESTS = "Слишком много запросов — подождите минуту.";
+
 let unauthorizedHandler: () => void = () => {};
 export const onUnauthorized = (handler: () => void) => {
   unauthorizedHandler = handler;
@@ -50,7 +55,12 @@ function refreshSession(): Promise<boolean> {
 }
 
 async function send(path: string, init: RequestInit = {}, retry = true): Promise<Response> {
-  const response = await fetch(path, { credentials: "same-origin", ...init });
+  let response: Response;
+  try {
+    response = await fetch(path, { credentials: "same-origin", ...init });
+  } catch {
+    throw new ApiError(0, NO_CONNECTION);
+  }
   if (response.status === 401 && !path.startsWith("/auth/")) {
     if (retry && (await refreshSession())) return send(path, init, false);
     unauthorizedHandler();
@@ -59,11 +69,12 @@ async function send(path: string, init: RequestInit = {}, retry = true): Promise
 }
 
 async function errorFrom(response: Response): Promise<ApiError> {
+  if (response.status >= 500) return new ApiError(response.status, SERVER_ERROR);
+  if (response.status === 429) return new ApiError(429, TOO_MANY_REQUESTS);
+  // The server already words its errors for people; anything else (an nginx page, a list of fields) is not shown
   const data = await response.json().catch(() => ({}));
-  const detail = Array.isArray(data.detail)
-    ? data.detail.map((item: { msg: string }) => item.msg).join("; ")
-    : data.detail;
-  return new ApiError(response.status, detail || response.statusText || "Ошибка запроса");
+  const detail = typeof data.detail === "string" && data.detail.trim() ? data.detail : SERVER_ERROR;
+  return new ApiError(response.status, detail);
 }
 
 type Goal = string | { name: string; params?: Record<string, unknown> };

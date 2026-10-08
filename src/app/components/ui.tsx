@@ -627,12 +627,17 @@ export class ErrorBoundary extends Component<
     return { error };
   }
 
+  componentDidCatch(error: Error) {
+    // The user sees a plain message; the details are for developers
+    console.error(error);
+  }
+
   render() {
     if (!this.state.error) return this.props.children;
     return (
       <div className="p-6 max-w-2xl mx-auto">
         <ErrorNote
-          message={`Что-то пошло не так: ${this.state.error.message}`}
+          message="Что-то пошло не так. Обновите страницу."
           onRetry={() => window.location.reload()}
         />
       </div>
