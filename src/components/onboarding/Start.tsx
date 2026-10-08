@@ -1469,14 +1469,23 @@ const WHITE_GRADIENT_STOPS = [
   { offset: "100%", color: "#e2e8f0" },
 ];
 
+const futureINTEGRATIONS = [
+  { src: "/images/google-calendar.png",       alt: "Google Calendar", w: 44 },
+  { src: "/images/Календарь_для_macOS.png",   alt: "Apple Calendar",  w: 44 },
+  { src: "/images/yandexcalendar.png",        alt: "Yandex Calendar", w: 44 },
+  { src: "/images/Jira_Software_Logo.svg",    alt: "Jira",            w: 40 },
+  { src: "/images/Notion.png",                alt: "Notion",          w: 44 },
+  { src: "/images/TelegramWB.png",            alt: "Telegram",        w: 44 },
+  { src: "/images/slack.png",                 alt: "Slack",           w: 44 },
+  { src: "/images/tc_logo_square.png",        alt: "TrueConf",        w: 44 },
+];
+
 const INTEGRATIONS = [
   { src: "/images/google-calendar.png",      alt: "Google Calendar", w: 44 },
-  { src: "/images/Календарь_для_macOS.png",  alt: "Apple Calendar",  w: 44 },
+  { src: "/images/yandexcalendar.png",        alt: "Yandex Calendar", w: 44 },
   { src: "/images/Jira_Software_Logo.svg",   alt: "Jira",            w: 40 },
   { src: "/images/Notion.png",               alt: "Notion",          w: 44 },
   { src: "/images/TelegramWB.png",             alt: "Telegram",        w: 44 },
-  { src: "/images/slack.png",             alt: "Slack",        w: 44 },
-  { src: "/images/tc_logo_square.png",             alt: "TrueConf",        w: 44 },
 ];
 
 const FINAL_CTA_OVERLAP_TOP_VH = 10;
