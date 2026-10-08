@@ -60,7 +60,7 @@ const futureINTEGRATIONS: Integration[] = [
 
 const INTEGRATIONS: Integration[] = [
   { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",  w: 40, kind: "oauth" },
-  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandex-calendar.png", w: 40, kind: "oauth" },
+  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandexcalendar.png", w: 40, kind: "oauth" },
   { id: "jira",     name: "Jira",            src: "/images/Jira_Software_Logo.svg",  w: 36, kind: "oauth" },
   { id: "notion",   name: "Notion",          src: "/images/Notion.png",              w: 40, kind: "oauth" },
 ];
