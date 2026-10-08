@@ -120,6 +120,11 @@ export interface DraftItem {
   all_day: boolean;
 }
 
+export interface CalendarTarget {
+  slug: string;
+  title: string;
+}
+
 /** A task as the assistant shows it in answers. */
 export interface AssistantEvent {
   id: number;
@@ -140,13 +145,24 @@ export interface AssistantEvent {
 export type AgendaScope = "today" | "tomorrow" | "week";
 
 export type AssistantReply =
-  | { kind: "proposal"; draft_id: number; events: DraftItem[]; answer: string | null; note: string | null }
+  | {
+      kind: "proposal";
+      draft_id: number;
+      events: DraftItem[];
+      answer: string | null;
+      note: string | null;
+      /** Where the new tasks go: "dayla" or a connected calendar; the choices are in `targets` */
+      target?: string;
+      targets?: CalendarTarget[];
+    }
   | {
       kind: "created" | "updated";
       events: AssistantEvent[];
       event_ids: number[];
       /** "Перенесла «…» на …" after the move buttons */
       text?: string;
+      /** "Добавлено в Яндекс Календарь" or why it was not */
+      note?: string | null;
       /** A task moved with the buttons: "Вернуть" moves it back to `from` */
       moved?: { event_id: number; from: string; to: string; from_label: string };
     }

@@ -421,6 +421,7 @@ function ChatMessage({
                 <Icon name="check" size={16} />{" "}
                 {reply.kind === "updated" ? reply.text ?? "Изменила" : "Добавила в календарь"}
               </p>
+              {reply.note && <p className="text-xs text-gray-500 dark:text-gray-400">{reply.note}</p>}
               <AssistantEvents events={reply.events} />
               {reply.kind === "updated" && reply.moved && (
                 <MoveBackButton moved={reply.moved} onDone={(next) => onReply(message.id, next)} />
@@ -1123,6 +1124,13 @@ const multiDay = (event: { start: string; end_date?: string | null }) =>
 
 /* ─── Proposal ───────────────────────────────────────────── */
 
+/** The end a task gets when none was said: an hour after the start, as the server does. */
+function hourLater(value: string): string {
+  const [hours, minutes] = value.split(":").map(Number);
+  const total = (hours * 60 + minutes + 60) % (24 * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
 function describeBefore(before: NonNullable<DraftItem["before"]>): string {
   const day = parseDayKey(before.date);
   const when = day ? relativeDay(day).toLowerCase() : before.date;
@@ -1142,6 +1150,7 @@ function Proposal({
   onReply: (reply: AssistantReply) => void;
 }) {
   const [items, setItems] = useState<DraftItem[]>(reply.events);
+  const [target, setTarget] = useState(reply.target ?? "dayla");
   const [busy, setBusy] = useState<"confirm" | "cancel" | null>(null);
   const reportError = useErrorToast();
 
@@ -1178,6 +1187,19 @@ function Proposal({
     });
 
   const isChange = items.some((item) => item.event_id);
+  const targets = reply.targets ?? [];
+
+  // Saved at once: the choice is also the default for the next drafts
+  const chooseTarget = async (next: string) => {
+    const previous = target;
+    setTarget(next);
+    try {
+      await api.assistant.setDraftTarget(reply.draft_id, next);
+    } catch (error) {
+      setTarget(previous);
+      reportError(errorText(error));
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -1260,6 +1282,27 @@ function Proposal({
                 )}
               />
             </label>
+            {item.time && (
+              <label className="flex-1 min-w-[7rem]">
+                <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">
+                  До
+                </span>
+                <input
+                  type="time"
+                  value={item.end_time ?? hourLater(item.time)}
+                  onChange={(e) => patch(index, { end_time: e.target.value || null })}
+                  onClick={(e) => openPicker(e.currentTarget)}
+                  aria-label="Время окончания"
+                  className={cn(
+                    "w-full h-9 px-3 text-sm rounded-lg",
+                    "bg-white/[0.05] dark:bg-white/[0.02]",
+                    "ring-1 ring-white/20 dark:ring-white/10",
+                    "outline-none focus:ring-sky-400/50",
+                    item.end_time ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"
+                  )}
+                />
+              </label>
+            )}
             {item.end_date && (
               <label className="flex-1 min-w-[7rem]">
                 <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">
@@ -1327,6 +1370,31 @@ function Proposal({
           )}
         </div>
       ))}
+
+      {!isChange && targets.length > 1 && (
+        <label className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <Icon name="calendar" size={14} />
+          Куда добавить
+          <select
+            value={target}
+            onChange={(e) => chooseTarget(e.target.value)}
+            aria-label="Куда добавить"
+            className={cn(
+              "h-8 px-2.5 rounded-lg text-sm",
+              "bg-white/[0.05] dark:bg-white/[0.02]",
+              "ring-1 ring-white/20 dark:ring-white/10",
+              "outline-none focus:ring-sky-400/50",
+              "text-gray-900 dark:text-white"
+            )}
+          >
+            {targets.map((option) => (
+              <option key={option.slug} value={option.slug}>
+                {option.slug === "dayla" ? option.title : `Dayla и ${option.title}`}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
         <Button

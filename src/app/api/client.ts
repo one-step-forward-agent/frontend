@@ -206,6 +206,8 @@ export const api = {
       request<AssistantReply>("/api/assistant/topic", json("POST", { title, text }), "assistant_topic"),
     updateDraft: (draftId: number, items: Partial<DraftItem>[]) =>
       request<AssistantReply>(`/api/assistant/drafts/${draftId}`, json("PUT", { items }), "assistant_draft_edit"),
+    setDraftTarget: (draftId: number, target: string) =>
+      request<AssistantReply>(`/api/assistant/drafts/${draftId}/target`, json("POST", { target }), "assistant_draft_target"),
     confirmDraft: (draftId: number) =>
       request<AssistantReply>(`/api/assistant/drafts/${draftId}/confirm`, { method: "POST" }, "assistant_confirm"),
     cancelDraft: (draftId: number) =>
