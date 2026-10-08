@@ -93,7 +93,11 @@ export function TodayPage() {
     <div className="relative max-w-3xl mx-auto pt-[1.5vh]">
     <div className={PAGE}>
       <PageHeader
-        title={dayTitle(now)}
+        title={
+          <span className="first-letter:uppercase">
+            {dayTitle(now).replace(/^Сегодня,?\s*/i, "")}
+          </span>
+        }
         subtitle={`${greeting(now.getHours())}${user.name ? `, ${user.name}` : ""}`}
       />
 
