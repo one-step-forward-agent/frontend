@@ -151,9 +151,9 @@ export type AssistantReply =
       events: DraftItem[];
       answer: string | null;
       note: string | null;
-      /** Where the new tasks go: "dayla" or a connected calendar; the choices are in `targets` */
-      target?: string;
+      /** Connected calendars the new tasks can also go to, and the ticked ones (empty: Dayla only) */
       targets?: CalendarTarget[];
+      calendars?: string[];
     }
   | {
       kind: "created" | "updated";

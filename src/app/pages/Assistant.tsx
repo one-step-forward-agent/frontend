@@ -1150,7 +1150,7 @@ function Proposal({
   onReply: (reply: AssistantReply) => void;
 }) {
   const [items, setItems] = useState<DraftItem[]>(reply.events);
-  const [target, setTarget] = useState(reply.target ?? "dayla");
+  const [calendars, setCalendars] = useState<string[]>(reply.calendars ?? []);
   const [busy, setBusy] = useState<"confirm" | "cancel" | null>(null);
   const reportError = useErrorToast();
 
@@ -1190,13 +1190,14 @@ function Proposal({
   const targets = reply.targets ?? [];
 
   // Saved at once: the choice is also the default for the next drafts
-  const chooseTarget = async (next: string) => {
-    const previous = target;
-    setTarget(next);
+  const toggleCalendar = async (slug: string) => {
+    const previous = calendars;
+    const next = calendars.includes(slug) ? calendars.filter((item) => item !== slug) : [...calendars, slug];
+    setCalendars(next);
     try {
-      await api.assistant.setDraftTarget(reply.draft_id, next);
+      await api.assistant.setDraftCalendars(reply.draft_id, next);
     } catch (error) {
-      setTarget(previous);
+      setCalendars(previous);
       reportError(errorText(error));
     }
   };
@@ -1371,29 +1372,36 @@ function Proposal({
         </div>
       ))}
 
-      {!isChange && targets.length > 1 && (
-        <label className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <Icon name="calendar" size={14} />
-          Куда добавить
-          <select
-            value={target}
-            onChange={(e) => chooseTarget(e.target.value)}
-            aria-label="Куда добавить"
-            className={cn(
-              "h-8 px-2.5 rounded-lg text-sm",
-              "bg-white/[0.05] dark:bg-white/[0.02]",
-              "ring-1 ring-white/20 dark:ring-white/10",
-              "outline-none focus:ring-sky-400/50",
-              "text-gray-900 dark:text-white"
-            )}
-          >
-            {targets.map((option) => (
-              <option key={option.slug} value={option.slug}>
-                {option.slug === "dayla" ? option.title : `Dayla и ${option.title}`}
-              </option>
-            ))}
-          </select>
-        </label>
+      {!isChange && targets.length > 0 && (
+        <fieldset className="space-y-1.5">
+          <legend className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+            <Icon name="calendar" size={13} />
+            Добавить также в
+          </legend>
+          <div className="flex flex-wrap gap-1.5">
+            {targets.map((option) => {
+              const checked = calendars.includes(option.slug);
+              return (
+                <label
+                  key={option.slug}
+                  className={cn(
+                    "inline-flex items-center gap-2 h-8 px-3 rounded-lg cursor-pointer select-none",
+                    "text-sm ring-1 transition-colors",
+                    checked
+                      ? "bg-sky-500/15 ring-sky-400/50 text-gray-900 dark:text-white"
+                      : "bg-white/[0.05] dark:bg-white/[0.02] ring-white/20 dark:ring-white/10 text-gray-600 dark:text-gray-300"
+                  )}
+                >
+                  <input type="checkbox" checked={checked} onChange={() => toggleCalendar(option.slug)} />
+                  {option.title}
+                </label>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">
+            {calendars.length ? "И, как всегда, в Dayla." : "Только в Dayla."}
+          </p>
+        </fieldset>
       )}
 
       <div className="flex flex-wrap gap-1.5">
