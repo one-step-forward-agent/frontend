@@ -73,7 +73,8 @@ const RegisterPage: React.FC = () => {
     }
   };
 
-  const displayError = localError ?? error;
+  // Set by a Google or Yandex sign-up that could not create the account
+  const displayError = localError ?? error ?? searchParams.get("error");
 
   const handleConsentChange = (checked: boolean) => {
     setIsConsentGiven(checked);
@@ -299,7 +300,7 @@ interface ConsentCheckboxProps {
   onChange: (checked: boolean) => void;
   children: React.ReactNode;
 }
-const ConsentCheckbox: React.FC<ConsentCheckboxProps> = ({
+export const ConsentCheckbox: React.FC<ConsentCheckboxProps> = ({
   id,
   checked,
   onChange,

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { NavigationBridge } from "@/app/router";
 import { ToastProvider } from "@/app/components/ui";
@@ -35,16 +35,23 @@ function RootRoute() {
   return isAuthenticated ? <Navigate to={`/app${search}`} replace /> : <Start />;
 }
 
-// Onboarding runs after registration: the integrations step needs a session to start OAuth.
+// Onboarding runs before registration: its integrations step signs the user up through Google or Yandex,
+// or sends them to the registration form and connects the chosen services after it.
 function OnboardingRouteLayout() {
-  const { isAuthenticated, isLoading } = useAuthStore();
-  if (isLoading) return <FullScreenLoader />;
-  if (!isAuthenticated) return <Navigate to="/register" replace />;
   return (
     <OnboardingProvider>
       <Outlet />
     </OnboardingProvider>
   );
+}
+
+// The last step saves the answers, so it needs an account.
+function RequireAccount({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuthStore();
+  const { pathname } = useLocation();
+  if (isLoading) return <FullScreenLoader />;
+  if (!isAuthenticated) return <Navigate to={`/register?next=${encodeURIComponent(pathname)}`} replace />;
+  return <>{children}</>;
 }
 
 function NotFoundPage() {
@@ -79,7 +86,7 @@ function Routing() {
           <Route path="/onboarding/goals-and-habits" element={<GoalsAndHabits />} />
           <Route path="/onboarding/existing-plans" element={<ExistingPlans />} />
           <Route path="/onboarding/integrations" element={<Integrations />} />
-          <Route path="/onboarding/success-and-learning" element={<SuccessAndLearning />} />
+          <Route path="/onboarding/success-and-learning" element={<RequireAccount><SuccessAndLearning /></RequireAccount>} />
         </Route>
 
         <Route element={<AuthLayout />}>

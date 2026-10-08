@@ -6,6 +6,7 @@ import { LogIn, Sparkles, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { Alert, FormField, Input } from '@/components/ui';
 import { cn } from '@/utils/cn';
+import { SignInButtons } from './SignInButtons';
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -27,6 +28,8 @@ const LoginPage: React.FC = () => {
   const { isAuthenticated, login, isSubmitting: isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Set by a Google or Yandex sign-in that could not log in, e.g. the email already has a password account
+  const redirectError = searchParams.get('error');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -52,6 +55,12 @@ const LoginPage: React.FC = () => {
           Вход в аккаунт
         </h2>
       </div>
+
+      {redirectError && !error && (
+        <Alert variant="error" className="mb-4">
+          {redirectError}
+        </Alert>
+      )}
 
       {/* ─── Форма ───────────────────────────── */}
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -140,6 +149,10 @@ const LoginPage: React.FC = () => {
           или
         </span>
         <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
+      </div>
+
+      <div className="mt-5">
+        <SignInButtons returnTo={safeNext(searchParams.get('next'))} />
       </div>
 
       {/* ─── Ссылка на регистрацию ───────────── */}

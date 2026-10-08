@@ -72,25 +72,28 @@ function loadStored(): OnboardingData | null {
   }
 }
 
+function store(data: OnboardingData): OnboardingData {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+  }
+  return data;
+}
+
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = React.useState<OnboardingData>(() => loadStored() ?? defaultData);
 
-  React.useEffect(() => {
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-    }
-  }, [data]);
-
+  // Stored at once, not after the render: the integrations step leaves onboarding right after choosing
+  // (to the registration form or to Google), and the choice must survive it.
   const update = React.useCallback(
     <K extends keyof OnboardingData>(key: K, value: OnboardingData[K]) => {
-      setData((prev) => ({ ...prev, [key]: value }));
+      setData((prev) => store({ ...prev, [key]: value }));
     },
     []
   );
 
   const patch = React.useCallback((partial: Partial<OnboardingData>) => {
-    setData((prev) => ({ ...prev, ...partial }));
+    setData((prev) => store({ ...prev, ...partial }));
   }, []);
 
   return (

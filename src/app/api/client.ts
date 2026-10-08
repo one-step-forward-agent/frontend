@@ -24,6 +24,8 @@ import type {
   User,
 } from "./types";
 
+export type SignInProvider = "google" | "yandex";
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -113,6 +115,16 @@ export const api = {
       request<TokenResponse>("/auth/login", json("POST", { email, password }), "login_success"),
     logout: () => request<{ status: string }>("/auth/logout", { method: "POST" }, "logout"),
     logoutAll: () => request<{ status: string }>("/auth/logout-all", { method: "POST" }, "logout_all"),
+    // Sign up or log in through Google or Yandex: the browser goes to the returned link, the callback starts the session
+    oauthStart: (
+      provider: SignInProvider,
+      body: { mode: "signup" | "login"; return_to?: string; timezone?: string; consent?: boolean },
+    ) =>
+      request<{ authorization_url: string }>(
+        `/auth/oauth/${provider}/start`,
+        json("POST", body),
+        { name: body.mode === "signup" ? "oauth_signup_start" : "oauth_login_start", params: { provider } },
+      ),
   },
   me: {
     get: () => request<User>("/api/me"),

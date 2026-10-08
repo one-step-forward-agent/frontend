@@ -1,6 +1,6 @@
 // src/components/onboarding/Integrations.tsx
 import * as React from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Check, ChevronDown, ChevronUp,
   GraduationCap, Link2,
@@ -9,8 +9,10 @@ import {
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
 import { cn } from "@/utils/cn";
-import { api } from "@/app/api/client";
+import { api, type SignInProvider } from "@/app/api/client";
 import { errorText } from "@/app/lib/format";
+import { ConsentCheckbox } from "@/pages/Auth/RegisterPage";
+import { useAuthStore } from "@/store/authStore";
 
 const TOTAL = 10;
 
@@ -58,6 +60,15 @@ const INTEGRATIONS: Integration[] = [
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
   INTEGRATIONS.find((i) => i.id === id)?.kind === "oauth";
 
+// Without an account the first of these creates it: its email becomes the Dayla account, no password needed
+const SIGN_UP_WITH: { id: SignInProvider; name: string }[] = [
+  { id: "google", name: "Google" },
+  { id: "yandex", name: "Яндекс ID" },
+];
+
+// Back here after signing up or logging in: ?resume=1 connects the remaining chosen services
+const RESUME_PATH = "/onboarding/integrations?resume=1";
+
 const loadConnected = (): Promise<Provider[]> =>
   api.integrations
     .list()
@@ -74,6 +85,8 @@ export const Integrations: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, update } = useOnboarding();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const needsAccount = !authLoading && !isAuthenticated;
 
   const initialSelected: Provider[] = React.useMemo(
     () =>
@@ -90,12 +103,18 @@ export const Integrations: React.FC = () => {
   // Провайдеры, у которых OAuth уже прошёл (по данным бэкенда и по ?connected=).
   const [connected, setConnected] = React.useState<Provider[]>([]);
   const [busy, setBusy] = React.useState(false);
+  const [consentGiven, setConsentGiven] = React.useState(false);
+  const [termsAccepted, setTermsAccepted] = React.useState(false);
+
+  const signUpWith = SIGN_UP_WITH.find((provider) => selected.includes(provider.id));
 
   React.useEffect(() => {
-    if (searchParams.has("connected")) return; // загрузит обработчик возврата с OAuth
+    if (!isAuthenticated) return;
+    // загрузит обработчик возврата с OAuth
+    if (searchParams.has("connected") || searchParams.has("resume")) return;
     loadConnected().then(setConnected);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthenticated]);
 
   const toggle = (id: Provider) => {
     setSelected((prev) =>
@@ -139,6 +158,7 @@ export const Integrations: React.FC = () => {
     const next = new URLSearchParams(searchParams);
     next.delete("connected");
     next.delete("error");
+    next.delete("resume");
     setSearchParams(next, { replace: true });
 
     if (errorParam) {
@@ -161,10 +181,58 @@ export const Integrations: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  /* ─── Возврат после регистрации или входа ─────────── */
+  // ?resume=1: аккаунт появился — подключаем выбранные сервисы.
+  React.useEffect(() => {
+    if (!searchParams.has("resume") || searchParams.has("connected") || searchParams.has("error")) return;
+    if (!isAuthenticated) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("resume");
+    setSearchParams(next, { replace: true });
+    setBusy(true);
+    void loadConnected().then((fromServer) => {
+      setConnected(fromServer);
+      return connectNext(selected, fromServer);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isAuthenticated]);
+
+  /* ─── Без аккаунта ─────────────────────────────── */
+  // Google или Яндекс ID создают аккаунт по своему email и сразу подключают календарь;
+  // остальные сервисы подключатся после обычной регистрации — выбор сохранён в онбординге.
+  const createAccount = async () => {
+    if (signUpWith) {
+      if (!consentGiven || !termsAccepted) {
+        setError("Чтобы создать аккаунт, примите пользовательское соглашение и дайте согласие на обработку персональных данных");
+        return;
+      }
+      setBusy(true);
+      try {
+        const { authorization_url } = await api.auth.oauthStart(signUpWith.id, {
+          mode: "signup",
+          return_to: RESUME_PATH,
+          timezone: data.timezone,
+          consent: true,
+        });
+        window.location.assign(authorization_url);
+      } catch (err) {
+        setError(errorText(err));
+        setBusy(false);
+      }
+      return;
+    }
+    const next = selected.some(isOAuthProvider) ? RESUME_PATH : "/onboarding/success-and-learning";
+    navigate(`/register?next=${encodeURIComponent(next)}`);
+  };
+
   const handleNext = async () => {
     setError(null);
     // manual-провайдеры сохраняются сразу — они подключаются в настройках
     update("integrations", selected);
+    if (needsAccount) {
+      await createAccount();
+      return;
+    }
     await connectNext(selected, connected);
   };
 
@@ -183,7 +251,11 @@ export const Integrations: React.FC = () => {
         nextLabel={
           busy
             ? "Подключаем…"
-            : pending.length > 0
+            : needsAccount && signUpWith
+              ? `Продолжить с ${signUpWith.name}`
+              : needsAccount
+                ? "Далее"
+                : pending.length > 0
               ? `Подключить${pending.length > 1 ? ` (${pending.length})` : ""}`
               : "Далее"
         }
@@ -287,6 +359,47 @@ export const Integrations: React.FC = () => {
               );
             })}
           </div>
+
+          {/* ─── Аккаунт через Google / Яндекс ID ──────── */}
+          {needsAccount && signUpWith && (
+            <div className="space-y-2.5">
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-snug">
+                Аккаунт Dayla создадим по email вашего {signUpWith.name} — пароль не нужен.
+                Остальные выбранные сервисы подключим следом.
+              </p>
+              <ConsentCheckbox id="onboarding-consent" checked={consentGiven} onChange={setConsentGiven}>
+                Я даю согласие на обработку моих персональных данных (имя, email)
+                в целях регистрации и предоставления доступа к сервису. С{" "}
+                <Link
+                  to="/personal-data-consent"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+                >
+                  условиями обработки ПД
+                </Link>{" "}
+                ознакомлен(а) и согласен(а).
+              </ConsentCheckbox>
+              <ConsentCheckbox id="onboarding-terms" checked={termsAccepted} onChange={setTermsAccepted}>
+                Я принимаю условия{" "}
+                <Link
+                  to="/terms-of-use"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+                >
+                  пользовательского соглашения
+                </Link>{" "}
+                и обязуюсь их соблюдать.
+              </ConsentCheckbox>
+            </div>
+          )}
+
+          {needsAccount && !signUpWith && selected.some(isOAuthProvider) && (
+            <p className="text-sm text-gray-600 dark:text-gray-300 leading-snug">
+              Сначала создадим аккаунт, затем подключим выбранные сервисы.
+            </p>
+          )}
 
           {/* ─── Гайд ВШЭ ─────────────────────────────── */}
           <div className={cn("relative overflow-hidden rounded-2xl", GLASS_BODY)}>
