@@ -2,16 +2,16 @@
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Check, ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp,
   GraduationCap, Link2,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding } from "./OnboardingContext";
 import { cn } from "@/utils/cn";
+import { api } from "@/app/api/client";
 
 const TOTAL = 10;
-const PENDING_KEY = "oauth:pending";
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -47,126 +47,23 @@ type Integration = {
   kind: "oauth" | "manual";
 };
 
-const futureINTEGRATIONS: Integration[] = [
-  { id: "google",   name: "Google Calendar", src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
-  { id: "yandex",   name: "Яндекс Календарь", src: "/images/yandexcalendar.png",    w: 40, kind: "oauth" },
-  { id: "apple",    name: "Apple Calendar",  src: `/images/${encodeURIComponent("Календарь_для_macOS.png")}`, w: 40, kind: "oauth" },
-  { id: "jira",     name: "Jira",            src: "/images/Jira_Software_Logo.svg",  w: 36, kind: "oauth" },
-  { id: "notion",   name: "Notion",          src: "/images/Notion.png",              w: 40, kind: "oauth" },
-  { id: "slack",    name: "Slack",           src: "/images/slack.png",               w: 40, kind: "oauth" },
-  { id: "telegram", name: "Telegram",        src: "/images/TelegramWB.png",          w: 40, kind: "oauth" },
-  { id: "trueconf", name: "TrueConf",        src: "/images/tc_logo_square.png",      w: 40, kind: "manual" },
-];
-
 const INTEGRATIONS: Integration[] = [
-  { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",  w: 40, kind: "oauth" },
-  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandexcalendar.png", w: 40, kind: "oauth" },
-  { id: "jira",     name: "Jira",            src: "/images/Jira_Software_Logo.svg",  w: 36, kind: "oauth" },
-  { id: "notion",   name: "Notion",          src: "/images/Notion.png",              w: 40, kind: "oauth" },
+  { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
+  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandexcalendar.png",      w: 40, kind: "oauth" },
+  { id: "jira",   name: "Jira",             src: "/images/Jira_Software_Logo.svg", w: 36, kind: "oauth" },
+  { id: "notion", name: "Notion",           src: "/images/Notion.png",             w: 40, kind: "oauth" },
 ];
 
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
   INTEGRATIONS.find((i) => i.id === id)?.kind === "oauth";
 
-/* ─── URL-строитель OAuth ────────────────────────────────── */
-
-const buildOAuthUrl = (
-  id: OAuthProvider,
-  state: string,
-  redirectUri: string
-): string => {
-  const params = (obj: Record<string, string>) =>
-    new URLSearchParams(obj).toString();
-
-  switch (id) {
-    case "apple":
-      return `https://appleid.apple.com/auth/authorize?${params({
-        client_id: import.meta.env.VITE_APPLE_CLIENT_ID!,
-        redirect_uri: redirectUri,
-        response_type: "code",
-        scope: "name email",
-        response_mode: "form_post",
-        state,
-      })}`;
-
-    case "google":
-      return `https://accounts.google.com/o/oauth2/v2/auth?${params({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID!,
-        redirect_uri: redirectUri,
-        response_type: "code",
-        scope: "https://www.googleapis.com/auth/calendar.readonly",
-        access_type: "offline",
-        prompt: "consent",
-        state,
-      })}`;
-
-    case "yandex":
-      return `https://oauth.yandex.ru/authorize?${params({
-        client_id: import.meta.env.VITE_YANDEX_CLIENT_ID!,
-        redirect_uri: redirectUri,
-        response_type: "code",
-        scope: "calendar:read",
-        state,
-      })}`;
-
-    case "jira":
-      return `https://auth.atlassian.com/authorize?${params({
-        audience: "api.atlassian.com",
-        client_id: import.meta.env.VITE_JIRA_CLIENT_ID!,
-        scope: "read:jira-work read:jira-user offline_access",
-        redirect_uri: redirectUri,
-        state,
-        response_type: "code",
-        prompt: "consent",
-      })}`;
-
-    case "notion":
-      return `https://api.notion.com/v1/oauth/authorize?${params({
-        client_id: import.meta.env.VITE_NOTION_CLIENT_ID!,
-        redirect_uri: redirectUri,
-        response_type: "code",
-        owner: "user",
-        state,
-      })}`;
-
-    case "slack":
-      return `https://slack.com/oauth/v2/authorize?${params({
-        client_id: import.meta.env.VITE_SLACK_CLIENT_ID!,
-        redirect_uri: redirectUri,
-        scope: "channels:history,channels:read,users:read",
-        state,
-      })}`;
-
-    case "telegram":
-      return `https://oauth.telegram.org/auth?${params({
-        bot_id: import.meta.env.VITE_TELEGRAM_BOT_ID!,
-        origin: window.location.origin,
-        request_access: "write",
-        return_to: `${redirectUri}?state=${encodeURIComponent(state)}`,
-      })}`;
-  }
-};
-
-const buildCallbackBase = (redirectUri: string) =>
-  redirectUri.replace(/\/onboarding\/.*$/, "/api/oauth/callback");
-
-/* ─── Pending-состояние OAuth-цепочки ───────────────────── */
-
-type PendingOAuth = {
-  selected: Provider[];
-  queue: OAuthProvider[];
-  startedAt: number;
-};
-
 /* ─── Компонент ─────────────────────────────────────────── */
 
 export const Integrations: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, update } = useOnboarding();
 
-  // data.integrations — string[], но по факту это Provider[].
-  // Приводим через filter+type guard, чтобы не гадать.
   const initialSelected: Provider[] = React.useMemo(
     () =>
       ((data.integrations ?? []) as string[]).filter((id): id is Provider =>
@@ -187,78 +84,43 @@ export const Integrations: React.FC = () => {
   };
 
   /* ─── Возврат с OAuth ─────────────────────────────── */
+  // Бэкенд сам обменивает code на токен и редиректит сюда
+  // с ?connected=<provider> или ?error=<сообщение>.
   React.useEffect(() => {
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
-    const provider = searchParams.get("provider") as OAuthProvider | null;
+    const connected = searchParams.get("connected");
+    const errorParam = searchParams.get("error");
+    if (!connected && !errorParam) return;
 
-    if (!code && !state) return;
-
-    const raw = sessionStorage.getItem(PENDING_KEY);
-    if (!raw) return;
-
-    const pending: PendingOAuth = JSON.parse(raw);
-
-    // CSRF-проверка: state должен совпадать с первым в очереди
-    const expected = pending.queue[0] ?? null;
-    if (!expected || state !== expected) {
-      setError("Ошибка авторизации: несовпадение state.");
-      sessionStorage.removeItem(PENDING_KEY);
-      return;
+    if (connected) {
+      setSelected((prev) =>
+        prev.includes(connected as Provider)
+          ? prev
+          : [...prev, connected as Provider]
+      );
+      // Объединяем уже сохранённые интеграции с новым провайдером,
+      // чтобы не потерять предыдущие подключения.
+      const existing = (data.integrations ?? []) as string[];
+      if (!existing.includes(connected)) {
+        update("integrations", [...existing, connected]);
+      }
+    }
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
     }
 
-    (async () => {
-      try {
-        const res = await fetch(
-          `${buildCallbackBase(import.meta.env.VITE_OAUTH_REDIRECT_URI!)}/${provider ?? "unknown"}`,
-          {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code, state }),
-          }
-        );
-        if (!res.ok) throw new Error(await res.text());
-      } catch {
-        setError("Не удалось завершить подключение. Попробуйте ещё раз.");
-        sessionStorage.removeItem(PENDING_KEY);
-        return;
-      }
-
-      const [, ...rest] = pending.queue;
-
-      if (rest.length === 0) {
-        // Все провайдеры подключены
-        sessionStorage.removeItem(PENDING_KEY);
-        update("integrations", pending.selected);
-        update("googleConnected", pending.selected.includes("google"));
-        navigate("/onboarding/success-and-learning", { replace: true });
-        return;
-      }
-
-      // Обновляем очередь и идём к следующему
-      sessionStorage.setItem(
-        PENDING_KEY,
-        JSON.stringify({ ...pending, queue: rest } satisfies PendingOAuth)
-      );
-
-      const nextId = rest[0];
-      const url = buildOAuthUrl(
-        nextId,
-        nextId,
-        import.meta.env.VITE_OAUTH_REDIRECT_URI!
-      );
-      window.location.href = url;
-    })();
-  }, [searchParams, navigate, update]);
+    const next = new URLSearchParams(searchParams);
+    next.delete("connected");
+    next.delete("error");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   /* ─── Старт OAuth-цепочки ─────────────────────────── */
-  const handleNext = () => {
+  const handleNext = async () => {
     setError(null);
 
     if (selected.length === 0) {
       update("integrations", []);
-      update("googleConnected", false);
       navigate("/onboarding/success-and-learning");
       return;
     }
@@ -268,27 +130,31 @@ export const Integrations: React.FC = () => {
 
     // manual-провайдеры сохраняются сразу — они подключаются в настройках
     update("integrations", [...manualOnly, ...oauthQueue]);
-    update("googleConnected", selected.includes("google"));
 
     if (oauthQueue.length === 0) {
       navigate("/onboarding/success-and-learning");
       return;
     }
 
-    const pending: PendingOAuth = {
-      selected,
-      queue: oauthQueue,
-      startedAt: Date.now(),
-    };
-    sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending));
-
-    const firstId = oauthQueue[0];
-    const url = buildOAuthUrl(
-      firstId,
-      firstId,
-      import.meta.env.VITE_OAUTH_REDIRECT_URI!
-    );
-    window.location.href = url;
+    // Запускаем OAuth у первого провайдера из очереди.
+    // URL с правильными client_id, scope, redirect_uri и подписанным
+    // state генерирует бэкенд — фронт только редиректит.
+    const firstSlug = oauthQueue[0];
+    try {
+      const result = await api.integrations.connect(
+        firstSlug,
+        {},
+        window.location.pathname,
+      );
+      if ("authorization_url" in result) {
+        window.location.assign(result.authorization_url);
+        return;
+      }
+      // manual-ответ (не должно случиться, т.к. первый — oauth)
+      navigate("/onboarding/success-and-learning");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось начать подключение");
+    }
   };
 
   return (
@@ -429,7 +295,7 @@ export const Integrations: React.FC = () => {
                     Студент Вышки?
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Покажем, как импортировать расписание пар в Google Calendar.
+                    Покажем, как импортировать расписание пар.
                   </p>
                 </div>
 
