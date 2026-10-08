@@ -1,5 +1,5 @@
 // src/pages/IntegrationsPage.tsx
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { Icon } from "../components/icons";
@@ -27,12 +27,17 @@ const GLASS_BODY = GLASS_BODY_FLAT;
 
 const LOGOS: Record<string, string> = {
   google: "/images/google-calendar.png",
+  yandex: "/images/yandexcalendar.png",
   jira: "/images/Jira_Software_Logo.svg",
   notion: "/images/Notion.png",
-  yandex: "/images/yandexcalendar.png",
 };
 
-/* ─── Общие стили ───────────────────────────────────────── */
+const PROVIDER_LABELS: Record<string, string> = {
+  google: "Google Calendar",
+  yandex: "Яндекс Календарь",
+  notion: "Notion",
+  jira: "Jira",
+};
 
 const PAGE = "relative max-w-5xl mx-auto pt-[1.5vh]";
 
@@ -45,28 +50,35 @@ export function IntegrationsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
 
-  const labelOf = (slug: string) =>
-  ({ google: "Google Calendar", yandex: "Яндекс Календарь",
-     notion: "Notion", jira: "Jira" }[slug] ?? slug);
+  // Бэкенд после OAuth-callback редиректит сюда с
+  // ?connected=<provider> или ?error=<сообщение>.
+  // Реагируем один раз: показываем тост, перезагружаем список
+  // и убираем параметры из URL, чтобы F5 не повторял тост.
+  const handledRef = useRef<string | null>(null);
 
   useEffect(() => {
     const connected = searchParams.get("connected");
-    const error = searchParams.get("error");
+    const errorParam = searchParams.get("error");
+    if (!connected && !errorParam) return;
+
+    // Защита от повторного срабатывания (React 18 StrictMode, F5)
+    const key = connected ?? errorParam ?? "";
+    if (handledRef.current === key) return;
+    handledRef.current = key;
 
     if (connected) {
-      toast(`${labelOf(connected)} подключён`);
+      toast(`${PROVIDER_LABELS[connected] ?? connected} подключён`);
       integrations.reload();
     }
-    if (error) {
-      toast(decodeURIComponent(error));
+    if (errorParam) {
+      toast(decodeURIComponent(errorParam));
     }
 
-    if (connected || error) {
-      const next = new URLSearchParams(searchParams);
-      next.delete("connected");
-      next.delete("error");
-      setSearchParams(next, { replace: true });
-    }
+    const next = new URLSearchParams(searchParams);
+    next.delete("connected");
+    next.delete("error");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   return (
@@ -143,11 +155,23 @@ function IntegrationCard({
   const { pending, run } = useAction(useErrorToast());
   const [purge, setPurge] = useState(false);
 
+  // Для OAuth-провайдеров URL с правильными client_id, scope,
+  // redirect_uri и подписанным state генерирует бэкенд.
+  // Фронт только редиректит и передаёт return_to = текущий путь,
+  // чтобы бэк вернул пользователя сюда же после callback.
   const connectOAuth = () =>
     run("connect", async () => {
-      const result = await api.integrations.connect(item.slug, {}, window.location.pathname);
-      if ("authorization_url" in result)
+      const result = await api.integrations.connect(
+        item.slug,
+        {},
+        window.location.pathname,
+      );
+      if ("authorization_url" in result) {
         window.location.assign(result.authorization_url);
+        return;
+      }
+      // Manual-ответ (не должно случиться для OAuth-провайдера)
+      onChanged();
     });
 
   const status = !connection ? (
@@ -160,7 +184,6 @@ function IntegrationCard({
 
   return (
     <GlassCard>
-      {/* ─── Шапка карточки ─────────────────────── */}
       <div className="flex items-center gap-3 mb-3">
         <span
           aria-hidden="true"
@@ -196,7 +219,6 @@ function IntegrationCard({
         {item.description}
       </p>
 
-      {/* ─── Метаданные ─────────────────────────── */}
       {connection && (
         <dl className="mb-3 space-y-1.5 text-xs">
           {connection.account_email && (
@@ -228,7 +250,6 @@ function IntegrationCard({
         </p>
       )}
 
-      {/* ─── Действия ───────────────────────────── */}
       <div className="flex flex-wrap gap-1.5">
         {!connection ? (
           <Button
@@ -289,7 +310,6 @@ function IntegrationCard({
         )}
       </div>
 
-      {/* ─── Отключение ─────────────────────────── */}
       {connection && (
         <div className="mt-4 pt-3 border-t border-white/20 dark:border-white/10 flex items-center justify-between gap-2">
           <label className="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none">
@@ -321,7 +341,7 @@ function IntegrationCard({
   );
 }
 
-/* ─── ConnectForm ───────────────────────────────────────── */
+/* ─── ConnectForm (для manual-провайдеров) ─────────────── */
 
 function ConnectForm({
   item,
@@ -382,9 +402,7 @@ function ConnectForm({
         ) : (
           <Field
             key={field.name}
-            label={
-              field.label + (field.required ? "" : " (необязательно)")
-            }
+            label={field.label + (field.required ? "" : " (необязательно)")}
             hint={field.help || undefined}
           >
             <input
