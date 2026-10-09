@@ -1,8 +1,9 @@
 // src/pages/TasksPage.tsx
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../api/client";
 import type { CalendarEvent } from "../api/types";
 import { EventList } from "../components/events";
+import { Icon } from "../components/icons";
 import {
   Button,
   Empty,
@@ -13,13 +14,11 @@ import {
 } from "../components/ui";
 import {
   addDays,
-  browserTimezone,
   dayKey,
   dayTitle,
   errorText,
   parseDayKey,
   startOfDay,
-  taskBounds,
 } from "../lib/format";
 import { notifyTasksChanged, useAsync, useTags, useTasksChanged } from "../lib/hooks";
 import { useTitle } from "../router";
@@ -32,6 +31,11 @@ const PAST_DAYS = 30;
 const AHEAD_DAYS = 90;
 const DAY_GROUPS = 7;
 type Filter = "all" | "untimed" | "deadline";
+const FILTERS: [Filter, string][] = [
+  ["all", "Все задачи"],
+  ["untimed", "Без времени"],
+  ["deadline", "С дедлайном"],
+];
 
 /* ─── Общие стили ───────────────────────────────────────── */
 
@@ -162,42 +166,64 @@ export function TasksPage() {
         }
       />
 
-      {/* ─── Фильтры ─────────────────────────────── */}
+      {/* ─── Фильтры: два выпадающих списка, сколько бы ни было сфер ─── */}
       <div className="mb-6 flex flex-wrap gap-1.5" role="group" aria-label="Фильтр задач">
-        {(
-          [
-            ["all", "Все"],
-            ["untimed", "Без времени"],
-            ["deadline", "С дедлайном"],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            className={cn(CHIP, filter === value && CHIP_ACTIVE)}
-            aria-pressed={filter === value}
-            onClick={() => setFilter(value)}
-          >
-            {label}
-          </button>
-        ))}
+        <Dropdown
+          label={filter === "all" ? "Фильтры" : FILTERS.find(([value]) => value === filter)?.[1] ?? "Фильтры"}
+          active={filter !== "all"}
+        >
+          {(close) =>
+            FILTERS.map(([value, label]) => (
+              <DropdownOption
+                key={value}
+                selected={filter === value}
+                onSelect={() => {
+                  setFilter(value);
+                  close();
+                }}
+              >
+                {label}
+              </DropdownOption>
+            ))
+          }
+        </Dropdown>
 
-        {tags.map((tag) => (
-          <button
-            key={tag.id}
-            type="button"
-            className={cn(CHIP, `tag-${tag.color}`, tagId === tag.id && CHIP_ACTIVE)}
-            aria-pressed={tagId === tag.id}
-            onClick={() => setTagId(tagId === tag.id ? null : tag.id)}
+        {tags.length > 0 && (
+          <Dropdown
+            label={tags.find((tag) => tag.id === tagId)?.name ?? "Сферы"}
+            active={tagId !== null}
           >
-            {/* One pill per filter: the tag colour is a dot, not a chip inside the chip */}
-            <i aria-hidden="true" className="tag-dot" />
-            {tag.name}
-          </button>
-        ))}
+            {(close) => (
+              <>
+                <DropdownOption
+                  selected={tagId === null}
+                  onSelect={() => {
+                    setTagId(null);
+                    close();
+                  }}
+                >
+                  Все сферы
+                </DropdownOption>
+                {tags.map((tag) => (
+                  <DropdownOption
+                    key={tag.id}
+                    selected={tagId === tag.id}
+                    className={`tag-${tag.color}`}
+                    onSelect={() => {
+                      setTagId(tag.id);
+                      close();
+                    }}
+                  >
+                    <i aria-hidden="true" className="tag-dot" />
+                    {tag.name}
+                  </DropdownOption>
+                ))}
+              </>
+            )}
+          </Dropdown>
+        )}
       </div>
 
-      {tab === "active" && <QuickAdd day={todayKey} tagId={tagId} />}
       {events.error && (
         <div className="mb-4">
           <ErrorNote message={events.error} onRetry={events.reload} />
@@ -212,7 +238,7 @@ export function TasksPage() {
             {shown.map((group) => (
               <GlassCard
                 key={group.title}
-                title={`${group.title} · ${group.items.length}`}
+                title={group.title}
                 actions={group.overdue && group.items.length > 1 ? <CompleteAll events={group.items} /> : undefined}
               >
                 <EventList
@@ -237,8 +263,8 @@ export function TasksPage() {
                   : "Ничего не найдено"
               }
             >
-              Добавьте задачу выше или напишите ассистенту: «купить продукты
-              завтра».
+              Добавьте задачу кнопкой в меню или напишите ассистенту: «купить
+              продукты завтра».
             </Empty>
           </GlassCard>
         )
@@ -252,76 +278,6 @@ export function TasksPage() {
         </GlassCard>
       )}
     </div>
-  );
-}
-
-/* ─── QuickAdd ─────────────────────────────────────────── */
-
-function QuickAdd({ day, tagId }: { day: string; tagId: number | null }) {
-  const [title, setTitle] = useState("");
-  const [busy, setBusy] = useState(false);
-  const reportError = useErrorToast();
-
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!title.trim()) return;
-    setBusy(true);
-    try {
-      const { start, end } = taskBounds(day, null, null);
-      await api.events.create({
-        title: title.trim().slice(0, 300),
-        start_at: start,
-        end_at: end,
-        all_day: true,
-        timezone: browserTimezone(),
-        tag_ids: tagId === null ? [] : [tagId],
-      });
-      setTitle("");
-      notifyTasksChanged();
-    } catch (error) {
-      reportError(errorText(error));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <form
-      onSubmit={submit}
-      className={cn(
-        "relative overflow-hidden rounded-2xl flex items-center gap-1 p-1.5 mb-6",
-        GLASS_BODY
-      )}
-    >
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Задача на сегодня"
-        aria-label="Задача на сегодня"
-        maxLength={300}
-        className={cn(
-          "relative flex-1 min-w-0 h-9 px-3 text-sm rounded-lg",
-          "bg-transparent border-0 outline-none focus:ring-0 shadow-none",
-          "text-gray-900 dark:text-white",
-          "placeholder:text-gray-400 dark:placeholder:text-gray-500"
-        )}
-        style={{
-          background: "transparent",
-          border: "none",
-          outline: "none",
-          boxShadow: "none",
-        }}
-      />
-      <Button
-        type="submit"
-        variant="primary"
-        size="sm"
-        icon="plus"
-        aria-label="Добавить задачу"
-        busy={busy}
-        disabled={!title.trim()}
-      />
-    </form>
   );
 }
 
@@ -382,5 +338,91 @@ function MoveTomorrow({ event }: { event: CalendarEvent }) {
     >
       <span className="move-label">На завтра</span>
     </Button>
+  );
+}
+/* ─── Dropdown ─────────────────────────────────────────── */
+
+// Своё меню, а не портал Radix: список остаётся внутри .fd-app и получает цвета сфер и тему
+function Dropdown({
+  label,
+  active,
+  children,
+}: {
+  label: string;
+  active: boolean;
+  children: (close: () => void) => ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: PointerEvent) => {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={cn(CHIP, active && CHIP_ACTIVE)}
+        onClick={() => setOpen(!open)}
+      >
+        <span className="max-w-[10rem] truncate">{label}</span>
+        <Icon name="right" size={12} className={cn("transition-transform", open ? "-rotate-90" : "rotate-90")} />
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          className={cn(
+            "absolute left-0 top-full mt-1.5 z-30 min-w-[11rem] max-h-72 overflow-y-auto p-1 rounded-xl",
+            "bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl",
+            "ring-1 ring-black/5 dark:ring-white/10 shadow-lg"
+          )}
+        >
+          {children(() => setOpen(false))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DropdownOption({
+  selected,
+  onSelect,
+  className,
+  children,
+}: {
+  selected: boolean;
+  onSelect: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      onClick={onSelect}
+      className={cn(
+        "w-full flex items-center gap-2 px-2.5 h-8 rounded-lg text-sm text-left",
+        "text-gray-700 dark:text-gray-200 hover:bg-gray-500/10",
+        selected && "font-medium text-sky-800 dark:text-sky-100",
+        className
+      )}
+    >
+      {children}
+      {selected && <Icon name="check" size={14} className="ml-auto shrink-0" />}
+    </button>
   );
 }

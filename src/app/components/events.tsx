@@ -5,7 +5,6 @@ import { useAuth } from "../auth";
 import {
   PRIORITIES,
   RECURRENCE_OPTIONS,
-  SOURCE_LABELS,
   addDays,
   browserTimezone,
   dayKey,
@@ -49,10 +48,14 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
     }
   };
 
-  const hasMeta = !!(event.location || event.source !== "local" || event.series_id || multiDay || event.deadline_at || event.is_fixed || event.tag_ids?.length);
+  // В списке — только то, что нужно, чтобы выбрать задачу; откуда она, повтор, место — в карточке
+  const hasMeta = !!(multiDay || (event.deadline_at && !done) || event.tag_ids?.length);
+  // Не выполнена, а время уже прошло — красная; выполненная — зелёная
+  const missed = !done && new Date(event.end_at) <= new Date();
+  const end = new Date(event.end_at);
 
   return (
-    <li className={`event-item prio-${event.priority}`}>
+    <li className={`event-item ${done ? "is-done" : missed ? "is-missed" : ""}`}>
       <button
         type="button"
         role="checkbox"
@@ -67,7 +70,14 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
       <Link to={`/events/${event.id}`} className={`event-row priority-${event.priority} ${done ? "done" : ""}`}>
         <span className={`event-time ${event.all_day ? "untimed" : ""} ${showDate ? "with-date" : ""}`}>
           {showDate && <span className="event-date">{start.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</span>}
-          <span className="event-clock">{event.all_day ? "без времени" : formatTime(start)}</span>
+          {event.all_day ? (
+            !showDate && <span className="event-clock" title="Без времени">—</span>
+          ) : (
+            <>
+              <span className="event-clock">{formatTime(start)}</span>
+              {!multiDay && <span className="event-end">{formatTime(end)}</span>}
+            </>
+          )}
         </span>
         <span className="event-main">
           <span className="event-title">{event.title}</span>
@@ -79,22 +89,6 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
                   <Icon name="flag" size={13} /> {formatDeadline(event.deadline_at)}
                 </span>
               )}
-              {event.is_fixed && (
-                <span title="Нельзя переносить">
-                  <Icon name="pin" size={13} /> не переносить
-                </span>
-              )}
-              {event.series_id && (
-                <span>
-                  <Icon name="sync" size={13} /> повторяется
-                </span>
-              )}
-              {event.location && (
-                <span>
-                  <Icon name="location" size={13} /> {event.location}
-                </span>
-              )}
-              {event.source !== "local" && <span>{SOURCE_LABELS[event.source] ?? event.source}</span>}
               <TagList ids={event.tag_ids} />
             </span>
           )}

@@ -376,15 +376,17 @@
 .fd-app .event-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   text-decoration: none;
   position: relative;
 }
 .fd-app .event-row:hover { background: var(--surface-2); }
-.fd-app .event-time { flex: none; min-width: 74px; white-space: nowrap; display: grid; font: 500 13px var(--font); font-variant-numeric: tabular-nums; color: var(--muted); }
-.fd-app .event-time.untimed .event-clock { font-size: 12px; }
+.fd-app .event-time { flex: none; min-width: 42px; white-space: nowrap; display: grid; font: 500 13px/1.25 var(--font); font-variant-numeric: tabular-nums; color: var(--muted); }
+.fd-app .event-time .event-clock { color: var(--ink); }
+.fd-app .event-time.untimed .event-clock { color: var(--muted); }
+.fd-app .event-end { font-size: 12px; font-weight: 400; }
 .fd-app .event-badge { flex: none; display: inline-flex; }
 .fd-app .deadline-warn { color: var(--warn); }
 .fd-app .deadline-bad { color: var(--bad); font-weight: 600; }
@@ -394,14 +396,16 @@
 .fd-app .event-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--muted); }
 .fd-app .event-meta span { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
 
-/* Priority is the colour of the check circle, the way to-do apps show it */
-.fd-app .event-item { --prio: var(--line-strong); display: flex; align-items: center; gap: 2px; }
-.fd-app .event-item.prio-high { --prio: #f59e0b; }
-.fd-app .event-item.prio-urgent { --prio: #ef4444; }
+/* Colour means one thing in a task list: green is done, red is missed (its time has passed). Priority is the badge */
+.fd-app .event-item { --prio: var(--line-strong); display: flex; align-items: center; gap: 2px; border-radius: var(--radius-sm); }
+.fd-app .event-item.is-done { --prio: #10b981; background: var(--ok-soft); }
+.fd-app .event-item.is-missed { --prio: #f43f5e; background: color-mix(in srgb, #f43f5e 9%, transparent); }
+.fd-app .event-item.is-missed .event-clock { color: #e11d48; }
+:root.dark .fd-app .event-item.is-missed .event-clock { color: #fb7185; }
 .fd-app .event-item > .event-row { flex: 1; min-width: 0; }
 .fd-app .event-check { flex: none; width: 22px; height: 22px; margin-left: 4px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--prio); border-radius: 50%; background: color-mix(in srgb, var(--prio) 10%, var(--surface-solid)); color: #fff; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
 .fd-app .event-check:hover { border-color: var(--accent); }
-.fd-app .event-check.checked { background: var(--gradient); border-color: transparent; }
+.fd-app .event-check.checked { background: #10b981; border-color: transparent; }
 .fd-app .event-row.done .event-title { text-decoration: line-through; color: var(--muted); }
 .fd-app .move-tomorrow { flex: none; }
 
@@ -409,6 +413,7 @@
 @container events (max-width: 480px) {
   .fd-app .event-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 1px; padding: 8px 10px; }
   .fd-app .event-time { grid-column: 1; min-width: 0; display: flex; gap: 6px; font-size: 12px; }
+  .fd-app .event-end::before { content: "– "; }
   .fd-app .event-time.untimed:not(.with-date) { display: none; }
   .fd-app .event-time.untimed.with-date .event-clock { display: none; }
   .fd-app .event-main { grid-column: 1; }
@@ -432,15 +437,22 @@
 
 .fd-app .recommendations { display: flex; align-items: flex-start; gap: 14px; padding: 12px 10px 12px 18px; border: 1px solid var(--glass-border); border-radius: var(--radius); background: var(--surface); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); box-shadow: var(--shadow); }
 .fd-app .recommendations > svg { color: var(--accent); flex: none; margin-top: 6px; }
-.fd-app .recommendations-list { flex: 1; display: grid; gap: 4px; min-width: 0; font-size: 14px; }
+/* Recommendations: one colour per kind — blue for advice, orange for warnings (moves, a busy day) */
+.fd-app .rec-info { --rec: #3b82f6; }
+.fd-app .rec-warn { --rec: #f59e0b; }
+.fd-app .recommendations-compact { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.fd-app .recommendation-line { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px 8px; border-radius: 10px; font-size: 14px; font-weight: 550; text-decoration: none; }
+.fd-app .recommendation-line:hover { background: var(--surface-2); }
+.fd-app .rec-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--rec); }
+.fd-app .rec-arrow { flex: none; margin-left: auto; color: var(--muted); }
+.fd-app .recommendations-list { flex: 1; display: grid; gap: 6px; min-width: 0; font-size: 14px; }
 .fd-app .recommendations-list > p { padding: 4px 0; }
-.fd-app .recommendation { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.fd-app .recommendation + .recommendation { border-top: 1px solid var(--line); padding-top: 4px; }
-.fd-app .recommendation > p { flex: 1; min-width: 0; padding: 4px 0; }
-.fd-app .recommendation .badge { margin-right: 4px; white-space: normal; }
+.fd-app .recommendation { display: flex; align-items: center; gap: 8px; min-width: 0; padding-left: 10px; border-left: 3px solid var(--rec); }
+.fd-app .recommendation > p { flex: 1; min-width: 0; padding: 2px 0; }
+.fd-app .recommendation strong { font-weight: 600; }
+.fd-app .recommendation .rich-text strong { font-weight: inherit; }
 .fd-app .recommendation > .btn { flex: none; }
 @media (max-width: 560px) {
-  .fd-app .recommendations { padding-left: 14px; gap: 10px; }
   .fd-app .recommendation { flex-wrap: wrap; gap: 0; }
   .fd-app .recommendation > .btn { margin-left: -13px; }
 }

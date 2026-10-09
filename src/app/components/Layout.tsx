@@ -1,12 +1,13 @@
 // src/components/Layout.tsx
 import { Sparkles } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/theme";
 import type { User } from "../api/types";
 import { useAuth, useSignOut } from "../auth";
 import { Link, navigate, useLocation } from "../router";
 import { Icon, type IconName } from "./icons";
 import { ErrorBoundary, useToast } from "./ui";
+import { AssistantChat } from "../pages/Assistant";
 import { cn } from "@/utils/cn";
 import React from "react";
 
@@ -19,8 +20,12 @@ const NAV: NavItem[] = [
   { to: "/tasks", label: "Задачи", icon: "tasks" },
 ];
 
+// Ассистент — первый пункт списка и выделен цветом; «Dayla» над списком — просто логотип
 const SIDEBAR: NavItem[] = [
-  ...NAV.filter((item) => !item.main),
+  NAV[2],
+  NAV[0],
+  NAV[1],
+  NAV[3],
   { to: "/events/new", label: "Новая задача", icon: "plus" },
 ];
 
@@ -32,7 +37,8 @@ const TABS: NavItem[] = [
   { to: "/account", label: "Аккаунт", icon: "user" },
 ];
 
-const NO_FAB = ["/assistant", "/events/new", "/account", "/settings", "/integrations"];
+// Where the corner chat would only get in the way: the chat page itself and the task form with its buttons
+const NO_DOCK = ["/assistant", "/events/new"];
 const ACCOUNT_PATHS = ["/account", "/settings", "/integrations"];
 
 const isActive = (to: string, path: string) =>
@@ -77,13 +83,9 @@ const GLASS_ICON_BTN =
 
 /* ─── Brand ─────────────────────────────────────────────── */
 
-export function Brand({ to = "/assistant" }: { to?: string }) {
+export function Brand() {
   return (
-    <Link
-      to={to}
-      className="flex items-center gap-2.5 text-sm font-semibold tracking-tight text-gray-900 dark:text-white"
-      aria-label="Dayla — Ассистент"
-    >
+    <span className="flex items-center gap-2.5 text-sm font-semibold tracking-tight text-gray-900 dark:text-white select-none">
       <span
         aria-hidden="true"
         className="relative w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-400 to-violet-500 text-white shadow-[0_2px_8px_rgba(56,189,248,0.35)]"
@@ -91,7 +93,7 @@ export function Brand({ to = "/assistant" }: { to?: string }) {
         <Sparkles size={14} strokeWidth={2} />
       </span>
       Dayla
-    </Link>
+    </span>
   );
 }
 
@@ -155,7 +157,6 @@ export function Layout({ children }: { children: ReactNode }) {
   const { path, query } = useLocation();
   const toast = useToast();
   const accountActive = isActive("/account", path);
-  const assistantActive = isActive("/assistant", path);
 
   const connected = query.get("connected");
   useEffect(() => {
@@ -166,109 +167,10 @@ export function Layout({ children }: { children: ReactNode }) {
   }, [connected, toast]);
 
   const hiddenTopbar = useHideOnScroll(80);
+  const docked = !NO_DOCK.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 
   return (
     <>
-      {/* ─── Стиль кнопки «Dayla · Ассистент» ─────────────── */}
-      <style>{`
-        .glass-brand-border {
-          position: relative;
-          isolation: isolate;
-          background: transparent;
-          border: none;
-          box-shadow:
-            inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-            inset 0 1px 0 rgba(255, 255, 255, 0.35),
-            0 0 20px 3px rgba(56, 189, 248, 0.14),
-            0 0 42px 12px rgba(139, 92, 246, 0.10);
-          transition: box-shadow 220ms;
-        }
-        .glass-brand-border::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          backdrop-filter: blur(16px) saturate(150%);
-          -webkit-backdrop-filter: blur(16px) saturate(150%);
-          pointer-events: none;
-          z-index: -1;
-        }
-        .glass-brand-border::after {
-          content: "";
-          position: absolute;
-          inset: -12px;
-          border-radius: 24px;
-          backdrop-filter: blur(6px) saturate(130%);
-          -webkit-backdrop-filter: blur(6px) saturate(130%);
-          -webkit-mask-image: radial-gradient(
-            ellipse 72% 72% at 50% 50%,
-            transparent 36%,
-            rgba(0, 0, 0, 0.55) 54%,
-            rgba(0, 0, 0, 0.25) 74%,
-            transparent 100%
-          );
-          mask-image: radial-gradient(
-            ellipse 72% 72% at 50% 50%,
-            transparent 36%,
-            rgba(0, 0, 0, 0.55) 54%,
-            rgba(0, 0, 0, 0.25) 74%,
-            transparent 100%
-          );
-          pointer-events: none;
-          z-index: -2;
-        }
-        .glass-brand-border > .glass-dots {
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          pointer-events: none;
-          z-index: 0;
-          overflow: hidden;
-          background:
-            radial-gradient(circle 5px at 24% 32%, rgba(56, 189, 248, 0.75), transparent 55%),
-            radial-gradient(circle 4px at 76% 66%, rgba(139, 92, 246, 0.70), transparent 55%),
-            radial-gradient(circle 3px at 52% 20%, rgba(59, 130, 246, 0.65), transparent 55%),
-            radial-gradient(circle 4px at 82% 28%, rgba(139, 92, 246, 0.60), transparent 55%),
-            radial-gradient(circle 3px at 38% 82%, rgba(56, 189, 248, 0.55), transparent 55%),
-            radial-gradient(circle 2.5px at 64% 78%, rgba(99, 102, 241, 0.55), transparent 55%);
-          filter: blur(1.5px);
-        }
-        .glass-brand-border > * {
-          position: relative;
-          z-index: 1;
-        }
-        .glass-brand-border:hover {
-          box-shadow:
-            inset 0 0 0 1px rgba(255, 255, 255, 0.30),
-            inset 0 1px 0 rgba(255, 255, 255, 0.45),
-            0 0 26px 5px rgba(56, 189, 248, 0.22),
-            0 0 54px 18px rgba(139, 92, 246, 0.14);
-        }
-        .dark .glass-brand-border {
-          box-shadow:
-            inset 0 0 0 1px rgba(255, 255, 255, 0.10),
-            inset 0 1px 0 rgba(255, 255, 255, 0.08),
-            0 0 20px 3px rgba(56, 189, 248, 0.14),
-            0 0 42px 12px rgba(139, 92, 246, 0.10);
-        }
-        .dark .glass-brand-border:hover {
-          box-shadow:
-            inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-            inset 0 1px 0 rgba(255, 255, 255, 0.12),
-            0 0 26px 5px rgba(56, 189, 248, 0.20),
-            0 0 54px 18px rgba(139, 92, 246, 0.14);
-        }
-        .dark .glass-brand-border > .glass-dots {
-          background:
-            radial-gradient(circle 5px at 24% 32%, rgba(56, 189, 248, 0.65), transparent 55%),
-            radial-gradient(circle 4px at 76% 66%, rgba(139, 92, 246, 0.60), transparent 55%),
-            radial-gradient(circle 3px at 52% 20%, rgba(59, 130, 246, 0.55), transparent 55%),
-            radial-gradient(circle 4px at 82% 28%, rgba(139, 92, 246, 0.52), transparent 55%),
-            radial-gradient(circle 3px at 38% 82%, rgba(56, 189, 248, 0.48), transparent 55%),
-            radial-gradient(circle 2.5px at 64% 78%, rgba(99, 102, 241, 0.48), transparent 55%);
-        }
-      `}</style>
-
       <div className="relative min-h-screen flex">
         {/* ═══ САЙДБАР ═══ */}
         <aside
@@ -279,25 +181,8 @@ export function Layout({ children }: { children: ReactNode }) {
             GLASS_SURFACE
           )}
         >
-          <div className="px-3 pt-3 pb-2">
-            <Link
-              to="/assistant"
-              aria-current={assistantActive ? "page" : undefined}
-              aria-label="Dayla — Ассистент"
-              className="glass-brand-border relative flex items-center gap-2.5 px-3 h-11 rounded-xl text-sm text-gray-900 dark:text-white"
-            >
-              <span className="glass-dots" aria-hidden="true" />
-              <span
-                aria-hidden="true"
-                className="relative w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-400 to-violet-500 text-white shadow-[0_2px_8px_rgba(56,189,248,0.4)]"
-              >
-                <Sparkles size={14} strokeWidth={2} />
-              </span>
-              <span className="relative font-semibold tracking-tight">Dayla</span>
-              <span className="relative ml-auto text-xs font-normal text-gray-500 dark:text-gray-400">
-                Ассистент
-              </span>
-            </Link>
+          <div className="px-3 pt-4 pb-2 pl-5">
+            <Brand />
           </div>
 
           <nav
@@ -315,7 +200,13 @@ export function Layout({ children }: { children: ReactNode }) {
                     "relative flex items-center gap-2.5 overflow-hidden",
                     "px-3 h-9 rounded-xl text-sm font-medium",
                     "transition-colors duration-200 outline-none focus:outline-none",
-                    active
+                    item.main
+                      ? cn(
+                          "mb-1.5 text-white bg-gradient-to-br from-sky-400 to-violet-500",
+                          "shadow-[0_4px_14px_rgba(99,102,241,0.35)] hover:brightness-105",
+                          active && "ring-2 ring-white/60 dark:ring-white/30"
+                        )
+                      : active
                       ? cn(GLASS_ACTIVE, "text-sky-800 dark:text-sky-100")
                       : [
                           "text-gray-600 dark:text-gray-400",
@@ -383,39 +274,24 @@ export function Layout({ children }: { children: ReactNode }) {
                 : "translate-y-0 opacity-100"
             )}
           >
-            <Brand to="/assistant" />
+            <Brand />
             <ThemeToggle />
           </header>
 
           <main
-            className="flex-1 min-w-0 px-4 sm:px-6 py-4 pb-28 lg:pb-8"
+            className={cn(
+              "flex-1 min-w-0 px-4 sm:px-6 py-4",
+              // Room under the content for the corner chat button
+              docked ? "pb-28 lg:pb-24" : "pb-28 lg:pb-8"
+            )}
             id="content"
           >
             <ErrorBoundary key={path}>{children}</ErrorBoundary>
           </main>
         </div>
 
-        {/* ═══ FAB ═══ */}
-        {!NO_FAB.some(
-          (prefix) => path === prefix || path.startsWith(`${prefix}/`)
-        ) && (
-          <Link
-            to="/events/new"
-            aria-label="Новая задача"
-            className={cn(
-              "lg:hidden fixed right-5 z-30 bottom-[5.5rem]",
-              "w-12 h-12 rounded-full flex items-center justify-center",
-              "bg-white/[0.06] dark:bg-white/[0.03] backdrop-blur-xl",
-              "ring-1 ring-sky-400/40 dark:ring-sky-400/30",
-              "text-sky-800 dark:text-sky-100",
-              "shadow-[0_8px_24px_rgba(56,189,248,0.20),inset_0_1px_0_rgba(255,255,255,0.55)]",
-              "dark:shadow-[0_8px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]",
-              "transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0"
-            )}
-          >
-            <Icon name="plus" size={22} />
-          </Link>
-        )}
+        {/* ═══ Чат в углу каждого раздела ═══ */}
+        {docked && <ChatDock path={path} />}
 
         {/* ═══ TABBAR (mobile) — парящий ═══ */}
         <nav
@@ -438,14 +314,14 @@ export function Layout({ children }: { children: ReactNode }) {
                       aria-current={active ? "page" : undefined}
                       aria-label={item.label}
                       className={cn(
-                        "glass-brand-border",
                         "flex items-center justify-center",
-                        "w-12 h-12 rounded-xl",
-                        "text-gray-900 dark:text-white",
+                        "w-12 h-12 rounded-xl text-white",
+                        "bg-gradient-to-br from-sky-400 to-violet-500",
+                        "shadow-[0_4px_14px_rgba(99,102,241,0.4)]",
+                        active && "ring-2 ring-white/60 dark:ring-white/30",
                         "transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0"
                       )}
                     >
-                      <span className="glass-dots" aria-hidden="true" />
                       <Icon name={item.icon} size={22} className="relative" />
                     </Link>
                   </li>
@@ -475,5 +351,52 @@ export function Layout({ children }: { children: ReactNode }) {
         </nav>
       </div>
     </>
+  );
+}
+/* ─── ChatDock ──────────────────────────────────────────── */
+
+/** The assistant one tap away in every section, in the corner like a bank's support chat. */
+function ChatDock({ path }: { path: string }) {
+  const [open, setOpen] = useState(false);
+
+  // Leaving the section (a task link in the chat, "Неделя в календаре") shows that section
+  useEffect(() => setOpen(false), [path]);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Спросить Dayla"
+        title="Спросить Dayla"
+        className={cn(
+          // On a phone the chat is the middle button of the tab bar: a second gradient button would only repeat it
+          "hidden lg:flex fixed z-30 right-6 bottom-6",
+          "items-center gap-2 h-14 pl-4 pr-5 justify-center rounded-full",
+          "text-white bg-gradient-to-br from-sky-400 to-violet-500",
+          "shadow-[0_8px_24px_rgba(99,102,241,0.45)]",
+          "transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0"
+        )}
+      >
+        <Icon name="assistant" size={24} />
+        <span className="text-sm font-semibold">Спросить Dayla</span>
+      </button>
+    );
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-label="Чат с Dayla"
+      className={cn(
+        "fixed z-40 inset-x-2 top-2 bottom-[5.25rem]",
+        "lg:inset-auto lg:right-6 lg:bottom-6 lg:w-[420px] lg:h-[min(660px,calc(100dvh-3rem))]",
+        "flex flex-col overflow-hidden rounded-2xl",
+        "bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl",
+        "ring-1 ring-black/5 dark:ring-white/10 shadow-[0_20px_60px_rgba(15,23,42,0.25)]"
+      )}
+    >
+      <AssistantChat panel onClose={() => setOpen(false)} />
+    </div>
   );
 }

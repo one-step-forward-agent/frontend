@@ -118,21 +118,6 @@ export function TodayPage() {
                 }`
               : "Задачи"
           }
-          actions={
-            <Link
-              to={`/events/new?day=${dayKey(today)}`}
-              className={cn(
-                "relative inline-flex items-center gap-1.5 overflow-hidden",
-                "px-3 h-8 rounded-xl text-xs font-medium",
-                GLASS_BODY,
-                "text-gray-700 dark:text-gray-300",
-                "transition-transform duration-200 hover:-translate-y-0.5"
-              )}
-            >
-              <Icon name="plus" size={14} className="relative" />
-              <span className="relative">Добавить</span>
-            </Link>
-          }
         >
           {events.loading && !events.data ? (
             <Loading />

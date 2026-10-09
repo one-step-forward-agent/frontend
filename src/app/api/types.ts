@@ -177,7 +177,7 @@ export type AssistantReply =
       mark?: boolean;
       days: { date: string; label: string; events: AssistantEvent[] }[];
     }
-  | ({ kind: "stats" } & Stats)
+  | ({ kind: "stats"; previous_percent?: number | null; habits?: StatsHabits } & Stats)
   | { kind: "help"; sections: { title: string; examples: string[] }[] }
   | { kind: "advice"; items: Recommendation[] }
   | { kind: "reminders"; settings: ReminderSettings }
@@ -208,6 +208,16 @@ export interface Stats {
   percent: number;
   streak: number;
   best_streak: number;
+}
+
+/** What the last weeks say about the user, as plain sentences from the server. */
+export interface StatsHabits {
+  done_per_day?: number;
+  planned_per_day?: number;
+  spheres_done?: string[];
+  most_done?: string;
+  weak_weekday?: string;
+  slipping?: string[];
 }
 
 export interface Recommendation {

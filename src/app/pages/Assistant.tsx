@@ -1,9 +1,10 @@
 // src/pages/AssistantPage.tsx
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type RefObject } from "react";
 import { ApiError, api } from "../api/client";
 import type {
   AgendaScope,
   AssistantEvent,
+  CalendarEvent,
   AssistantReply,
   DraftItem,
   HistoryMessage,
@@ -23,6 +24,7 @@ import {
   formatTime,
   openPicker,
   parseDayKey,
+  plural,
   relativeDay,
 } from "../lib/format";
 import { notifyTasksChanged } from "../lib/hooks";
@@ -41,26 +43,28 @@ type Message =
   | { id: number; role: "assistant"; reply: AssistantReply; serverId?: number; rating?: -1 | 1 | null }
   | { id: number; role: "error"; text: string };
 
-const QUICK_ACTIONS = [
-  "Сегодня",
-  "Завтра",
-  "Неделя",
-  "Выполнено",
-  "Статистика",
-  "Советы",
-  "Анализ недели",
-  "Помощь",
+// "Разбить на шаги" does not send: it starts the request, the user names the task and the date
+const QUICK_ACTIONS: { label: string; fill?: string }[] = [
+  { label: "Сегодня" },
+  { label: "Завтра" },
+  { label: "Разбить на шаги", fill: "Разбей на шаги до " },
+  { label: "Выполнено" },
+  { label: "Статистика" },
+  { label: "Советы" },
+  { label: "Анализ недели" },
+  { label: "Помощь" },
 ];
+// The week is the calendar's job: a link there instead of a third scope
 const SCOPES: { value: AgendaScope; label: string }[] = [
   { value: "today", label: "Сегодня" },
   { value: "tomorrow", label: "Завтра" },
-  { value: "week", label: "Неделя" },
 ];
 
 const TOPIC_REPLIES = ["Как это сделать?", "Помоги перепланировать", "Что можно перенести?"];
 
 const EXAMPLES: Record<Mode, string[]> = {
   plan: [
+    "Помоги подготовиться к экзамену 20 октября",
     "Проанализируй мою неделю",
     "Созвон с командой завтра в 11:00 на час",
     "Каждую пятницу в 18:00 спортзал, напомни за 30 минут",
@@ -90,13 +94,22 @@ function fromHistory(items: HistoryMessage[]): Message[] {
 
 export function AssistantPage() {
   useTitle("Ассистент");
+  return <AssistantChat />;
+}
+
+/**
+ * The chat itself. On its page it fills the screen; as a panel it sits in the corner of every section.
+ * Either way the messages scroll inside and the input stays at the bottom, always in view.
+ */
+export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onClose?: () => void }) {
   const { query } = useLocation();
   const [mode, setMode] = useState<Mode>("plan");
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -110,8 +123,10 @@ export function AssistantPage() {
     };
   }, []);
 
+  // Only the list scrolls: the page stays put and the input never leaves the screen
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: loaded ? "smooth" : "auto", block: "end" });
+    const list = listRef.current;
+    if (list) list.scrollTo({ top: list.scrollHeight, behavior: loaded ? "smooth" : "auto" });
   }, [messages, busy, loaded]);
 
   const push = (message: Message) => setMessages((items) => [...items, message]);
@@ -135,7 +150,7 @@ export function AssistantPage() {
     }
   };
 
-  const initial = query.get("q");
+  const initial = panel ? null : query.get("q");
   const handled = useRef<string | null>(null);
   useEffect(() => {
     if (!loaded || !initial || handled.current === initial) return;
@@ -144,8 +159,8 @@ export function AssistantPage() {
     send(initial);
   }, [initial, loaded]);
 
-  const topic = query.get("topic");
-  const topicText = query.get("text");
+  const topic = panel ? null : query.get("topic");
+  const topicText = panel ? null : query.get("text");
   useEffect(() => {
     if (!loaded || !topic || !topicText || handled.current === `topic:${topic}`) return;
     handled.current = `topic:${topic}`;
@@ -173,12 +188,17 @@ export function AssistantPage() {
       )
     );
 
-  return (
-    <div className="relative max-w-3xl mx-auto pt-[1.5vh]">
-      <PageHeader
-        title="Ассистент"
-        subtitle="Пишите, говорите или пришлите документ — Dayla создаст или изменит задачи. Перед сохранением всё можно поправить."
-        actions={
+  const quick = (action: (typeof QUICK_ACTIONS)[number]) => {
+    if (!action.fill) return send(action.label);
+    setText(action.fill);
+    requestAnimationFrame(() => {
+      const input = inputRef.current;
+      input?.focus();
+      input?.setSelectionRange(action.fill!.length, action.fill!.length);
+    });
+  };
+
+  const modeSwitch = (
           <div
             className={cn(
               "relative inline-flex items-center gap-1 p-1 rounded-full overflow-hidden",
@@ -204,11 +224,63 @@ export function AssistantPage() {
               </button>
             ))}
           </div>
-        }
-      />
+  );
 
-      {/* ─── Чат ──────────────────────────────────── */}
-      <div className="relative p-4 sm:p-5 space-y-4 min-h-[320px]">
+  return (
+    <div
+      className={cn(
+        "relative flex flex-col min-h-0",
+        panel ? "h-full" : "max-w-3xl mx-auto h-[calc(100dvh-11.5rem)] lg:h-[calc(100dvh-3rem)]"
+      )}
+    >
+      {panel ? (
+        <div className="shrink-0 flex items-center gap-2 px-4 pt-3 pb-2">
+          <span className="text-sm font-semibold text-gray-900 dark:text-white">Dayla</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">ассистент</span>
+          <span className="ml-auto flex items-center gap-1">
+            <Link
+              to="/events/new"
+              className="inline-flex items-center gap-1 px-2 h-8 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-500/10"
+              title="Новая задача вручную"
+            >
+              <Icon name="plus" size={14} /> Задача
+            </Link>
+            <Link
+              to="/assistant"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-500/10"
+              aria-label="Открыть чат на весь экран"
+              title="На весь экран"
+            >
+              <Icon name="external" size={15} />
+            </Link>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-500/10"
+              aria-label="Свернуть чат"
+            >
+              <Icon name="close" size={16} />
+            </button>
+          </span>
+        </div>
+      ) : (
+        <div className="shrink-0">
+          <PageHeader
+            title="Ассистент"
+            subtitle={
+              // On a phone the screen belongs to the conversation
+              <span className="hidden sm:inline">
+                Пишите, говорите или пришлите документ — Dayla создаст или изменит задачи, разобьёт большую на шаги.
+                Перед сохранением всё можно поправить.
+              </span>
+            }
+            actions={modeSwitch}
+          />
+        </div>
+      )}
+
+      {/* ─── Чат: прокручивается только он ─────────── */}
+      <div ref={listRef} role="log" aria-label="Переписка с Dayla" className={cn("relative flex-1 min-h-0 overflow-y-auto space-y-4", panel ? "px-3 py-2" : "p-1 sm:p-2")}>
         {loaded && messages.length === 0 && (
           <div className="flex flex-col items-center text-center py-8">
             <span
@@ -273,29 +345,28 @@ export function AssistantPage() {
             />
           </div>
         )}
-        <div ref={endRef} />
       </div>
 
-      {/* ─── Быстрые команды + Composer ─────────────── */}
-      <div className="sticky bottom-4">
+      {/* ─── Быстрые команды + Composer: всегда внизу ─── */}
+      <div className={cn("shrink-0 pt-2", panel && "px-3 pb-3")}>
         <div
-          className="mb-2 flex flex-wrap gap-1.5"
+          className="mb-2 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]"
           role="group"
           aria-label="Быстрые команды"
         >
           {QUICK_ACTIONS.map((action) => (
             <button
-              key={action}
+              key={action.label}
               type="button"
-              className={GLASS_CHIP}
+              className={cn(GLASS_CHIP, "shrink-0", action.fill && "text-sky-800 dark:text-sky-100")}
               disabled={busy}
-              onClick={() => send(action)}
+              onClick={() => quick(action)}
             >
-              <span className="relative">{action}</span>
+              <span className="relative whitespace-nowrap">{action.label}</span>
             </button>
           ))}
         </div>
-        <Composer value={text} onChange={setText} onSend={() => send(text)} busy={busy} mode={mode} />
+        <Composer value={text} onChange={setText} onSend={() => send(text)} busy={busy} mode={mode} inputRef={inputRef} />
       </div>
     </div>
   );
@@ -535,7 +606,7 @@ function AgendaReply({
           ) : moving ? (
             <MoveList events={day.events} onMoved={onAppend} />
           ) : (
-            <AssistantEvents events={day.events} />
+            <AssistantEvents events={day.events} showDay={false} />
           )}
         </div>
       ))}
@@ -563,6 +634,12 @@ function AgendaReply({
               </button>
             ))}
           </div>
+          <Link
+            to="/calendar?view=week"
+            className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg text-xs font-medium text-sky-700 dark:text-sky-300 hover:bg-sky-500/10"
+          >
+            <Icon name="calendar" size={13} /> Неделя в календаре
+          </Link>
           {count > 0 && !reply.mark && (
             <Button
               variant="ghost"
@@ -801,59 +878,148 @@ function UndoButton({
 /* ─── StatsReply ─────────────────────────────────────────── */
 
 function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" }> }) {
+  const max = Math.max(1, ...stats.days.map((day) => day.total));
+  const todayKey = stats.today.date;
+  const delta = stats.previous_percent == null || !stats.total ? null : stats.percent - stats.previous_percent;
+  const habits = stats.habits ?? {};
+  const noticed = [
+    habits.done_per_day != null &&
+      `Обычно вы выполняете ${habits.done_per_day} ${plural(Math.round(habits.done_per_day), "задачу", "задачи", "задач")} в день${
+        habits.planned_per_day ? `, а планируете ${habits.planned_per_day}` : ""
+      }.`,
+    habits.most_done && `Вы ${habits.most_done}.`,
+    habits.weak_weekday && `Слабее всего день — ${habits.weak_weekday}.`,
+    ...(habits.slipping ?? []).slice(0, 2).map((text) => `Откладывается: ${text}.`),
+  ].filter(Boolean) as string[];
+
   return (
-    <div className="space-y-3">
-      <p className="text-base">
-        <strong className="font-semibold">{stats.today.done}</strong> из {stats.today.total}{" "}
-        <span className="text-gray-500 dark:text-gray-400">выполнено сегодня</span>
-      </p>
-
-      <div
-        className={cn(
-          "relative h-2 rounded-full overflow-hidden",
-          "bg-white/[0.06] dark:bg-white/[0.02]",
-          "ring-1 ring-white/20 dark:ring-white/10",
-          "shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]"
-        )}
-      >
-        <div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-sky-400 to-blue-500"
-          style={{ width: `${stats.today.percent}%` }}
-        />
-      </div>
-
-      <div className="flex items-end gap-1.5 h-16" aria-label="Выполнение за 7 дней">
-        {stats.days.map((day) => (
-          <div
-            key={day.date}
-            title={`${day.done} из ${day.total}`}
-            className="flex-1 flex flex-col items-center gap-1 h-full"
+    <div className="space-y-4">
+      {/* ─── Итог недели и сравнение с прошлой ─── */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
+            Выполнено за 7 дней
+          </p>
+          <p className="text-3xl font-semibold tabular-nums leading-tight">{stats.percent}%</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {stats.done} из {stats.total} {plural(stats.total, "задачи", "задач", "задач")}
+          </p>
+        </div>
+        {delta !== null && (
+          <span
+            className={cn(
+              "inline-flex items-center px-2.5 h-7 rounded-full text-xs font-medium",
+              delta >= 0
+                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                : "bg-rose-500/15 text-rose-700 dark:text-rose-300"
+            )}
           >
-            <span className="relative flex-1 w-full rounded-md bg-white/[0.06] dark:bg-white/[0.02] ring-1 ring-white/20 dark:ring-white/10 overflow-hidden">
-              <span
-                className={cn(
-                  "absolute inset-x-0 bottom-0 rounded-md",
-                  day.total && day.done === day.total
-                    ? "bg-emerald-500/60"
-                    : "bg-sky-500/50"
-                )}
-                style={{ height: `${day.total ? Math.max(day.percent, 6) : 0}%` }}
-              />
-            </span>
-            <span className="text-[10px] text-gray-500 dark:text-gray-400">
-              {(parseDayKey(day.date) ?? new Date()).toLocaleDateString("ru-RU", {
-                weekday: "short",
-              })}
-            </span>
-          </div>
-        ))}
+            {delta >= 0 ? "↑" : "↓"} {Math.abs(delta)}% к прошлой неделе
+          </span>
+        )}
       </div>
 
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        За неделю {stats.done} из {stats.total} ({stats.percent}%)
-        {stats.streak > 0 ? ` · 🔥 серия ${stats.streak} дн.` : ""}
-        {stats.best_streak > stats.streak ? ` · лучшая ${stats.best_streak} дн.` : ""}
+      {/* ─── По дням: зелёное — сделано, красное — не сделано ─── */}
+      <div>
+        <div className="flex items-end gap-1.5 h-28" aria-label="Выполнение по дням">
+          {stats.days.map((day) => {
+            const isToday = day.date === todayKey;
+            const missed = day.total - day.done;
+            return (
+              <div key={day.date} className="flex-1 flex flex-col items-center gap-1 h-full min-w-0">
+                <span className="text-[10px] tabular-nums text-gray-500 dark:text-gray-400">
+                  {day.total ? `${day.done}/${day.total}` : "—"}
+                </span>
+                <span className="relative flex-1 w-full flex flex-col justify-end">
+                  <span
+                    className="w-full flex flex-col rounded-md overflow-hidden"
+                    style={{ height: `${(day.total / max) * 100}%` }}
+                    title={`${day.done} из ${day.total}`}
+                  >
+                    {missed > 0 && (
+                      <span
+                        className={isToday ? "bg-sky-400/40" : "bg-rose-400/70"}
+                        style={{ flexGrow: missed }}
+                      />
+                    )}
+                    {day.done > 0 && <span className="bg-emerald-500/80" style={{ flexGrow: day.done }} />}
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    "text-[10px]",
+                    isToday ? "font-semibold text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"
+                  )}
+                >
+                  {isToday
+                    ? "сег."
+                    : (parseDayKey(day.date) ?? new Date()).toLocaleDateString("ru-RU", { weekday: "short" })}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500 dark:text-gray-400">
+          <span className="inline-flex items-center gap-1">
+            <i className="w-2 h-2 rounded-sm bg-emerald-500/80" /> сделано
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <i className="w-2 h-2 rounded-sm bg-rose-400/70" /> не сделано
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <i className="w-2 h-2 rounded-sm bg-sky-400/40" /> сегодня ещё впереди
+          </span>
+        </p>
+      </div>
+
+      <p className="text-sm">
+        Сегодня: <strong className="font-semibold">{stats.today.done}</strong> из {stats.today.total}
+        {stats.streak > 0 && (
+          <span className="text-gray-500 dark:text-gray-400">
+            {" "}· 🔥 {stats.streak} {plural(stats.streak, "день", "дня", "дней")} подряд всё выполнено
+            {stats.best_streak > stats.streak ? ` (рекорд — ${stats.best_streak})` : ""}
+          </span>
+        )}
       </p>
+
+      {/* ─── По сферам ─── */}
+      {habits.spheres_done && habits.spheres_done.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
+            По сферам за 4 недели
+          </p>
+          {habits.spheres_done.map((line) => {
+            const [name, rest] = line.split(": ");
+            const percent = Number(/(\d+)%/.exec(rest ?? "")?.[1] ?? 0);
+            return (
+              <div key={line} className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_2.5rem] items-center gap-2 text-xs">
+                <span className="truncate">{name}</span>
+                <span className="h-1.5 rounded-full bg-gray-500/15 overflow-hidden">
+                  <span
+                    className={cn("block h-full rounded-full", percent >= 50 ? "bg-emerald-500/80" : "bg-rose-400/80")}
+                    style={{ width: `${percent}%` }}
+                  />
+                </span>
+                <span className="tabular-nums text-right text-gray-500 dark:text-gray-400">{percent}%</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {noticed.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">Что я заметила</p>
+          <ul className="space-y-1 text-sm">
+            {noticed.map((line) => (
+              <li key={line} className="flex gap-2">
+                <span aria-hidden="true" className="text-sky-600 dark:text-sky-300">•</span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -881,7 +1047,7 @@ function AdviceReply({
   return (
     <>
       <p>Советы на сегодня:</p>
-      <RecommendationList items={items} onDiscuss={discuss} />
+      <RecommendationList items={items} full onDiscuss={discuss} />
     </>
   );
 }
@@ -1050,7 +1216,8 @@ function DeleteProposal({
 
 /* ─── AssistantEvents ────────────────────────────────────── */
 
-function AssistantEvents({ events }: { events: AssistantEvent[] }) {
+function AssistantEvents({ events, showDay = true }: { events: AssistantEvent[]; showDay?: boolean }) {
+  const today = dayKey(new Date());
   return (
     <ul className="space-y-1.5">
       {events.map((event) => (
@@ -1065,9 +1232,22 @@ function AssistantEvents({ events }: { events: AssistantEvent[] }) {
               event.completed && "opacity-60"
             )}
           >
-            <span className="relative flex flex-col shrink-0 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums">
-              <span>{relativeDay(new Date(event.start))}</span>
-              <span>{event.all_day ? "—" : formatTime(new Date(event.start))}</span>
+            <span className="relative flex flex-col shrink-0 min-w-[2.75rem] text-xs tabular-nums">
+              <span
+                className={cn(
+                  "font-semibold",
+                  event.completed
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-sky-700 dark:text-sky-300"
+                )}
+              >
+                {event.all_day ? "—" : formatTime(new Date(event.start))}
+              </span>
+              {showDay && event.start.slice(0, 10) !== today && (
+                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                  {relativeDay(new Date(event.start))}
+                </span>
+              )}
             </span>
             <span className="relative min-w-0 flex-1">
               <span
@@ -1188,6 +1368,9 @@ function Proposal({
 
   const isChange = items.some((item) => item.event_id);
   const targets = reply.targets ?? [];
+  // Several new tasks (steps of a big one): first how they fit the calendar, editing on demand
+  const plan = !isChange && items.length >= 3;
+  const [editing, setEditing] = useState(!plan);
 
   // Saved at once: the choice is also the default for the next drafts
   const toggleCalendar = async (slug: string) => {
@@ -1214,7 +1397,14 @@ function Proposal({
       />
       {reply.note && <p className="text-xs text-gray-500 dark:text-gray-400">{reply.note}</p>}
 
-      {items.map((item, index) => (
+      {plan && <DraftPreview items={items} />}
+      {plan && (
+        <Button variant="ghost" size="sm" icon={editing ? "left" : "settings"} onClick={() => setEditing(!editing)}>
+          {editing ? "Свернуть правку" : "Поправить шаги"}
+        </Button>
+      )}
+
+      {editing && items.map((item, index) => (
         <div
           key={index}
           className={cn("relative overflow-hidden rounded-xl p-3 space-y-2", GLASS_BODY)}
@@ -1428,6 +1618,80 @@ function Proposal({
   );
 }
 
+/* ─── DraftPreview: how new tasks fit the calendar ───────── */
+
+function DraftPreview({ items }: { items: DraftItem[] }) {
+  const days = [...new Set(items.map((item) => item.date))].sort();
+  const first = parseDayKey(days[0]);
+  const last = parseDayKey(days[days.length - 1]);
+  const [existing, setExisting] = useState<CalendarEvent[]>([]);
+
+  useEffect(() => {
+    if (!first || !last) return;
+    let active = true;
+    api.events
+      .list({ start: first.toISOString(), end: addDays(last, 1).toISOString(), limit: 500 })
+      .then((events) => active && setExisting(events))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [days[0], days[days.length - 1]]);
+
+  return (
+    <div className={cn("relative rounded-xl p-3 space-y-2.5", GLASS_BODY)} aria-label="Как это будет в календаре">
+      <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">В календаре</p>
+      {days.map((key) => {
+        const day = parseDayKey(key) ?? new Date();
+        const fresh = items.filter((item) => item.date === key);
+        const taken = existing.filter(
+          (event) => !event.completed_at && dayKey(new Date(event.start_at)) === key
+        );
+        const rows = [
+          ...taken.map((event) => ({
+            key: `e${event.id}`,
+            time: event.all_day ? "" : formatTime(new Date(event.start_at)),
+            title: event.title,
+            fresh: false,
+          })),
+          ...fresh.map((item, index) => ({
+            key: `n${index}`,
+            time: item.time ?? "",
+            title: item.title,
+            fresh: true,
+          })),
+        ].sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
+        return (
+          <div key={key} className="space-y-1">
+            <span className="block text-xs font-semibold text-gray-700 dark:text-gray-200 capitalize-first">
+              {relativeDay(day)}
+            </span>
+            <ul className="space-y-1 min-w-0">
+              {rows.map((row) => (
+                <li
+                  key={row.key}
+                  className={cn(
+                    "flex items-baseline gap-2 px-2 py-1 rounded-lg text-xs min-w-0",
+                    row.fresh
+                      ? "bg-sky-500/15 ring-1 ring-sky-400/40 text-gray-900 dark:text-white font-medium"
+                      : "text-gray-500 dark:text-gray-400"
+                  )}
+                >
+                  <span className="tabular-nums shrink-0 w-9">{row.time || "—"}</span>
+                  <span className="truncate">{row.title}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+        Выделены новые шаги, серым — то, что уже есть в эти дни.
+      </p>
+    </div>
+  );
+}
+
 /* ─── Composer ───────────────────────────────────────────── */
 
 function Composer({
@@ -1436,12 +1700,14 @@ function Composer({
   onSend,
   busy,
   mode,
+  inputRef,
 }: {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
   busy: boolean;
   mode: Mode;
+  inputRef?: RefObject<HTMLTextAreaElement | null>;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder | null>(null);
@@ -1532,6 +1798,7 @@ function Composer({
         onClick={() => fileInput.current?.click()}
       />
       <textarea
+        ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}

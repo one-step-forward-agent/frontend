@@ -5,7 +5,7 @@ import type { CalendarEvent } from "../api/types";
 import { EventList } from "../components/events";
 import { RecommendationList } from "../components/recommendations";
 import { Icon } from "../components/icons";
-import { Button, Empty, ErrorNote } from "../components/ui";
+import { Empty, ErrorNote } from "../components/ui";
 import {
   addDays,
   dayKey,
@@ -18,8 +18,8 @@ import {
   startOfMonth,
   startOfWeek,
 } from "../lib/format";
-import { useAsync, useTasksChanged } from "../lib/hooks";
-import { Link, navigate, useLocation, useTitle } from "../router";
+import { useAsync, useTags, useTasksChanged } from "../lib/hooks";
+import { navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
 
@@ -48,23 +48,27 @@ const SEGMENTED_TAB =
   "relative flex-1 sm:flex-none px-2 sm:px-3.5 h-8 rounded-full text-sm font-medium transition-colors duration-200 outline-none";
 const NAV_BUTTON =
   "relative shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full " +
-  "text-gray-700 dark:text-gray-200 hover:bg-white/[0.12] dark:hover:bg-white/[0.06] transition-colors " +
-  GLASS_BODY;
+  "text-gray-700 dark:text-gray-200 hover:bg-white/[0.12] dark:hover:bg-white/[0.06] transition-colors";
 const TODAY_BUTTON =
   "relative shrink-0 inline-flex items-center h-10 px-3 sm:px-4 rounded-full text-sm font-medium " +
   "text-gray-700 dark:text-gray-200 transition-colors " +
-  "disabled:opacity-40 disabled:pointer-events-none " +
   GLASS_BODY;
 const SEGMENTED_TAB_ACTIVE =
   "bg-sky-500/20 text-sky-800 dark:text-sky-100 ring-1 ring-sky-400/40";
 const SEGMENTED_TAB_IDLE =
   "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200";
 
-const PRIORITY_TINT: Record<string, string> = {
-  high: "bg-red-500",
-  medium: "bg-sky-500",
-  low: "bg-slate-400",
-};
+// Как в списках задач: зелёная — выполнена, красная — время прошло, а не выполнена
+const missed = (event: CalendarEvent, now: Date) =>
+  !event.completed_at && new Date(event.end_at) <= now;
+const statusDot = (event: CalendarEvent, now: Date) =>
+  event.completed_at ? "bg-emerald-500" : missed(event, now) ? "bg-rose-500" : "bg-sky-500";
+const statusChip = (event: CalendarEvent, now: Date) =>
+  event.completed_at
+    ? "bg-emerald-500/15 line-through text-gray-500 dark:text-gray-400"
+    : missed(event, now)
+    ? "bg-rose-500/15 text-gray-700 dark:text-gray-200"
+    : "bg-white/[0.05] dark:bg-white/[0.03] text-gray-700 dark:text-gray-200";
 
 /* ─── Утилиты ───────────────────────────────────────────── */
 
@@ -96,13 +100,15 @@ const untimedFirst = (events: CalendarEvent[]) => [
 export function CalendarPage() {
   useTitle("Календарь");
   const { query } = useLocation();
-  const today = startOfDay(new Date());
+  const now = new Date();
+  const today = startOfDay(now);
   const requested = query.get("view");
   const view: View =
     requested === "day" || requested === "week" || requested === "month"
       ? requested
       : storedView();
   const selected = parseDayKey(query.get("day")) ?? today;
+  const { byId: tagsById } = useTags();
   const month = parseDayKey(`${query.get("month") ?? ""}-01`) ?? startOfMonth(selected);
 
   const gridStart =
@@ -163,6 +169,7 @@ export function CalendarPage() {
     );
   };
 
+  // Стрелки листают то, что выбрано: день, неделю или месяц
   const shift = (delta: number) => {
     if (view === "month") {
       const next = new Date(month.getFullYear(), month.getMonth() + delta, 1);
@@ -171,24 +178,8 @@ export function CalendarPage() {
       go(addDays(selected, (view === "week" ? 7 : 1) * delta));
     }
   };
-  const shiftDay = (delta: number) => {
-    const day = addDays(selected, delta);
-    go(
-      day,
-      view,
-      view === "month" && day.getMonth() === month.getMonth()
-        ? month
-        : startOfMonth(day)
-    );
-  };
   const selectDay = (day: Date) =>
-    go(
-      day,
-      view,
-      view === "month" && day.getMonth() === month.getMonth()
-        ? month
-        : startOfMonth(day)
-    );
+    go(day, view, day.getMonth() === month.getMonth() ? month : startOfMonth(day));
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -217,63 +208,68 @@ export function CalendarPage() {
       : view === "week"
       ? weekTitle(gridStart)
       : formatMonth(month);
-  // "Сегодня" does nothing when today is already on the screen
+  // "Сегодня" only when today is off the screen: one way back, not a second "today"
   const showsToday =
     view === "month" ? sameDay(month, startOfMonth(today)) : days.some((day) => sameDay(day, today));
 
   return (
-    <div className="relative max-w-4xl mx-auto pt-[1.5vh]">
-      {/* ─── Шапка: где мы (← заголовок →) и как смотрим (Сегодня, вид) ─── */}
-      <header className={cn("relative rounded-2xl mb-6 p-3 sm:p-4", GLASS_BODY)}>
-        <div className="relative flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <button
-              type="button"
-              className={NAV_BUTTON}
-              aria-label={STEP_LABELS[view][0]}
-              title={STEP_LABELS[view][0]}
-              onClick={() => shift(-1)}
-            >
-              <Icon name="left" size={18} />
-            </button>
-            <button
-              type="button"
-              className={NAV_BUTTON}
-              aria-label={STEP_LABELS[view][1]}
-              title={STEP_LABELS[view][1]}
-              onClick={() => shift(1)}
-            >
-              <Icon name="right" size={18} />
-            </button>
-            <h1 className="ml-1.5 min-w-0 truncate !text-[22px] sm:!text-[28px] capitalize-first">{title}</h1>
-          </div>
+    <div className={cn("relative mx-auto pt-[1.5vh]", view === "month" ? "max-w-6xl 2xl:max-w-7xl" : "max-w-4xl")}>
+      {/* ─── Шапка: период со стрелками внутри, под ней — вид ─── */}
+      <header className="mb-6 space-y-3">
+        <div className={cn("relative flex items-center gap-1 p-1 rounded-full", GLASS_BODY)}>
+          <button
+            type="button"
+            className={NAV_BUTTON}
+            aria-label={STEP_LABELS[view][0]}
+            title={STEP_LABELS[view][0]}
+            onClick={() => shift(-1)}
+          >
+            <Icon name="left" size={18} />
+          </button>
+          <h1 className="min-w-0 flex-1 text-center truncate !text-[20px] sm:!text-[24px] capitalize-first">
+            {title}
+          </h1>
+          <button
+            type="button"
+            className={NAV_BUTTON}
+            aria-label={STEP_LABELS[view][1]}
+            title={STEP_LABELS[view][1]}
+            onClick={() => shift(1)}
+          >
+            <Icon name="right" size={18} />
+          </button>
+        </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2">
+          <div
+            className={cn(SEGMENTED, "flex-1 min-w-0 sm:flex-none")}
+            role="tablist"
+            aria-label="Вид календаря"
+          >
+            {VIEWS.map((item) => (
+              <button
+                key={item.value}
+                role="tab"
+                aria-selected={view === item.value}
+                className={cn(
+                  SEGMENTED_TAB,
+                  view === item.value ? SEGMENTED_TAB_ACTIVE : SEGMENTED_TAB_IDLE
+                )}
+                onClick={() => go(selected, item.value)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          {!showsToday && (
             <button
               type="button"
               className={TODAY_BUTTON}
-              disabled={showsToday}
               onClick={() => go(today, view, startOfMonth(today))}
             >
               Сегодня
             </button>
-            <div className={cn(SEGMENTED, "flex-1 min-w-0 sm:flex-none")} role="tablist" aria-label="Вид календаря">
-              {VIEWS.map((item) => (
-                <button
-                  key={item.value}
-                  role="tab"
-                  aria-selected={view === item.value}
-                  className={cn(
-                    SEGMENTED_TAB,
-                    view === item.value ? SEGMENTED_TAB_ACTIVE : SEGMENTED_TAB_IDLE
-                  )}
-                  onClick={() => go(selected, item.value)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       </header>
 
@@ -309,23 +305,54 @@ export function CalendarPage() {
 
       {view === "day" ? (
         <GlassCard>
-          <DayEvents day={selected} events={selectedEvents} loading={events.loading} />
+          <DayEvents events={selectedEvents} loading={events.loading} />
         </GlassCard>
+      ) : view === "week" ? (
+        /* Неделя — крупный план: каждый день раскрыт, задачи написаны целиком */
+        <div className="space-y-3">
+          {days.map((day) => {
+            const items = untimedFirst(byDay.get(dayKey(day)) ?? []);
+            const isToday = sameDay(day, today);
+            return (
+              <GlassCard key={day.getTime()} className={cn(isToday && "ring-1 ring-sky-400/50")}>
+                <button
+                  type="button"
+                  className="mb-2 flex items-baseline gap-2 text-left hover:underline"
+                  title="Открыть день"
+                  onClick={() => go(day, "day")}
+                >
+                  <span
+                    className={cn(
+                      "text-sm font-semibold capitalize-first",
+                      isToday ? "text-sky-700 dark:text-sky-300" : "text-gray-900 dark:text-white"
+                    )}
+                  >
+                    {formatDate(day, { weekday: "long", day: "numeric", month: "long" })}
+                  </span>
+                  {isToday && (
+                    <span className="text-xs text-sky-700 dark:text-sky-300">сегодня</span>
+                  )}
+                </button>
+                {items.length ? (
+                  <EventList events={items} />
+                ) : (
+                  <p className="px-3 text-sm text-gray-400 dark:text-gray-500">
+                    {events.loading ? "Загружаем…" : "Свободно"}
+                  </p>
+                )}
+              </GlassCard>
+            );
+          })}
+        </div>
       ) : (
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
-          {/* ─── Сетка календаря ─────────────────────── */}
+        <div className="grid 2xl:grid-cols-[minmax(0,1fr)_300px] gap-6">
+          {/* ─── Сетка месяца ─────────────────────── */}
           <div
-            className={cn(
-              "relative overflow-hidden rounded-2xl p-3 sm:p-4",
-              GLASS_BODY
-            )}
+            className={cn("relative overflow-hidden rounded-2xl p-3 sm:p-4", GLASS_BODY)}
             role="grid"
             aria-label={title}
           >
-            <div
-              className="relative grid grid-cols-7 gap-1.5 mb-1.5"
-              role="row"
-            >
+            <div className="relative grid grid-cols-7 gap-1.5 mb-1.5" role="row">
               {WEEKDAYS.map((name) => (
                 <span
                   key={name}
@@ -337,18 +364,12 @@ export function CalendarPage() {
               ))}
             </div>
 
-            <div
-              className={cn(
-                "relative grid gap-1.5",
-                view === "week" ? "grid-cols-7 grid-rows-1" : "grid-cols-7 grid-rows-6"
-              )}
-            >
+            <div className="relative grid gap-1.5 grid-cols-7 grid-rows-6">
               {days.map((day) => {
                 const items = untimedFirst(byDay.get(dayKey(day)) ?? []);
                 const isToday = sameDay(day, today);
                 const isSelected = sameDay(day, selected);
-                const otherMonth = view === "month" && day.getMonth() !== month.getMonth();
-                const cellsToShow = view === "week" ? items.length : MAX_CHIPS;
+                const otherMonth = day.getMonth() !== month.getMonth();
 
                 return (
                   <button
@@ -363,8 +384,7 @@ export function CalendarPage() {
                       month: "long",
                     })}, событий: ${items.length}`}
                     className={cn(
-                      "group relative overflow-hidden rounded-xl",
-                      view === "week" ? "min-h-[140px] sm:min-h-[260px]" : "aspect-square",
+                      "group relative overflow-hidden rounded-xl aspect-square sm:aspect-auto sm:min-h-[124px]",
                       "transition-colors duration-200",
                       "bg-white/[0.04] dark:bg-white/[0.02]",
                       "ring-1 ring-white/20 dark:ring-white/10",
@@ -374,8 +394,7 @@ export function CalendarPage() {
                       isToday &&
                         !isSelected &&
                         "ring-amber-400/50 bg-amber-500/[0.06] dark:bg-amber-500/[0.05]",
-                      isSelected &&
-                        "bg-sky-500/[0.12] dark:bg-sky-500/[0.10] ring-sky-400/50"
+                      isSelected && "bg-sky-500/[0.12] dark:bg-sky-500/[0.10] ring-sky-400/50"
                     )}
                   >
                     {/* ─── Абсолютный слой: не влияет на intrinsic height кнопки ─── */}
@@ -394,45 +413,36 @@ export function CalendarPage() {
                       </span>
 
                       <span className="hidden sm:flex flex-col gap-0.5 min-w-0">
-                        {items.slice(0, cellsToShow).map((event) => (
-                          <span
-                            key={event.id}
-                            className={cn(
-                              "relative inline-flex items-center gap-1 min-w-0",
-                              "px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px]",
-                              "bg-white/[0.05] dark:bg-white/[0.03]",
-                              "text-gray-700 dark:text-gray-200 truncate",
-                              event.completed_at && "opacity-50 line-through"
-                            )}
-                          >
+                        {items.slice(0, MAX_CHIPS).map((event) => {
+                          const tag = event.tag_ids?.map((id) => tagsById.get(id)).find(Boolean);
+                          const time = event.all_day
+                            ? ""
+                            : new Date(event.start_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+                          return (
                             <span
-                              aria-hidden="true"
+                              key={event.id}
+                              title={[time, event.title, tag && `#${tag.name}`].filter(Boolean).join(" · ")}
                               className={cn(
-                                "shrink-0 w-1 h-1 rounded-full",
-                                PRIORITY_TINT[event.priority ?? "medium"] ?? "bg-sky-500"
+                                "relative block min-w-0 line-clamp-2 break-words",
+                                "pl-2 pr-1.5 py-0.5 rounded-md text-[11px] leading-[14px]",
+                                statusChip(event, now),
+                                tag && `tag-${tag.color}`
                               )}
-                            />
-                            {!event.all_day && (
-                              <b className="shrink-0 tabular-nums text-gray-500 dark:text-gray-400 font-medium">
-                                {new Date(event.start_at).toLocaleTimeString("ru-RU", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </b>
-                            )}
-                            <span className="truncate">{event.title}</span>
-                          </span>
-                        ))}
+                            >
+                              {/* Сфера задачи — полоска её цвета, чтобы было видно, о чём задача */}
+                              <span
+                                aria-hidden="true"
+                                className="absolute left-0 inset-y-0.5 w-[3px] rounded-full"
+                                style={{ background: tag ? "var(--dot)" : "transparent" }}
+                              />
+                              {event.title}
+                            </span>
+                          );
+                        })}
 
-                        {view === "month" && items.length > MAX_CHIPS && (
+                        {items.length > MAX_CHIPS && (
                           <span className="text-[10px] text-gray-500 dark:text-gray-400 px-1">
                             +{items.length - MAX_CHIPS}
-                          </span>
-                        )}
-
-                        {view === "week" && items.length === 0 && (
-                          <span className="text-[11px] text-gray-400 dark:text-gray-500 px-1">
-                            —
                           </span>
                         )}
                       </span>
@@ -442,13 +452,10 @@ export function CalendarPage() {
                           className="sm:hidden mt-auto flex flex-wrap items-center gap-0.5"
                           aria-hidden="true"
                         >
-                          {items.slice(0, view === "week" ? 8 : 3).map((event) => (
+                          {items.slice(0, 3).map((event) => (
                             <i
                               key={event.id}
-                              className={cn(
-                                "w-1.5 h-1.5 rounded-full",
-                                PRIORITY_TINT[event.priority ?? "medium"] ?? "bg-sky-500"
-                              )}
+                              className={cn("w-1.5 h-1.5 rounded-full", statusDot(event, now))}
                             />
                           ))}
                         </span>
@@ -460,36 +467,12 @@ export function CalendarPage() {
             </div>
           </div>
 
-          {/* ─── Панель дня ──────────────────────────── */}
+          {/* ─── Панель выбранного дня: без своих стрелок, листает шапка ─── */}
           <GlassCard className="h-fit lg:sticky lg:top-6">
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                icon="left"
-                aria-label="Предыдущий день"
-                title="Предыдущий день"
-                onClick={() => shiftDay(-1)}
-              />
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate capitalize-first">
-                {sameDay(selected, today)
-                  ? `Сегодня, ${formatDate(selected, { day: "numeric", month: "long" })}`
-                  : formatDate(selected, { weekday: "long", day: "numeric", month: "long" })}
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                icon="right"
-                aria-label="Следующий день"
-                title="Следующий день"
-                onClick={() => shiftDay(1)}
-              />
-            </div>
-            <DayEvents
-              day={selected}
-              events={selectedEvents}
-              loading={events.loading}
-            />
+            <h2 className="mb-4 text-sm font-medium text-gray-900 dark:text-white truncate capitalize-first">
+              {formatDate(selected, { weekday: "long", day: "numeric", month: "long" })}
+            </h2>
+            <DayEvents events={selectedEvents} loading={events.loading} />
           </GlassCard>
         </div>
       )}
@@ -499,60 +482,33 @@ export function CalendarPage() {
 
 /* ─── DayEvents ─────────────────────────────────────────── */
 
-function DayEvents({
-  day,
-  events,
-  loading,
-}: {
-  day: Date;
-  events: CalendarEvent[];
-  loading: boolean;
-}) {
+function DayEvents({ events, loading }: { events: CalendarEvent[]; loading: boolean }) {
   const untimed = events.filter((event) => event.all_day);
   const timed = events.filter((event) => !event.all_day);
 
+  if (!events.length)
+    return <Empty title="Нет задач">{loading ? "Загружаем…" : "Свободный день."}</Empty>;
+
   return (
     <div className="space-y-4">
-      {events.length ? (
-        <>
-          {untimed.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
-                Без времени
-              </h3>
-              <EventList events={untimed} />
-            </div>
-          )}
-          {timed.length > 0 && (
-            <div className="space-y-2">
-              {untimed.length > 0 && (
-                <h3 className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
-                  По времени
-                </h3>
-              )}
-              <EventList events={timed} />
-            </div>
-          )}
-        </>
-      ) : (
-        <Empty title="Нет задач">
-          {loading ? "Загружаем…" : "Выберите другой день или добавьте задачу."}
-        </Empty>
+      {untimed.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
+            Без времени
+          </h3>
+          <EventList events={untimed} />
+        </div>
       )}
-
-      <Link
-        to={`/events/new?day=${dayKey(day)}`}
-        className={cn(
-          "relative inline-flex items-center justify-center gap-1.5 overflow-hidden",
-          "w-full px-3 h-9 rounded-xl text-xs font-medium",
-          "transition-transform duration-200 hover:-translate-y-0.5",
-          GLASS_BODY,
-          "text-gray-700 dark:text-gray-300"
-        )}
-      >
-        <Icon name="plus" size={14} className="relative" />
-        <span className="relative">Задача на этот день</span>
-      </Link>
+      {timed.length > 0 && (
+        <div className="space-y-2">
+          {untimed.length > 0 && (
+            <h3 className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
+              По времени
+            </h3>
+          )}
+          <EventList events={timed} />
+        </div>
+      )}
     </div>
   );
 }
