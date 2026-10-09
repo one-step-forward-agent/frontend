@@ -194,6 +194,9 @@ export const api = {
     /** «Перенести» в списке задач: задача получает выбранный день и сохраняет время. */
     move: (eventId: number, date: string) =>
       request<AssistantReply & { message_id?: number }>(`/api/assistant/events/${eventId}/move`, json("POST", { date }), "assistant_move"),
+    /** «Отменить» под напоминанием, которое поставил ассистент. */
+    cancelReminder: (reminderId: number) =>
+      request<AssistantReply>(`/api/assistant/reminders/${reminderId}`, { method: "DELETE" }, "assistant_reminder_cancel"),
     undo: (eventIds: number[]) => request<{ deleted: number }>("/api/assistant/undo", json("POST", { event_ids: eventIds }), "assistant_undo"),
     rate: (messageId: number, value: -1 | 0 | 1) =>
       request<{ id: number; rating: -1 | 1 | null }>(`/api/assistant/messages/${messageId}/rating`, json("POST", { value }), {

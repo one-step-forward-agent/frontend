@@ -535,6 +535,9 @@ function ChatMessage({
           )}
           {reply.kind === "advice" && <AdviceReply items={reply.items} onAppend={onAppend} />}
           {reply.kind === "reminders" && <RemindersReply initial={reply.settings} />}
+          {reply.kind === "reminder" && (
+            <ReminderReply reply={reply} onDone={(text) => onReply(message.id, { kind: "cancelled", text })} />
+          )}
           {reply.kind === "agenda" && (
             <AgendaReply reply={reply} onReply={(next) => onReply(message.id, next)} onAppend={onAppend} />
           )}
@@ -587,6 +590,7 @@ function AgendaReply({
 
   return (
     <div className="space-y-3">
+      {reply.answer && <RichText text={reply.answer} />}
       <p>
         {count
           ? reply.mark
@@ -871,6 +875,49 @@ function UndoButton({
       <Button variant="ghost" size="sm" icon="left" busy={busy} onClick={undo}>
         Отменить
       </Button>
+    </div>
+  );
+}
+
+/* ─── ReminderReply ──────────────────────────────────────── */
+
+function ReminderReply({
+  reply,
+  onDone,
+}: {
+  reply: Extract<AssistantReply, { kind: "reminder" }>;
+  onDone: (text: string) => void;
+}) {
+  const [busy, setBusy] = useState<number | null>(null);
+  const reportError = useErrorToast();
+
+  const cancel = async (id: number) => {
+    setBusy(id);
+    try {
+      const result = await api.assistant.cancelReminder(id);
+      onDone(result.kind === "cancelled" ? result.text : "Напоминание отменено");
+    } catch {
+      reportError("Напоминание уже пришло или отменено");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {reply.reminders.map((item) => (
+        <p key={item.id} className="inline-flex items-center gap-1.5 text-sky-700 dark:text-sky-300">
+          <Icon name="bell" size={16} /> Напомню {item.label}: {item.text}
+        </p>
+      ))}
+      <p className="text-xs text-gray-500 dark:text-gray-400">Напоминание придёт в Telegram.</p>
+      <div className="flex flex-wrap gap-1.5">
+        {reply.reminders.map((item) => (
+          <Button key={item.id} variant="ghost" size="sm" icon="close" busy={busy === item.id} onClick={() => cancel(item.id)}>
+            {reply.reminders.length > 1 ? `Отменить «${item.text}»` : "Отменить"}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -176,11 +176,15 @@ export type AssistantReply =
       scope?: AgendaScope;
       mark?: boolean;
       days: { date: string; label: string; events: AssistantEvent[] }[];
+      /** The assistant's comment on the found tasks */
+      answer?: string | null;
     }
   | ({ kind: "stats"; previous_percent?: number | null; habits?: StatsHabits } & Stats)
   | { kind: "help"; sections: { title: string; examples: string[] }[] }
   | { kind: "advice"; items: Recommendation[] }
   | { kind: "reminders"; settings: ReminderSettings }
+  /** Reminders the assistant set ("напомни через 10 минут …"); the bot sends them to Telegram */
+  | { kind: "reminder"; text: string; reminders: { id: number; text: string; at: string; label: string }[] }
   | { kind: "answer" | "not_found" | "edit_error" | "cancelled"; text: string }
   | { kind: "nothing" };
 
