@@ -19,6 +19,7 @@ const Integrations = lazy(() => import("@/components/onboarding/Integrations").t
 const SuccessAndLearning = lazy(() => import("@/components/onboarding/SuccessAndLearning").then((module) => ({ default: module.SuccessAndLearning })));
 const TermsOfUsePage = lazy(() => import("@/pages/Documents/TermsOfUsePage"));
 const PersonalDataConsentPage = lazy(() => import("@/pages/Documents/PersonalDataConsentPage"));
+const AdminDashboard = lazy(() => import("@/pages/Admin/AdminDashboard"));
 
 function FullScreenLoader() {
   return (
@@ -107,7 +108,9 @@ function Routing() {
         <Route path="/privacy-policy" element={<PrivacyPolicyRedirect />} />
 
         <Route path="/app/*" element={<AppRoutes />} />
-        <Route path="/dashboard/*" element={<Navigate to="/app" replace />} />
+        {/* Admins only (users.is_admin): the backend refuses everyone else */}
+        <Route path="/dashboard" element={<AdminDashboard />} />
+        <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

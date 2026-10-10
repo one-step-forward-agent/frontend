@@ -1,5 +1,7 @@
 import { reachGoal } from "@/app/lib/metrics";
+import type { TableData, TableInfo } from "@/pages/Admin/sheet";
 import type {
+  AdminNote,
   AgendaScope,
   AssistantReply,
   Calendar,
@@ -271,5 +273,13 @@ export const api = {
     status: () => request<TelegramStatus>("/api/telegram"),
     link: () => request<TelegramLink>("/api/telegram/link", { method: "POST" }, "telegram_link"),
     unlink: () => request<void>("/api/telegram", { method: "DELETE" }, "telegram_unlink"),
+  },
+  admin: {
+    tables: () => request<TableInfo[]>("/api/admin/tables"),
+    table: (name: string) => request<TableData>(`/api/admin/tables/${encodeURIComponent(name)}`),
+    note: () => request<AdminNote>("/api/admin/notes"),
+    lockNote: () => request<AdminNote>("/api/admin/notes/lock", { method: "POST" }),
+    unlockNote: () => request<AdminNote>("/api/admin/notes/unlock", { method: "POST" }),
+    saveNote: (text: string, version: number) => request<AdminNote>("/api/admin/notes", json("PUT", { text, version })),
   },
 };

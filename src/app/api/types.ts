@@ -6,6 +6,20 @@ export interface User {
   telegram_username: string | null;
   telegram_linked_at: string | null;
   profile?: Record<string, unknown>;
+  /** Opens the admin dashboard at /dashboard */
+  is_admin?: boolean;
+}
+
+/** The note all admins share on the dashboard; one admin at a time edits it after locking it */
+export interface AdminNote {
+  text: string;
+  version: number;
+  updated_at: string | null;
+  updated_by: string | null;
+  locked: boolean;
+  locked_by: string | null;
+  locked_by_me: boolean;
+  lock_expires_at: string | null;
 }
 
 export interface TokenResponse {
