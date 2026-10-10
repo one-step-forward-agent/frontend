@@ -317,6 +317,9 @@ export default function AdminDashboard() {
                 {rows.length !== sheet.rows.length && <> из {sheet.rows.length.toLocaleString("ru-RU")}</>}
               </span>
             )}
+            <span title="Имена, email, тексты задач, напоминаний и сообщений заменены псевдонимами ◆…: одинаковое значение — одинаковый псевдоним, восстановить текст нельзя">
+              Персональные данные обезличены
+            </span>
             {view.hidden.length > 0 && (
               <button type="button" className="inline-flex items-center gap-1 text-sky-700 hover:underline dark:text-sky-400" onClick={() => changeView((current) => ({ ...current, hidden: [] }))}>
                 <Eye size={12} /> Показать скрытые ({view.hidden.length})
