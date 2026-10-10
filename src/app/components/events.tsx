@@ -70,9 +70,8 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
       <Link to={`/events/${event.id}`} className={`event-row priority-${event.priority} ${done ? "done" : ""}`}>
         <span className={`event-time ${event.all_day ? "untimed" : ""} ${showDate ? "with-date" : ""}`}>
           {showDate && <span className="event-date">{start.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</span>}
-          {event.all_day ? (
-            !showDate && <span className="event-clock" title="Без времени">—</span>
-          ) : (
+          {/* No time: the column stays empty, the titles stay aligned */}
+          {!event.all_day && (
             <>
               <span className="event-clock">{formatTime(start)}</span>
               {!multiDay && <span className="event-end">{formatTime(end)}</span>}

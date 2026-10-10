@@ -333,16 +333,17 @@ export function Layout({ children }: { children: ReactNode }) {
                   <Link
                     to={item.to}
                     aria-current={active ? "page" : undefined}
+                    aria-label={item.label}
+                    title={item.label}
                     className={cn(
-                      "relative flex flex-col items-center justify-center gap-0.5 h-full w-full",
-                      "text-[10px] font-medium transition-colors duration-200",
+                      "relative flex items-center justify-center h-full w-full",
+                      "transition-colors duration-200",
                       active
                         ? "text-sky-800 dark:text-sky-100"
                         : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                     )}
                   >
-                    <Icon name={item.icon} size={20} />
-                    <span>{item.label}</span>
+                    {item.to === "/" ? <TodayMark /> : <Icon name={item.icon} size={22} />}
                   </Link>
                 </li>
               );
@@ -353,6 +354,23 @@ export function Layout({ children }: { children: ReactNode }) {
     </>
   );
 }
+/* ─── TodayMark ─────────────────────────────────────────── */
+
+/** The «Сегодня» tab as a tear-off calendar page: today's weekday and date instead of an icon. */
+function TodayMark() {
+  const now = new Date();
+  const weekday = now.toLocaleDateString("ru-RU", { weekday: "short" });
+  return (
+    <span
+      aria-hidden="true"
+      className="flex flex-col items-center justify-center w-8 h-8 rounded-lg ring-[1.5px] ring-current leading-none"
+    >
+      <span className="text-[9px] font-semibold uppercase tracking-wide opacity-80">{weekday}</span>
+      <span className="text-[14px] font-bold tabular-nums mt-px">{now.getDate()}</span>
+    </span>
+  );
+}
+
 /* ─── ChatDock ──────────────────────────────────────────── */
 
 /** The assistant one tap away in every section, in the corner like a bank's support chat. */
