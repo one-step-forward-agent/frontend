@@ -36,8 +36,6 @@ const GLASS_BODY = GLASS_BODY_FLAT;
 
 /* ─── Модель данных ──────────────────────────────────────── */
 
-type Mode = "plan" | "search";
-
 type Message =
   | { id: number; role: "user"; text: string }
   | { id: number; role: "assistant"; reply: AssistantReply; serverId?: number; rating?: -1 | 1 | null }
@@ -62,17 +60,15 @@ const SCOPES: { value: AgendaScope; label: string }[] = [
 
 const TOPIC_REPLIES = ["Как это сделать?", "Помоги перепланировать", "Что можно перенести?"];
 
-const EXAMPLES: Record<Mode, string[]> = {
-  plan: [
-    "Помоги подготовиться к экзамену 20 октября",
-    "Проанализируй мою неделю",
-    "Созвон с командой завтра в 11:00 на час",
-    "Каждую пятницу в 18:00 спортзал, напомни за 30 минут",
-    "Отчёт, дедлайн в пятницу 18:00",
-    "Перенеси созвон с командой на послезавтра",
-  ],
-  search: ["Что у меня на этой неделе?", "Когда встреча с Олей?", "Что у меня в следующую пятницу?"],
-};
+// One chat plans and finds: the assistant tells a question from a request by itself
+const EXAMPLES = [
+  "Созвон с командой завтра в 11:00 на час",
+  "Когда встреча с Олей?",
+  "Помоги подготовиться к экзамену 20 октября",
+  "Что у меня в следующую пятницу?",
+  "Перенеси созвон с командой на послезавтра",
+  "Проанализируй мою неделю",
+];
 
 let messageId = 0;
 
@@ -103,7 +99,6 @@ export function AssistantPage() {
  */
 export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onClose?: () => void }) {
   const { query } = useLocation();
-  const [mode, setMode] = useState<Mode>("plan");
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -138,13 +133,13 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     push({ id: ++messageId, role: "user", text: value });
     setBusy(true);
     try {
-      const { message_id: serverId, ...reply } = await api.assistant.chat(
-        mode === "search" ? `найди ${value}` : value
-      );
+      const { message_id: serverId, ...reply } = await api.assistant.chat(value);
       push({ id: ++messageId, role: "assistant", reply: reply as AssistantReply, serverId });
       if (reply.kind === "completed") notifyTasksChanged();
-    } catch {
-      push({ id: ++messageId, role: "error", text: TEMPORARY_ERROR });
+    } catch (error) {
+      // A limit reached is not a failure to retry at once: the user is told when the assistant answers again
+      const limited = error instanceof ApiError && error.status === 429;
+      push({ id: ++messageId, role: "error", text: limited ? error.message : TEMPORARY_ERROR });
     } finally {
       setBusy(false);
     }
@@ -165,7 +160,6 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     if (!loaded || !topic || !topicText || handled.current === `topic:${topic}`) return;
     handled.current = `topic:${topic}`;
     navigate("/assistant", { replace: true });
-    setMode("plan");
     api.assistant
       .topic(topic.slice(0, 120), topicText.slice(0, 600))
       .then((reply) =>
@@ -197,34 +191,6 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       input?.setSelectionRange(action.fill!.length, action.fill!.length);
     });
   };
-
-  const modeSwitch = (
-          <div
-            className={cn(
-              "relative inline-flex items-center gap-1 p-1 rounded-full overflow-hidden",
-              GLASS_BODY
-            )}
-            role="tablist"
-            aria-label="Режим"
-          >
-            {(["plan", "search"] as const).map((value) => (
-              <button
-                key={value}
-                role="tab"
-                aria-selected={mode === value}
-                onClick={() => setMode(value)}
-                className={cn(
-                  "relative px-3.5 h-7 rounded-full text-xs font-medium transition-colors duration-200",
-                  mode === value
-                    ? "bg-sky-500/20 text-sky-800 dark:text-sky-100"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                )}
-              >
-                {value === "plan" ? "Запланировать" : "Найти"}
-              </button>
-            ))}
-          </div>
-  );
 
   return (
     <div
@@ -274,7 +240,6 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
                 Перед сохранением всё можно поправить.
               </span>
             }
-            actions={modeSwitch}
           />
         </div>
       )}
@@ -296,11 +261,11 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
               <Icon name="assistant" size={26} className="relative" />
             </span>
             <p className="text-sm font-medium text-gray-900 dark:text-white mb-4">
-              {mode === "plan" ? "Что запланируем?" : "Что найти в календаре?"}
+              Что запланировать или найти?
             </p>
 
             <div className="flex flex-wrap justify-center gap-1.5 w-full max-w-2xl">
-              {EXAMPLES[mode].map((example) => (
+              {EXAMPLES.map((example) => (
                 <button
                   key={example}
                   type="button"
@@ -366,7 +331,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
             </button>
           ))}
         </div>
-        <Composer value={text} onChange={setText} onSend={() => send(text)} busy={busy} mode={mode} inputRef={inputRef} />
+        <Composer value={text} onChange={setText} onSend={() => send(text)} busy={busy} inputRef={inputRef} />
       </div>
     </div>
   );
@@ -1746,14 +1711,12 @@ function Composer({
   onChange,
   onSend,
   busy,
-  mode,
   inputRef,
 }: {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
   busy: boolean;
-  mode: Mode;
   inputRef?: RefObject<HTMLTextAreaElement | null>;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
@@ -1850,7 +1813,7 @@ function Composer({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
         rows={1}
-        placeholder={recording ? "Говорите…" : mode === "plan" ? "Что запланировать?" : "Что найти?"}
+        placeholder={recording ? "Говорите…" : "Запланировать, найти, перенести…"}
         aria-label="Сообщение"
         maxLength={50000}
         className={cn(

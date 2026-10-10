@@ -72,10 +72,12 @@ async function send(path: string, init: RequestInit = {}, retry = true): Promise
 
 async function errorFrom(response: Response): Promise<ApiError> {
   if (response.status >= 500) return new ApiError(response.status, SERVER_ERROR);
-  if (response.status === 429) return new ApiError(429, TOO_MANY_REQUESTS);
   // The server already words its errors for people; anything else (an nginx page, a list of fields) is not shown
   const data = await response.json().catch(() => ({}));
-  const detail = typeof data.detail === "string" && data.detail.trim() ? data.detail : SERVER_ERROR;
+  const worded = typeof data.detail === "string" && data.detail.trim() ? data.detail : null;
+  // The backend says which limit was reached and when it ends; nginx's own 429 has no such text
+  if (response.status === 429) return new ApiError(429, worded ?? TOO_MANY_REQUESTS);
+  const detail = worded ?? SERVER_ERROR;
   return new ApiError(response.status, detail);
 }
 
@@ -109,7 +111,7 @@ const upload = (field: string, file: Blob, filename?: string): RequestInit => {
 
 export const api = {
   auth: {
-    register: (body: { email: string; password: string; name?: string | null; timezone?: string }) =>
+    register: (body: { email: string; password: string; name?: string | null; timezone?: string; website?: string; form_ms?: number }) =>
       request<TokenResponse>("/auth/register", json("POST", body), "register_success"),
     login: (email: string, password: string) =>
       request<TokenResponse>("/auth/login", json("POST", { email, password }), "login_success"),

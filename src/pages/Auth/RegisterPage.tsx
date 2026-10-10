@@ -1,5 +1,5 @@
 // src/pages/Auth/RegisterPage.tsx
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   User, Mail, Lock, ShieldCheck, Check, Sparkles, ArrowRight,
@@ -39,6 +39,9 @@ const RegisterPage: React.FC = () => {
 
   const [isConsentGiven, setIsConsentGiven] = useState(false);
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
+  // Spam protection: bots fill every field and submit at once
+  const [website, setWebsite] = useState("");
+  const openedAt = useRef(Date.now());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +67,7 @@ const RegisterPage: React.FC = () => {
 
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      await register({ email, password, name: username, timezone });
+      await register({ email, password, name: username, timezone, website, form_ms: Date.now() - openedAt.current });
       sendMetricGoal("registration_success");
       // A fresh account goes through onboarding, which is applied at its last step.
       const next = searchParams.get("next");
@@ -97,6 +100,11 @@ const RegisterPage: React.FC = () => {
 
       {/* ─── Форма ───────────────────────────── */}
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Hidden from people and screen readers; a bot that fills it is turned away */}
+        <div aria-hidden="true" className="absolute -left-[9999px] w-px h-px overflow-hidden">
+          <label htmlFor="website">Сайт</label>
+          <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+        </div>
 
         <FormField id="email" label="Email" required>
           {(field) => (

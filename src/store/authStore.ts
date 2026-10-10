@@ -9,6 +9,9 @@ interface RegisterInput {
   password: string;
   name?: string | null;
   timezone?: string;
+  // Spam protection: the hidden field people never fill and how long the form was open
+  website?: string;
+  form_ms?: number;
 }
 
 interface AuthState {
@@ -76,7 +79,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     }
   },
 
-  register: async ({ email, password, name, timezone }) => {
+  register: async ({ email, password, name, timezone, website, form_ms }) => {
     if (DEV_AUTH_BYPASS) {
       set({
         user: DEV_USER,
@@ -94,6 +97,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         password,
         name: name?.trim() || null,
         timezone,
+        website,
+        form_ms,
       });
       await get().loadUser();
     } catch (error) {
