@@ -13,7 +13,7 @@ import type {
 import { RecommendationList } from "../components/recommendations";
 import { RichText } from "../components/RichText";
 import { Icon } from "../components/icons";
-import { Badge, Button, PageHeader, Switch, useErrorToast } from "../components/ui";
+import { Badge, Button, Switch, useErrorToast } from "../components/ui";
 import {
   TEMPORARY_ERROR,
   dayKey,
@@ -230,18 +230,8 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
           </span>
         </div>
       ) : (
-        <div className="shrink-0">
-          <PageHeader
-            title="Ассистент"
-            subtitle={
-              // On a phone the screen belongs to the conversation
-              <span className="hidden sm:inline">
-                Пишите, говорите или пришлите документ — Dayla создаст или изменит задачи, разобьёт большую на шаги.
-                Перед сохранением всё можно поправить.
-              </span>
-            }
-          />
-        </div>
+        // Just the name: the screen belongs to the conversation
+        <h1 className="shrink-0 px-1 sm:px-2 pb-2 text-base font-semibold text-gray-900 dark:text-white">Ассистент</h1>
       )}
 
       {/* ─── Чат: прокручивается только он ─────────── */}
