@@ -54,6 +54,14 @@ function RequireAccount({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+// /privacy-policy is a static page served by nginx; here only when the app itself navigates to it (or in `vite dev`)
+function PrivacyPolicyRedirect() {
+  useEffect(() => {
+    window.location.replace("/privacy-policy.html");
+  }, []);
+  return <FullScreenLoader />;
+}
+
 function NotFoundPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-white px-4 text-center dark:bg-gray-950">
@@ -96,6 +104,7 @@ function Routing() {
 
         <Route path="/terms-of-use" element={<TermsOfUsePage />} />
         <Route path="/personal-data-consent" element={<PersonalDataConsentPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyRedirect />} />
 
         <Route path="/app/*" element={<AppRoutes />} />
         <Route path="/dashboard/*" element={<Navigate to="/app" replace />} />

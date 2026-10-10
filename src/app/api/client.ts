@@ -134,6 +134,7 @@ export const api = {
       request<User>("/api/me", json("PATCH", body), "me_update"),
     saveOnboarding: (profile: Record<string, unknown>) =>
       request<User>("/api/me/onboarding", json("PUT", profile), "onboarding_save"),
+    remove: () => request<void>("/api/me", { method: "DELETE" }, "account_delete"),
   },
   calendars: {
     list: () => request<Calendar[]>("/api/calendars"),

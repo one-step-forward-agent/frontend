@@ -1,0 +1,199 @@
+<!doctype html>
+<!-- A static page, not a route of the app: Google's OAuth review and crawlers read it without running JavaScript.
+     nginx serves it at /privacy-policy. -->
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Политика конфиденциальности Dayla: какие данные мы обрабатываем, как используем данные Google и как их удалить. Dayla Privacy Policy." />
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
+  <title>Политика конфиденциальности — Dayla / Privacy Policy</title>
+  <style>
+    :root { --bg: #f7f8fc; --card: #ffffff; --text: #1f2937; --muted: #6b7280; --head: #111827; --accent: #2563eb; --line: #e5e7eb; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0b1020; --card: #111827; --text: #d1d5db; --muted: #9ca3af; --head: #f9fafb; --accent: #60a5fa; --line: #1f2937; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 Inter, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+    header { max-width: 860px; margin: 0 auto; padding: 20px 16px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    header a.logo { color: var(--head); font-weight: 700; font-size: 22px; text-decoration: none; }
+    nav a { color: var(--accent); text-decoration: none; margin-left: 14px; font-size: 15px; }
+    main { max-width: 860px; margin: 16px auto 48px; padding: 0 16px; }
+    article { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 28px 24px; margin-bottom: 24px; }
+    h1 { color: var(--head); font-size: 30px; line-height: 1.25; margin: 0 0 6px; }
+    h2 { color: var(--head); font-size: 20px; margin: 28px 0 8px; }
+    p, li { margin: 0 0 10px; }
+    ul { padding-left: 22px; margin: 0 0 10px; }
+    a { color: var(--accent); }
+    .muted { color: var(--muted); font-size: 14px; }
+    .note { border-left: 3px solid var(--accent); padding: 10px 14px; background: color-mix(in srgb, var(--accent) 8%, transparent); border-radius: 0 10px 10px 0; }
+    footer { max-width: 860px; margin: 0 auto 40px; padding: 0 16px; color: var(--muted); font-size: 14px; }
+    @media (min-width: 640px) { article { padding: 40px 44px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="/">Dayla</a>
+    <nav><a href="#ru">Русский</a><a href="#en" lang="en">English</a><a href="/terms-of-use">Условия использования</a></nav>
+  </header>
+
+  <main>
+    <article id="ru">
+      <h1>Политика конфиденциальности Dayla</h1>
+      <p class="muted">Редакция от 10 октября 2026 г.</p>
+
+      <p>Dayla (<a href="https://dayla.tech/">dayla.tech</a>) — личный ИИ-ассистент для планирования: календарь, задачи, цели и напоминания на сайте и в Telegram. Эта политика объясняет, какие данные обрабатывает Dayla, зачем, кому они передаются и как их удалить. Оператор сервиса — ООО «Ментрикс Лабс» (ИНН 9810004909, ОГРН 1257800101019; г. Санкт-Петербург, ул. Парашютная, д. 65, стр. 1, кв. 529), далее — «мы».</p>
+      <p>Политика дополняет <a href="/personal-data-consent">Согласие на обработку персональных данных</a> и <a href="/terms-of-use">Пользовательское соглашение</a>.</p>
+
+      <h2>1. Какие данные мы обрабатываем</h2>
+      <ul>
+        <li><strong>Аккаунт:</strong> имя, email, пароль (храним только его хеш), часовой пояс, ответы онбординга (сферы деятельности, цели, рабочий график, тон общения).</li>
+        <li><strong>Содержимое:</strong> задачи, события, напоминания, теги, загруженные файлы, сообщения ассистенту и голосовые сообщения для распознавания речи.</li>
+        <li><strong>Telegram:</strong> идентификатор чата и имя пользователя, если вы подключили бота.</li>
+        <li><strong>Подключённые сервисы:</strong> данные Google, Яндекс, Apple, Notion или Jira в объёме выданных вами разрешений и ключи доступа к ним.</li>
+        <li><strong>Технические данные:</strong> IP-адрес, браузер и устройство, cookie, посещённые страницы (в том числе через Яндекс Метрику).</li>
+      </ul>
+
+      <h2>2. Данные Google и как мы их используем</h2>
+      <p>Если вы входите через Google или подключаете Google Calendar, Dayla запрашивает только следующие разрешения:</p>
+      <ul>
+        <li><strong>Профиль Google</strong> (<code>openid</code>, <code>email</code>, <code>profile</code>): имя, адрес почты и идентификатор аккаунта Google. Используются, чтобы создать ваш аккаунт Dayla и входить в него без пароля.</li>
+        <li><strong>События календарей</strong> (<code>calendar.events</code>): название, описание, место, время начала и окончания событий. Dayla показывает ваши события Google на экранах «Сегодня», «Календарь» и «Задачи», учитывает их, когда ассистент планирует день и ищет свободное время, создаёт в Google Calendar события, которые вы добавили в Dayla с отметкой Google, и меняет или удаляет их в Google, когда вы переносите, меняете или удаляете их в Dayla.</li>
+        <li><strong>Список календарей</strong> (<code>calendar.calendarlist.readonly</code>): названия, идентификаторы и часовые пояса ваших календарей, чтобы показать их и дать выбрать, с какими работать. Календари и их настройки доступа Dayla не меняет.</li>
+      </ul>
+      <p>Dayla обращается к данным Google только по вашему действию (подключение, синхронизация, запрос ассистенту, создание или изменение события).</p>
+      <p><strong>ИИ-ассистент.</strong> Чтобы ответить на ваш запрос (например, «что у меня завтра?» или «перенеси встречу»), Dayla передаёт поставщику языковой модели (GigaChat от ПАО Сбербанк или совместимый с OpenAI API сервис) ваш запрос и нужные для ответа события, включая события из Google Calendar. Эти данные используются только для ответа вам. Мы не используем данные Google для создания, обучения или улучшения обобщённых моделей ИИ или машинного обучения.</p>
+      <p class="note" lang="en">Dayla’s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+      <p>В частности, данные Google:</p>
+      <ul>
+        <li>используются только для функций Dayla, которые вы видите и которыми пользуетесь;</li>
+        <li>не продаются и не используются для рекламы, в том числе персонализированной, а также для оценки кредитоспособности и кредитования;</li>
+        <li>не передаются третьим лицам, кроме поставщиков, без которых функция не работает (хостинг, поставщик языковой модели для ответа ассистента), а также случаев, когда этого требует закон или вы дали явное согласие;</li>
+        <li>не читаются людьми, кроме случаев, когда вы сами об этом попросили (например, в обращении в поддержку), это нужно для расследования злоупотреблений и защиты безопасности или этого требует закон.</li>
+      </ul>
+
+      <h2>3. Зачем мы обрабатываем данные</h2>
+      <ul>
+        <li>регистрация, вход и работа вашего аккаунта;</li>
+        <li>работа функций сервиса: планирование, задачи, календарь, напоминания, ассистент, синхронизация с подключёнными сервисами, Telegram-бот;</li>
+        <li>поддержка, обязательные уведомления о работе сервиса, защита от спама и злоупотреблений;</li>
+        <li>обезличенная статистика посещений сайта для улучшения сервиса (данные Google для этого не используются).</li>
+      </ul>
+
+      <h2>4. Кому передаются данные</h2>
+      <ul>
+        <li>хостинг-провайдеру, на серверах которого работает Dayla (Amvera, Россия);</li>
+        <li>поставщику языковой модели — только содержание запроса ассистенту и данные, нужные для ответа;</li>
+        <li>поставщику распознавания речи — только голосовые сообщения, которые вы отправили;</li>
+        <li>сервисам, которые вы подключили сами (Google, Яндекс, Apple, Notion, Jira, Telegram), — только для синхронизации, которую вы включили;</li>
+        <li>Яндекс Метрике — технические данные о посещении сайта;</li>
+        <li>государственным органам — если этого требует закон.</li>
+      </ul>
+      <p>Мы не продаём персональные данные.</p>
+
+      <h2>5. Хранение и защита</h2>
+      <p>Данные передаются только по HTTPS. Ключи доступа к Google и другим сервисам, email, имя и ответы онбординга хранятся в зашифрованном виде. Доступ сотрудников к данным ограничен и выдаётся только для работы сервиса и расследования инцидентов.</p>
+      <p>Данные хранятся, пока существует ваш аккаунт. Ключи доступа к Google удаляются при отключении Google Calendar или удалении аккаунта.</p>
+
+      <h2>6. Как отозвать доступ и удалить данные</h2>
+      <ul>
+        <li><strong>Отключить Google Calendar:</strong> «Интеграции» → Google Calendar → «Отключить». Dayla удаляет ключи доступа и отзывает свой доступ в аккаунте Google. При отключении можно также удалить из Dayla все импортированные события.</li>
+        <li><strong>Отозвать доступ в Google:</strong> в любой момент на странице <a href="https://myaccount.google.com/connections">«Сторонние приложения и сервисы»</a> аккаунта Google.</li>
+        <li><strong>Удалить аккаунт:</strong> «Аккаунт» → «Безопасность» → «Удалить аккаунт». Сразу и безвозвратно удаляются аккаунт, задачи, события, файлы, переписка с ассистентом и подключения; доступ к Google отзывается. События, которые Dayla создала в вашем Google Calendar, остаются в Google — их можно удалить там.</li>
+        <li><strong>По почте:</strong> напишите на <a href="mailto:mentrixlabs@yandex.ru">mentrixlabs@yandex.ru</a> с адреса, на который зарегистрирован аккаунт, — удалим данные в течение 30 дней.</li>
+      </ul>
+
+      <h2>7. Ваши права</h2>
+      <p>Вы можете узнать, какие ваши данные мы обрабатываем, исправить их, получить копию, ограничить обработку, отозвать согласие и удалить данные, а также обжаловать наши действия в Роскомнадзоре или в суде. Пишите на <a href="mailto:mentrixlabs@yandex.ru">mentrixlabs@yandex.ru</a>.</p>
+
+      <h2>8. Дети</h2>
+      <p>Пользоваться Dayla самостоятельно можно с 16 лет; младше — только с согласия родителей или законных представителей. Мы сознательно не собираем данные детей младше 16 лет без такого согласия.</p>
+
+      <h2>9. Изменения политики</h2>
+      <p>Новая редакция публикуется на этой странице с датой изменения. О существенных изменениях, касающихся данных Google, мы предупредим в сервисе заранее.</p>
+
+      <h2>10. Контакты</h2>
+      <p>ООО «Ментрикс Лабс», <a href="mailto:mentrixlabs@yandex.ru">mentrixlabs@yandex.ru</a>.</p>
+    </article>
+
+    <article id="en" lang="en">
+      <h1>Dayla Privacy Policy</h1>
+      <p class="muted">Effective October 10, 2026</p>
+
+      <p>Dayla (<a href="https://dayla.tech/">dayla.tech</a>) is a personal AI planning assistant: calendar, tasks, goals and reminders on the web and in Telegram. This policy explains what data Dayla processes, why, who receives it and how to delete it. Dayla is operated by Mentrix Labs LLC (ООО «Ментрикс Лабс», INN 9810004909, OGRN 1257800101019, Saint Petersburg, Russia) — “we”.</p>
+
+      <h2>1. Data we process</h2>
+      <ul>
+        <li><strong>Account:</strong> name, email, password (stored only as a hash), time zone, onboarding answers (areas of activity, goals, working hours, preferred tone).</li>
+        <li><strong>Content:</strong> tasks, events, reminders, tags, uploaded files, messages to the assistant and voice messages for speech recognition.</li>
+        <li><strong>Telegram:</strong> chat ID and username if you connect the bot.</li>
+        <li><strong>Connected services:</strong> data from Google, Yandex, Apple, Notion or Jira within the permissions you grant, and the access tokens for them.</li>
+        <li><strong>Technical data:</strong> IP address, browser and device, cookies, pages visited (including via Yandex Metrica).</li>
+      </ul>
+
+      <h2>2. Google user data and how we use it</h2>
+      <p>When you sign in with Google or connect Google Calendar, Dayla requests only these permissions:</p>
+      <ul>
+        <li><strong>Google profile</strong> (<code>openid</code>, <code>email</code>, <code>profile</code>): your name, email address and Google account ID, used to create your Dayla account and sign you in without a password.</li>
+        <li><strong>Calendar events</strong> (<code>calendar.events</code>): event title, description, location, start and end time. Dayla shows your Google events on its Today, Calendar and Tasks screens, takes them into account when the assistant plans your day and looks for free time, creates events in Google Calendar for the tasks you add in Dayla with Google selected, and updates or deletes those events in Google when you move, change or delete them in Dayla.</li>
+        <li><strong>Calendar list</strong> (<code>calendar.calendarlist.readonly</code>): names, IDs and time zones of your calendars, to show them and let you choose which to use. Dayla never changes your calendars or their sharing settings.</li>
+      </ul>
+      <p>Dayla accesses Google data only in response to your actions (connecting, syncing, asking the assistant, creating or changing an event).</p>
+      <p><strong>AI assistant.</strong> To answer your request (for example “what do I have tomorrow?” or “move the meeting”), Dayla sends your request and the events needed to answer it, including Google Calendar events, to a large language model provider (Sber GigaChat or an OpenAI-compatible API). This data is used only to produce the answer for you. We do not use Google user data to develop, improve or train generalized AI and/or machine learning models.</p>
+      <p class="note">Dayla’s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+      <p>In particular, Google user data:</p>
+      <ul>
+        <li>is used only to provide the user-facing features of Dayla described above;</li>
+        <li>is never sold and never used for advertising, including personalized or retargeted ads, or for determining creditworthiness or lending;</li>
+        <li>is not transferred to third parties except providers needed to run the feature (hosting, the language model provider for the assistant’s answer), when required by law, or with your explicit consent;</li>
+        <li>is not read by humans unless you ask us to (for example in a support request), it is needed to investigate abuse or for security, or it is required by law.</li>
+      </ul>
+
+      <h2>3. Why we process data</h2>
+      <ul>
+        <li>to register you, sign you in and run your account;</li>
+        <li>to provide Dayla’s features: planning, tasks, calendar, reminders, the assistant, sync with connected services, the Telegram bot;</li>
+        <li>for support, service notifications, and protection against spam and abuse;</li>
+        <li>for aggregated website statistics to improve the service (Google user data is not used for this).</li>
+      </ul>
+
+      <h2>4. Who receives data</h2>
+      <ul>
+        <li>our hosting provider (Amvera, Russia);</li>
+        <li>the language model provider — only the request to the assistant and the data needed to answer it;</li>
+        <li>the speech recognition provider — only voice messages you send;</li>
+        <li>services you connect yourself (Google, Yandex, Apple, Notion, Jira, Telegram) — only for the sync you turned on;</li>
+        <li>Yandex Metrica — technical data about website visits;</li>
+        <li>authorities, when required by law.</li>
+      </ul>
+      <p>We do not sell personal data.</p>
+
+      <h2>5. Storage and security</h2>
+      <p>Data is transmitted only over HTTPS. Access tokens for Google and other services, your email, name and onboarding answers are encrypted at rest. Staff access is limited to operating the service and investigating incidents.</p>
+      <p>Data is kept while your account exists. Google access tokens are deleted when you disconnect Google Calendar or delete your account.</p>
+
+      <h2>6. Revoking access and deleting data</h2>
+      <ul>
+        <li><strong>Disconnect Google Calendar:</strong> Integrations → Google Calendar → Disconnect. Dayla deletes its tokens and revokes its access in your Google account. You can also delete all imported events from Dayla when disconnecting.</li>
+        <li><strong>Revoke access in Google:</strong> at any time on your Google Account’s <a href="https://myaccount.google.com/connections">Third-party apps &amp; services</a> page.</li>
+        <li><strong>Delete your account:</strong> Account → Security → Delete account. Your account, tasks, events, files, assistant conversations and connections are deleted immediately and permanently, and Google access is revoked. Events Dayla created in your Google Calendar stay in Google; you can delete them there.</li>
+        <li><strong>By email:</strong> write to <a href="mailto:mentrixlabs@yandex.ru">mentrixlabs@yandex.ru</a> from your account’s email and we will delete your data within 30 days.</li>
+      </ul>
+
+      <h2>7. Your rights</h2>
+      <p>You can ask what data we hold about you, correct it, get a copy, restrict processing, withdraw consent and delete your data. Contact <a href="mailto:mentrixlabs@yandex.ru">mentrixlabs@yandex.ru</a>.</p>
+
+      <h2>8. Children</h2>
+      <p>You may use Dayla on your own from age 16; younger users need the consent of a parent or legal guardian. We do not knowingly collect data of children under 16 without such consent.</p>
+
+      <h2>9. Changes</h2>
+      <p>Updates are published on this page with the effective date. We will notify you in the service in advance of material changes concerning Google user data.</p>
+
+      <h2>10. Contact</h2>
+      <p>Mentrix Labs LLC, <a href="mailto:mentrixlabs@yandex.ru">mentrixlabs@yandex.ru</a>.</p>
+    </article>
+  </main>
+
+  <footer>© Dayla · <a href="/">dayla.tech</a> · <a href="/terms-of-use">Условия использования / Terms of Use</a></footer>
+</body>
+</html>

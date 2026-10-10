@@ -6,6 +6,8 @@
   } catch (e) {}
   var dark = mode === "dark" || (mode !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   var root = document.documentElement;
+  // With JavaScript the app draws the page: the no-JavaScript homepage text in index.html stays hidden
+  root.classList.add("js");
   root.classList.add(dark ? "dark" : "light");
   root.style.colorScheme = dark ? "dark" : "light";
 })();

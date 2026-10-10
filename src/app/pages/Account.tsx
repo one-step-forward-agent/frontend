@@ -31,6 +31,8 @@ import { SOURCE_LABELS, browserTimezone, errorText, formatDateTime, formatLead, 
 import { notifyTagsChanged, useAction, useAsync, useMediaQuery, useTags } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
+import { useAuthStore } from "@/store/authStore";
+import { useNavigate } from "react-router-dom";
 
 const SECTIONS = [
   { id: "profile", label: "Профиль" },
@@ -892,6 +894,23 @@ function CalendarsSection() {
 
 function SecuritySection() {
   const logout = useSignOut();
+  const navigate = useNavigate();
+  const errorToast = useErrorToast();
+  const [deleting, setDeleting] = useState(false);
+
+  // Everything goes: events, files, chat, integrations; Google's access to the calendar is revoked too
+  const deleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await api.me.remove();
+      useAuthStore.setState({ user: null, isAuthenticated: false, error: null });
+      navigate("/", { replace: true });
+    } catch (error) {
+      errorToast(errorText(error));
+      setDeleting(false);
+    }
+  };
+
   return (
     <div id="security" className="anchor">
       <GlassCard title="Безопасность">
@@ -905,6 +924,25 @@ function SecuritySection() {
             onConfirm={() => logout(true)}
           >
             Выйти везде
+          </ConfirmButton>
+        </div>
+        <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+          Удаление аккаунта стирает все ваши задачи, файлы, переписку с ассистентом и подключения и отзывает доступ
+          Dayla к Google Calendar. Отменить его нельзя. Подробнее — в{" "}
+          <a href="/privacy-policy" className="text-sky-600 dark:text-sky-400 hover:underline">
+            политике конфиденциальности
+          </a>
+          .
+        </p>
+        <div className="button-row mt-3">
+          <ConfirmButton
+            size="sm"
+            icon="trash"
+            busy={deleting}
+            confirmLabel="Удалить аккаунт навсегда?"
+            onConfirm={deleteAccount}
+          >
+            Удалить аккаунт
           </ConfirmButton>
         </div>
       </GlassCard>

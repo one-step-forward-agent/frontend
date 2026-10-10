@@ -111,6 +111,12 @@ const LandingFooter: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <a href="/privacy-policy" className={linkClass}>
+                  <FileText size={14} aria-hidden="true" />
+                  Политика конфиденциальности
+                </a>
+              </li>
+              <li>
                 <Link to="/personal-data-consent" className={linkClass}>
                   <FileText size={14} aria-hidden="true" />
                   Обработка персональных данных

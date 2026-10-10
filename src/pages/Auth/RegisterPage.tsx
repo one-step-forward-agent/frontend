@@ -194,7 +194,15 @@ const RegisterPage: React.FC = () => {
             >
               условиями обработки ПД
             </Link>{" "}
-            ознакомлен(а) и согласен(а).
+            ознакомлен(а) и согласен(а), с{" "}
+            <a
+              href="/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+            >
+              политикой конфиденциальности
+            </a> — тоже.
           </ConsentCheckbox>
 
           <ConsentCheckbox

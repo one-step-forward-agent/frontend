@@ -9,6 +9,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Dayla — планируйте день за минуту</title>
     <script src="/theme-init.js"></script>
+    <style>html.js .no-js-home { display: none !important; }</style>
 
     <!-- Yandex.Metrika counter -->
     <script src="/metrika.js" async></script>
@@ -16,7 +17,15 @@
     <!-- /Yandex.Metrika counter -->
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- For crawlers without JavaScript (Google's OAuth review reads the homepage
+           for what the app does and the link to the privacy policy). React replaces it. -->
+      <div class="no-js-home" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center;font-family:Inter,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280">
+        <h1 style="margin:0;font-size:32px;color:#111827">Dayla</h1>
+        <p style="margin:0;max-width:460px">Личный ИИ-ассистент для планирования: календарь, задачи и напоминания на сайте и в Telegram. Подключите Google Calendar — Dayla покажет ваши события рядом с задачами и поможет спланировать день.</p>
+        <p style="margin:0;font-size:14px"><a href="/privacy-policy" style="color:#2563eb">Политика конфиденциальности</a> · <a href="/terms-of-use" style="color:#2563eb">Условия использования</a> · <a href="mailto:mentrixlabs@yandex.ru" style="color:#2563eb">mentrixlabs@yandex.ru</a></p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
