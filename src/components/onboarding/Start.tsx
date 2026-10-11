@@ -31,20 +31,6 @@ import { cn } from "@/utils/cn";
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
 
-type Priority = "A" | "B" | "C" | "D" | "E" | "F";
-
-const PRIORITY_STYLES: Record<
-  Priority,
-  { bg: string; solid: string; text: string; ring: string }
-> = {
-  A: { bg: "bg-red-100 dark:bg-red-900/40",       solid: "bg-red-500",     text: "text-red-700 dark:text-red-300",       ring: "ring-red-300/60 dark:ring-red-700/60" },
-  B: { bg: "bg-orange-100 dark:bg-orange-900/40", solid: "bg-orange-500",  text: "text-orange-700 dark:text-orange-300", ring: "ring-orange-300/60 dark:ring-orange-700/60" },
-  C: { bg: "bg-amber-100 dark:bg-amber-900/40",   solid: "bg-amber-500",   text: "text-amber-700 dark:text-amber-300",   ring: "ring-amber-300/60 dark:ring-amber-700/60" },
-  D: { bg: "bg-blue-100 dark:bg-blue-900/40",     solid: "bg-blue-500",    text: "text-blue-700 dark:text-blue-300",     ring: "ring-blue-300/60 dark:ring-blue-700/60" },
-  E: { bg: "bg-slate-100 dark:bg-slate-800/60",   solid: "bg-slate-400",   text: "text-slate-600 dark:text-slate-300",   ring: "ring-slate-300/60 dark:ring-slate-700/60" },
-  F: { bg: "bg-slate-50 dark:bg-slate-800/40",    solid: "bg-slate-300",   text: "text-slate-500 dark:text-slate-400",   ring: "ring-slate-200/60 dark:ring-slate-700/40" },
-};
-
 export const Start: React.FC = () => {
   const navigate = useNavigate();
   const start = () => navigate("/onboarding/field-of-activity");
@@ -55,7 +41,7 @@ export const Start: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white overflow-x-hidden">
+    <div className="relative min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white overflow-x-clip">
       <PageBackdrop />
       <LandingHeader />
       <div className="relative z-10">
@@ -87,8 +73,6 @@ type MenuItem = {
 
 const CONTEXT_MENU_ITEMS: MenuItem[] = [
   { label: "Ответить",         icon: Reply },
-  { label: "Скопировать",      icon: Copy },
-  { label: "Сохранить фото",   icon: Download },
   { label: "Переслать Dayla",        icon: Forward },
   { label: "Удалить",          icon: Trash2, tone: "danger" },
 ];
@@ -120,7 +104,7 @@ const ChatContextMenu: React.FC = () => (
             tabIndex={-1}
             className={cn(
                 "relative isolate w-full flex items-center gap-2.5",
-                "px-3 py-2 text-left text-[20px] font-medium",
+                "px-3 py-2 text-left text-[15px] font-medium",
                 "transition-colors rounded-xl",
                 isHighlighted ? "z-10" : "z-0",
                 isDanger &&
@@ -176,18 +160,17 @@ const ChatContextMenu: React.FC = () => (
 
 const GTD_SOURCES = [
   { id: "jira",     name: "Jira",     src: "/images/Jira_Software_Logo.svg", count: 6 },
-  { id: "trueconf", name: "TrueConf", src: "/images/tc_logo_square.webp",    count: 3 },
-  { id: "slack",    name: "Slack",    src: "/images/slack.webp",            count: 3 },
+  { id: "telegram",    name: "Telegram",    src: "/images/TelegramWB.png",            count: 3 },
 ];
 
 const GTDAggregation: React.FC = () => (
-  <div className="relative w-full max-w-[460px]">
+  <div className="relative w-full max-w-[320px]">
     <div
       aria-hidden="true"
       className="absolute inset-[-10%] -z-10 rounded-full bg-slate-400/10 blur-3xl"
     />
 
-    <div className="grid grid-cols-3 gap-3 mb-1">
+    <div className="grid grid-cols-2 gap-3 mb-1">
       {GTD_SOURCES.map(({ id, name, src, count }) => (
         <div
           key={id}
@@ -232,6 +215,7 @@ const GTDAggregation: React.FC = () => (
           </filter>
         </defs>
 
+        {/* мягкое свечение под линиями */}
         <g
           filter="url(#gtd-glow)"
           opacity="0.35"
@@ -239,24 +223,22 @@ const GTDAggregation: React.FC = () => (
           strokeWidth="2"
           strokeLinecap="round"
         >
-          <path d="M72 4 Q72 32 200 46" />
-          <path d="M200 4 L200 46" />
-          <path d="M328 4 Q328 32 200 46" />
+          <path d="M100 4 Q100 32 200 46" />
+          <path d="M300 4 Q300 32 200 46" />
         </g>
 
+        {/* сами линии */}
         <g
           stroke="url(#gtd-line-down)"
           strokeWidth="1.25"
           strokeLinecap="round"
         >
-          <path d="M72 4 Q72 32 200 46" />
-          <path d="M200 4 L200 46" />
-          <path d="M328 4 Q328 32 200 46" />
+          <path d="M100 4 Q100 32 200 46" />
+          <path d="M300 4 Q300 32 200 46" />
         </g>
 
-        <circle cx="72"  cy="4"  r="3" fill="url(#gtd-node)" />
-        <circle cx="200" cy="4"  r="3" fill="url(#gtd-node)" />
-        <circle cx="328" cy="4"  r="3" fill="url(#gtd-node)" />
+        <circle cx="100" cy="4"  r="3" fill="url(#gtd-node)" />
+        <circle cx="300" cy="4"  r="3" fill="url(#gtd-node)" />
         <circle cx="200" cy="46" r="4" fill="url(#gtd-node)" />
       </svg>
     </div>
@@ -420,9 +402,6 @@ const SectionLabel: React.FC<{ tint: GlassTint; children: React.ReactNode }> = (
 
 const GTD_RESPONSE = (
   <div className="space-y-3">
-      <SectionLabel tint="blue">
-        План по вашему графику · Пн–Пт 09:00–18:00
-      </SectionLabel>
 
       <div className="space-y-2 text-[12px] leading-snug mt-1">
         <div>
@@ -455,49 +434,12 @@ const GTD_RESPONSE = (
       </button>
       <button
         type="button"
-        className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 transition-all hover:-translate-y-0.5"
-      >
-        Изменить
-      </button>
-      <button
-        type="button"
         className="inline-flex items-center text-xs font-medium px-3 py-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
       >
         Отмена
       </button>
     </div>
   </div>
-);
-
-const UserCaseGTD: React.FC = () => (
-  <section id="usecase-gtd" className="relative py-20 md:py-28 overflow-hidden">
-    <div className="relative max-w-6xl mx-auto px-4 md:px-6">
-      <div className="max-w-2xl mb-12 md:mb-16">
-        <Badge className="text-eyebrow mb-3">Систематизация по GTD</Badge>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Одна фраза — и всё разложено по полочкам
-        </h2>
-        <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Jira, TrueConf, Slack — Dayla соберёт задачи из всех источников,
-          расставит дедлайны и впишет их в ваш календарь.
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-12 lg:gap-16 items-center">
-        <div className="relative flex justify-center">
-          <GTDAggregation />
-        </div>
-
-        <div className="relative">
-          <DaylaChatCard
-            userMessage="Систематизируй задачи по Getting Things Done, которые мне прислали на этой неделе из Jira, TrueConf и Slack, в мой Гугл календарь"
-            daylaMessage={GTD_RESPONSE}
-          />
-        </div>
-      </div>
-
-    </div>
-  </section>
 );
 
 const IMG_W = 396;
@@ -513,7 +455,21 @@ const IPHONE_SCREEN_CORNERS: [Point, Point, Point, Point] = [
   [7, 96],
 ];
 
-const IPhoneScene: React.FC = () => {
+
+/* ─── Общая «коробка» iPhone для любых сцен ──────────────── */
+const IPHONE_MASK_BOTTOM =
+  "linear-gradient(to bottom, " +
+    "black 0%, " +
+    "black 32%, " +
+    "rgba(0,0,0,0.92) 40%, " +
+    "rgba(0,0,0,0.72) 45%, " +
+    "rgba(0,0,0,0.4)  50%, " +
+    "rgba(0,0,0,0.0) 54%, " +
+    "transparent 92%, " +
+    "transparent 100%" +
+  ")";
+
+const IPhoneFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const [scale, setScale] = React.useState(0.4);
 
@@ -552,18 +508,16 @@ const IPhoneScene: React.FC = () => {
     <div
       ref={wrapperRef}
       className="relative w-full"
-      style={{ height: IMG_H * scale }}
+      style={{ height: IMG_H * scale * IPHONE_VISIBLE_RATIO }}
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
         style={{
-            width: IMG_W,
-            height: IMG_H,
-            transform: `scale(${scale})`,
-            WebkitMaskImage:
-            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.25) 65%, transparent 78%, transparent 100%)",
-            maskImage:
-            "linear-gradient(to bottom, black 0%, black 45%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.25) 65%, transparent 78%, transparent 100%)",
+          width: IMG_W,
+          height: IMG_H,
+          transform: `scale(${scale})`,
+          WebkitMaskImage: IPHONE_MASK_BOTTOM,
+          maskImage: IPHONE_MASK_BOTTOM,
         }}
       >
         <img
@@ -584,56 +538,109 @@ const IPhoneScene: React.FC = () => {
             borderRadius: 50,
           }}
         >
-          <div className="absolute inset-0 flex flex-col bg-white dark:bg-gray-950">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-semibold shrink-0">
-                АС
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
-                  Андрей Смирнов
-                </p>
-                <p className="text-[20px] text-emerald-500">онлайн</p>
-              </div>
-            </div>
-
-            <div className="flex-1 p-3 space-y-2">
-              <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5">
-                  <p className="text-[25px] text-gray-800 dark:text-gray-200">
-                    Привет! Не забудь про рейс ✈️
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <img
-            src="/images/airplaneTicketWB-mes.webp"
-            alt="Сообщение с авиабилетом"
-            className="
-              absolute left-[3%] top-[27%] z-20
-              w-[84%] h-auto
-              rounded-2xl shadow-lg
-              pointer-events-none select-none
-            "
-            loading="lazy"
-          />
-
-          <div
-            className="
-              absolute left-[3%] top-[48%] z-30
-              w-[53%]
-              pointer-events-none select-none
-            "
-          >
-            <ChatContextMenu />
-          </div>
+          {children}
         </div>
       </div>
     </div>
   );
 };
+
+
+const IPHONE_VISIBLE_RATIO = 0.6;
+const IPhoneScene: React.FC = () => (
+  <IPhoneFrame>
+    <div className="absolute inset-0 flex flex-col bg-white dark:bg-gray-950">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+          п
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
+            Папа
+          </p>
+          <p className="text-[20px] text-emerald-500">online</p>
+        </div>
+      </div>
+
+      <div className="flex-1 p-3 space-y-2">
+        <div className="flex justify-start">
+          <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5">
+            <p className="text-[20px] text-gray-800 dark:text-gray-200">
+              Привет! Не забудь про рейс ✈️
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <img
+      src="/images/AirPlaneTicket.jpeg"
+      alt="Сообщение с авиабилетом"
+      className="
+        absolute left-[3%] top-[22%] z-20
+        w-[84%] h-auto
+        rounded-2xl shadow-lg
+        pointer-events-none select-none
+      "
+      loading="lazy"
+    />
+
+    <div
+      className="
+        absolute left-[3%] top-[43%] z-30
+        w-[53%]
+        pointer-events-none select-none
+      "
+    >
+      <ChatContextMenu />
+    </div>
+  </IPhoneFrame>
+);
+
+const IPhoneSceneFinance: React.FC = () => (
+  <IPhoneFrame>
+    <div className="absolute inset-0 flex flex-col bg-white dark:bg-gray-950">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+          SN
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
+            Sergey Nenashev
+          </p>
+          <p className="text-[16px] text-emerald-500">online</p>
+        </div>
+      </div>
+
+      <div className="flex-1 p-4 space-y-4 overflow-hidden">
+        <div className="flex justify-center">
+          <div
+            className="
+              px-3 py-1 rounded-full
+              bg-blue-50 dark:bg-blue-950/50
+              ring-1 ring-blue-100 dark:ring-blue-900/60
+              text-blue-700 dark:text-blue-300
+              text-[15px] font-medium
+              flex items-center gap-1.5
+            "
+          >
+            <Sparkles size={13} aria-hidden="true" />
+            В этом диалоге сидит Dayla
+          </div>
+        </div>
+
+        <div className="flex justify-start">
+          <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-3 py-2">
+            <p className="text-[20px] text-gray-800 dark:text-gray-200">
+              Пришлите отчётность к концу квартала
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </IPhoneFrame>
+);
 
 interface DaylaChatCardProps {
   forwardedFrom?: string;
@@ -656,21 +663,6 @@ const DaylaChatCard: React.FC<DaylaChatCardProps> = ({
       "dark:shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]",
     )}
   >
-    <div className="relative flex items-center gap-3 px-4 py-3 border-b border-white/40 dark:border-white/5 bg-white/30 dark:bg-white/[0.03] backdrop-blur-md">
-      <div
-        aria-hidden="true"
-        className="w-9 h-9 rounded-full shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-md ring-1 ring-white/40"
-      >
-        <Sparkles size={15} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-gray-900 dark:text-white">Dayla</p>
-        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          Онлайн
-        </p>
-      </div>
-    </div>
 
     <div className="relative p-4 space-y-4">
       {(forwardedFrom || userMessage) && (
@@ -757,25 +749,6 @@ const PAGE_BLOBS: PageBlob[] = [
   { left: "-12%", top: "92%",  size: "28rem", gradient: "from-blue-500/16     to-cyan-500/8",      shape: "50% 50% 40% 60% / 60% 40% 50% 50%", duration: "34s", delay: "7s"   },
 ];
 
-type PagePulse = {
-  left: string;
-  top: string;
-  color: string;
-  delay: string;
-  duration: string;
-};
-
-const PAGE_PULSES: PagePulse[] = [
-  { left: "14%",  top: "12%", color: "bg-blue-400/40",    delay: "0s",   duration: "7s"  },
-  { left: "82%",  top: "22%", color: "bg-purple-400/35",  delay: "1.5s", duration: "9s"  },
-  { left: "28%",  top: "34%", color: "bg-indigo-400/35",  delay: "3s",   duration: "11s" },
-  { left: "58%",  top: "44%", color: "bg-fuchsia-400/30", delay: "4.5s", duration: "8s"  },
-  { left: "36%",  top: "56%", color: "bg-violet-400/35",  delay: "2s",   duration: "9s"  },
-  { left: "72%",  top: "68%", color: "bg-pink-400/30",    delay: "5.5s", duration: "12s" },
-  { left: "12%",  top: "78%", color: "bg-indigo-400/35",  delay: "0.6s", duration: "9s"  },
-  { left: "84%",  top: "88%", color: "bg-blue-400/30",    delay: "3.8s", duration: "10s" },
-];
-
 const PageBackdrop: React.FC = () => (
   <>
     <style>{`
@@ -830,17 +803,6 @@ const PageBackdrop: React.FC = () => (
         />
       ))}
 
-      {PAGE_PULSES.map((p, i) => (
-        <span
-          key={`pulse-${i}`}
-          className={`absolute w-2 h-2 rounded-full blur-[1px] page-pulse ${p.color}`}
-          style={{
-            left: p.left,
-            top: p.top,
-            animation: `page-pulse ${p.duration} ease-in-out ${p.delay} infinite`,
-          }}
-        />
-      ))}
 
       <div
         className="absolute inset-0 opacity-[0.035] dark:opacity-[0.06]"
@@ -855,62 +817,15 @@ const PageBackdrop: React.FC = () => (
   </>
 );
 
-const UserCase: React.FC = () => (
-  <section id="usecase" className="relative py-20 md:py-28 overflow-hidden">
-
-    <div className="relative max-w-5xl mx-auto px-4 md:px-6">
-      <div className="max-w-2xl mb-12 md:mb-16">
-        <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Пересылайте события — Dayla всё спланирует
-        </h2>
-        <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Не нужно вручную копировать дату, время и место. Отправьте сообщение
-          боту — Dayla разберётся сама.
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-        <div className="relative flex justify-center">
-        <div className="relative w-full max-w-[400px]">
-            <IPhoneScene />
-        </div>
-        </div>
-
-        <div className="relative">
-            <DaylaChatCard
-                forwardedFrom="Переслано от Андрея Смирнова"
-                userMessage="Авиабилет PD-205 · VKO → LED"
-                daylaMessage={
-                <>
-                    Распознала авиабилет:{' '}
-                    <strong className="font-semibold">дата — 05 апреля, 21:55</strong>,{' '}
-                    <strong className="font-semibold">место посадки — Внуково, терминал A</strong>.
-                    Куда добавить событие?
-                </>
-                }
-            />
-            </div>
-      </div>
-
-      <div className="mt-12 md:mt-16 max-w-2xl mx-auto text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-          Dayla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
-        </p>
-      </div>
-    </div>
-  </section>
-);
 
 const ExcelPreview: React.FC = () => (
   <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
     <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-100 dark:border-emerald-900/60">
-      <div className="w-6 h-6 rounded bg-emerald-500 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+      <div className="w-5 h-5 rounded bg-emerald-500 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
         X
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
+        <p className="text-[10px] font-medium text-gray-900 dark:text-white truncate">
           Финансовый_отчёт_Q4.xlsx
         </p>
         <p className="text-[9px] text-gray-500 dark:text-gray-400">
@@ -920,7 +835,7 @@ const ExcelPreview: React.FC = () => (
     </div>
 
     <div className="p-2.5">
-      <table className="w-full text-[15px] leading-tight">
+      <table className="w-full text-[10px] leading-tight">
         <thead>
           <tr className="text-left text-gray-500 dark:text-gray-400">
             <th className="pb-1 font-medium">Статья</th>
@@ -1045,9 +960,9 @@ const MonitorScene: React.FC = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
-                  Сергей Ненашев
+                  Sergey Nenashev
                 </p>
-                <p className="text-[16px] text-emerald-500">онлайн</p>
+                <p className="text-[16px] text-emerald-500">online</p>
               </div>
             </div>
 
@@ -1073,29 +988,12 @@ const MonitorScene: React.FC = () => {
                 <div className="max-w-[60%] space-y-2.5">
                   <div className="rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-3.5 py-2">
                     <p className="text-[20px] text-gray-800 dark:text-gray-200">
-                      Не забудьте подать отчётность к концу квартала
-                    </p>
-                  </div>
-
-                  <ExcelPreview />
-                </div>
-              </div>
-
-              <div className="flex items-end gap-2">
-                <div
-                  aria-hidden="true"
-                  className="w-8 h-8 rounded-full shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm"
-                >
-                  <Sparkles size={14} />
-                </div>
-                <div className="max-w-[70%] min-w-0">
-                  <div className="rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-3.5 py-2">
-                    <p className="text-[18px] text-gray-900 dark:text-white leading-snug">
-                      Зафиксировала <strong className="font-semibold">«Подать фин отчёт»</strong> на 30.09.2027. Собираю документы к концу отчётного периода.
+                      Пришлите отчётность к концу квартала
                     </p>
                   </div>
                 </div>
               </div>
+
 
             </div>
           </div>
@@ -1105,47 +1003,6 @@ const MonitorScene: React.FC = () => {
   );
 };
 
-const UserCaseFinance: React.FC = () => (
-  <section
-    id="usecase-finance"
-    className="relative py-20 md:py-28 overflow-hidden"
-  >
-    <div className="relative max-w-5xl mx-auto px-4 md:px-6">
-      <div className="max-w-2xl mb-12 md:mb-16">
-        <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Прислали файл? Dayla превратит его в задачу
-        </h2>
-        <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Добавьте Dayla в чат.
-          Она распознает, что к чему и когда это надо сдать.
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-20 items-center">
-        <div className="relative">
-            <DaylaChatCard
-            daylaMessage={
-                <>
-                Подтянула Финансовый_отчёт_Q4.xlsx.
-                Зафиксировала задачу{' '}
-                <strong className="font-semibold">«Подать фин отчёт»</strong>{' '}
-                на 30.09.2027 (конец квартала). Собираю ваши документы к концу
-                отчётного периода.
-                </>
-            }
-            />
-        </div>
-
-        <div className="relative flex justify-center">
-            <div className="relative w-full max-w-[2000px]">
-            <MonitorScene />
-            </div>
-        </div>
-        </div>
-    </div>
-  </section>
-);
 
 const HERO_SCENE_W = 790;
 const HERO_SCENE_H = 600;
@@ -1318,14 +1175,8 @@ const SpeechBubble: React.FC = () => (
         </div>
 
         <div className="min-w-0">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            Голосовой запрос
-          </p>
           <p className="text-lg md:text-xl leading-snug text-gray-900 dark:text-white">
-            «Dayla, тренировка отменилась»
-          </p>
-          <p className="mt-3 text-base text-gray-600 dark:text-gray-400">
-            Dayla подберёт альтернативу под ваши цели.
+            Завтра в 16 созвон с командой
           </p>
         </div>
       </div>
@@ -1342,19 +1193,18 @@ const MOCK_TASKS: Array<{
   time: string;
   title: string;
   done?: boolean;
+  isNew?: boolean;   // ← новое
 }> = [
-  { time: "09:00", title: "Встреча с командой"},        
-  { time: "11:30", title: "Ответить на письма"},        
-  { time: "13:00", title: "Обед"},   
-  { time: "15:00", title: "Тренировка", done: true},                
-  { time: "18:30", title: "Лабораторная работа X"},     
-  { time: "18:30", title: "Созвон с контрагентом Y"},   
+  { time: "09:30", title: "Лекция по программированию" },
+  { time: "11:10", title: "Лекция по экономике" },
+  { time: "16:00", title: "Созвон с командой", isNew: true },
+  { time: "18:30", title: "Сделать лабораторную работу" },
 ];
 
 const AI_RECOMMENDATION_STUDENT =
-  "Перенести лабораторную работу X с 18:30 на 15:00?";
+  "Не успели задачу? Могу перенести на завтра в свободное окно";
 const AI_RECOMMENDATION_PRO =
-  "Перенести онлайн-встречу с контрагентом Y с 18:30 на 15:00?";
+  "Уделим больше времени изучению английского?";
 
 const HeroMockup: React.FC = () => (
   <div className="relative w-full">
@@ -1362,9 +1212,13 @@ const HeroMockup: React.FC = () => (
     <Card className="relative w-full p-0 overflow-hidden shadow-xl">
       <div className="p-5 flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Сегодня</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Завтра</p>
           <p className="text-base md:text-lg font-medium">
-            понедельник, 14 октября
+            {new Intl.DateTimeFormat("ru-RU", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            }).format(new Date(Date.now() + 24 * 60 * 60 * 1000))}
           </p>
         </div>
       </div>
@@ -1375,27 +1229,54 @@ const HeroMockup: React.FC = () => (
             <li
               key={t.time + t.title}
               className={cn(
-                "flex items-center gap-2.5 p-2.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800/60",
+                "relative flex items-center gap-2.5 p-2.5 rounded transition-colors",
+                "hover:bg-gray-50 dark:hover:bg-gray-800/60",
                 t.done && "opacity-60",
+
+                // ─── Подсветка новой задачи ───
+                t.isNew &&
+                  "bg-blue-50/70 dark:bg-blue-950/30 " +
+                  "ring-1 ring-blue-200/70 dark:ring-blue-800/50 " +
+                  "hover:bg-blue-50 dark:hover:bg-blue-950/40"
               )}
             >
               <span className="text-sm text-gray-400 w-14 tabular-nums shrink-0">
                 {t.time}
               </span>
 
+              {/* Цветная полоска слева: у новой — синяя, у обычных — прозрачная */}
               <span
-                className="w-1 self-stretch rounded shrink-0"
                 aria-hidden="true"
+                className={cn(
+                  "w-1 self-stretch rounded shrink-0",
+                  t.isNew ? "bg-blue-500" : "bg-transparent"
+                )}
               />
 
               <span
                 className={cn(
                   "text-base flex-1 min-w-0 truncate",
-                  t.done && "line-through text-gray-400",
+                  t.done && "line-through text-gray-400"
                 )}
               >
                 {t.title}
               </span>
+
+              {/* Бейдж «Новое» */}
+              {t.isNew && (
+                <span
+                  className={cn(
+                    "shrink-0 inline-flex items-center gap-1",
+                    "px-2 py-0.5 rounded-full",
+                    "text-[11px] font-semibold uppercase tracking-wide",
+                    "bg-blue-500 text-white",
+                    "shadow-[0_1px_4px_rgba(59,130,246,0.45)]"
+                  )}
+                >
+                  <Sparkles size={10} aria-hidden="true" />
+                  Новое
+                </span>
+              )}
             </li>
           );
         })}
@@ -1411,7 +1292,7 @@ const HeroMockup: React.FC = () => (
             </span>
 
             <div className="relative flex-1 min-w-0 h-6" aria-label="Рекомендация ИИ">
-              <span className="ai-reco-a absolute inset-0 flex items-center text-base text-blue-800 dark:text-blue-200 whitespace-nowrap overflow-hidden text-ellipsis">
+              <span className="ai-reco-a absolute inset-0 flex items-center text-base text-blue-800 dark:text-blue-200 text-ellipsis">
                 {AI_RECOMMENDATION_STUDENT}
               </span>
               <span
@@ -1431,18 +1312,7 @@ const HeroMockup: React.FC = () => (
                 bg-blue-600 text-white hover:bg-blue-700 transition-colors
               "
             >
-              Подтвердить
-            </button>
-
-            <button
-              type="button"
-              className="
-                inline-flex items-center gap-1 px-3 h-7 rounded text-xs font-medium
-                bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-300
-                hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors
-              "
-            >
-              Изменить
+              Давай
             </button>
 
             <button
@@ -1471,7 +1341,7 @@ const WHITE_GRADIENT_STOPS = [
 const futureINTEGRATIONS = [
   { src: "/images/google-calendar.png",       alt: "Google Calendar", w: 44 },
   { src: "/images/apple-calendar.webp",   alt: "Apple Calendar",  w: 44 },
-  { src: "/images/yandexcalendar.webp",        alt: "Yandex Calendar", w: 44 },
+  { src: "/images/yandexcalendar.png",        alt: "Yandex Calendar", w: 44 },
   { src: "/images/Jira_Software_Logo.svg",    alt: "Jira",            w: 40 },
   { src: "/images/Notion.webp",                alt: "Notion",          w: 44 },
   { src: "/images/TelegramWB.webp",            alt: "Telegram",        w: 44 },
@@ -1481,7 +1351,7 @@ const futureINTEGRATIONS = [
 
 const INTEGRATIONS = [
   { src: "/images/google-calendar.png",      alt: "Google Calendar", w: 44 },
-  { src: "/images/yandexcalendar.webp",        alt: "Yandex Calendar", w: 44 },
+  { src: "/images/yandexcalendar.png",        alt: "Yandex Calendar", w: 44 },
   { src: "/images/Jira_Software_Logo.svg",   alt: "Jira",            w: 40 },
   { src: "/images/Notion.webp",               alt: "Notion",          w: 44 },
   { src: "/images/TelegramWB.webp",             alt: "Telegram",        w: 44 },
@@ -1564,13 +1434,15 @@ const FinalCTA: React.FC<{
     const icons = iconRefs.current;
     if (!icons.length) return;
 
-    const computeRadius = () => Math.min(window.innerWidth * 0.45, 340);
+    const ORBIT_RADIUS_SCALE = 1/1.2;
+    const computeRadius = () =>
+      Math.min(window.innerWidth * 0.32, 240) * ORBIT_RADIUS_SCALE;
 
     const orbitValues = (i: number, angle: number) => {
       const R = computeRadius();
       const baseAngle = (i / N) * 360;
       const rad = ((baseAngle + angle) * Math.PI) / 180;
-      const x = R * Math.cos(rad);
+      const x = R * Math.cos(rad)*1.2;
       const y = R * Math.sin(rad);
       const t = (Math.sin(rad) + 1) / 2;
       const sf = 0.45 + 0.55 * t;
@@ -1713,27 +1585,17 @@ const FinalCTA: React.FC<{
         }}
       >
         <div className="text-center max-w-3xl">
-          <p className="text-eyebrow text-white/70 mb-4">
-            Один ритм вместо десяти приложений
-          </p>
-
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
             Ваш день живёт в&nbsp;Google, Jira и&nbsp;блокноте.{" "}
             <span className="text-white/85">
-              Dayla собирает его в&nbsp;одну картину.
+              Dayla задаёт единый ритм.
             </span>
           </h2>
-
-          <p className="mt-5 md:mt-6 text-base md:text-lg text-white/85 max-w-2xl mx-auto">
-            Мы соединяем то, чем вы уже пользуетесь: календари, рабочие задачи,
-            заметки и идеи. Без переносов вручную. Без копирования.
-            Без «а где у меня это записано?».
-          </p>
         </div>
 
         <div className="mt-16 flex flex-col items-center text-center">
           <p className="text-lg md:text-xl font-medium">
-            Личный ИИ-ассистент, который держит день в&nbsp;форме.
+            Личный ассистент, который держит день в&nbsp;форме.
           </p>
 
           <div className="relative mt-10 flex justify-center">
@@ -1775,7 +1637,7 @@ const FinalCTA: React.FC<{
               onClick={onStart}
               className={cn(
                 "group relative z-10 inline-flex items-center justify-center",
-                "px-14 md:px-16 h-16 md:h-20",
+                "px-8 md:px-6 h-14 md:h-16",
                 "text-lg md:text-xl font-semibold text-blue-700",
                 "rounded-full",
                 "transition-all duration-300 ease-out",
@@ -1813,64 +1675,47 @@ const FinalCTA: React.FC<{
 
 
 const SLIDE_DESIGN_WIDTH = 1280;
-const MOBILE_HEIGHT_CAP = 0.8; // 80vh
+const MOBILE_HEIGHT_CAP = 1; // 80vh
 
 interface ScaledSlideProps {
   children: React.ReactNode;
-  /** Реальная (уже отмасштабированная) высота обёртки. Если не задана — обёртка берёт высоту по контенту. */
-  forcedHeight?: number;
-  /** Сообщает родителю натуральную высоту в дизайн-пикселях и текущий scale */
-  onMeasured?: (designHeight: number, scale: number) => void;
+  /** Общий scale для всех слайдов. */
+  scale: number;
+  /** Натуральная высота контента в дизайн-пикселях (до transform). */
+  onMeasured?: (designHeight: number) => void;
 }
 
 const ScaledSlide: React.FC<ScaledSlideProps> = ({
   children,
-  forcedHeight,
+  scale,
   onMeasured,
 }) => {
-  const wrapperRef = React.useRef<HTMLDivElement>(null);
   const innerRef = React.useRef<HTMLDivElement>(null);
-  const [scale, setScale] = React.useState(1);
-  const [naturalHeight, setNaturalHeight] = React.useState(0);
 
   React.useLayoutEffect(() => {
-    const wrapper = wrapperRef.current;
     const inner = innerRef.current;
-    if (!wrapper || !inner) return;
+    if (!inner) return;
 
-    const update = () => {
-      const w = wrapper.clientWidth;
-      const s = w > 0 ? Math.min(1, w / SLIDE_DESIGN_WIDTH) : 1;
-      const h = inner.offsetHeight;
-      setScale(s);
-      setNaturalHeight(h);
-      onMeasured?.(h, s);
-    };
+    // offsetHeight не зависит от transform — это чистая высота layout'а.
+    const update = () => onMeasured?.(inner.offsetHeight);
 
     update();
     if (typeof ResizeObserver === "undefined") return;
+
     const ro = new ResizeObserver(update);
-    ro.observe(wrapper);
     ro.observe(inner);
     return () => ro.disconnect();
   }, [onMeasured]);
 
-  const height =
-    forcedHeight != null ? forcedHeight : naturalHeight * scale;
-
   return (
-    <div
-      ref={wrapperRef}
-      className="w-full min-w-0 overflow-hidden"
-      style={{ height: height || undefined }}
-    >
+    <div className="w-full h-full overflow-hidden flex items-center justify-center">
       <div
         ref={innerRef}
-        className="min-w-0"
         style={{
           width: SLIDE_DESIGN_WIDTH,
+          flexShrink: 0,
           transform: `scale(${scale})`,
-          transformOrigin: "top left",
+          transformOrigin: "center center",
         }}
       >
         {children}
@@ -1886,14 +1731,10 @@ const SlideFlight: React.FC = () => (
   <div className="py-16">
     <div className="max-w-5xl mx-auto px-6">
       <div className="max-w-2xl mb-14">
-        <Badge className="text-eyebrow mb-3">Реальный сценарий</Badge>
+        <Badge className="text-eyebrow mb-3">Парсинг документов</Badge>
         <h2 className="text-4xl font-semibold tracking-tight">
           Пересылайте события — Dayla всё спланирует
         </h2>
-        <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Не нужно вручную копировать дату, время и место. Отправьте сообщение
-          боту — Dayla разберётся сама.
-        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-20 items-center">
@@ -1904,14 +1745,14 @@ const SlideFlight: React.FC = () => (
         </div>
         <div className="relative">
           <DaylaChatCard
-            forwardedFrom="Переслано от Андрея Смирнова"
+            forwardedFrom="Переслано от Папы"
             userMessage="Авиабилет PD-205 · VKO → LED"
             daylaMessage={
               <>
                 Распознала авиабилет:{' '}
                 <strong className="font-semibold">дата — 05 апреля, 21:55</strong>,{' '}
                 <strong className="font-semibold">место посадки — Внуково, терминал A</strong>.
-                Куда добавить событие?
+                Добавила событие в календарь, заранее напомню о вылете
               </>
             }
           />
@@ -1934,30 +1775,28 @@ const SlideFinance: React.FC = () => (
       <div className="max-w-2xl mb-14">
         <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
         <h2 className="text-4xl font-semibold tracking-tight">
-          Прислали файл? Dayla превратит его в задачу
+          Прислали задачу? Dayla подготовит всё необходимое
         </h2>
         <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Добавьте Dayla в чат. Она распознает, что к чему и когда это надо сдать.
+          Осталось добавить Dayla в чат
         </p>
       </div>
 
-      <div className="grid grid-cols-[1fr_2fr] gap-16 items-center">
-        <div className="relative">
+      <div className="grid grid-cols-2 gap-20 items-center">
+        <div className="relative flex justify-center">
+          <div className="relative w-full max-w-[400px]">
+            <IPhoneSceneFinance />
+          </div>
+        </div>
+        <div className="max-w-sm relative mx-auto">
           <DaylaChatCard
             daylaMessage={
               <>
-                Подтянула Финансовый_отчёт_Q4.xlsx. Зафиксировала задачу{' '}
-                <strong className="font-semibold">«Подать фин отчёт»</strong>{' '}
-                на 30.09.2027 (конец квартала). Собираю ваши документы к концу
-                отчётного периода.
+                Уже собираю ваши документы
+                <ExcelPreview />
               </>
             }
           />
-        </div>
-        <div className="relative flex justify-center">
-          <div className="relative w-full">
-            <MonitorScene />
-          </div>
         </div>
       </div>
     </div>
@@ -1968,14 +1807,10 @@ const SlideGTD: React.FC = () => (
   <div className="py-16">
     <div className="max-w-6xl mx-auto px-6">
       <div className="max-w-2xl mb-14">
-        <Badge className="text-eyebrow mb-3">Систематизация по GTD</Badge>
+        <Badge className="text-eyebrow mb-3">Систематизация и дисциплина</Badge>
         <h2 className="text-4xl font-semibold tracking-tight">
           Одна фраза — и всё разложено по полочкам
         </h2>
-        <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Jira, TrueConf, Slack — Dayla соберёт задачи из всех источников,
-          расставит дедлайны и впишет их в ваш календарь.
-        </p>
       </div>
 
       <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-16 items-center">
@@ -1984,7 +1819,7 @@ const SlideGTD: React.FC = () => (
         </div>
         <div className="relative">
           <DaylaChatCard
-            userMessage="Систематизируй задачи по Getting Things Done, которые мне прислали на этой неделе из Jira, TrueConf и Slack, в мой Гугл календарь"
+            userMessage="Систематизируй задачи по GTD из Jira и Telegram"
             daylaMessage={GTD_RESPONSE}
           />
         </div>
@@ -2006,181 +1841,209 @@ const USE_CASE_SLIDES: { id: string; render: () => React.ReactNode }[] = [
   { id: "gtd",     render: () => <SlideGTD />     },
 ];
 
-const UserCaseCarousel: React.FC<{ paused?: boolean }> = ({ paused = false }) => {
+const SLIDE_COOLDOWN_MS = 1150;
+const EXIT_COOLDOWN_MS  = 600;
+
+
+const UserCaseCarousel: React.FC<{
+  /** @deprecated Оставлен для совместимости с Start. Авто-прокрутка удалена. */
+  paused?: boolean;
+}> = () => {
+  const sectionRef = React.useRef<HTMLElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = React.useState({ w: 0, h: 0 });
   const [index, setIndex] = React.useState(0);
   const total = USE_CASE_SLIDES.length;
-  const pausedUntil = React.useRef<number>(0);
 
-  /* ─── Измерения ──────────────────────────────── */
-  const measurementsRef = React.useRef<Record<number, { h: number; s: number }>>({});
-  const [measureVersion, setMeasureVersion] = React.useState(0);
-  const [viewportH, setViewportH] = React.useState<number>(0);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const update = () => setViewportH(window.innerHeight);
+  /* ─── Меряем контейнер (по-прежнему нужен для scale) ─── */
+  React.useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () =>
+      setContainerSize({ w: el.clientWidth, h: el.clientHeight });
     update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
+  /* ─── Меряем натуральные высоты слайдов ─── */
+  const measurementsRef = React.useRef<Record<number, number>>({});
+  const [measureVersion, setMeasureVersion] = React.useState(0);
+
   const handleMeasured = React.useCallback(
-    (idx: number, designHeight: number, scale: number) => {
-      const prev = measurementsRef.current[idx];
-      if (prev && prev.h === designHeight && prev.s === scale) return;
-      measurementsRef.current[idx] = { h: designHeight, s: scale };
+    (idx: number, designHeight: number) => {
+      if (measurementsRef.current[idx] === designHeight) return;
+      measurementsRef.current[idx] = designHeight;
       setMeasureVersion((v) => v + 1);
     },
     []
   );
 
-  /* Максимальная натуральная высота среди слайдов (дизайн-px) */
-  const maxDesignHeight = React.useMemo(() => {
-    const heights = Object.values(measurementsRef.current).map((m) => m.h);
-    return heights.length ? Math.max(...heights) : 0;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [measureVersion]);
-
-  /* Текущий scale (одинаковый для всех слайдов, т.к. ширина контейнера одна) */
-  const currentScale = React.useMemo(() => {
-    const first = Object.values(measurementsRef.current)[0];
-    return first ? first.s : 1;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [measureVersion]);
-
-  /* Финальная высота обёртки: max в реальных px, но не больше 80vh */
-  const forcedHeight = React.useMemo(() => {
-    if (!maxDesignHeight || !viewportH) return undefined;
-    const naturalReal = maxDesignHeight * currentScale;
-    const mobileCap = viewportH * MOBILE_HEIGHT_CAP;
-    return Math.min(naturalReal, mobileCap);
-  }, [maxDesignHeight, currentScale, viewportH]);
-
-  /* ─── Логика карусели ───────────────────────── */
-  const goTo = React.useCallback(
-    (next: number) => {
-      setIndex(((next % total) + total) % total);
-      pausedUntil.current = Date.now() + MANUAL_PAUSE_MS;
-    },
-    [total]
+  const measuredCallbacks = React.useMemo(
+    () => USE_CASE_SLIDES.map((_, i) => (h: number) => handleMeasured(i, h)),
+    [handleMeasured]
   );
 
-  const next = () => goTo(index + 1);
-  const prev = () => goTo(index - 1);
+  const maxDesignHeight = React.useMemo(() => {
+    const hs = Object.values(measurementsRef.current);
+    return hs.length ? Math.max(...hs) : 0;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [measureVersion]);
 
+  const scale = React.useMemo(() => {
+    if (!containerSize.w || !containerSize.h || !maxDesignHeight) return 1;
+    return Math.min(
+      containerSize.w / SLIDE_DESIGN_WIDTH,
+      containerSize.h / maxDesignHeight
+    );
+  }, [containerSize, maxDesignHeight]);
+
+  /* ─── Индекс слайда = функция от позиции скролла ─── */
   React.useEffect(() => {
-    if (paused) return;
-    const t = window.setInterval(() => {
-      if (Date.now() < pausedUntil.current) return;
-      setIndex((i) => (i + 1) % total);
-    }, AUTO_ADVANCE_MS);
-    return () => window.clearInterval(t);
-  }, [total, paused]);
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const onScroll = () => {
+      const rect = section.getBoundingClientRect();
+      const sectionTop = window.scrollY + rect.top;
+      const vh = window.innerHeight;
+      const raw = Math.floor((window.scrollY - sectionTop) / vh);
+      const clamped = Math.max(0, Math.min(total - 1, raw));
+      setIndex((prev) => (prev === clamped ? prev : clamped));
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [total]);
+
+  /* ─── Wheel hijack: скролл вниз внутри ловушки = шаг слайда ─── */
+  React.useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    let cooldownUntil = 0;
+
+    const onWheel = (e: WheelEvent) => {
+      const now = performance.now();
+
+      /* Кулдаун — ПЕРВЫМ. Иначе выход из секции проскакивает мимо него:
+        scrollY мгновенно покидает trapBottom, и handler возвращается раньше
+        проверки времени. */
+      if (now < cooldownUntil) {
+        e.preventDefault();
+        return;
+      }
+
+      const vh = window.innerHeight;
+      const rect = section.getBoundingClientRect();
+      const sectionTop = window.scrollY + rect.top;
+      const trapBottom = sectionTop + (total - 1) * vh;
+
+      const inTrap =
+        window.scrollY >= sectionTop - 1 &&
+        window.scrollY <= trapBottom + 1;
+
+      if (!inTrap) return;
+
+      if (e.deltaY > 0) {
+        const step = Math.round((window.scrollY - sectionTop) / vh);
+        const nextStep = Math.min(step + 1, total);
+        const isExit = nextStep >= total;
+
+        e.preventDefault();
+        window.scrollTo({
+          top: sectionTop + nextStep * vh,
+          behavior: "smooth",
+        });
+        cooldownUntil = now + (isExit ? EXIT_COOLDOWN_MS : SLIDE_COOLDOWN_MS);
+      } else if (e.deltaY < 0) {
+        e.preventDefault();
+        window.scrollTo({
+          top: Math.max(0, sectionTop - vh),
+          behavior: "smooth",
+        });
+        cooldownUntil = now + EXIT_COOLDOWN_MS;
+      }
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [total]);
 
   return (
     <section
+      ref={sectionRef}
       id="usecases"
-      className="relative py-12 md:py-20 overflow-hidden"
+      className="relative"
+      style={{ height: `${total * 100}vh` }}
       aria-roledescription="carousel"
     >
-      <div className="relative grid grid-cols-1 min-w-0">
-        {USE_CASE_SLIDES.map((slide, i) => {
-          const isActive = i === index;
-          return (
-            <div
-              key={slide.id}
-              aria-hidden={!isActive}
-              className={cn(
-                "col-start-1 row-start-1 min-w-0",
-                "transition-opacity duration-700",
-                isActive
-                  ? "opacity-100 z-10"
-                  : "opacity-0 z-0 pointer-events-none"
-              )}
-            >
-              <ScaledSlide
-                forcedHeight={forcedHeight}
-                onMeasured={(h, s) => handleMeasured(i, h, s)}
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        <div ref={containerRef} className="relative w-full h-full">
+          {USE_CASE_SLIDES.map((slide, i) => {
+            const isActive = i === index;
+            return (
+              <div
+                key={slide.id}
+                aria-hidden={!isActive}
+                className={cn(
+                  "absolute inset-0 transition-opacity duration-700",
+                  isActive
+                    ? "opacity-100 z-10"
+                    : "opacity-0 z-0 pointer-events-none"
+                )}
               >
-                {slide.render()}
-              </ScaledSlide>
-            </div>
-          );
-        })}
-      </div>
+                <ScaledSlide
+                  scale={scale}
+                  onMeasured={measuredCallbacks[i]}
+                >
+                  {slide.render()}
+                </ScaledSlide>
+              </div>
+            );
+          })}
 
-      <button
-        type="button"
-        onClick={prev}
-        aria-label="Предыдущий сценарий"
-        className={cn(
-          "absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20",
-          "w-11 h-11 md:w-12 md:h-12 rounded-full",
-          "flex items-center justify-center",
-          "bg-white/40 dark:bg-white/[0.06]",
-          "backdrop-blur-xl",
-          "ring-1 ring-white/60 dark:ring-white/10",
-          "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
-          "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
-          "text-gray-700 dark:text-gray-200",
-          "hover:bg-white/60 dark:hover:bg-white/[0.1]",
-          "hover:scale-105 active:scale-95",
-          "transition-all duration-200"
-        )}
-      >
-        <svg
-          width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2.5"
-          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
-
-      <button
-        type="button"
-        onClick={next}
-        aria-label="Следующий сценарий"
-        className={cn(
-          "absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20",
-          "w-11 h-11 md:w-12 md:h-12 rounded-full",
-          "flex items-center justify-center",
-          "bg-white/40 dark:bg-white/[0.06]",
-          "backdrop-blur-xl",
-          "ring-1 ring-white/60 dark:ring-white/10",
-          "shadow-[0_4px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
-          "dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
-          "text-gray-700 dark:text-gray-200",
-          "hover:bg-white/60 dark:hover:bg-white/[0.1]",
-          "hover:scale-105 active:scale-95",
-          "transition-all duration-200"
-        )}
-      >
-        <svg
-          width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2.5"
-          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-        >
-          <path d="M9 18l6-6-6-6" />
-        </svg>
-      </button>
-
-      <div className="mt-6 flex items-center justify-center gap-2">
-        {USE_CASE_SLIDES.map((slide, i) => (
-          <button
-            key={slide.id}
-            type="button"
-            onClick={() => goTo(i)}
-            aria-label={`Перейти к сценарию ${i + 1}`}
-            aria-current={i === index}
+          {/* Нижний ряд: стрелки + точки */}
+          <div
             className={cn(
-              "h-2 rounded-full transition-all duration-300",
-              i === index
-                ? "w-8 bg-gray-800/70 dark:bg-white/70"
-                : "w-2 bg-gray-400/50 dark:bg-white/30 hover:bg-gray-500/70"
+              "absolute bottom-4 left-1/2 -translate-x-1/2 z-20",
+              "flex items-center gap-3"
             )}
-          />
-        ))}
+          >
+
+            <div className="flex items-center gap-2">
+              {USE_CASE_SLIDES.map((slide, i) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => {
+                    const section = sectionRef.current;
+                    if (!section) return;
+                    const rect = section.getBoundingClientRect();
+                    const sectionTop = window.scrollY + rect.top;
+                    const vh = window.innerHeight;
+                    window.scrollTo({
+                      top: sectionTop + i * vh,
+                      behavior: "smooth",
+                    });
+                  }}
+                  aria-label={`Перейти к сценарию ${i + 1}`}
+                  aria-current={i === index}
+                  className={cn(
+                    "h-2 rounded-full transition-all duration-300",
+                    i === index
+                      ? "w-8 bg-gray-800/70 dark:bg-white/70"
+                      : "w-2 bg-gray-400/50 dark:bg-white/30 hover:bg-gray-500/70"
+                  )}
+                />
+              ))}
+            </div>
+
+          </div>
+        </div>
       </div>
     </section>
   );
