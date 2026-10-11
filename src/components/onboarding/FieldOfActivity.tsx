@@ -28,6 +28,10 @@ const GLASS_SHEEN =
   "pointer-events-none absolute inset-0 rounded-2xl " +
   "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
+/* Обводка активного состояния — как в Integrations.tsx */
+const ACTIVE_RING_SKY =
+  "0 0 0 1.5px rgba(56,189,248,0.6), 0 4px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(15,23,42,0.06)";
+
 type Preset = {
   name: string;
   icon: LucideIcon;
@@ -41,12 +45,8 @@ const PRESETS: Preset[] = [
   { name: "Учёба",        icon: GraduationCap, tint: "text-teal-600 dark:text-teal-300",     tintSoft: "bg-teal-500/15 dark:bg-teal-400/15",     tintRing: "ring-teal-400/40 dark:ring-teal-400/30" },
   { name: "Спорт",        icon: Dumbbell,      tint: "text-orange-600 dark:text-orange-300", tintSoft: "bg-orange-500/15 dark:bg-orange-400/15", tintRing: "ring-orange-400/40 dark:ring-orange-400/30" },
   { name: "Языки",        icon: Languages,     tint: "text-violet-600 dark:text-violet-300", tintSoft: "bg-violet-500/15 dark:bg-violet-400/15", tintRing: "ring-violet-400/40 dark:ring-violet-400/30" },
-  { name: "Здоровье",     icon: HeartPulse,    tint: "text-rose-600 dark:text-rose-300",     tintSoft: "bg-rose-500/15 dark:bg-rose-400/15",     tintRing: "ring-rose-400/40 dark:ring-rose-400/30" },
-  { name: "Дом и быт",    icon: Home,          tint: "text-amber-600 dark:text-amber-300",   tintSoft: "bg-amber-500/15 dark:bg-amber-400/15",   tintRing: "ring-amber-400/40 dark:ring-amber-400/30" },
   { name: "Отдых",        icon: Coffee,        tint: "text-cyan-600 dark:text-cyan-300",     tintSoft: "bg-cyan-500/15 dark:bg-cyan-400/15",     tintRing: "ring-cyan-400/40 dark:ring-cyan-400/30" },
   { name: "Отношения",    icon: Users,         tint: "text-pink-600 dark:text-pink-300",     tintSoft: "bg-pink-500/15 dark:bg-pink-400/15",     tintRing: "ring-pink-400/40 dark:ring-pink-400/30" },
-  { name: "Саморазвитие", icon: BookOpen,      tint: "text-indigo-600 dark:text-indigo-300", tintSoft: "bg-indigo-500/15 dark:bg-indigo-400/15", tintRing: "ring-indigo-400/40 dark:ring-indigo-400/30" },
-  { name: "Хобби",        icon: Palette,       tint: "text-lime-600 dark:text-lime-300",     tintSoft: "bg-lime-500/15 dark:bg-lime-400/15",     tintRing: "ring-lime-400/40 dark:ring-lime-400/30" },
 ];
 
 const PALETTE = [
@@ -206,19 +206,15 @@ export const FieldOfActivity: React.FC = () => {
                   "rounded-2xl p-4",
                   GLASS_BODY,
                   "transition-all duration-300",
-                  "hover:-translate-y-0.5",
-                  active && sphere && `ring-[1.5px]`
+                  "hover:-translate-y-0.5"
                 )}
-                style={
-                  active && sphere
-                    ? { boxShadow: `0 0 0 1.5px ${sphere.color}cc, 0 4px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(15,23,42,0.06)` }
-                    : undefined
-                }
+                /* Обводка активной плитки — единый sky-blue, как в Integrations */
+                style={active ? { boxShadow: ACTIVE_RING_SKY } : undefined}
               >
                 <span aria-hidden="true" className={GLASS_SHEEN} />
 
                 <div className="relative flex items-center gap-3">
-                  {/* Иконка: тот же стиль, что у карточек */}
+                  {/* Иконка — сохраняет цвет своей сферы, чтобы отличать пресеты */}
                   <div
                     className={cn(
                       "relative shrink-0 w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden",
@@ -231,13 +227,14 @@ export const FieldOfActivity: React.FC = () => {
                         "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]",
                         p.tintRing,
                       ],
-                      active && "text-white ring-white/40"
+                      active && sphere && "text-white ring-sky-400/60"
                     )}
                     style={
                       active && sphere
                         ? {
-                            backgroundColor: `${sphere.color}cc`,
-                            boxShadow: `0 4px 14px ${sphere.color}40, inset 0 1px 0 rgba(255,255,255,0.5)`,
+                            backgroundColor: "rgba(56,189,248,0.15)",
+                            boxShadow:
+                              "0 4px 14px rgba(56,189,248,0.30), inset 0 1px 0 rgba(255,255,255,0.6)",
                           }
                         : undefined
                     }
@@ -268,10 +265,9 @@ export const FieldOfActivity: React.FC = () => {
               "backdrop-blur-xl",
               "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
               "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]",
-              showCustom
-                ? "ring-2 ring-blue-400/60"
-                : "ring-1 ring-white/30 dark:ring-white/10"
+              !showCustom && "ring-1 ring-white/30 dark:ring-white/10"
             )}
+            style={showCustom ? { boxShadow: ACTIVE_RING_SKY } : undefined}
           >
             <span aria-hidden="true" className={GLASS_SHEEN} />
 
@@ -281,11 +277,23 @@ export const FieldOfActivity: React.FC = () => {
                   "shrink-0 w-10 h-10 rounded-xl flex items-center justify-center",
                   "bg-white/[0.06] dark:bg-white/[0.02]",
                   "backdrop-blur-xl",
-                  "ring-1 ring-white/30 dark:ring-white/10",
+                  "ring-1 transition-all duration-300",
+                  showCustom
+                    ? "ring-sky-400/60"
+                    : "ring-white/30 dark:ring-white/10",
                   "text-gray-700 dark:text-gray-300",
                   "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]",
                   "transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
                 )}
+                style={
+                  showCustom
+                    ? {
+                        backgroundColor: "rgba(56,189,248,0.15)",
+                        boxShadow:
+                          "0 4px 14px rgba(56,189,248,0.30), inset 0 1px 0 rgba(255,255,255,0.6)",
+                      }
+                    : undefined
+                }
                 aria-hidden="true"
               >
                 <Plus size={18} />
@@ -364,7 +372,7 @@ export const FieldOfActivity: React.FC = () => {
                           "transition-all duration-200",
                           "cursor-grab active:cursor-grabbing",
                           isDragging && "opacity-40 cursor-grabbing",
-                          isOver && "ring-2 ring-blue-400/60 -translate-y-1"
+                          isOver && "ring-2 ring-sky-400/60 -translate-y-1"
                         )}
                       >
                         <span aria-hidden="true" className={GLASS_SHEEN} />
@@ -391,19 +399,6 @@ export const FieldOfActivity: React.FC = () => {
                           {i + 1}
                         </span>
 
-                        {/* Кружок цвета — плоский, без блика */}
-                        <button
-                          type="button"
-                          onClick={() => cycleColor(s.id)}
-                          className={cn(
-                            "relative shrink-0 w-7 h-7 rounded-full",
-                            "ring-1 ring-white/40 dark:ring-white/20",
-                            "hover:scale-110 active:scale-95 transition-transform"
-                          )}
-                          style={{ backgroundColor: s.color }}
-                          title="Сменить цвет"
-                          aria-label={`Сменить цвет сферы ${s.name}`}
-                        />
 
                         <span className="relative flex-1 min-w-0 text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
                           {s.name}

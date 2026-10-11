@@ -23,9 +23,21 @@ const GLASS_SHEEN =
   "pointer-events-none absolute inset-0 rounded-2xl " +
   "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
-const GLASS_SHEEN_PILL =
-  "pointer-events-none absolute inset-0 rounded-full " +
-  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
+/* Общие стили для time-инпутов: снимаем нативную ширину Safari */
+const TIME_INPUT_CLASS =
+  "w-full min-w-0 px-2 tabular-nums text-center " +
+  "[appearance:none] [-webkit-appearance:none] " +
+  "[&::-webkit-date-and-time-value]:text-center " +
+  "[&::-webkit-calendar-picker-indicator]:hidden " +
+  "[&::-webkit-datetime-edit]:p-0";
+
+const TIME_INPUT_STYLE: React.CSSProperties = {
+  width: "100%",
+  minWidth: 0,
+  maxWidth: "100%",
+  appearance: "none",
+  WebkitAppearance: "none",
+};
 
 const DAYS: { short: DayShort; full: string }[] = [
   { short: "Пн", full: "Понедельник" },
@@ -35,12 +47,6 @@ const DAYS: { short: DayShort; full: string }[] = [
   { short: "Пт", full: "Пятница" },
   { short: "Сб", full: "Суббота" },
   { short: "Вс", full: "Воскресенье" },
-];
-
-const PRESETS = [
-  { id: "classic", label: "Классика",    days: ["Пн", "Вт", "Ср", "Чт", "Пт"] as DayShort[], from: "09:00", to: "18:00" },
-  { id: "early",   label: "Ранний",      days: ["Пн", "Вт", "Ср", "Чт", "Пт"] as DayShort[], from: "07:00", to: "16:00" },
-  { id: "short",   label: "Сокращённый", days: ["Пн", "Вт", "Ср", "Чт"]       as DayShort[], from: "10:00", to: "18:00" },
 ];
 
 const SectionDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -92,29 +98,11 @@ export const ExistingPlans: React.FC = () => {
     );
   };
 
-  const applyPreset = (p: (typeof PRESETS)[number]) => {
-    setDays(p.days);
-    setUniformFrom(p.from);
-    setUniformTo(p.to);
-    const next = {} as Record<DayShort, { from: string; to: string }>;
-    for (const d of DAYS) next[d.short] = { from: p.from, to: p.to };
-    setDayTimes(next);
-  };
-
   const updateDayTime = (day: DayShort, key: "from" | "to", value: string) => {
     setDayTimes((prev) => ({
       ...prev,
       [day]: { ...prev[day], [key]: value },
     }));
-  };
-
-  const applyFirstToAll = () => {
-    const first = days[0] as DayShort | undefined;
-    if (!first) return;
-    const src = dayTimes[first];
-    const next = {} as Record<DayShort, { from: string; to: string }>;
-    for (const d of DAYS) next[d.short] = { ...src };
-    setDayTimes(next);
   };
 
   const handleNext = () => {
@@ -161,105 +149,21 @@ export const ExistingPlans: React.FC = () => {
     <OnboardingLayout
       step={5}
       totalSteps={TOTAL}
-      title="Укажите свой обычный график"
+      title="Укажите свой рабочий график"
       onBack={() => navigate("/onboarding/goals-and-habits")}
       onNext={handleNext}
       nextDisabled={days.length === 0}
       nextLabel={`Далее${weeklyHours > 0 ? ` · ${Math.round(weeklyHours)} ч/нед` : ""}`}
     >
-      <div className="relative space-y-4 sm:space-y-5">
-        {/* ─── Eyebrow ─────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <span
-            className={cn(
-              "relative inline-flex items-center gap-1.5 overflow-hidden",
-              "px-2.5 py-1 rounded-full",
-              GLASS_BODY,
-              "text-[11px] uppercase tracking-widest font-medium",
-              "text-gray-600 dark:text-gray-300"
-            )}
-          >
-            <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
-            <Sparkles size={11} aria-hidden="true" className="relative" />
-            <span className="relative">Ваш график</span>
-          </span>
-        </div>
-
-        {/* ─── Пресеты ─────────────────────────────── */}
-        <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            Быстрый выбор
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {PRESETS.map((p) => {
-              const active =
-                days.length === p.days.length &&
-                days.every((d) => p.days.includes(d as DayShort)) &&
-                !perDay &&
-                uniformFrom === p.from &&
-                uniformTo === p.to;
-
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => applyPreset(p)}
-                  className={cn(
-                    "group relative inline-flex items-center overflow-hidden",
-                    "px-3 py-1.5 rounded-full text-xs font-medium",
-                    "transition-transform duration-200",
-                    GLASS_BODY,
-                    "text-gray-700 dark:text-gray-300",
-                    "hover:-translate-y-0.5",
-                    "max-w-full"
-                  )}
-                  style={
-                    active
-                      ? {
-                          boxShadow:
-                            "0 0 0 1.5px rgba(56,189,248,0.6), 0 4px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(15,23,42,0.06)",
-                        }
-                      : undefined
-                  }
-                >
-                  <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
-                  <span className="relative truncate">
-                    {p.label} · {p.from}–{p.to}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      <div className="relative space-y-4 sm:space-y-5 overflow-x-hidden">
 
         {/* ─── Карточка графика ─────────────────────── */}
         <div className={cn("relative overflow-hidden rounded-2xl", GLASS_BODY)}>
           <span aria-hidden="true" className={GLASS_SHEEN} />
 
-          <div className="relative p-3.5 sm:p-5 space-y-4 sm:space-y-5">
-            {/* Заголовок блока */}
-            <div className="flex items-start gap-3">
-              <div
-                aria-hidden="true"
-                className={cn(
-                  "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
-                  "bg-white/[0.06] dark:bg-white/[0.02]",
-                  "backdrop-blur-xl",
-                  "ring-1 ring-white/30 dark:ring-white/10",
-                  "text-blue-600 dark:text-blue-300",
-                  "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
-                )}
-              >
-                <CalendarDays size={16} className="relative" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  Рабочие дни
-                </p>
-              </div>
-            </div>
+          <div className="relative p-3.5 sm:p-5 space-y-4 sm:space-y-5 overflow-x-hidden">
 
-            {/* Плитки дней: 7 на всех, но компактнее на мобильном */}
+            {/* Плитки дней */}
             <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
               {DAYS.map((d) => {
                 const active = days.includes(d.short);
@@ -307,7 +211,7 @@ export const ExistingPlans: React.FC = () => {
 
             <SectionDivider>Рабочие часы</SectionDivider>
 
-            {/* Switch — на узких экранах переносится под текст */}
+            {/* Switch */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
@@ -348,14 +252,10 @@ export const ExistingPlans: React.FC = () => {
               </button>
             </div>
 
-            {/* Одинаковое время: одна колонка на мобильном */}
+            {/* Одинаковое время */}
             {!perDay && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <label className="block min-w-0">
-                  <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-                    <Clock size={12} aria-hidden="true" />
-                    Начало
-                  </span>
                   <div className="relative min-w-0">
                     <Clock
                       size={14}
@@ -366,17 +266,13 @@ export const ExistingPlans: React.FC = () => {
                       type="time"
                       value={uniformFrom}
                       onChange={(e) => setUniformFrom(e.target.value)}
-                      className="w-full min-w-0 pl-9"
-                      style={{ width: "100%", minWidth: 0, maxWidth: "100%" }}
+                      className={cn("pl-9", TIME_INPUT_CLASS)}
+                      style={TIME_INPUT_STYLE}
                     />
                   </div>
                 </label>
 
                 <label className="block min-w-0">
-                  <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-                    <Clock size={12} aria-hidden="true" />
-                    Конец
-                  </span>
                   <div className="relative min-w-0">
                     <Clock
                       size={14}
@@ -387,8 +283,8 @@ export const ExistingPlans: React.FC = () => {
                       type="time"
                       value={uniformTo}
                       onChange={(e) => setUniformTo(e.target.value)}
-                      className="w-full min-w-0 pl-9"
-                      style={{ width: "100%", minWidth: 0, maxWidth: "100%" }}
+                      className={cn("pl-9", TIME_INPUT_CLASS)}
+                      style={TIME_INPUT_STYLE}
                     />
                   </div>
                 </label>
@@ -397,7 +293,7 @@ export const ExistingPlans: React.FC = () => {
 
             {/* Разное время по дням */}
             {perDay && (
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 {activeDays.length === 0 && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-3">
                     Сначала выберите хотя бы один рабочий день
@@ -417,37 +313,32 @@ export const ExistingPlans: React.FC = () => {
                     >
                       <span aria-hidden="true" className={GLASS_SHEEN} />
 
-                      <div className="relative flex items-center gap-2 min-w-0">
-                        {/* День — фиксированная узкая метка */}
-                        <span className="shrink-0 w-7 text-xs font-semibold text-gray-700 dark:text-gray-200">
-                          {d.short}
+                      {/*
+                        На мобильном: метка дня сверху, инпуты под ней во всю ширину.
+                        На десктопе: метка слева, инпуты справа в две колонки.
+                      */}
+                      <div className="relative flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2 min-w-0">
+                        <span className="shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-200">
+                          <span className="sm:hidden">{d.full}</span>
+                          <span className="hidden sm:inline">{d.short}</span>
                         </span>
 
-                        {/* Два инпута: сетка 2 колонки, каждый сжимается */}
                         <div className="flex-1 min-w-0 grid grid-cols-2 gap-1.5">
                           <Input
                             type="time"
                             value={t.from}
                             onChange={(e) => updateDayTime(d.short, "from", e.target.value)}
                             aria-label={`Начало работы в ${d.full}`}
-                            className="w-full min-w-0 px-2 text-xs sm:text-sm tabular-nums"
-                            style={{
-                              width: "100%",
-                              minWidth: 0,
-                              maxWidth: "100%",
-                            }}
+                            className={cn("text-xs sm:text-sm", TIME_INPUT_CLASS)}
+                            style={TIME_INPUT_STYLE}
                           />
                           <Input
                             type="time"
                             value={t.to}
                             onChange={(e) => updateDayTime(d.short, "to", e.target.value)}
                             aria-label={`Конец работы в ${d.full}`}
-                            className="w-full min-w-0 px-2 text-xs sm:text-sm tabular-nums"
-                            style={{
-                              width: "100%",
-                              minWidth: 0,
-                              maxWidth: "100%",
-                            }}
+                            className={cn("text-xs sm:text-sm", TIME_INPUT_CLASS)}
+                            style={TIME_INPUT_STYLE}
                           />
                         </div>
                       </div>
@@ -480,11 +371,3 @@ export const ExistingPlans: React.FC = () => {
     </OnboardingLayout>
   );
 };
-
-function plural(n: number, one: string, few: string, many: string): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
-  return many;
-}

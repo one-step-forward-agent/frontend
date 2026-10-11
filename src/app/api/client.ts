@@ -24,6 +24,7 @@ import type {
   TelegramStatus,
   TokenResponse,
   User,
+  AiChatSource
 } from "./types";
 
 export type SignInProvider = "google" | "yandex";
@@ -282,4 +283,51 @@ export const api = {
     unlockNote: () => request<AdminNote>("/api/admin/notes/unlock", { method: "POST" }),
     saveNote: (text: string, version: number) => request<AdminNote>("/api/admin/notes", json("PUT", { text, version })),
   },
+    aiSources: {
+    list: () => request<AiChatSource[]>("/api/ai-sources"),
+
+    add: (body: {
+      url: string;
+      spheres?: string[];
+      notes?: string[];
+      comment?: string;
+    }) =>
+      request<AiChatSource>(
+        "/api/ai-sources",
+        json("POST", body),
+        { name: "ai_source_add" },
+      ),
+
+    update: (id: string, body: {
+      url?: string;
+      spheres?: string[];
+      notes?: string[];
+      comment?: string;
+    }) =>
+      request<AiChatSource>(
+        `/api/ai-sources/${encodeURIComponent(id)}`,
+        json("PUT", body),
+        { name: "ai_source_update" },
+      ),
+
+    remove: (id: string) =>
+      request<void>(
+        `/api/ai-sources/${encodeURIComponent(id)}`,
+        { method: "DELETE" },
+        { name: "ai_source_remove" },
+      ),
+
+    reparse: (id: string) =>
+      request<AiChatSource>(
+        `/api/ai-sources/${encodeURIComponent(id)}/reparse`,
+        { method: "POST" },
+        { name: "ai_source_reparse" },
+      ),
+
+    status: (id: string) =>
+      request<AiChatSource>(
+        `/api/ai-sources/${encodeURIComponent(id)}/status`,
+      ),
+  },
 };
+

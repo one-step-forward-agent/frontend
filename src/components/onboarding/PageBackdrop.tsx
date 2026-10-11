@@ -23,25 +23,6 @@ const PAGE_BLOBS: PageBlob[] = [
   { left: "-12%", top: "92%",  size: "28rem", gradient: "from-blue-500/16     to-cyan-500/8",      shape: "50% 50% 40% 60% / 60% 40% 50% 50%", duration: "34s", delay: "7s"   },
 ];
 
-type PagePulse = {
-  left: string;
-  top: string;
-  color: string;
-  delay: string;
-  duration: string;
-};
-
-const PAGE_PULSES: PagePulse[] = [
-  { left: "14%", top: "12%", color: "bg-blue-400/40",    delay: "0s",   duration: "7s"  },
-  { left: "82%", top: "22%", color: "bg-purple-400/35",  delay: "1.5s", duration: "9s"  },
-  { left: "28%", top: "34%", color: "bg-indigo-400/35",  delay: "3s",   duration: "11s" },
-  { left: "58%", top: "44%", color: "bg-fuchsia-400/30", delay: "4.5s", duration: "8s"  },
-  { left: "36%", top: "56%", color: "bg-violet-400/35",  delay: "2s",   duration: "9s"  },
-  { left: "72%", top: "68%", color: "bg-pink-400/30",    delay: "5.5s", duration: "12s" },
-  { left: "12%", top: "78%", color: "bg-indigo-400/35",  delay: "0.6s", duration: "9s"  },
-  { left: "84%", top: "88%", color: "bg-blue-400/30",    delay: "3.8s", duration: "10s" },
-];
-
 export const PageBackdrop: React.FC = () => (
   <>
     <style>{`
@@ -72,18 +53,6 @@ export const PageBackdrop: React.FC = () => (
             width: b.size,
             height: b.size,
             borderRadius: b.shape,
-          }}
-        />
-      ))}
-
-      {PAGE_PULSES.map((p, i) => (
-        <span
-          key={`pulse-${i}`}
-          className={`absolute w-2 h-2 rounded-full blur-[1px] page-pulse ${p.color}`}
-          style={{
-            left: p.left,
-            top: p.top,
-            animation: `page-pulse ${p.duration} ease-in-out ${p.delay} infinite`,
           }}
         />
       ))}

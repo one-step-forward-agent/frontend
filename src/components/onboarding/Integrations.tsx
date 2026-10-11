@@ -52,7 +52,7 @@ type Integration = {
 
 const INTEGRATIONS: Integration[] = [
   { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
-  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandexcalendar.webp",      w: 40, kind: "oauth" },
+  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandexcalendar.png",      w: 40, kind: "oauth" },
   { id: "jira",   name: "Jira",             src: "/images/Jira_Software_Logo.svg", w: 36, kind: "oauth" },
   { id: "notion", name: "Notion",           src: "/images/Notion.webp",             w: 40, kind: "oauth" },
 ];
@@ -418,7 +418,7 @@ export const Integrations: React.FC = () => {
                 type="button"
                 onClick={() => setShowGuide((v) => !v)}
                 aria-expanded={showGuide}
-                className="w-full flex items-start gap-3 text-left"
+                className="w-full flex items-center gap-3 text-left"
               >
                 <div
                   aria-hidden="true"
@@ -435,9 +435,6 @@ export const Integrations: React.FC = () => {
 
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-900 dark:text-white">
-                    Студент Вышки?
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     Покажем, как импортировать расписание пар.
                   </p>
                 </div>
@@ -453,10 +450,9 @@ export const Integrations: React.FC = () => {
               {showGuide && (
                 <ol className="mt-4 sm:ml-12 space-y-2 text-sm text-gray-600 dark:text-gray-400 animate-in fade-in slide-in-from-top-1 duration-300">
                   {[
-                    "Откройте личный кабинет ВШЭ → раздел «Расписание».",
+                    "Откройте личный кабинет университета → раздел «Расписание».",
                     "Выгрузите расписание в формате ICS.",
-                    "В Google Calendar выберите «Импорт» и загрузите файл.",
-                    "Вернитесь сюда — выберите этот календарь в списке.",
+                    "Отправьте расписание в чат к Dayla."
                   ].map((step, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <span

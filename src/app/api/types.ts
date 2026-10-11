@@ -320,3 +320,22 @@ export interface TelegramLink {
   expires_at: string;
   deep_link: string | null;
 }
+
+export type AiChatSourceStatus =
+  | "pending"     // только что добавлен, ждёт обработки
+  | "parsing"     // идёт разбор
+  | "ready"       // разбор завершён, данные применены
+  | "error";      // не удалось распарсить
+
+export type AiChatSource = {
+  id: string;
+  url: string;
+  host: string;                 // chatgpt.com, claude.ai и т.д.
+  spheres: string[];
+  notes: string[];
+  comment: string;
+  status: AiChatSourceStatus;
+  error: string | null;         // сообщение, если status === "error"
+  added_at: string;             // ISO datetime
+  parsed_at: string | null;     // ISO datetime
+};
