@@ -2,13 +2,14 @@
 import React, { useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
-  User, Mail, Lock, ShieldCheck, Check, Sparkles, ArrowRight,
+  User, Mail, Lock, ShieldCheck, Check, Sparkles, ArrowRight, Eye, EyeOff,
 } from "lucide-react";
 
 import { useAuthStore } from "@/store/authStore";
 import { Alert, FormField, Input } from "@/components/ui";
 import { sendMetricGoal } from "@/utils/metrics";
 import { safeNext } from "./LoginPage";
+import { SignInButtons } from "./SignInButtons";
 import { cn } from "@/utils/cn";
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
@@ -26,6 +27,20 @@ const GLASS_SHEEN_ROUND_XL =
   "pointer-events-none absolute inset-0 rounded-xl " +
   "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
+/* Eye inside a password field: shows or hides what was typed */
+const PasswordToggle: React.FC<{ shown: boolean; onToggle: () => void }> = ({ shown, onToggle }) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    aria-label={shown ? "Скрыть пароль" : "Показать пароль"}
+    aria-pressed={shown}
+    title={shown ? "Скрыть пароль" : "Показать пароль"}
+    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition-colors"
+  >
+    {shown ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+  </button>
+);
+
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -35,6 +50,8 @@ const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const [isConsentGiven, setIsConsentGiven] = useState(false);
@@ -142,15 +159,16 @@ const RegisterPage: React.FC = () => {
               />
               <Input
                 {...field}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 placeholder="Минимум 8 символов"
-                className="pl-9"
+                className="pl-9 pr-10"
                 required
                 minLength={8}
               />
+              <PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} />
             </div>
           )}
         </FormField>
@@ -165,14 +183,15 @@ const RegisterPage: React.FC = () => {
               />
               <Input
                 {...field}
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 autoComplete="new-password"
                 placeholder="Повторите пароль"
-                className="pl-9"
+                className="pl-9 pr-10"
                 required
               />
+              <PasswordToggle shown={showConfirmPassword} onToggle={() => setShowConfirmPassword((v) => !v)} />
             </div>
           )}
         </FormField>
@@ -280,6 +299,19 @@ const RegisterPage: React.FC = () => {
           или
         </span>
         <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
+      </div>
+
+      {/* ─── Google / Яндекс: the same checkboxes count ─── */}
+      <div className="mt-5">
+        <SignInButtons
+          register
+          returnTo={searchParams.get("next") ? safeNext(searchParams.get("next")) : undefined}
+          blocked={() =>
+            !isConsentGiven || !isTermsAccepted
+              ? "Отметьте согласие на обработку данных и пользовательское соглашение выше"
+              : null
+          }
+        />
       </div>
 
       {/* ─── Ссылка на вход ──────────────────── */}

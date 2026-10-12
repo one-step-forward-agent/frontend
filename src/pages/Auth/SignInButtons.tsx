@@ -1,5 +1,6 @@
 // src/pages/Auth/SignInButtons.tsx
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { api, type SignInProvider } from '@/app/api/client';
 import { errorText } from '@/app/lib/format';
@@ -34,26 +35,42 @@ const GOOGLE_BODY =
   "bg-white text-[#1F1F1F] ring-1 ring-[#747775] hover:bg-[#F7F8F8] " +
   "dark:bg-[#131314] dark:text-[#E3E3E3] dark:ring-[#8E918F] dark:hover:bg-[#1F1F20]";
 
-const PROVIDERS: { id: SignInProvider; label: string; Mark: React.FC; body: string }[] = [
-  { id: 'google', label: 'Войти через Google', Mark: GoogleMark, body: GOOGLE_BODY },
-  { id: 'yandex', label: 'Войти с Яндекс ID', Mark: YandexMark, body: cn("text-gray-800 dark:text-gray-100", GLASS_BODY) },
+const PROVIDERS: { id: SignInProvider; label: string; signUp: string; Mark: React.FC; body: string }[] = [
+  { id: 'google', label: 'Войти через Google', signUp: 'Регистрация через Google', Mark: GoogleMark, body: GOOGLE_BODY },
+  { id: 'yandex', label: 'Войти с Яндекс ID', signUp: 'Регистрация с Яндекс ID', Mark: YandexMark, body: cn("text-gray-800 dark:text-gray-100", GLASS_BODY) },
 ];
+
+const LINK = "font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300";
 
 interface SignInButtonsProps {
   /** Where to land after logging in */
   returnTo?: string;
+  /** On the registration page: the labels say so, and the form's checkboxes must be ticked first */
+  register?: boolean;
+  /** register: why the buttons cannot go on yet (the checkboxes), or null */
+  blocked?: () => string | null;
 }
 
-/** «Войти через Google / Яндекс ID»: for accounts that signed up through them or connected them once. */
-export const SignInButtons: React.FC<SignInButtonsProps> = ({ returnTo }) => {
+/**
+ * «Войти через Google / Яндекс ID». An account with the same email (made with a password too) is logged into;
+ * a new email gets a new account, so the login page says that this accepts the terms, like the registration form.
+ */
+export const SignInButtons: React.FC<SignInButtonsProps> = ({ returnTo, register = false, blocked }) => {
   const [busy, setBusy] = useState<SignInProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const signIn = async (provider: SignInProvider) => {
+    const reason = blocked?.() ?? null;
+    if (reason) return setError(reason);
     setError(null);
     setBusy(provider);
     try {
-      const { authorization_url } = await api.auth.oauthStart(provider, { mode: 'login', return_to: returnTo });
+      const { authorization_url } = await api.auth.oauthStart(provider, {
+        mode: 'login',
+        return_to: returnTo,
+        consent: true,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
       window.location.assign(authorization_url);
     } catch (err) {
       setError(errorText(err));
@@ -64,7 +81,7 @@ export const SignInButtons: React.FC<SignInButtonsProps> = ({ returnTo }) => {
   return (
     <div className="space-y-2.5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        {PROVIDERS.map(({ id, label, Mark, body }) => (
+        {PROVIDERS.map(({ id, label, signUp, Mark, body }) => (
           <button
             key={id}
             type="button"
@@ -80,10 +97,18 @@ export const SignInButtons: React.FC<SignInButtonsProps> = ({ returnTo }) => {
             )}
           >
             <Mark />
-            {busy === id ? 'Переходим…' : label}
+            {busy === id ? 'Переходим…' : register ? signUp : label}
           </button>
         ))}
       </div>
+      {!register && (
+        <p className="text-center text-[11px] leading-snug text-gray-500 dark:text-gray-400">
+          Нет аккаунта — создадим его. Продолжая, вы принимаете{' '}
+          <Link to="/terms-of-use" target="_blank" rel="noopener noreferrer" className={LINK}>пользовательское соглашение</Link>{' '}
+          и даёте{' '}
+          <Link to="/personal-data-consent" target="_blank" rel="noopener noreferrer" className={LINK}>согласие на обработку персональных данных</Link>.
+        </p>
+      )}
       {error && (
         <p role="alert" className="text-center text-sm text-red-600 dark:text-red-400">
           {error}
