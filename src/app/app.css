@@ -405,7 +405,9 @@
 .fd-app .event-check { flex: none; width: 22px; height: 22px; margin-left: 4px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--prio); border-radius: 50%; background: color-mix(in srgb, var(--prio) 10%, var(--surface-solid)); color: #fff; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
 .fd-app .event-check:hover { border-color: var(--accent); }
 .fd-app .event-check.checked { background: #10b981; border-color: transparent; }
-.fd-app .event-row.done .event-title { text-decoration: line-through; color: var(--muted); }
+/* A done task fades as a whole — time, title, tags — instead of a crossed-out title */
+.fd-app .event-item.is-done > .event-row { opacity: 0.45; transition: opacity 0.15s; }
+.fd-app .event-item.is-done > .event-row:hover { opacity: 0.7; }
 .fd-app .move-tomorrow { flex: none; }
 
 /* Narrow list: time above the title, no "без времени" filler, the badge on the right, icon-only buttons */
@@ -467,7 +469,7 @@
 
 .fd-app .streak-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); font-weight: 650; font-size: 13px; white-space: nowrap; }
 .fd-app .progress-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-.fd-app .progress-week > div.complete .progress-bar i { background: linear-gradient(#34d399, #059669); }
+.fd-app .progress-week > div.complete .progress-bar i { background: linear-gradient(#60a5fa, #2563eb); }
 
 .fd-app .tag { display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.6; white-space: nowrap; background: var(--tag-bg); color: var(--tag-ink); border: 1px solid transparent; }
 .fd-app .tag button { display: grid; place-items: center; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; }
@@ -551,7 +553,7 @@
 .fd-app .chip.priority-high b { color: var(--warn); }
 .fd-app .chip.priority-urgent { background: var(--bad-soft); }
 .fd-app .chip.priority-urgent b { color: var(--bad); }
-.fd-app .chip.chip-done { opacity: 0.55; text-decoration: line-through; }
+.fd-app .chip.chip-done { opacity: 0.45; }
 .fd-app .chip.chip-untimed { background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); }
 .fd-app .month.week .day-cell { min-height: 260px; }
 .fd-app .month.week .chip { white-space: normal; }

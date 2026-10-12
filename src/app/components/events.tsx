@@ -314,12 +314,11 @@ export function EventForm({
         <Field label="До" className="picker-field">
           <input type="time" value={state.endTime} disabled={!state.time} onChange={(e) => set("endTime", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} aria-label="Время окончания" />
         </Field>
-        {state.time ? (
+        {/* Empty time fields already say there is no time */}
+        {state.time && (
           <Button variant="ghost" size="sm" onClick={() => changeTime("")}>
             Без времени
           </Button>
-        ) : (
-          <span className="muted small no-time">Без времени</span>
         )}
       </div>
 

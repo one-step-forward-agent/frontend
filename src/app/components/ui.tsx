@@ -218,27 +218,15 @@ export function PageHeader({
   subtitle?: ReactNode;
   actions?: ReactNode;
 }) {
+  // Just text: a box around the title took room and pushed it off narrow screens.
+  // Tabs and buttons go on their own row under it, never squeezed onto the title's line.
   return (
-    <header
-      className={cx(
-        "relative overflow-hidden rounded-2xl mb-6",
-        GLASS_BODY
-      )}
-    >
-      <span aria-hidden="true" className={GLASS_SHEEN} />
-      <div className="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-3 p-4 sm:p-5">
-        <div className="min-w-0">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {subtitle}
-            </p>
-          )}
-        </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+    <header className="mb-6 space-y-3 px-1">
+      <div className="min-w-0">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white break-words">{title}</h1>
+        {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>}
       </div>
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
 }

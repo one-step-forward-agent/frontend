@@ -65,7 +65,7 @@ const statusDot = (event: CalendarEvent, now: Date) =>
   event.completed_at ? "bg-emerald-500" : missed(event, now) ? "bg-rose-500" : "bg-sky-500";
 const statusChip = (event: CalendarEvent, now: Date) =>
   event.completed_at
-    ? "bg-emerald-500/15 line-through text-gray-500 dark:text-gray-400"
+    ? "bg-emerald-500/15 opacity-45 text-gray-700 dark:text-gray-200"
     : missed(event, now)
     ? "bg-rose-500/15 text-gray-700 dark:text-gray-200"
     : "bg-white/[0.05] dark:bg-white/[0.03] text-gray-700 dark:text-gray-200";
@@ -214,35 +214,33 @@ export function CalendarPage() {
 
   return (
     <div className={cn("relative mx-auto pt-[1.5vh]", view === "month" ? "max-w-6xl 2xl:max-w-7xl" : "max-w-4xl")}>
-      {/* ─── Шапка: период со стрелками внутри, под ней — вид ─── */}
+      {/* ─── Шапка: период — просто текст; под ним стрелки, вид и «Сегодня» ─── */}
       <header className="mb-6 space-y-3">
-        <div className={cn("relative flex items-center gap-1 p-1 rounded-full", GLASS_BODY)}>
-          <button
-            type="button"
-            className={NAV_BUTTON}
-            aria-label={STEP_LABELS[view][0]}
-            title={STEP_LABELS[view][0]}
-            onClick={() => shift(-1)}
-          >
-            <Icon name="left" size={18} />
-          </button>
-          <h1 className="min-w-0 flex-1 text-center truncate !text-[20px] sm:!text-[24px] capitalize-first">
-            {title}
-          </h1>
-          <button
-            type="button"
-            className={NAV_BUTTON}
-            aria-label={STEP_LABELS[view][1]}
-            title={STEP_LABELS[view][1]}
-            onClick={() => shift(1)}
-          >
-            <Icon name="right" size={18} />
-          </button>
-        </div>
+        <h1 className="px-1 break-words !text-[22px] sm:!text-[28px] capitalize-first">{title}</h1>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className={cn(NAV_BUTTON, "relative overflow-hidden", GLASS_BODY)}
+              aria-label={STEP_LABELS[view][0]}
+              title={STEP_LABELS[view][0]}
+              onClick={() => shift(-1)}
+            >
+              <Icon name="left" size={18} />
+            </button>
+            <button
+              type="button"
+              className={cn(NAV_BUTTON, "relative overflow-hidden", GLASS_BODY)}
+              aria-label={STEP_LABELS[view][1]}
+              title={STEP_LABELS[view][1]}
+              onClick={() => shift(1)}
+            >
+              <Icon name="right" size={18} />
+            </button>
+          </div>
           <div
-            className={cn(SEGMENTED, "flex-1 min-w-0 sm:flex-none")}
+            className={cn(SEGMENTED, "min-w-0")}
             role="tablist"
             aria-label="Вид календаря"
           >
@@ -489,26 +487,11 @@ function DayEvents({ events, loading }: { events: CalendarEvent[]; loading: bool
   if (!events.length)
     return <Empty title="Нет задач">{loading ? "Загружаем…" : "Свободный день."}</Empty>;
 
+  // No "Без времени" headings: a task without a time simply shows none
   return (
     <div className="space-y-4">
-      {untimed.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
-            Без времени
-          </h3>
-          <EventList events={untimed} />
-        </div>
-      )}
-      {timed.length > 0 && (
-        <div className="space-y-2">
-          {untimed.length > 0 && (
-            <h3 className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
-              По времени
-            </h3>
-          )}
-          <EventList events={timed} />
-        </div>
-      )}
+      {untimed.length > 0 && <EventList events={untimed} />}
+      {timed.length > 0 && <EventList events={timed} />}
     </div>
   );
 }

@@ -42,6 +42,13 @@ const PAGE = "relative max-w-5xl mx-auto pt-[1.5vh]";
 const movable = (event: CalendarEvent) =>
   event.all_day && !event.completed_at && !event.series_id && !event.is_fixed;
 
+// Meetings from other calendars cannot be ticked here: once over, they simply happened
+const EXTERNAL_SOURCES = ["google", "apple", "jira", "notion"];
+
+/** A one-off task of the user's from a past day, not ticked — with or without a time. */
+const unfinished = (event: CalendarEvent) =>
+  !event.completed_at && !event.series_id && !event.is_fixed && !EXTERNAL_SOURCES.includes(event.source);
+
 /* ─── TodayPage ─────────────────────────────────────────── */
 
 export function TodayPage() {
@@ -75,7 +82,7 @@ export function TodayPage() {
   const timed = todays.filter((event) => !event.all_day);
   const untimed = todays.filter((event) => event.all_day);
   const overdue = (events.data ?? []).filter(
-    (event) => movable(event) && new Date(event.end_at) <= today
+    (event) => unfinished(event) && new Date(event.end_at) <= today
   );
   const leftToday =
     now.getHours() >= EVENING_HOUR ? untimed.filter(movable) : [];
@@ -127,14 +134,8 @@ export function TodayPage() {
 
               {timed.length > 0 && <EventList events={timed} />}
 
-              {untimed.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
-                    Без времени
-                  </h3>
-                  <EventList events={untimed} />
-                </div>
-              )}
+              {/* No heading: a task without a time already shows none */}
+              {untimed.length > 0 && <EventList events={untimed} />}
             </div>
           ) : (
             <Empty icon="today" title="На сегодня ничего">
@@ -148,23 +149,7 @@ export function TodayPage() {
 
         {/* ─── Правая колонка ───────────────────── */}
         <div className="space-y-6">
-          <GlassCard
-            title="Прогресс"
-            actions={
-              <Link
-                to="/tasks"
-                className={cn(
-                  "relative inline-flex items-center gap-1.5 overflow-hidden",
-                  "px-3 h-8 rounded-xl text-xs font-medium",
-                  GLASS_BODY,
-                  "text-gray-700 dark:text-gray-300",
-                  "transition-transform duration-200 hover:-translate-y-0.5"
-                )}
-              >
-                Задачи
-              </Link>
-            }
-          >
+          <GlassCard title="Прогресс">
             {stats.data ? <Progress stats={stats.data} /> : <Loading />}
           </GlassCard>
 
@@ -472,37 +457,19 @@ function Recommendations({
 function Progress({ stats }: { stats: Stats }) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-base">
-          <strong className="font-semibold">{stats.today.done}</strong> из{" "}
-          {stats.today.total}{" "}
-          <span className="text-gray-500 dark:text-gray-400">
-            выполнено сегодня
-          </span>
-        </p>
-        {stats.streak > 0 && (
-          <span
-            title={`Дней подряд, когда выполнено всё запланированное. Лучшая серия: ${stats.best_streak}`}
-            className={cn(
-              "relative inline-flex items-center gap-1.5 overflow-hidden",
-              "px-2.5 h-7 rounded-full text-xs font-medium",
-              GLASS_BODY,
-              "text-amber-700 dark:text-amber-300"
-            )}
-          >
-            <Icon name="fire" size={13} className="relative" />
-            <span className="relative tabular-nums">
-              {stats.streak} {plural(stats.streak, "день", "дня", "дней")}
-            </span>
-          </span>
-        )}
-      </div>
+      <p className="text-base">
+        <strong className="font-semibold">{stats.today.done}</strong> из{" "}
+        {stats.today.total}{" "}
+        <span className="text-gray-500 dark:text-gray-400">
+          выполнено сегодня
+        </span>
+      </p>
 
       <div
         className={cn(
           "relative h-2 rounded-full overflow-hidden",
-          "bg-white/[0.06] dark:bg-white/[0.02]",
-          "ring-1 ring-white/20 dark:ring-white/10"
+          "bg-gray-500/10 dark:bg-white/[0.04]",
+          "ring-1 ring-gray-500/10 dark:ring-white/10"
         )}
       >
         <div
@@ -511,6 +478,7 @@ function Progress({ stats }: { stats: Stats }) {
         />
       </div>
 
+      {/* The week as bars: deep blue — the whole day done, light — part of it */}
       <div className="flex items-end gap-1.5 h-16" aria-label="Выполнение за 7 дней">
         {stats.days.map((day) => (
           <div
@@ -521,16 +489,16 @@ function Progress({ stats }: { stats: Stats }) {
             <span
               className={cn(
                 "relative flex-1 w-full rounded-md overflow-hidden",
-                "bg-white/[0.06] dark:bg-white/[0.02]",
-                "ring-1 ring-white/20 dark:ring-white/10"
+                "bg-gray-500/10 dark:bg-white/[0.04]",
+                "ring-1 ring-gray-500/10 dark:ring-white/10"
               )}
             >
               <span
                 className={cn(
                   "absolute inset-x-0 bottom-0 rounded-md",
                   day.total && day.done === day.total
-                    ? "bg-emerald-500/60"
-                    : "bg-sky-500/50"
+                    ? "bg-blue-500/80"
+                    : "bg-sky-400/50"
                 )}
                 style={{ height: `${day.total ? Math.max(day.percent, 6) : 0}%` }}
               />
@@ -542,15 +510,27 @@ function Progress({ stats }: { stats: Stats }) {
         ))}
       </div>
 
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        За неделю выполнено {stats.done} из {stats.total}
-        {stats.best_streak > stats.streak
-          ? ` · лучшая серия ${stats.best_streak} дн.`
-          : ""}
-        {stats.streak === 0
-          ? " · выполните все задачи дня, чтобы начать серию"
-          : ""}
-      </p>
+      {/* The week's numbers are in the bars above; below them only the streak */}
+      {stats.streak > 0 ? (
+        <span
+          title={`Дней подряд, когда выполнено всё запланированное. Лучшая серия: ${stats.best_streak}`}
+          className={cn(
+            "relative inline-flex items-center gap-1.5 overflow-hidden",
+            "px-2.5 h-7 rounded-full text-xs font-medium",
+            GLASS_BODY,
+            "text-amber-700 dark:text-amber-300"
+          )}
+        >
+          <Icon name="fire" size={13} className="relative" />
+          <span className="relative tabular-nums">
+            {stats.streak} {plural(stats.streak, "день", "дня", "дней")} подряд
+          </span>
+        </span>
+      ) : (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Выполните все задачи дня, чтобы начать серию
+        </p>
+      )}
     </div>
   );
 }

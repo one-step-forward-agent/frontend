@@ -154,6 +154,7 @@ export interface AssistantEvent {
   end_date?: string | null;
   deadline?: string | null;
   fixed?: boolean;
+  tag_ids?: number[];
 }
 
 export type AgendaScope = "today" | "tomorrow" | "week";

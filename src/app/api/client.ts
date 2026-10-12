@@ -210,6 +210,8 @@ export const api = {
         params: { value },
       }),
     history: () => request<HistoryMessage[]>("/api/assistant/history?limit=60"),
+    /** «Очистить историю»: переписка пропадает у пользователя и у ассистента. */
+    clearHistory: () => request<{ cleared: number }>("/api/assistant/history", { method: "DELETE" }, "assistant_history_clear"),
     /** Открыть чат по рекомендации: ассистент запомнит её как контекст разговора. */
     topic: (title: string, text: string) =>
       request<AssistantReply>("/api/assistant/topic", json("POST", { title, text }), "assistant_topic"),

@@ -1,5 +1,5 @@
 // src/pages/AssistantPage.tsx
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent, type RefObject } from "react";
 import { ApiError, api } from "../api/client";
 import type {
   AgendaScope,
@@ -12,6 +12,7 @@ import type {
 } from "../api/types";
 import { RecommendationList } from "../components/recommendations";
 import { RichText } from "../components/RichText";
+import { TagList } from "../components/tags";
 import { Icon } from "../components/icons";
 import { Badge, Button, Switch, useErrorToast } from "../components/ui";
 import {
@@ -27,7 +28,7 @@ import {
   plural,
   relativeDay,
 } from "../lib/format";
-import { notifyTasksChanged } from "../lib/hooks";
+import { notifyTagsChanged, notifyTasksChanged, useTags } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GLASS_BODY_FLAT, GLASS_ERROR, GLASS_PRIMARY, GLASS_CHIP } from "@/components/dashboard/glass";
@@ -118,11 +119,45 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     };
   }, []);
 
-  // Only the list scrolls: the page stays put and the input never leaves the screen
-  useEffect(() => {
+  // Only the list scrolls: the page stays put and the input never leaves the screen.
+  // The history opens at its last message at once, before it is painted; only new messages glide in.
+  const placed = useRef(false);
+  useLayoutEffect(() => {
     const list = listRef.current;
-    if (list) list.scrollTo({ top: list.scrollHeight, behavior: loaded ? "smooth" : "auto" });
+    if (!list || !loaded) return;
+    list.scrollTo({ top: list.scrollHeight, behavior: placed.current ? "smooth" : "auto" });
+    placed.current = true;
   }, [messages, busy, loaded]);
+
+  const [clearing, setClearing] = useState(false);
+  const reportError = useErrorToast();
+  const clearHistory = async () => {
+    if (!messages.length || !window.confirm("Очистить историю чата? Задачи в календаре останутся.")) return;
+    setClearing(true);
+    try {
+      await api.assistant.clearHistory();
+      setMessages([]);
+    } catch {
+      reportError(TEMPORARY_ERROR);
+    } finally {
+      setClearing(false);
+    }
+  };
+  const clearButton = (
+    <button
+      type="button"
+      onClick={clearHistory}
+      disabled={clearing || busy || !messages.length}
+      className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-gray-500/10 disabled:opacity-40 disabled:pointer-events-none"
+      aria-label="Очистить историю чата"
+      title="Очистить историю"
+    >
+      <Icon name="trash" size={15} />
+    </button>
+  );
+
+  // A tag the assistant has just created is not in the list loaded before
+  const { byId: tagsById } = useTags();
 
   const push = (message: Message) => setMessages((items) => [...items, message]);
 
@@ -136,6 +171,8 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       const { message_id: serverId, ...reply } = await api.assistant.chat(value);
       push({ id: ++messageId, role: "assistant", reply: reply as AssistantReply, serverId });
       if (reply.kind === "completed") notifyTasksChanged();
+      const events = "events" in reply && Array.isArray(reply.events) ? (reply.events as { tag_ids?: number[] }[]) : [];
+      if (events.some((event) => event.tag_ids?.some((id) => !tagsById.has(id)))) notifyTagsChanged();
     } catch (error) {
       // A limit reached is not a failure to retry at once: the user is told when the assistant answers again
       const limited = error instanceof ApiError && error.status === 429;
@@ -211,6 +248,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
             >
               <Icon name="plus" size={14} /> Задача
             </Link>
+            {clearButton}
             <Link
               to="/assistant"
               className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-500/10"
@@ -230,8 +268,11 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
           </span>
         </div>
       ) : (
-        // Just the name: the screen belongs to the conversation
-        <h1 className="shrink-0 px-1 sm:px-2 pb-2 text-base font-semibold text-gray-900 dark:text-white">Ассистент</h1>
+        // Just the name and the bin: the screen belongs to the conversation
+        <div className="shrink-0 flex items-center gap-2 px-1 sm:px-2 pb-2">
+          <h1 className="text-base font-semibold text-gray-900 dark:text-white">Ассистент</h1>
+          <span className="ml-auto">{clearButton}</span>
+        </div>
       )}
 
       {/* ─── Чат: прокручивается только он ─────────── */}
@@ -652,10 +693,11 @@ function MarkList({ events }: { events: AssistantEvent[] }) {
             aria-label={done[event.id] ? `Снять отметку: ${event.title}` : `Выполнено: ${event.title}`}
             className={cn(
               "relative shrink-0 w-5 h-5 rounded-md flex items-center justify-center overflow-hidden",
-              "ring-1 transition-colors",
+              "border-2 transition-colors",
+              // An empty box has to be visible on the light glass too
               done[event.id]
-                ? "bg-emerald-500/70 ring-emerald-400/60 text-white"
-                : cn(GLASS_BODY, "text-transparent hover:text-gray-400")
+                ? "bg-emerald-500 border-emerald-500 text-white"
+                : "bg-white/70 dark:bg-white/[0.04] border-gray-400 dark:border-gray-500 hover:border-sky-500"
             )}
             onClick={() => toggle(event)}
           >
@@ -663,14 +705,17 @@ function MarkList({ events }: { events: AssistantEvent[] }) {
           </button>
           <span
             className={cn(
-              "flex-1 min-w-0 flex items-baseline gap-2 text-sm",
-              done[event.id] && "line-through text-gray-400 dark:text-gray-500"
+              "flex-1 min-w-0 flex items-baseline gap-2 text-sm transition-opacity",
+              done[event.id] && "opacity-45"
             )}
           >
-            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums shrink-0">
-              {event.all_day ? "без времени" : formatTime(new Date(event.start))}
-            </span>
+            {!event.all_day && (
+              <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums shrink-0">
+                {formatTime(new Date(event.start))}
+              </span>
+            )}
             <span className="truncate text-gray-900 dark:text-white">{event.title}</span>
+            <TagList ids={event.tag_ids} />
           </span>
         </li>
       ))}
@@ -721,9 +766,11 @@ function MoveList({ events, onMoved }: { events: AssistantEvent[]; onMoved: (rep
         return (
           <li key={event.id} className={cn("relative rounded-xl px-3 py-2 space-y-1.5", GLASS_BODY)}>
             <span className="flex items-baseline gap-2 text-sm">
-              <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums shrink-0">
-                {event.all_day ? "без времени" : formatTime(new Date(event.start))}
-              </span>
+              {!event.all_day && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums shrink-0">
+                  {formatTime(new Date(event.start))}
+                </span>
+              )}
               <span className={cn("truncate text-gray-900 dark:text-white", done && "text-gray-400 dark:text-gray-500")}>
                 {event.title}
               </span>
@@ -921,7 +968,7 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
         )}
       </div>
 
-      {/* ─── По дням: зелёное — сделано, красное — не сделано ─── */}
+      {/* ─── По дням: синее — сделано, красное — не сделано ─── */}
       <div>
         <div className="flex items-end gap-1.5 h-28" aria-label="Выполнение по дням">
           {stats.days.map((day) => {
@@ -940,11 +987,11 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
                   >
                     {missed > 0 && (
                       <span
-                        className={isToday ? "bg-sky-400/40" : "bg-rose-400/70"}
+                        className={isToday ? "bg-gray-400/35" : "bg-rose-400/70"}
                         style={{ flexGrow: missed }}
                       />
                     )}
-                    {day.done > 0 && <span className="bg-emerald-500/80" style={{ flexGrow: day.done }} />}
+                    {day.done > 0 && <span className="bg-blue-500/85" style={{ flexGrow: day.done }} />}
                   </span>
                 </span>
                 <span
@@ -963,13 +1010,13 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
         </div>
         <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500 dark:text-gray-400">
           <span className="inline-flex items-center gap-1">
-            <i className="w-2 h-2 rounded-sm bg-emerald-500/80" /> сделано
+            <i className="w-2 h-2 rounded-sm bg-blue-500/85" /> сделано
           </span>
           <span className="inline-flex items-center gap-1">
             <i className="w-2 h-2 rounded-sm bg-rose-400/70" /> не сделано
           </span>
           <span className="inline-flex items-center gap-1">
-            <i className="w-2 h-2 rounded-sm bg-sky-400/40" /> сегодня ещё впереди
+            <i className="w-2 h-2 rounded-sm bg-gray-400/35" /> сегодня ещё впереди
           </span>
         </p>
       </div>
@@ -998,7 +1045,7 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
                 <span className="truncate">{name}</span>
                 <span className="h-1.5 rounded-full bg-gray-500/15 overflow-hidden">
                   <span
-                    className={cn("block h-full rounded-full", percent >= 50 ? "bg-emerald-500/80" : "bg-rose-400/80")}
+                    className={cn("block h-full rounded-full", percent >= 50 ? "bg-blue-500/85" : "bg-rose-400/80")}
                     style={{ width: `${percent}%` }}
                   />
                 </span>
@@ -1231,7 +1278,7 @@ function AssistantEvents({ events, showDay = true }: { events: AssistantEvent[];
               "px-3 py-2 rounded-xl",
               "transition-transform duration-200 hover:-translate-y-0.5",
               GLASS_BODY,
-              event.completed && "opacity-60"
+              event.completed && "opacity-45"
             )}
           >
             <span className="relative flex flex-col shrink-0 min-w-[2.75rem] text-xs tabular-nums">
@@ -1243,7 +1290,7 @@ function AssistantEvents({ events, showDay = true }: { events: AssistantEvent[];
                     : "text-sky-700 dark:text-sky-300"
                 )}
               >
-                {event.all_day ? "—" : formatTime(new Date(event.start))}
+                {event.all_day ? "" : formatTime(new Date(event.start))}
               </span>
               {showDay && event.start.slice(0, 10) !== today && (
                 <span className="text-[11px] text-gray-500 dark:text-gray-400">
@@ -1255,12 +1302,11 @@ function AssistantEvents({ events, showDay = true }: { events: AssistantEvent[];
               <span
                 className={cn(
                   "block text-sm text-gray-900 dark:text-white truncate",
-                  event.completed && "line-through text-gray-400 dark:text-gray-500"
                 )}
               >
                 {event.title}
               </span>
-              {(event.recurrence || event.location || event.deadline || multiDay(event)) && (
+              {(event.recurrence || event.location || event.deadline || multiDay(event) || !!event.tag_ids?.length) && (
                 <span className="mt-1 flex flex-wrap gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
                   {multiDay(event) && (
                     <span>
@@ -1291,6 +1337,7 @@ function AssistantEvents({ events, showDay = true }: { events: AssistantEvent[];
                       <Icon name="location" size={11} /> {event.location}
                     </span>
                   )}
+                  <TagList ids={event.tag_ids} />
                 </span>
               )}
             </span>
@@ -1525,13 +1572,12 @@ function Proposal({
               >
                 Без времени
               </Button>
-            ) : (
-              <span className="text-xs text-gray-500 dark:text-gray-400">без времени</span>
-            )}
+            ) : null}
           </div>
 
-          {(item.deadline || item.fixed) && (
-            <div className="relative flex flex-wrap gap-1.5">
+          {(item.deadline || item.fixed || !!item.tag_ids?.length) && (
+            <div className="relative flex flex-wrap items-center gap-1.5">
+              <TagList ids={item.tag_ids} />
               {item.deadline && (
                 <Badge tone={deadlineTone(item.deadline)}>
                   дедлайн {formatDeadline(item.deadline).replace(/^до /, "")}
