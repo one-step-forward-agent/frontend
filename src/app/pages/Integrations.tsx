@@ -428,7 +428,7 @@ function IntegrationCard({
         </p>
       )}
 
-      <div className="flex flex-wrap gap-1.5">
+      <div className="mt-1 flex flex-wrap gap-1.5">
         {!connection ? (
           <Button
             variant="primary"

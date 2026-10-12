@@ -130,8 +130,9 @@ const BUTTON_VARIANT: Record<ButtonVariant, string> = {
   "bg-sky-500/20 dark:bg-sky-400/15",
   "backdrop-blur-xl",
   "ring-1 ring-sky-400/40 dark:ring-sky-400/30",
-  "shadow-[0_4px_14px_rgba(56,189,248,0.15),inset_0_1px_0_rgba(255,255,255,0.6)]",
-  "dark:shadow-[0_4px_14px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]",
+  // No inner top highlight: on a small button it looked like a notch along the top edge
+  "shadow-[0_4px_14px_rgba(56,189,248,0.15)]",
+  "dark:shadow-[0_4px_14px_rgba(0,0,0,0.3)]",
   // ─── На hover — чуть плотнее, но без «вспышки» ───
   "hover:bg-sky-500/30 dark:hover:bg-sky-400/20",
   "hover:ring-sky-400/60 dark:hover:ring-sky-400/50"
