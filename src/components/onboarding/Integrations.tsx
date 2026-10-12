@@ -64,6 +64,8 @@ const isOAuthProvider = (id: Provider): id is OAuthProvider =>
 const SIGN_UP_WITH: { id: SignInProvider; name: string }[] = [
   { id: "google", name: "Google" },
   { id: "yandex", name: "Яндекс ID" },
+  { id: "notion", name: "Notion" },
+  { id: "jira", name: "Jira" },
 ];
 
 // Back here after signing up or logging in: ?resume=1 connects the remaining chosen services
@@ -198,7 +200,7 @@ export const Integrations: React.FC = () => {
   }, [searchParams, isAuthenticated]);
 
   /* ─── Без аккаунта ─────────────────────────────── */
-  // Google или Яндекс ID создают аккаунт по своему email. Яндекс сразу подключает календарь;
+  // Google, Яндекс ID, Notion или Jira создают аккаунт по своему email. Яндекс, Notion и Jira сразу подключаются;
   // Google — только аккаунт (без проверки Google), а его календарь подключается следом, если он отмечен;
   // остальные сервисы подключатся после обычной регистрации — выбор сохранён в онбординге.
   const createAccount = async () => {
@@ -361,11 +363,11 @@ export const Integrations: React.FC = () => {
             })}
           </div>
 
-          {/* ─── Аккаунт через Google / Яндекс ID ──────── */}
+          {/* ─── Аккаунт через Google / Яндекс ID / Notion / Jira ─── */}
           {needsAccount && signUpWith && (
             <div className="space-y-2.5">
               <p className="text-sm text-gray-600 dark:text-gray-300 leading-snug">
-                Аккаунт Dayla создадим по email вашего {signUpWith.name} — пароль не нужен.
+                Аккаунт Dayla создадим по email вашего аккаунта {signUpWith.name} — пароль не нужен.
                 Остальные выбранные сервисы подключим следом.
               </p>
               <ConsentCheckbox id="onboarding-consent" checked={consentGiven} onChange={setConsentGiven}>

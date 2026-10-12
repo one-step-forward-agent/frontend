@@ -27,7 +27,7 @@ import type {
   AiChatSource
 } from "./types";
 
-export type SignInProvider = "google" | "yandex";
+export type SignInProvider = "google" | "yandex" | "notion" | "jira";
 
 export class ApiError extends Error {
   constructor(
@@ -143,6 +143,9 @@ export const api = {
     list: () => request<Calendar[]>("/api/calendars"),
     create: (body: { name: string; description?: string | null; timezone?: string }) =>
       request<Calendar>("/api/calendars", json("POST", { provider: "local", ...body }), "calendar_create"),
+    /** The private feed link (path) for Samsung Calendar and other apps; reset makes a new one */
+    feed: (reset = false) =>
+      request<{ path: string }>(`/api/calendar/feed${reset ? "?reset=true" : ""}`, { method: "POST" }, reset ? "calendar_feed_reset" : "calendar_feed"),
     exportIcs: async () => {
       const response = await send("/api/calendar/export.ics");
       if (!response.ok) throw await errorFrom(response);

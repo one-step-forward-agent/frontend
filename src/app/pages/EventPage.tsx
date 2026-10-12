@@ -211,6 +211,12 @@ export function EventPage({ id }: { id: number }) {
             </DetailRow>
           )}
 
+          {item.recurrence && (
+            <DetailRow icon="sync" label="Повтор">
+              {item.recurrence}
+            </DetailRow>
+          )}
+
           {item.location && (
             <DetailRow icon="location" label="Где">
               {item.location}

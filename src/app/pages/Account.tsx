@@ -6,6 +6,7 @@ import { ThemePicker } from "@/theme";
 import { useAuth, useSignOut, useUser } from "../auth";
 import { Icon } from "../components/icons";
 import { Avatar } from "../components/Layout";
+import { restartTour } from "../components/Tour";
 import { TAG_COLORS, TagChip } from "../components/tags";
 import {
   Badge,
@@ -207,7 +208,14 @@ function ProfileSection() {
 
   return (
     <div id="profile" className="anchor">
-      <GlassCard title="Профиль">
+      <GlassCard
+        title="Профиль"
+        actions={
+          <button type="button" className="btn btn-ghost btn-sm h-8 px-3 text-xs" onClick={restartTour}>
+            Как пользоваться Dayla
+          </button>
+        }
+      >
         <form className={cn("form", COMPACT_FIELD)} onSubmit={save}>
           <div className="form-row">
             <Field label="Имя">
@@ -605,8 +613,8 @@ function IntegrationsSection() {
         }
       >
         <p className="muted small">
-          Google Calendar, Apple Calendar, Jira и Notion: подключение, импорт и
-          отправка задач.
+          Google Calendar, Яндекс Календарь, Apple Calendar, Samsung Calendar, Jira и
+          Notion: подключение, импорт и отправка задач.
         </p>
         {integrations.error && (
           <ErrorNote message={integrations.error} onRetry={integrations.reload} />

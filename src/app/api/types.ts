@@ -62,6 +62,9 @@ export interface CalendarEvent {
   sync_status: string;
   external_id: string | null;
   series_id: string | null;
+  recurrence_rule?: string | null;
+  /** The repeat in words: «каждый день», «по будням» */
+  recurrence?: string | null;
   completed_at: string | null;
   deadline_at: string | null;
   /** Нельзя переносить: подсказки и автоперенос планируют вокруг такой задачи. */
@@ -199,7 +202,12 @@ export type AssistantReply =
   | { kind: "advice"; items: Recommendation[] }
   | { kind: "reminders"; settings: ReminderSettings }
   /** Reminders the assistant set ("напомни через 10 минут …"); the bot sends them to Telegram */
-  | { kind: "reminder"; text: string; reminders: { id: number; text: string; at: string; label: string }[] }
+  | {
+      kind: "reminder";
+      text: string;
+      /** repeat: "каждый день в 09:00", "каждые 2 часа"; label: when the (first) one comes */
+      reminders: { id: number; text: string; at: string; label: string; repeat?: string | null }[];
+    }
   | { kind: "answer" | "not_found" | "edit_error" | "cancelled"; text: string }
   | { kind: "nothing" };
 

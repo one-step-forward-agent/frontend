@@ -8,6 +8,7 @@ import { Link, navigate, useLocation } from "../router";
 import { Icon, type IconName } from "./icons";
 import { ErrorBoundary, useToast } from "./ui";
 import { AssistantChat } from "../pages/Assistant";
+import { Tour } from "./Tour";
 import { cn } from "@/utils/cn";
 import React from "react";
 
@@ -40,6 +41,16 @@ const TABS: NavItem[] = [
 // Where the corner chat would only get in the way: the chat page itself and the task form with its buttons
 const NO_DOCK = ["/assistant", "/events/new"];
 const ACCOUNT_PATHS = ["/account", "/settings", "/integrations"];
+
+// The first-visit hints point at these (see Tour.tsx)
+const TOUR_IDS: Record<string, string> = {
+  "/": "today",
+  "/calendar": "calendar",
+  "/assistant": "assistant",
+  "/tasks": "tasks",
+  "/events/new": "new",
+  "/account": "account",
+};
 
 const isActive = (to: string, path: string) =>
   to === "/"
@@ -195,6 +206,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Link
                   key={item.to}
                   to={item.to}
+                  data-tour={TOUR_IDS[item.to]}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "relative flex items-center gap-2.5 overflow-hidden",
@@ -225,6 +237,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="shrink-0 px-3 py-2.5 flex items-center gap-1.5">
             <Link
               to="/account"
+              data-tour="account"
               aria-current={accountActive ? "page" : undefined}
               title="Профиль, настройки и интеграции"
               className={cn(
@@ -293,6 +306,9 @@ export function Layout({ children }: { children: ReactNode }) {
         {/* ═══ Чат в углу каждого раздела ═══ */}
         {docked && <ChatDock path={path} />}
 
+        {/* ═══ Подсказки при первом входе ═══ */}
+        {user && <Tour userId={user.id} />}
+
         {/* ═══ TABBAR (mobile) — парящий ═══ */}
         <nav
           className={cn(
@@ -311,6 +327,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   <li key={item.to} className="flex items-center justify-center">
                     <Link
                       to={item.to}
+                      data-tour={TOUR_IDS[item.to]}
                       aria-current={active ? "page" : undefined}
                       aria-label={item.label}
                       className={cn(
@@ -332,6 +349,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 <li key={item.to}>
                   <Link
                     to={item.to}
+                    data-tour={TOUR_IDS[item.to]}
                     aria-current={active ? "page" : undefined}
                     aria-label={item.label}
                     title={item.label}
@@ -385,6 +403,7 @@ function ChatDock({ path }: { path: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
+        data-tour="dock"
         aria-label="Спросить Dayla"
         title="Спросить Dayla"
         className={cn(

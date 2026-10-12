@@ -48,8 +48,8 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
     }
   };
 
-  // В списке — только то, что нужно, чтобы выбрать задачу; откуда она, повтор, место — в карточке
-  const hasMeta = !!(multiDay || (event.deadline_at && !done) || event.tag_ids?.length);
+  // В списке — только то, что нужно, чтобы выбрать задачу, и повтор; откуда она и место — в карточке
+  const hasMeta = !!(multiDay || (event.deadline_at && !done) || event.tag_ids?.length || event.recurrence);
   // Не выполнена, а время уже прошло — красная; выполненная — зелёная
   const missed = !done && new Date(event.end_at) <= new Date();
   const end = new Date(event.end_at);
@@ -83,6 +83,11 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
           {hasMeta && (
             <span className="event-meta">
               {multiDay && <span>по {formatDate(last, { day: "numeric", month: "short" })}</span>}
+              {event.recurrence && (
+                <span className="inline-flex items-center gap-1">
+                  <Icon name="sync" size={13} /> {event.recurrence}
+                </span>
+              )}
               {event.deadline_at && !done && (
                 <span className={`deadline deadline-${deadlineTone(event.deadline_at)}`}>
                   <Icon name="flag" size={13} /> {formatDeadline(event.deadline_at)}
@@ -246,7 +251,7 @@ export function EventForm({
     { label: "Сегодня", value: dayKey(today) },
     { label: "Завтра", value: dayKey(addDays(today, 1)) },
   ];
-  const hasDetails = !!(event && (event.deadline_at || event.is_fixed || event.location || event.description || event.reminder_minutes != null || event.priority !== "medium"));
+  const hasDetails = !!(event && (event.recurrence || event.deadline_at || event.is_fixed || event.location || event.description || event.reminder_minutes != null || event.priority !== "medium"));
 
   const changeTime = (value: string) =>
     setState((current) => {
@@ -346,6 +351,12 @@ export function EventForm({
           <Switch checked={state.fixed} onChange={(value) => set("fixed", value)} label="Нельзя переносить" hint="Dayla будет планировать вокруг этой задачи" />
 
           <div className="form-row">
+            {event?.recurrence && (
+              <Field label="Повтор">
+                {/* The rule belongs to the whole series: a changed copy would not change the other days */}
+                <input value={event.recurrence} readOnly disabled />
+              </Field>
+            )}
             {!event && (
               <Field label="Повтор">
                 <select value={state.repeat} onChange={(e) => set("repeat", e.target.value)}>

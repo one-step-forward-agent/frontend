@@ -47,7 +47,7 @@ const OAUTH_INTEGRATIONS: Record<
     title: "Яндекс Календарь",
     description:
       "Импорт событий Яндекс Календаря в Dayla и экспорт обратно.",
-    src: "/images/yandexcalendar.webp",
+    src: "/images/yandexcalendar.png",
   },
   notion: {
     title: "Notion",
@@ -187,6 +187,7 @@ export function IntegrationsPage() {
               onChanged={integrations.reload}
             />
           ))}
+          <SamsungCard />
         </div>
       )}
 
@@ -206,6 +207,105 @@ export function IntegrationsPage() {
         )}
       </Dialog>
     </div>
+  );
+}
+
+/* ─── Samsung Calendar ──────────────────────────────────── */
+
+// Samsung Calendar has no API of its own: it shows the calendars of the phone's accounts (Google) and subscriptions.
+// So Dayla reaches it through the Google account or through a private feed link (ICSx⁵ adds it on the phone).
+function SamsungCard() {
+  const toast = useToast();
+  const { pending, run } = useAction(useErrorToast());
+  const [path, setPath] = useState<string | null>(null);
+  const url = path ? `${window.location.origin}${path}` : null;
+
+  const load = (reset = false) =>
+    run(reset ? "reset" : "link", async () => {
+      const result = await api.calendars.feed(reset);
+      setPath(result.path);
+      if (reset) toast("Новая ссылка готова, старая больше не работает");
+    });
+
+  const copy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("Ссылка скопирована");
+    } catch {
+      toast("Не удалось скопировать — выделите ссылку вручную");
+    }
+  };
+
+  return (
+    <GlassCard>
+      <div className="flex items-center gap-3 mb-3">
+        <span
+          aria-hidden="true"
+          className={cn(
+            "relative shrink-0 w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden",
+            "bg-[#1428A0] text-white",
+          )}
+        >
+          <Icon name="calendar" size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate">Samsung Calendar</h2>
+          <div className="mt-1">
+            <Badge>{url ? "ссылка готова" : "по подписке"}</Badge>
+          </div>
+        </div>
+      </div>
+
+      <ol className="mb-3 space-y-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
+        <li>
+          Через Google: подключите здесь Google Calendar — Samsung Calendar сам показывает календари Google-аккаунта
+          телефона (Календарь → ☰ → Управление календарями). Задачи Dayla появятся в Samsung, события из Samsung в
+          календаре Google — в Dayla.
+        </li>
+        <li>
+          По ссылке: установите ICSx⁵ из Google Play или Galaxy Store и добавьте в нём ссылку ниже — календарь Dayla
+          появится в Samsung Calendar и будет обновляться сам.
+        </li>
+      </ol>
+
+      {url && (
+        <input
+          readOnly
+          value={url}
+          aria-label="Ссылка на календарь Dayla"
+          onFocus={(e) => e.currentTarget.select()}
+          className="mb-3 w-full rounded-lg px-2.5 py-2 text-xs bg-white/50 dark:bg-white/5 ring-1 ring-white/30 dark:ring-white/10 text-gray-900 dark:text-white"
+        />
+      )}
+
+      <div className="flex flex-wrap gap-1.5">
+        {url ? (
+          <>
+            <Button variant="primary" size="sm" icon="clip" onClick={copy}>
+              Скопировать ссылку
+            </Button>
+            <ConfirmButton
+              size="sm"
+              icon="sync"
+              label="Новая ссылка"
+              confirmLabel="Старая перестанет работать"
+              busy={pending === "reset"}
+              onConfirm={() => load(true)}
+            >
+              Новая ссылка
+            </ConfirmButton>
+          </>
+        ) : (
+          <Button variant="primary" size="sm" icon="external" busy={pending === "link"} onClick={() => load()}>
+            Получить ссылку
+          </Button>
+        )}
+      </div>
+      <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+        Ссылка личная: по ней видно ваше расписание, не пересылайте её.
+      </p>
+    </GlassCard>
   );
 }
 

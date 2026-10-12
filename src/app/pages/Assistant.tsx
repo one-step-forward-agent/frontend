@@ -543,8 +543,8 @@ function ChatMessage({
             reply.kind === "cancelled") && <RichText text={reply.text} />}
           {reply.kind === "nothing" && (
             <p>
-              Не нашла в сообщении задач. Напишите, что и когда, — например:
-              «созвон с Олей завтра в 15:00».
+              Я лучше всего помогаю с планами: добавить задачу, перенести встречу, напомнить о деле. Напишите,
+              например, «созвон с Олей завтра в 15:00» или «что у меня на завтра?».
             </p>
           )}
           {rating}
@@ -908,15 +908,28 @@ function ReminderReply({
   return (
     <div className="space-y-2">
       {reply.reminders.map((item) => (
-        <p key={item.id} className="inline-flex items-center gap-1.5 text-sky-700 dark:text-sky-300">
-          <Icon name="bell" size={16} /> Напомню {item.label}: {item.text}
-        </p>
+        <div key={item.id} className="flex items-start gap-2 text-sky-700 dark:text-sky-300">
+          <Icon name={item.repeat ? "sync" : "bell"} size={16} className="mt-0.5 shrink-0" />
+          <div className="min-w-0">
+            <p className="font-medium break-words">{item.text}</p>
+            <p className="text-sm">
+              {item.repeat ? (
+                <>
+                  Повтор: {item.repeat}
+                  <span className="text-gray-500 dark:text-gray-400"> · первое — {item.label}</span>
+                </>
+              ) : (
+                <>Напомню {item.label}</>
+              )}
+            </p>
+          </div>
+        </div>
       ))}
       <p className="text-xs text-gray-500 dark:text-gray-400">Напоминание придёт в Telegram.</p>
       <div className="flex flex-wrap gap-1.5">
         {reply.reminders.map((item) => (
           <Button key={item.id} variant="ghost" size="sm" icon="close" busy={busy === item.id} onClick={() => cancel(item.id)}>
-            {reply.reminders.length > 1 ? `Отменить «${item.text}»` : "Отменить"}
+            {reply.reminders.length > 1 ? `Отменить «${item.text}»` : item.repeat ? "Отменить повтор" : "Отменить"}
           </Button>
         ))}
       </div>
@@ -1760,6 +1773,25 @@ function Composer({
   const [recording, setRecording] = useState(false);
   const [working, setWorking] = useState<"voice" | "file" | null>(null);
   const reportError = useErrorToast();
+  const ownRef = useRef<HTMLTextAreaElement>(null);
+  const textarea = inputRef ?? ownRef;
+  // A narrow screen gets a short placeholder: a wrapped one showed half of its second line under the field
+  const [narrow, setNarrow] = useState(() => window.matchMedia("(max-width: 639px)").matches);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 639px)");
+    const update = () => setNarrow(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  // The field grows with the text (up to max-h-32, then it scrolls) instead of cutting lines off
+  useLayoutEffect(() => {
+    const element = textarea.current;
+    if (!element) return;
+    element.style.height = "auto";
+    element.style.height = `${Math.min(element.scrollHeight, 128)}px`;
+  }, [value, narrow, textarea]);
 
   const append = (extra: string) => onChange(value ? `${value}\n${extra}` : extra);
 
@@ -1824,7 +1856,7 @@ function Composer({
     <form
       onSubmit={submit}
       className={cn(
-        "relative overflow-hidden rounded-2xl flex items-center gap-1 p-1.5",
+        "relative overflow-hidden rounded-2xl flex items-end gap-1 p-1.5",
         GLASS_BODY
       )}
     >
@@ -1844,12 +1876,12 @@ function Composer({
         onClick={() => fileInput.current?.click()}
       />
       <textarea
-        ref={inputRef}
+        ref={textarea}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
         rows={1}
-        placeholder={recording ? "Говорите…" : "Запланировать, найти, перенести…"}
+        placeholder={recording ? "Говорите…" : narrow ? "Напишите Dayla…" : "Запланировать, найти, перенести…"}
         aria-label="Сообщение"
         maxLength={50000}
         className={cn(
@@ -1858,16 +1890,20 @@ function Composer({
           "border-0 outline-none focus:outline-none focus:ring-0",
           "bg-transparent",
           "shadow-none",
-          "px-2 py-2 text-sm",
+          // 16px on a phone: a smaller field makes iOS zoom the page in on focus
+          "px-2 py-2 text-base leading-6 sm:text-sm sm:leading-5",
           "text-gray-900 dark:text-white",
           "placeholder:text-gray-400 dark:placeholder:text-gray-500",
-          "max-h-32"
+          "max-h-32 overflow-y-auto"
         )}
         style={{
           background: "transparent",
           border: "none",
           outline: "none",
           boxShadow: "none",
+          resize: "none",
+          // Mobile browsers drew a scroll corner as a dot in the field's corner
+          scrollbarWidth: "none",
         }}
       />
       {"MediaRecorder" in window && (
