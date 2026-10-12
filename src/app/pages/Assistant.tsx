@@ -234,7 +234,14 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     <div
       className={cn(
         "relative flex flex-col min-h-0",
-        panel ? "h-full" : "max-w-3xl mx-auto h-[calc(100dvh-11.5rem)] lg:h-[calc(100dvh-3rem)]"
+        panel
+          ? "h-full"
+          : cn(
+              "max-w-3xl mx-auto lg:h-[calc(100dvh-3rem)]",
+              // On a phone the chat is pinned between the top bar and the tab bar: the page itself never scrolls,
+              // so a swipe moves only the messages, not the input with an empty space under it
+              "max-lg:fixed max-lg:inset-x-4 max-lg:top-16 max-lg:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-lg:z-10"
+            )
       )}
     >
       {panel ? (
@@ -277,7 +284,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       )}
 
       {/* ─── Чат: прокручивается только он ─────────── */}
-      <div ref={listRef} role="log" aria-label="Переписка с Dayla" className={cn("relative flex-1 min-h-0 overflow-y-auto space-y-4", panel ? "px-3 py-2" : "p-1 sm:p-2")}>
+      <div ref={listRef} role="log" aria-label="Переписка с Dayla" className={cn("relative flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4", panel ? "px-3 py-2" : "p-1 sm:p-2")}>
         {loaded && messages.length === 0 && (
           <div className="flex flex-col items-center text-center py-8">
             <span

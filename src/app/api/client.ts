@@ -27,6 +27,25 @@ import type {
   AiChatSource
 } from "./types";
 
+/** A reminder the user asked for: once, or repeating (repeat says it in words) */
+export interface CustomReminder {
+  id: number;
+  text: string;
+  at: string;
+  label: string;
+  repeat: string | null;
+  repeat_kind: "daily" | "weekdays" | "weekly" | "monthly" | null;
+  every_minutes: number | null;
+}
+
+export interface CustomReminderBody {
+  text: string;
+  /** The moment, ISO with an offset (a bare "YYYY-MM-DDTHH:MM" is the profile's local time) */
+  at: string;
+  repeat?: "daily" | "weekdays" | "weekly" | "monthly";
+  every_minutes?: number;
+}
+
 export type SignInProvider = "google" | "yandex" | "notion" | "jira";
 
 export class ApiError extends Error {
@@ -274,6 +293,13 @@ export const api = {
     test: () =>
       request<{ id: number; status: string }>("/api/reminders/test", { method: "POST" }, "reminder_test"),
     history: () => request<ReminderHistoryItem[]>("/api/reminders/history"),
+  },
+  customReminders: {
+    list: () => request<CustomReminder[]>("/api/reminders/custom"),
+    create: (body: CustomReminderBody) => request<CustomReminder>("/api/reminders/custom", json("POST", body), "custom_reminder_create"),
+    update: (id: number, body: CustomReminderBody) =>
+      request<CustomReminder>(`/api/reminders/custom/${id}`, json("PUT", body), "custom_reminder_update"),
+    remove: (id: number) => request<void>(`/api/reminders/custom/${id}`, { method: "DELETE" }, "custom_reminder_delete"),
   },
   telegram: {
     status: () => request<TelegramStatus>("/api/telegram"),

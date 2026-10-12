@@ -213,7 +213,7 @@ export function IntegrationsPage() {
 /* ─── Samsung Calendar ──────────────────────────────────── */
 
 // Samsung Calendar has no API of its own: it shows the calendars of the phone's accounts (Google) and subscriptions.
-// So Dayla reaches it through the Google account or through a private feed link (ICSx⁵ adds it on the phone).
+// So Dayla reaches it through the phone's Google account; the feed link is for apps that subscribe (Outlook, Apple).
 function SamsungCard() {
   const toast = useToast();
   const { pending, run } = useAction(useErrorToast());
@@ -252,22 +252,26 @@ function SamsungCard() {
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate">Samsung Calendar</h2>
           <div className="mt-1">
-            <Badge>{url ? "ссылка готова" : "по подписке"}</Badge>
+            <Badge>{url ? "ссылка готова" : "через Google"}</Badge>
           </div>
         </div>
       </div>
 
-      <ol className="mb-3 space-y-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
+      <p className="mb-2 text-xs text-gray-700 dark:text-gray-200 leading-relaxed">
+        В обычном Samsung Calendar Dayla появляется через Google-аккаунт телефона — без сторонних приложений:
+      </p>
+      <ol className="mb-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
+        <li>Подключите выше Google Calendar.</li>
         <li>
-          Через Google: подключите здесь Google Calendar — Samsung Calendar сам показывает календари Google-аккаунта
-          телефона (Календарь → ☰ → Управление календарями). Задачи Dayla появятся в Samsung, события из Samsung в
-          календаре Google — в Dayla.
+          В Samsung Calendar: ☰ → ⚙ Настройки → Управление календарями (или «Календари») → включите календарь вашего
+          Google-аккаунта. Если аккаунта нет — Настройки телефона → Учётные записи → Добавить → Google.
         </li>
-        <li>
-          По ссылке: установите ICSx⁵ из Google Play или Galaxy Store и добавьте в нём ссылку ниже — календарь Dayla
-          появится в Samsung Calendar и будет обновляться сам.
-        </li>
+        <li>Задачи из Dayla сразу появятся в Samsung Calendar, а события, созданные в нём в Google-календаре, — в Dayla.</li>
       </ol>
+      <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+        Без Google: ссылка ниже — для подписки в Outlook, Apple Calendar и других приложениях. Samsung Calendar сам
+        подписываться на ссылки не умеет — его календари приходят только из аккаунтов телефона.
+      </p>
 
       {url && (
         <input

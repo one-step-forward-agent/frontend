@@ -8,6 +8,7 @@ import { Icon } from "../components/icons";
 import { Avatar } from "../components/Layout";
 import { TimeField } from "@/components/ui/time-field";
 import { restartTour } from "../components/Tour";
+import { CustomRemindersSection } from "../components/customReminders";
 import { TAG_COLORS, TagChip } from "../components/tags";
 import {
   Badge,
@@ -39,6 +40,7 @@ import { useNavigate } from "react-router-dom";
 const SECTIONS = [
   { id: "profile", label: "Профиль" },
   { id: "tags", label: "Теги" },
+  { id: "my-reminders", label: "Напоминания" },
   { id: "reminders", label: "Уведомления" },
   { id: "telegram", label: "Telegram" },
   { id: "appearance", label: "Оформление" },
@@ -169,6 +171,7 @@ export function AccountPage() {
         <div className="space-y-6 min-w-0">
           <ProfileSection />
           <TagsSection />
+          <CustomRemindersSection />
           <RemindersSection />
           <TelegramSection />
           <AppearanceSection />
