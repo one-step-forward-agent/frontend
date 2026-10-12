@@ -28,7 +28,7 @@ const GLASS_SHEEN_ROUND_XL =
   "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
 /* Eye inside a password field: shows or hides what was typed */
-const PasswordToggle: React.FC<{ shown: boolean; onToggle: () => void }> = ({ shown, onToggle }) => (
+export const PasswordToggle: React.FC<{ shown: boolean; onToggle: () => void }> = ({ shown, onToggle }) => (
   <button
     type="button"
     onClick={onToggle}

@@ -92,3 +92,46 @@
 @keyframes fd-rise { from { opacity: 0; transform: translateY(8px); } }
 @media (max-width: 959px) { .toasts { left: 16px; right: 16px; bottom: calc(64px + 12px + env(safe-area-inset-bottom, 0px)); max-width: none; } }
 
+
+/* ─── TimeField: hours and minutes as two dropdowns (components/ui/time-field.tsx) ─── */
+.time-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.time-field.is-disabled { opacity: 0.55; cursor: default; }
+.time-field-icon { flex-shrink: 0; margin-right: 6px; opacity: 0.55; pointer-events: none; }
+.time-field-colon { opacity: 0.6; pointer-events: none; }
+.time-field select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none;
+  min-height: 0 !important;
+  width: auto !important;
+  padding: 4px 2px !important;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.time-field select:disabled { cursor: default; }
+.time-field select:focus-visible { border-radius: 6px; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.6) !important; }
+/* Inside the app's forms it looks like the other inputs */
+.fd-app .time-field {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  color: var(--ink);
+}
+.fd-app .time-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus); }

@@ -31,6 +31,7 @@ import {
 import { notifyTagsChanged, notifyTasksChanged, useTags } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
+import { TimeField } from "@/components/ui/time-field";
 import { GLASS_BODY_FLAT, GLASS_ERROR, GLASS_PRIMARY, GLASS_CHIP } from "@/components/dashboard/glass";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
@@ -367,6 +368,11 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     </div>
   );
 }
+
+// Time fields of a draft card: the same glass as its date field
+const DRAFT_TIME =
+  "h-9 px-3 text-sm rounded-lg bg-white/[0.05] dark:bg-white/[0.02] ring-1 ring-white/20 dark:ring-white/10 " +
+  "focus-within:ring-sky-400/50 text-gray-900 dark:text-white";
 
 /* ─── ChatMessage ────────────────────────────────────────── */
 
@@ -1516,23 +1522,17 @@ function Proposal({
               <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">
                 Время
               </span>
-              <input
-                type="time"
+              <TimeField
                 value={item.time ?? ""}
-                onChange={(e) =>
+                onChange={(value) =>
                   patch(index, {
-                    time: e.target.value || null,
-                    end_time: e.target.value ? item.end_time : null,
+                    time: value || null,
+                    end_time: value ? item.end_time : null,
                   })
                 }
-                onClick={(e) => openPicker(e.currentTarget)}
-                className={cn(
-                  "w-full h-9 px-3 text-sm rounded-lg",
-                  "bg-white/[0.05] dark:bg-white/[0.02]",
-                  "ring-1 ring-white/20 dark:ring-white/10",
-                  "outline-none focus:ring-sky-400/50",
-                  "text-gray-900 dark:text-white"
-                )}
+                allowEmpty
+                label="Время"
+                className={DRAFT_TIME}
               />
             </label>
             {item.time && (
@@ -1540,19 +1540,11 @@ function Proposal({
                 <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">
                   До
                 </span>
-                <input
-                  type="time"
+                <TimeField
                   value={item.end_time ?? hourLater(item.time)}
-                  onChange={(e) => patch(index, { end_time: e.target.value || null })}
-                  onClick={(e) => openPicker(e.currentTarget)}
-                  aria-label="Время окончания"
-                  className={cn(
-                    "w-full h-9 px-3 text-sm rounded-lg",
-                    "bg-white/[0.05] dark:bg-white/[0.02]",
-                    "ring-1 ring-white/20 dark:ring-white/10",
-                    "outline-none focus:ring-sky-400/50",
-                    item.end_time ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"
-                  )}
+                  onChange={(value) => patch(index, { end_time: value || null })}
+                  label="Время окончания"
+                  className={cn(DRAFT_TIME, !item.end_time && "text-gray-500 dark:text-gray-400")}
                 />
               </label>
             )}

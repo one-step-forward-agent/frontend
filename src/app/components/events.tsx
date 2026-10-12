@@ -4,7 +4,6 @@ import type { Calendar, CalendarEvent, EventCreate, Priority } from "../api/type
 import { useAuth } from "../auth";
 import {
   PRIORITIES,
-  RECURRENCE_OPTIONS,
   addDays,
   browserTimezone,
   dayKey,
@@ -17,14 +16,15 @@ import {
   lastDay,
   openPicker,
   parseDayKey,
-  recurrenceRule,
   sameDay,
   startOfDay,
 } from "../lib/format";
 import { notifyTasksChanged } from "../lib/hooks";
 import { Link } from "../router";
 import { Icon } from "./icons";
+import { NO_REPEAT, RepeatEditor, parseRepeat, repeatError, repeatRule, sameRule, type Repeat } from "./repeat";
 import { TagList, TagPicker } from "./tags";
+import { TimeField } from "@/components/ui/time-field";
 import { Badge, Button, Field, Switch } from "./ui";
 
 export function EventRow({ event, showDate = false, extra }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode }) {
@@ -137,7 +137,7 @@ interface FormState {
   location: string;
   description: string;
   reminder: string;
-  repeat: string;
+  repeat: Repeat;
 }
 
 const clock = (date: Date) => formatTime(date);
@@ -164,7 +164,7 @@ function initialState(event?: CalendarEvent, day?: string | null): FormState {
       location: event.location ?? "",
       description: event.description ?? "",
       reminder: event.reminder_minutes == null ? "" : String(event.reminder_minutes),
-      repeat: "",
+      repeat: parseRepeat(event.recurrence_rule),
     };
   }
   // Новая задача не получает текущие дату и время автоматически: дата — только если её выбрали (день в календаре)
@@ -184,7 +184,7 @@ function initialState(event?: CalendarEvent, day?: string | null): FormState {
     location: "",
     description: "",
     reminder: "",
-    repeat: "",
+    repeat: NO_REPEAT,
   };
 }
 
@@ -211,6 +211,8 @@ function toPayload(state: FormState, timezone: string): EventCreate | string {
     if (end <= start) return "Окончание должно быть позже начала";
   }
   const deadlineDay = parseDayKey(state.deadlineDate);
+  const repeatProblem = repeatError(state.repeat, state.date);
+  if (repeatProblem) return repeatProblem;
   return {
     title,
     all_day: !state.time,
@@ -221,7 +223,7 @@ function toPayload(state: FormState, timezone: string): EventCreate | string {
     location: state.location.trim() || null,
     description: state.description.trim() || null,
     reminder_minutes: state.reminder === "" ? null : Number(state.reminder),
-    recurrence_rule: recurrenceRule(state.repeat, start),
+    recurrence_rule: repeatRule(state.repeat, start),
     deadline_at: deadlineDay ? at(deadlineDay, state.deadlineTime || "23:59").toISOString() : null,
     is_fixed: state.fixed,
     tag_ids: state.tagIds,
@@ -251,7 +253,7 @@ export function EventForm({
     { label: "Сегодня", value: dayKey(today) },
     { label: "Завтра", value: dayKey(addDays(today, 1)) },
   ];
-  const hasDetails = !!(event && (event.recurrence || event.deadline_at || event.is_fixed || event.location || event.description || event.reminder_minutes != null || event.priority !== "medium"));
+  const hasDetails = !!(event && (event.deadline_at || event.is_fixed || event.location || event.description || event.reminder_minutes != null || event.priority !== "medium"));
 
   const changeTime = (value: string) =>
     setState((current) => {
@@ -273,8 +275,9 @@ export function EventForm({
     setSaving(true);
     try {
       const { recurrence_rule, ...changes } = payload;
+      // An existing task sends its repeat only when it changed: then this and the later tasks of the series follow it
       const saved = event
-        ? await api.events.update(event.id, changes)
+        ? await api.events.update(event.id, sameRule(recurrence_rule, event.recurrence_rule) ? changes : { ...changes, recurrence_rule })
         : await api.events.create({ ...changes, recurrence_rule, ...(state.calendarId ? { calendar_id: Number(state.calendarId) } : {}) });
       notifyTasksChanged();
       onSaved(saved);
@@ -294,7 +297,7 @@ export function EventForm({
       </Field>
 
       <div className="form-row form-row-when">
-        <Field label={state.multiDay ? "С" : "Дата"} className="picker-field">
+        <Field label={state.multiDay ? "С" : state.repeat.freq ? "Начало" : "Дата"} className="picker-field">
           <input type="date" value={state.date} onChange={(e) => set("date", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} required />
         </Field>
         {state.multiDay ? (
@@ -314,10 +317,10 @@ export function EventForm({
 
       <div className="form-row form-row-time">
         <Field label="Время" className="picker-field">
-          <input type="time" value={state.time} onChange={(e) => changeTime(e.target.value)} onClick={(e) => openPicker(e.currentTarget)} aria-label="Время начала" />
+          <TimeField value={state.time} onChange={changeTime} allowEmpty label="Время начала" />
         </Field>
         <Field label="До" className="picker-field">
-          <input type="time" value={state.endTime} disabled={!state.time} onChange={(e) => set("endTime", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} aria-label="Время окончания" />
+          <TimeField value={state.endTime} onChange={(value) => set("endTime", value)} allowEmpty disabled={!state.time} label="Время окончания" />
         </Field>
         {/* Empty time fields already say there is no time */}
         {state.time && (
@@ -332,42 +335,27 @@ export function EventForm({
         Несколько дней
       </label>
 
+      <RepeatEditor value={state.repeat} onChange={(repeat) => set("repeat", repeat)} start={parseDayKey(state.date) ?? today} existing={!!event?.recurrence_rule} />
+
       <Field label="Теги">
         <TagPicker value={state.tagIds} onChange={(ids) => set("tagIds", ids)} />
       </Field>
 
       <details className="more" open={hasDetails}>
-        <summary>Дедлайн, повтор и детали</summary>
+        <summary>Дедлайн и детали</summary>
         <div className="form">
           <div className="form-row">
             <Field label="Дедлайн" className="picker-field">
               <input type="date" value={state.deadlineDate} onChange={(e) => set("deadlineDate", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} />
             </Field>
             <Field label="Время дедлайна" className="picker-field">
-              <input type="time" value={state.deadlineTime} disabled={!state.deadlineDate} onChange={(e) => set("deadlineTime", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} />
+              <TimeField value={state.deadlineTime} onChange={(value) => set("deadlineTime", value)} allowEmpty disabled={!state.deadlineDate} label="Время дедлайна" />
             </Field>
           </div>
 
           <Switch checked={state.fixed} onChange={(value) => set("fixed", value)} label="Нельзя переносить" hint="Dayla будет планировать вокруг этой задачи" />
 
           <div className="form-row">
-            {event?.recurrence && (
-              <Field label="Повтор">
-                {/* The rule belongs to the whole series: a changed copy would not change the other days */}
-                <input value={event.recurrence} readOnly disabled />
-              </Field>
-            )}
-            {!event && (
-              <Field label="Повтор">
-                <select value={state.repeat} onChange={(e) => set("repeat", e.target.value)}>
-                  {RECURRENCE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            )}
             <Field label="Приоритет">
               <select value={state.priority} onChange={(e) => set("priority", e.target.value as Priority)}>
                 {PRIORITIES.map((item) => (

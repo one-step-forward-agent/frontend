@@ -6,6 +6,7 @@ import { ThemePicker } from "@/theme";
 import { useAuth, useSignOut, useUser } from "../auth";
 import { Icon } from "../components/icons";
 import { Avatar } from "../components/Layout";
+import { TimeField } from "@/components/ui/time-field";
 import { restartTour } from "../components/Tour";
 import { TAG_COLORS, TagChip } from "../components/tags";
 import {
@@ -481,11 +482,7 @@ function RemindersSection() {
             />
             {draft.daily_digest_enabled && (
               <Field label="Время плана" className="field-inline">
-                <input
-                  type="time"
-                  value={draft.daily_digest_time.slice(0, 5)}
-                  onChange={(e) => update({ daily_digest_time: e.target.value })}
-                />
+                <TimeField value={draft.daily_digest_time.slice(0, 5)} onChange={(value) => update({ daily_digest_time: value })} label="Время плана" />
               </Field>
             )}
 
@@ -497,11 +494,7 @@ function RemindersSection() {
             />
             {draft.checkin_enabled && (
               <Field label="Время проверки" className="field-inline">
-                <input
-                  type="time"
-                  value={draft.checkin_time.slice(0, 5)}
-                  onChange={(e) => update({ checkin_time: e.target.value })}
-                />
+                <TimeField value={draft.checkin_time.slice(0, 5)} onChange={(value) => update({ checkin_time: value })} label="Время проверки" />
               </Field>
             )}
 
@@ -513,11 +506,7 @@ function RemindersSection() {
             />
             {draft.evening_enabled && (
               <Field label="Время итогов" className="field-inline">
-                <input
-                  type="time"
-                  value={draft.evening_time.slice(0, 5)}
-                  onChange={(e) => update({ evening_time: e.target.value })}
-                />
+                <TimeField value={draft.evening_time.slice(0, 5)} onChange={(value) => update({ evening_time: value })} label="Время итогов" />
               </Field>
             )}
 
@@ -537,18 +526,10 @@ function RemindersSection() {
             {draft.quiet_hours_enabled && (
               <div className="form-row">
                 <Field label="С">
-                  <input
-                    type="time"
-                    value={draft.quiet_hours_start.slice(0, 5)}
-                    onChange={(e) => update({ quiet_hours_start: e.target.value })}
-                  />
+                  <TimeField value={draft.quiet_hours_start.slice(0, 5)} onChange={(value) => update({ quiet_hours_start: value })} label="Тихие часы с" />
                 </Field>
                 <Field label="До">
-                  <input
-                    type="time"
-                    value={draft.quiet_hours_end.slice(0, 5)}
-                    onChange={(e) => update({ quiet_hours_end: e.target.value })}
-                  />
+                  <TimeField value={draft.quiet_hours_end.slice(0, 5)} onChange={(value) => update({ quiet_hours_end: value })} label="Тихие часы до" />
                 </Field>
               </div>
             )}

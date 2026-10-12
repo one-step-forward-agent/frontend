@@ -2,12 +2,13 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  CalendarDays, Clock, Globe, Sparkles, Copy,
+  CalendarDays, Globe, Sparkles, Copy,
 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
 import { useOnboarding, type DayShort } from "./OnboardingContext";
 import { Input } from "@/components/ui/form-field";
+import { TimeField } from "@/components/ui/time-field";
 import { cn } from "@/utils/cn";
 
 const TOTAL = 10;
@@ -24,20 +25,10 @@ const GLASS_SHEEN =
   "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
 /* Общие стили для time-инпутов: снимаем нативную ширину Safari */
-const TIME_INPUT_CLASS =
-  "w-full min-w-0 px-2 tabular-nums text-center " +
-  "[appearance:none] [-webkit-appearance:none] " +
-  "[&::-webkit-date-and-time-value]:text-center " +
-  "[&::-webkit-calendar-picker-indicator]:hidden " +
-  "[&::-webkit-datetime-edit]:p-0";
-
-const TIME_INPUT_STYLE: React.CSSProperties = {
-  width: "100%",
-  minWidth: 0,
-  maxWidth: "100%",
-  appearance: "none",
-  WebkitAppearance: "none",
-};
+// A time field that looks like the other inputs of the onboarding
+const TIME_FIELD_CLASS =
+  "justify-center h-11 px-3 rounded border border-gray-200 dark:border-gray-700 " +
+  "bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-within:border-blue-500";
 
 const DAYS: { short: DayShort; full: string }[] = [
   { short: "Пн", full: "Понедельник" },
@@ -255,39 +246,25 @@ export const ExistingPlans: React.FC = () => {
             {/* Одинаковое время */}
             {!perDay && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
-                <label className="block min-w-0">
-                  <div className="relative min-w-0">
-                    <Clock
-                      size={14}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
-                      aria-hidden="true"
-                    />
-                    <Input
-                      type="time"
-                      value={uniformFrom}
-                      onChange={(e) => setUniformFrom(e.target.value)}
-                      className={cn("pl-9", TIME_INPUT_CLASS)}
-                      style={TIME_INPUT_STYLE}
-                    />
-                  </div>
-                </label>
+                <div className="min-w-0">
+                  <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">Начало</p>
+                  <TimeField
+                    value={uniformFrom}
+                    onChange={setUniformFrom}
+                    label="Начало работы"
+                    className={TIME_FIELD_CLASS}
+                  />
+                </div>
 
-                <label className="block min-w-0">
-                  <div className="relative min-w-0">
-                    <Clock
-                      size={14}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
-                      aria-hidden="true"
-                    />
-                    <Input
-                      type="time"
-                      value={uniformTo}
-                      onChange={(e) => setUniformTo(e.target.value)}
-                      className={cn("pl-9", TIME_INPUT_CLASS)}
-                      style={TIME_INPUT_STYLE}
-                    />
-                  </div>
-                </label>
+                <div className="min-w-0">
+                  <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">Конец</p>
+                  <TimeField
+                    value={uniformTo}
+                    onChange={setUniformTo}
+                    label="Конец работы"
+                    className={TIME_FIELD_CLASS}
+                  />
+                </div>
               </div>
             )}
 
@@ -324,21 +301,19 @@ export const ExistingPlans: React.FC = () => {
                         </span>
 
                         <div className="flex-1 min-w-0 grid grid-cols-2 gap-1.5">
-                          <Input
-                            type="time"
+                          <TimeField
                             value={t.from}
-                            onChange={(e) => updateDayTime(d.short, "from", e.target.value)}
-                            aria-label={`Начало работы в ${d.full}`}
-                            className={cn("text-xs sm:text-sm", TIME_INPUT_CLASS)}
-                            style={TIME_INPUT_STYLE}
+                            onChange={(value) => updateDayTime(d.short, "from", value)}
+                            label={`Начало работы, ${d.full}`}
+                            icon={false}
+                            className={cn("text-sm", TIME_FIELD_CLASS)}
                           />
-                          <Input
-                            type="time"
+                          <TimeField
                             value={t.to}
-                            onChange={(e) => updateDayTime(d.short, "to", e.target.value)}
-                            aria-label={`Конец работы в ${d.full}`}
-                            className={cn("text-xs sm:text-sm", TIME_INPUT_CLASS)}
-                            style={TIME_INPUT_STYLE}
+                            onChange={(value) => updateDayTime(d.short, "to", value)}
+                            label={`Конец работы, ${d.full}`}
+                            icon={false}
+                            className={cn("text-sm", TIME_FIELD_CLASS)}
                           />
                         </div>
                       </div>

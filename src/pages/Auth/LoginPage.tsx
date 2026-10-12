@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import { Alert, FormField, Input } from '@/components/ui';
 import { cn } from '@/utils/cn';
 import { SignInButtons } from './SignInButtons';
+import { PasswordToggle } from './RegisterPage';
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -28,6 +29,7 @@ const LoginPage: React.FC = () => {
   const { isAuthenticated, login, isSubmitting: isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   // Set by a Google or Yandex sign-in that could not log in, e.g. the email already has a password account
   const redirectError = searchParams.get('error');
 
@@ -80,15 +82,19 @@ const LoginPage: React.FC = () => {
 
         <FormField id="password" label="Пароль" required>
           {(field) => (
-            <Input
-              {...field}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              placeholder="Минимум 8 символов"
-              required
-            />
+            <div className="relative">
+              <Input
+                {...field}
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                placeholder="Минимум 8 символов"
+                className="pr-10"
+                required
+              />
+              <PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} />
+            </div>
           )}
         </FormField>
 
