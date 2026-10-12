@@ -51,6 +51,9 @@ const unfinished = (event: CalendarEvent) =>
 
 /* ─── TodayPage ─────────────────────────────────────────── */
 
+const calendarLink = (view: "day" | "week", day: Date) =>
+  `/calendar?view=${view}&month=${dayKey(day).slice(0, 7)}&day=${dayKey(day)}`;
+
 export function TodayPage() {
   useTitle("Сегодня");
   const user = useUser();
@@ -99,6 +102,17 @@ export function TodayPage() {
           <span className="inline-block first-letter:uppercase">
             {dayTitle(now).replace(/^Сегодня,?\s*/i, "")}
           </span>
+        }
+        actions={
+          // Tomorrow and this week open in the calendar: the day itself and its week
+          <>
+            <Link to={calendarLink("day", addDays(now, 1))} className="chip-toggle inline-flex items-center gap-1.5">
+              <Icon name="right" size={14} /> Завтра
+            </Link>
+            <Link to={calendarLink("week", now)} className="chip-toggle inline-flex items-center gap-1.5">
+              <Icon name="calendar" size={14} /> Неделя
+            </Link>
+          </>
         }
       />
 
