@@ -2,6 +2,7 @@
 import { useCallback, useState } from "react";
 import { api } from "../api/client";
 import { TelegramPrompt } from "../components/TelegramPrompt";
+import { DayTimeline } from "../components/DayTimeline";
 import type { CalendarEvent, Recommendation, Stats } from "../api/types";
 import { useUser } from "../auth";
 import { EventList } from "../components/events";
@@ -72,7 +73,6 @@ export function TodayPage() {
   );
   const stats = useAsync(() => api.stats(7), []);
   const recommendations = useAsync(() => loadRecommendations(user.id), [user.id]);
-  const telegram = useAsync(() => api.telegram.status(), []);
 
   // Tips change with the tasks too: "Незакрытые задачи" goes away once they are done
   const reloadAll = useCallback(() => {
@@ -172,43 +172,12 @@ export function TodayPage() {
             {stats.data ? <Progress stats={stats.data} /> : <Loading />}
           </GlassCard>
 
-          {telegram.data && !telegram.data.linked && (
-            <GlassCard>
-              <div className="flex items-start gap-3">
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center",
-                    "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl",
-                    "ring-1 ring-white/30 dark:ring-white/10",
-                    "text-sky-600 dark:text-sky-300"
-                  )}
-                >
-                  <Icon name="bell" size={16} className="relative" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    Telegram
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Напоминания, план утром, итоги дня вечером и дедлайны.
-                  </p>
-                  <Link
-                    to="/account#telegram"
-                    className={cn(
-                      "mt-2 inline-flex items-center gap-1.5 overflow-hidden",
-                      "px-3 h-8 rounded-xl text-xs font-medium",
-                      GLASS_BODY,
-                      "text-gray-700 dark:text-gray-300",
-                      "transition-transform duration-200 hover:-translate-y-0.5"
-                    )}
-                  >
-                    Подключить
-                  </Link>
-                </div>
-              </div>
+          {todays.length > 0 && (
+            <GlassCard title="День по часам">
+              <DayTimeline events={todays} day={today} />
             </GlassCard>
           )}
+
         </div>
       </div>
     </div>
@@ -528,6 +497,13 @@ function Progress({ stats }: { stats: Stats }) {
           </div>
         ))}
       </div>
+
+      <Link
+        to={`/assistant?q=${encodeURIComponent("Статистика")}`}
+        className="inline-flex items-center gap-1 text-xs font-medium text-sky-700 dark:text-sky-300 hover:underline"
+      >
+        Подробнее в чате <Icon name="right" size={12} />
+      </Link>
 
       {/* The week's numbers are in the bars above; below them only the streak */}
       {stats.streak > 0 ? (
