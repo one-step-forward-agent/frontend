@@ -820,56 +820,6 @@ const PageBackdrop: React.FC = () => (
 );
 
 
-const ExcelPreview: React.FC = () => (
-  <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
-    <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-100 dark:border-emerald-900/60">
-      <div className="w-5 h-5 rounded bg-emerald-500 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
-        X
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-medium text-gray-900 dark:text-white truncate">
-          Финансовый_отчёт_Q4.xlsx
-        </p>
-        <p className="text-[9px] text-gray-500 dark:text-gray-400">
-          Excel · 24 КБ
-        </p>
-      </div>
-    </div>
-
-    <div className="p-2.5">
-      <table className="w-full text-[10px] leading-tight">
-        <thead>
-          <tr className="text-left text-gray-500 dark:text-gray-400">
-            <th className="pb-1 font-medium">Статья</th>
-            <th className="pb-1 text-right font-medium">План</th>
-            <th className="pb-1 text-right font-medium">Факт</th>
-            <th className="pb-1 text-right font-medium">Δ</th>
-          </tr>
-        </thead>
-        <tbody className="text-gray-800 dark:text-gray-200">
-          <tr>
-            <td className="py-0.5">Выручка</td>
-            <td className="py-0.5 text-right tabular-nums">2 400</td>
-            <td className="py-0.5 text-right tabular-nums text-emerald-600 dark:text-emerald-400">2 580</td>
-            <td className="py-0.5 text-right tabular-nums text-emerald-600 dark:text-emerald-400">+7,5%</td>
-          </tr>
-          <tr>
-            <td className="py-0.5">Себестоимость</td>
-            <td className="py-0.5 text-right tabular-nums">1 100</td>
-            <td className="py-0.5 text-right tabular-nums text-red-500 dark:text-red-400">1 240</td>
-            <td className="py-0.5 text-right tabular-nums text-red-500 dark:text-red-400">+12,7%</td>
-          </tr>
-          <tr className="border-t border-gray-100 dark:border-gray-800">
-            <td className="py-1 font-medium">Маржа</td>
-            <td className="py-1 text-right tabular-nums font-medium">1 300</td>
-            <td className="py-1 text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">1 340</td>
-            <td className="py-1 text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">+3,1%</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
 
 const MON_IMG_W = 1144;
 const MON_IMG_H = 938;
@@ -1354,8 +1304,7 @@ const futureINTEGRATIONS = [
 const INTEGRATIONS = [
   { src: "/images/google-calendar.png",      alt: "Google Calendar", w: 44 },
   { src: "/images/yandexcalendar.png",        alt: "Yandex Calendar", w: 44 },
-  { src: "/images/Jira_Software_Logo.svg",   alt: "Jira",            w: 40 },
-  { src: "/images/Notion.webp",               alt: "Notion",          w: 44 },
+  { src: "/images/apple-calendar.webp",       alt: "Apple Calendar",  w: 44 },
   { src: "/images/TelegramWB.webp",             alt: "Telegram",        w: 44 },
 ];
 
@@ -1777,10 +1726,10 @@ const SlideFinance: React.FC = () => (
       <div className="max-w-2xl mb-14">
         <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
         <h2 className="text-4xl font-semibold tracking-tight">
-          Прислали задачу? Dayla подготовит всё необходимое
+          Прислали задачу? Dayla внесёт её в ваш план
         </h2>
         <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Осталось добавить Dayla в чат
+          Добавьте Dayla в рабочий чат и упомяните её — задача и напоминание появятся в вашем календаре
         </p>
       </div>
 
@@ -1794,8 +1743,9 @@ const SlideFinance: React.FC = () => (
           <DaylaChatCard
             daylaMessage={
               <>
-                Уже собираю ваши документы
-                <ExcelPreview />
+                Записала «Отчётность за квартал» на{" "}
+                <strong className="font-semibold">27 декабря</strong> и напомню за день. Подтвердите в личных
+                сообщениях — всё уже в календаре
               </>
             }
           />
@@ -1821,7 +1771,7 @@ const SlideGTD: React.FC = () => (
         </div>
         <div className="relative">
           <DaylaChatCard
-            userMessage="Систематизируй задачи по GTD из Jira и Telegram"
+            userMessage="Систематизируй задачи по GTD из рабочих чатов и Telegram"
             daylaMessage={GTD_RESPONSE}
           />
         </div>

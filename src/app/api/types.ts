@@ -78,6 +78,8 @@ export interface Tag {
   id: number;
   name: string;
   color: TagColor;
+  /** false: its tasks are left out of the progress and the streak («прогулка» is not progress, «спортзал» is) */
+  counts_progress?: boolean;
 }
 
 export interface EventCreate {

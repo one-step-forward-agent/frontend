@@ -34,20 +34,16 @@ const ImageMark = (src: string, width: number): React.FC => {
   const Mark: React.FC = () => <img src={src} alt="" aria-hidden="true" style={{ width, height: 'auto' }} className="max-h-[18px] object-contain" />;
   return Mark;
 };
-const NotionMark = ImageMark('/images/Notion.webp', 18);
-const JiraMark = ImageMark('/images/Jira_Software_Logo.svg', 20);
 
 // Google's button keeps Google's own look (white or #131314, grey outline), not the glass of the rest of the form
 const GOOGLE_BODY =
   "bg-white text-[#1F1F1F] ring-1 ring-[#747775] hover:bg-[#F7F8F8] " +
   "dark:bg-[#131314] dark:text-[#E3E3E3] dark:ring-[#8E918F] dark:hover:bg-[#1F1F20]";
 
-// Four buttons in two columns: the button shows the service, the line above says what it does
+// Two buttons: the button shows the service, the line above says what it does
 const PROVIDERS: { id: SignInProvider; name: string; label: string; signUp: string; Mark: React.FC; body: string }[] = [
   { id: 'google', name: 'Google', label: 'Войти через Google', signUp: 'Регистрация через Google', Mark: GoogleMark, body: GOOGLE_BODY },
   { id: 'yandex', name: 'Яндекс ID', label: 'Войти с Яндекс ID', signUp: 'Регистрация с Яндекс ID', Mark: YandexMark, body: cn("text-gray-800 dark:text-gray-100", GLASS_BODY) },
-  { id: 'notion', name: 'Notion', label: 'Войти через Notion', signUp: 'Регистрация через Notion', Mark: NotionMark, body: cn("text-gray-800 dark:text-gray-100", GLASS_BODY) },
-  { id: 'jira', name: 'Jira', label: 'Войти через Jira', signUp: 'Регистрация через Jira', Mark: JiraMark, body: cn("text-gray-800 dark:text-gray-100", GLASS_BODY) },
 ];
 
 const LINK = "font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300";
@@ -62,7 +58,7 @@ interface SignInButtonsProps {
 }
 
 /**
- * «Войти через Google / Яндекс ID / Notion / Jira». An account with the same email (made with a password too) is logged into;
+ * «Войти через Google / Яндекс ID». An account with the same email (made with a password too) is logged into;
  * a new email gets a new account, so the login page says that this accepts the terms, like the registration form.
  */
 export const SignInButtons: React.FC<SignInButtonsProps> = ({ returnTo, register = false, blocked }) => {

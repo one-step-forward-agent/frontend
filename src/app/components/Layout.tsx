@@ -288,7 +288,18 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
           >
             <Brand />
-            <ThemeToggle />
+            <span className="flex items-center gap-1.5">
+              {path !== "/events/new" && (
+                <Link
+                  to="/events/new"
+                  aria-label="Новая задача"
+                  className="inline-flex items-center gap-1 h-9 pl-2.5 pr-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-sky-500 to-indigo-500 shadow-sm active:scale-95 transition-transform"
+                >
+                  <Icon name="plus" size={16} /> Задача
+                </Link>
+              )}
+              <ThemeToggle />
+            </span>
           </header>
 
           <main

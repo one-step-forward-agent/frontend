@@ -53,8 +53,6 @@ type Integration = {
 const INTEGRATIONS: Integration[] = [
   { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
   { id: "yandex", name: "Яндекс Календарь", src: "/images/yandexcalendar.png",      w: 40, kind: "oauth" },
-  { id: "jira",   name: "Jira",             src: "/images/Jira_Software_Logo.svg", w: 36, kind: "oauth" },
-  { id: "notion", name: "Notion",           src: "/images/Notion.webp",             w: 40, kind: "oauth" },
 ];
 
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
@@ -64,8 +62,6 @@ const isOAuthProvider = (id: Provider): id is OAuthProvider =>
 const SIGN_UP_WITH: { id: SignInProvider; name: string }[] = [
   { id: "google", name: "Google" },
   { id: "yandex", name: "Яндекс ID" },
-  { id: "notion", name: "Notion" },
-  { id: "jira", name: "Jira" },
 ];
 
 // Back here after signing up or logging in: ?resume=1 connects the remaining chosen services
@@ -200,7 +196,7 @@ export const Integrations: React.FC = () => {
   }, [searchParams, isAuthenticated]);
 
   /* ─── Без аккаунта ─────────────────────────────── */
-  // Google, Яндекс ID, Notion или Jira создают аккаунт по своему email. Яндекс, Notion и Jira сразу подключаются;
+  // Google или Яндекс ID создают аккаунт по своему email. Яндекс сразу подключается;
   // Google — только аккаунт (без проверки Google), а его календарь подключается следом, если он отмечен;
   // остальные сервисы подключатся после обычной регистрации — выбор сохранён в онбординге.
   const createAccount = async () => {
@@ -363,7 +359,7 @@ export const Integrations: React.FC = () => {
             })}
           </div>
 
-          {/* ─── Аккаунт через Google / Яндекс ID / Notion / Jira ─── */}
+          {/* ─── Аккаунт через Google / Яндекс ID ─── */}
           {needsAccount && signUpWith && (
             <div className="space-y-2.5">
               <p className="text-sm text-gray-600 dark:text-gray-300 leading-snug">

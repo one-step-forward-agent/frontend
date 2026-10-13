@@ -209,8 +209,8 @@ export const api = {
     request<{ items: Recommendation[] }>(`/api/recommendations?scope=${scope}${day ? `&day=${day}` : ""}`).then((result) => result.items),
   tags: {
     list: () => request<Tag[]>("/api/tags"),
-    create: (body: { name: string; color?: TagColor }) => request<Tag>("/api/tags", json("POST", body), "tag_create"),
-    update: (id: number, body: { name?: string; color?: TagColor }) => request<Tag>(`/api/tags/${id}`, json("PATCH", body), "tag_update"),
+    create: (body: { name: string; color?: TagColor; counts_progress?: boolean }) => request<Tag>("/api/tags", json("POST", body), "tag_create"),
+    update: (id: number, body: { name?: string; color?: TagColor; counts_progress?: boolean }) => request<Tag>(`/api/tags/${id}`, json("PATCH", body), "tag_update"),
     remove: (id: number) => request<void>(`/api/tags/${id}`, { method: "DELETE" }, "tag_delete"),
   },
   assistant: {

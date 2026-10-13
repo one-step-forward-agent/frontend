@@ -8,7 +8,6 @@ import { Icon } from "../components/icons";
 import { Avatar } from "../components/Layout";
 import { TimeField } from "@/components/ui/time-field";
 import { restartTour } from "../components/Tour";
-import { CustomRemindersSection } from "../components/customReminders";
 import { TAG_COLORS, TagChip } from "../components/tags";
 import {
   Badge,
@@ -40,7 +39,6 @@ import { useNavigate } from "react-router-dom";
 const SECTIONS = [
   { id: "profile", label: "Профиль" },
   { id: "tags", label: "Теги" },
-  { id: "my-reminders", label: "Напоминания" },
   { id: "reminders", label: "Уведомления" },
   { id: "telegram", label: "Telegram" },
   { id: "appearance", label: "Оформление" },
@@ -171,7 +169,6 @@ export function AccountPage() {
         <div className="space-y-6 min-w-0">
           <ProfileSection />
           <TagsSection />
-          <CustomRemindersSection />
           <RemindersSection />
           <TelegramSection />
           <AppearanceSection />
@@ -285,6 +282,13 @@ function TagsSection() {
       notifyTagsChanged(tags.map((item) => (item.id === tag.id ? saved : item)));
     });
 
+  const setCounts = (tag: Tag, counts: boolean) =>
+    run(`counts-${tag.id}`, async () => {
+      const saved = await api.tags.update(tag.id, { counts_progress: counts });
+      notifyTagsChanged(tags.map((item) => (item.id === tag.id ? saved : item)));
+      toast(counts ? `«${tag.name}» снова считается в прогрессе` : `Задачи с тегом «${tag.name}» больше не влияют на прогресс`);
+    });
+
   const remove = (tag: Tag) =>
     run(`delete-${tag.id}`, async () => {
       await api.tags.remove(tag.id);
@@ -297,7 +301,8 @@ function TagsSection() {
       <GlassCard title="Теги">
         <p className="muted small">
           Отмечайте задачи тегами и фильтруйте по ним в «Задачах». В чате тег
-          ставится так: «отчёт завтра #работа».
+          ставится так: «отчёт завтра #работа». Снимите «в прогрессе» у тегов
+          вроде «прогулка» — такие задачи не будут влиять на процент и серию.
         </p>
         {tags.length > 0 && (
           <ul className="simple-list tag-manage">
@@ -322,6 +327,18 @@ function TagsSection() {
                     />
                   ))}
                 </span>
+                <label
+                  className="inline-flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 cursor-pointer select-none"
+                  title="Учитывать задачи с этим тегом в прогрессе и серии"
+                >
+                  <input
+                    type="checkbox"
+                    checked={tag.counts_progress !== false}
+                    disabled={pending === `counts-${tag.id}`}
+                    onChange={(event) => setCounts(tag, event.target.checked)}
+                  />
+                  в прогрессе
+                </label>
                 <ConfirmButton
                   size="sm"
                   icon="trash"
@@ -387,8 +404,14 @@ function AppearanceSection() {
   );
 }
 
-const LEAD_PRESETS = [0, 5, 10, 15, 30, 60, 120, 1440];
-const SOURCES: Source[] = ["local", "ai", "google", "apple", "jira", "notion"];
+// Offered until chosen; any other time is added by hand
+const LEAD_SUGGESTIONS = [0, 15, 60, 1440];
+const LEAD_UNITS = [
+  { value: 1, label: "мин" },
+  { value: 60, label: "ч" },
+  { value: 1440, label: "дн" },
+];
+const SOURCES: Source[] = ["local", "ai", "google", "apple"];
 
 function RemindersSection() {
   const settings = useAsync(() => api.reminders.get(), []);
@@ -452,27 +475,10 @@ function RemindersSection() {
 
             <fieldset className="fieldset" disabled={!draft.enabled}>
               <legend className="field-label">Когда напоминать</legend>
-              <div className="chips">
-                {LEAD_PRESETS.map((minutes) => (
-                  <button
-                    key={minutes}
-                    type="button"
-                    className={`chip-toggle ${
-                      draft.lead_times.includes(minutes) ? "active" : ""
-                    }`}
-                    aria-pressed={draft.lead_times.includes(minutes)}
-                    onClick={() =>
-                      update({
-                        lead_times: toggle(draft.lead_times, minutes).slice(0, 10),
-                      })
-                    }
-                  >
-                    {minutes === 0
-                      ? "в момент начала"
-                      : `за ${formatLead(minutes)}`}
-                  </button>
-                ))}
-              </div>
+              <LeadTimes
+                value={draft.lead_times}
+                onChange={(lead_times) => update({ lead_times })}
+              />
               <span className="field-hint">
                 Для отдельного события можно задать своё время в его настройках.
               </span>
@@ -597,8 +603,8 @@ function IntegrationsSection() {
         }
       >
         <p className="muted small">
-          Google Calendar, Яндекс Календарь, Apple Calendar, Samsung Calendar, Jira и
-          Notion: подключение, импорт и отправка задач.
+          Google Calendar, Яндекс Календарь, Apple Calendar и Samsung Calendar:
+          подключение, импорт и отправка задач.
         </p>
         {integrations.error && (
           <ErrorNote message={integrations.error} onRetry={integrations.reload} />
@@ -938,6 +944,78 @@ function SecuritySection() {
           </ConfirmButton>
         </div>
       </GlassCard>
+    </div>
+  );
+}
+/* Reminder lead times: the chosen ones with ×, a few suggestions, and any time of one's own */
+function LeadTimes({ value, onChange }: { value: number[]; onChange: (value: number[]) => void }) {
+  const [amount, setAmount] = useState("");
+  const [unit, setUnit] = useState(1);
+  const sorted = [...value].sort((a, b) => a - b);
+  const label = (minutes: number) => (minutes === 0 ? "в момент начала" : `за ${formatLead(minutes)}`);
+  const add = (minutes: number) => {
+    if (!Number.isFinite(minutes) || minutes < 0 || minutes > 10080 || value.includes(minutes)) return;
+    onChange([...value, minutes].slice(-10));
+  };
+  const addOwn = () => {
+    const number = Number(amount.replace(",", "."));
+    if (!number || number <= 0) return;
+    add(Math.round(number * unit));
+    setAmount("");
+  };
+  const suggestions = LEAD_SUGGESTIONS.filter((minutes) => !value.includes(minutes));
+
+  return (
+    <div className="space-y-2">
+      <div className="chips">
+        {sorted.length === 0 && <span className="field-hint">Пока не выбрано — добавьте время ниже.</span>}
+        {sorted.map((minutes) => (
+          <span key={minutes} className="chip-toggle active inline-flex items-center gap-1">
+            {label(minutes)}
+            <button
+              type="button"
+              aria-label={`Убрать «${label(minutes)}»`}
+              className="opacity-70 hover:opacity-100"
+              onClick={() => onChange(value.filter((item) => item !== minutes))}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        {suggestions.map((minutes) => (
+          <button key={minutes} type="button" className="chip-toggle" onClick={() => add(minutes)}>
+            + {label(minutes)}
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center gap-2 max-w-xs">
+        <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">за</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={amount}
+          placeholder="20"
+          aria-label="Своё время напоминания"
+          onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, "").slice(0, 4))}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              addOwn();
+            }
+          }}
+          className="!w-20"
+        />
+        <select value={unit} onChange={(event) => setUnit(Number(event.target.value))} aria-label="Единица" className="!w-24">
+          {LEAD_UNITS.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+        <Button size="sm" onClick={addOwn} disabled={!amount}>
+          Добавить
+        </Button>
+      </div>
     </div>
   );
 }

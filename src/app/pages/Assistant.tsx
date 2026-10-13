@@ -1,8 +1,8 @@
 // src/pages/AssistantPage.tsx
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent, type RefObject } from "react";
 import { ApiError, api } from "../api/client";
+import { TelegramPrompt } from "../components/TelegramPrompt";
 import type {
-  AgendaScope,
   AssistantEvent,
   CalendarEvent,
   AssistantReply,
@@ -43,33 +43,22 @@ type Message =
   | { id: number; role: "assistant"; reply: AssistantReply; serverId?: number; rating?: -1 | 1 | null }
   | { id: number; role: "error"; text: string };
 
-// "Разбить на шаги" does not send: it starts the request, the user names the task and the date
+// Everything else is asked in words; the day, the calendar and the stats have their own screens
 const QUICK_ACTIONS: { label: string; fill?: string }[] = [
-  { label: "Сегодня" },
-  { label: "Завтра" },
-  { label: "Разбить на шаги", fill: "Разбей на шаги до " },
-  { label: "Выполнено" },
-  { label: "Статистика" },
   { label: "Советы" },
   { label: "Анализ недели" },
-  { label: "Помощь" },
-];
-// The week is the calendar's job: a link there instead of a third scope
-const SCOPES: { value: AgendaScope; label: string }[] = [
-  { value: "today", label: "Сегодня" },
-  { value: "tomorrow", label: "Завтра" },
 ];
 
 const TOPIC_REPLIES = ["Как это сделать?", "Помоги перепланировать", "Что можно перенести?"];
 
-// One chat plans and finds: the assistant tells a question from a request by itself
-const EXAMPLES = [
-  "Созвон с командой завтра в 11:00 на час",
-  "Когда встреча с Олей?",
-  "Помоги подготовиться к экзамену 20 октября",
-  "Что у меня в следующую пятницу?",
-  "Перенеси созвон с командой на послезавтра",
-  "Проанализируй мою неделю",
+// What the chat can do, said once on an empty chat: plain text, not buttons to press
+const ABILITIES = [
+  ["Планирует", "«созвон с командой завтра в 11 на час», «каждую пятницу спортзал #спорт»"],
+  ["Находит", "«что у меня в пятницу?», «когда встреча с Олей?»"],
+  ["Меняет", "«перенеси всё на завтра», «удали отчёт», «я сделала уборку»"],
+  ["Напоминает в Telegram", "«напомни через 20 минут выключить духовку»"],
+  ["Разбивает на шаги", "«разбей на шаги: выучить SQL до 1 декабря»"],
+  ["Советует", "«как мне всё успеть на этой неделе?»"],
 ];
 
 let messageId = 0;
@@ -299,21 +288,18 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
             >
               <Icon name="assistant" size={26} className="relative" />
             </span>
-            <p className="text-sm font-medium text-gray-900 dark:text-white mb-4">
-              Что запланировать или найти?
+            <p className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              Напишите, что нужно, — своими словами
             </p>
-
-            <div className="flex flex-wrap justify-center gap-1.5 w-full max-w-2xl">
-              {EXAMPLES.map((example) => (
-                <button
-                  key={example}
-                  type="button"
-                  className={cn(GLASS_CHIP, "shrink-0")}
-                  onClick={() => send(example)}
-                >
-                  <span className="relative whitespace-nowrap">{example}</span>
-                </button>
+            <ul className="w-full max-w-md space-y-1.5 text-left text-sm text-gray-600 dark:text-gray-300">
+              {ABILITIES.map(([what, example]) => (
+                <li key={what}>
+                  <strong className="font-medium text-gray-900 dark:text-white">{what}:</strong> {example}
+                </li>
               ))}
+            </ul>
+            <div className="w-full max-w-md mt-4">
+              <TelegramPrompt place="chat" compact />
             </div>
           </div>
         )}
@@ -580,20 +566,8 @@ function AgendaReply({
   onReply: (reply: AssistantReply) => void;
   onAppend: (reply: AssistantReply) => void;
 }) {
-  const [busy, setBusy] = useState(false);
   const [moving, setMoving] = useState(false);
-  const reportError = useErrorToast();
-
-  const show = async (scope: AgendaScope, mark = false) => {
-    setBusy(true);
-    try {
-      onReply(await api.assistant.agenda(scope, mark));
-    } catch {
-      reportError(TEMPORARY_ERROR);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const busy = false;
 
   const count = reply.days.reduce((sum, day) => sum + day.events.length, 0);
 
@@ -625,45 +599,12 @@ function AgendaReply({
       ))}
       {reply.scope && (
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <div
-            className={cn(
-              "relative inline-flex items-center gap-1 p-1 rounded-full overflow-hidden",
-              GLASS_BODY
-            )}
-          >
-            {SCOPES.map((scope) => (
-              <button
-                key={scope.value}
-                className={cn(
-                  "relative px-3 h-7 rounded-full text-xs font-medium transition-colors",
-                  reply.scope === scope.value && !reply.mark
-                    ? "bg-sky-500/20 text-sky-800 dark:text-sky-100"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                )}
-                disabled={busy}
-                onClick={() => show(scope.value)}
-              >
-                {scope.label}
-              </button>
-            ))}
-          </div>
           <Link
             to="/calendar?view=week"
             className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg text-xs font-medium text-sky-700 dark:text-sky-300 hover:bg-sky-500/10"
           >
             <Icon name="calendar" size={13} /> Неделя в календаре
           </Link>
-          {count > 0 && !reply.mark && (
-            <Button
-              variant="ghost"
-              size="sm"
-              icon="check"
-              disabled={busy}
-              onClick={() => show(reply.scope ?? "today", true)}
-            >
-              Отметить выполненные
-            </Button>
-          )}
           {count > 0 && !reply.mark && (
             <Button variant="ghost" size="sm" icon={moving ? "left" : "sync"} disabled={busy} onClick={() => setMoving((value) => !value)}>
               {moving ? "Готово" : "Перенести"}

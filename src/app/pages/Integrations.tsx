@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useMemo, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
+import { TelegramPrompt } from "../components/TelegramPrompt";
 import { Icon } from "../components/icons";
 import type { Integration } from "../api/types";
 import {
@@ -27,7 +28,7 @@ const GLASS_BODY = GLASS_BODY_FLAT;
 
 /* ─── OAuth-провайдеры (совпадает с onboarding/Integrations.tsx) ─── */
 
-type OAuthProvider = "google" | "yandex" | "notion" | "jira";
+type OAuthProvider = "google" | "yandex";
 
 const OAUTH_INTEGRATIONS: Record<
   OAuthProvider,
@@ -49,18 +50,6 @@ const OAUTH_INTEGRATIONS: Record<
       "Импорт событий Яндекс Календаря в Dayla и экспорт обратно.",
     src: "/images/yandexcalendar.png",
   },
-  notion: {
-    title: "Notion",
-    description:
-      "Импорт страниц и баз Notion в Dayla и синхронизация задач.",
-    src: "/images/Notion.webp",
-  },
-  jira: {
-    title: "Jira",
-    description:
-      "Импорт задач и проектов Jira в Dayla и синхронизация статусов.",
-    src: "/images/Jira_Software_Logo.svg",
-  },
 };
 
 const isOAuth = (slug: string): slug is OAuthProvider =>
@@ -69,8 +58,6 @@ const isOAuth = (slug: string): slug is OAuthProvider =>
 const PROVIDER_LABELS: Record<string, string> = {
   google: "Google Calendar",
   yandex: "Яндекс Календарь",
-  notion: "Notion",
-  jira: "Jira",
 };
 
 const PAGE = "relative max-w-5xl mx-auto pt-[1.5vh]";
@@ -168,6 +155,10 @@ export function IntegrationsPage() {
         title="Интеграции"
         subtitle="Импортируйте события и задачи из сервисов и отправляйте события Dayla обратно."
       />
+
+      <div className="mb-4">
+        <TelegramPrompt place="integrations" closable={false} />
+      </div>
 
       {integrations.error && (
         <div className="mb-4">

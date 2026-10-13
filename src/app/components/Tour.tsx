@@ -48,7 +48,7 @@ const STEPS: Step[] = [
   {
     target: "account",
     title: "Профиль и интеграции",
-    text: "Подключите Telegram — туда приходят напоминания. В «Интеграциях» — Google, Яндекс, Notion, Jira и Samsung Calendar.",
+    text: "Подключите Telegram — туда приходят напоминания. В «Интеграциях» — Google, Яндекс, Apple и Samsung Calendar.",
   },
 ];
 

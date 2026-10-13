@@ -1,6 +1,7 @@
 // src/pages/TodayPage.tsx
 import { useCallback, useState } from "react";
 import { api } from "../api/client";
+import { TelegramPrompt } from "../components/TelegramPrompt";
 import type { CalendarEvent, Recommendation, Stats } from "../api/types";
 import { useUser } from "../auth";
 import { EventList } from "../components/events";
@@ -115,6 +116,10 @@ export function TodayPage() {
           </>
         }
       />
+
+      <div className="mb-4">
+        <TelegramPrompt place="today" />
+      </div>
 
       {events.error && (
         <div className="mb-4">
