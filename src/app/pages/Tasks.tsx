@@ -18,9 +18,8 @@ import {
   dayTitle,
   errorText,
   parseDayKey,
-  startOfDay,
 } from "../lib/format";
-import { notifyTasksChanged, useAsync, useTags, useTasksChanged } from "../lib/hooks";
+import { notifyTasksChanged, useAsync, useTags, useTasksChanged, useToday } from "../lib/hooks";
 import { useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -61,7 +60,7 @@ const CHIP_ACTIVE =
 /* ─── TasksPage ─────────────────────────────────────────── */
 
 export function TasksPage() {
-  const today = startOfDay(new Date());
+  const today = useToday();
   const [tab, setTab] = useState<"active" | "done">("active");
   const [filter, setFilter] = useState<Filter>("all");
   const [tagId, setTagId] = useState<number | null>(null);

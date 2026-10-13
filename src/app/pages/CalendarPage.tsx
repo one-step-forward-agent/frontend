@@ -14,11 +14,10 @@ import {
   occursOn,
   parseDayKey,
   sameDay,
-  startOfDay,
   startOfMonth,
   startOfWeek,
 } from "../lib/format";
-import { useAsync, useTags, useTasksChanged } from "../lib/hooks";
+import { useAsync, useTags, useTasksChanged, useToday } from "../lib/hooks";
 import { navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -101,7 +100,7 @@ export function CalendarPage() {
   useTitle("Календарь");
   const { query } = useLocation();
   const now = new Date();
-  const today = startOfDay(now);
+  const today = useToday();
   const requested = query.get("view");
   const view: View =
     requested === "day" || requested === "week" || requested === "month"

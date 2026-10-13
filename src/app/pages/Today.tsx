@@ -27,7 +27,7 @@ import {
   plural,
   startOfDay,
 } from "../lib/format";
-import { notifyTasksChanged, useAsync, useTasksChanged } from "../lib/hooks";
+import { notifyTasksChanged, useAsync, useTasksChanged, useToday } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -58,7 +58,7 @@ export function TodayPage() {
   useTitle("Сегодня");
   const user = useUser();
   const now = new Date();
-  const today = startOfDay(now);
+  const today = useToday();
 
   const events = useAsync(
     () =>

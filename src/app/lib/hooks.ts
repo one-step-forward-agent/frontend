@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type DependencyList } from "react";
 import { api } from "../api/client";
 import type { Tag } from "../api/types";
-import { errorText } from "./format";
+import { errorText, startOfDay } from "./format";
 
 export interface AsyncState<T> {
   data: T | undefined;
@@ -53,6 +53,34 @@ export function useTasksChanged(reload: () => void) {
     window.addEventListener(TASKS_CHANGED, reload);
     return () => window.removeEventListener(TASKS_CHANGED, reload);
   }, [reload]);
+}
+
+/** The start of today that moves on at midnight and when the tab comes back after sleep: a page left open
+ * overnight would otherwise keep showing yesterday as today. On a new day every screen reloads its tasks. */
+export function useToday(): Date {
+  const [today, setToday] = useState(() => startOfDay(new Date()).getTime());
+  useEffect(() => {
+    let timer = 0;
+    const check = () => {
+      const current = startOfDay(new Date()).getTime();
+      setToday((previous) => {
+        if (previous !== current) window.setTimeout(notifyTasksChanged);
+        return current;
+      });
+      window.clearTimeout(timer);
+      // A second past midnight, so the clock has surely turned
+      timer = window.setTimeout(check, current + 86_400_000 - Date.now() + 1000);
+    };
+    check();
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("focus", check);
+    };
+  }, []);
+  return new Date(today);
 }
 
 export function useAction(onError: (message: string) => void) {
