@@ -14,6 +14,8 @@ import {
   Hash,
   Video,
   ListChecks,
+  ChevronLeft,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -1841,21 +1843,24 @@ const USE_CASE_SLIDES: { id: string; render: () => React.ReactNode }[] = [
   { id: "gtd",     render: () => <SlideGTD />     },
 ];
 
-const SLIDE_COOLDOWN_MS = 1150;
-const EXIT_COOLDOWN_MS  = 600;
+const SWIPE_MIN_PX = 40;
 
-
+/* Обычная секция высотой в экран: страница прокручивается как обычно,
+   слайды листаются сами, стрелками, точками, свайпом и клавишами ← →. */
 const UserCaseCarousel: React.FC<{
-  /** @deprecated Оставлен для совместимости с Start. Авто-прокрутка удалена. */
+  /** Пауза авто-листания, пока виден финальный CTA. */
   paused?: boolean;
-}> = () => {
-  const sectionRef = React.useRef<HTMLElement>(null);
+}> = ({ paused = false }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = React.useState({ w: 0, h: 0 });
   const [index, setIndex] = React.useState(0);
+  const [hovered, setHovered] = React.useState(false);
+  const [visible, setVisible] = React.useState(false);
+  const manualUntil = React.useRef(0);
+  const touchX = React.useRef<number | null>(null);
   const total = USE_CASE_SLIDES.length;
 
-  /* ─── Меряем контейнер (по-прежнему нужен для scale) ─── */
+  /* ─── Меряем контейнер (нужен для scale) ─── */
   React.useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -1866,6 +1871,15 @@ const UserCaseCarousel: React.FC<{
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  /* ─── Листаем сами, только пока секция на экране ─── */
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), { threshold: 0.5 });
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   /* ─── Меряем натуральные высоты слайдов ─── */
@@ -1900,88 +1914,52 @@ const UserCaseCarousel: React.FC<{
     );
   }, [containerSize, maxDesignHeight]);
 
-  /* ─── Индекс слайда = функция от позиции скролла ─── */
+  const go = React.useCallback(
+    (next: number) => {
+      manualUntil.current = performance.now() + MANUAL_PAUSE_MS;
+      setIndex(((next % total) + total) % total);
+    },
+    [total]
+  );
+
   React.useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
+    if (paused || hovered || !visible) return;
+    const timer = window.setInterval(() => {
+      if (performance.now() < manualUntil.current) return;
+      setIndex((i) => (i + 1) % total);
+    }, AUTO_ADVANCE_MS);
+    return () => window.clearInterval(timer);
+  }, [paused, hovered, visible, total]);
 
-    const onScroll = () => {
-      const rect = section.getBoundingClientRect();
-      const sectionTop = window.scrollY + rect.top;
-      const vh = window.innerHeight;
-      const raw = Math.floor((window.scrollY - sectionTop) / vh);
-      const clamped = Math.max(0, Math.min(total - 1, raw));
-      setIndex((prev) => (prev === clamped ? prev : clamped));
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [total]);
-
-  /* ─── Wheel hijack: скролл вниз внутри ловушки = шаг слайда ─── */
-  React.useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    let cooldownUntil = 0;
-
-    const onWheel = (e: WheelEvent) => {
-      const now = performance.now();
-
-      /* Кулдаун — ПЕРВЫМ. Иначе выход из секции проскакивает мимо него:
-        scrollY мгновенно покидает trapBottom, и handler возвращается раньше
-        проверки времени. */
-      if (now < cooldownUntil) {
-        e.preventDefault();
-        return;
-      }
-
-      const vh = window.innerHeight;
-      const rect = section.getBoundingClientRect();
-      const sectionTop = window.scrollY + rect.top;
-      const trapBottom = sectionTop + (total - 1) * vh;
-
-      const inTrap =
-        window.scrollY >= sectionTop - 1 &&
-        window.scrollY <= trapBottom + 1;
-
-      if (!inTrap) return;
-
-      if (e.deltaY > 0) {
-        const step = Math.round((window.scrollY - sectionTop) / vh);
-        const nextStep = Math.min(step + 1, total);
-        const isExit = nextStep >= total;
-
-        e.preventDefault();
-        window.scrollTo({
-          top: sectionTop + nextStep * vh,
-          behavior: "smooth",
-        });
-        cooldownUntil = now + (isExit ? EXIT_COOLDOWN_MS : SLIDE_COOLDOWN_MS);
-      } else if (e.deltaY < 0) {
-        e.preventDefault();
-        window.scrollTo({
-          top: Math.max(0, sectionTop - vh),
-          behavior: "smooth",
-        });
-        cooldownUntil = now + EXIT_COOLDOWN_MS;
-      }
-    };
-
-    window.addEventListener("wheel", onWheel, { passive: false });
-    return () => window.removeEventListener("wheel", onWheel);
-  }, [total]);
+  const arrowClass = cn(
+    "flex h-9 w-9 items-center justify-center rounded-full",
+    "bg-white/70 dark:bg-white/10 ring-1 ring-black/10 dark:ring-white/15 backdrop-blur",
+    "text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-white/20 transition-colors"
+  );
 
   return (
     <section
-      ref={sectionRef}
       id="usecases"
       className="relative"
-      style={{ height: `${total * 100}vh` }}
       aria-roledescription="carousel"
+      aria-label="Сценарии использования"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft") go(index - 1);
+        if (e.key === "ArrowRight") go(index + 1);
+      }}
+      onTouchStart={(e) => {
+        touchX.current = e.touches[0].clientX;
+      }}
+      onTouchEnd={(e) => {
+        if (touchX.current === null) return;
+        const dx = e.changedTouches[0].clientX - touchX.current;
+        touchX.current = null;
+        if (Math.abs(dx) >= SWIPE_MIN_PX) go(index + (dx < 0 ? 1 : -1));
+      }}
     >
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
+      <div className="h-[100svh] min-h-[480px] w-full overflow-hidden">
         <div ref={containerRef} className="relative w-full h-full">
           {USE_CASE_SLIDES.map((slide, i) => {
             const isActive = i === index;
@@ -2013,23 +1991,16 @@ const UserCaseCarousel: React.FC<{
               "flex items-center gap-3"
             )}
           >
+            <button type="button" onClick={() => go(index - 1)} aria-label="Предыдущий сценарий" className={arrowClass}>
+              <ChevronLeft size={18} aria-hidden="true" />
+            </button>
 
             <div className="flex items-center gap-2">
               {USE_CASE_SLIDES.map((slide, i) => (
                 <button
                   key={slide.id}
                   type="button"
-                  onClick={() => {
-                    const section = sectionRef.current;
-                    if (!section) return;
-                    const rect = section.getBoundingClientRect();
-                    const sectionTop = window.scrollY + rect.top;
-                    const vh = window.innerHeight;
-                    window.scrollTo({
-                      top: sectionTop + i * vh,
-                      behavior: "smooth",
-                    });
-                  }}
+                  onClick={() => go(i)}
                   aria-label={`Перейти к сценарию ${i + 1}`}
                   aria-current={i === index}
                   className={cn(
@@ -2042,6 +2013,9 @@ const UserCaseCarousel: React.FC<{
               ))}
             </div>
 
+            <button type="button" onClick={() => go(index + 1)} aria-label="Следующий сценарий" className={arrowClass}>
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
           </div>
         </div>
       </div>
