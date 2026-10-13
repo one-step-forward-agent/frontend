@@ -283,7 +283,7 @@ function SamsungCard() {
         />
       )}
 
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {url ? (
           <>
             <Button variant="primary" size="sm" icon="clip" onClick={copy}>
@@ -428,7 +428,7 @@ function IntegrationCard({
         </p>
       )}
 
-      <div className="mt-1 flex flex-wrap gap-1.5">
+      <div className="mt-3 flex flex-wrap gap-2">
         {!connection ? (
           <Button
             variant="primary"

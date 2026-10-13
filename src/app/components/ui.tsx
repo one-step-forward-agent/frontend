@@ -168,8 +168,9 @@ export function Button({
 }: ButtonProps) {
   const isIconOnly = !children;
   const dimension = size === "sm" ? "h-8 min-w-8" : "h-10 min-w-10";
-  const padding = isIconOnly ? "px-0" : size === "sm" ? "px-3" : "px-4";
-  const text = size === "sm" ? "text-xs" : "text-sm";
+  const padding = isIconOnly ? "px-0" : size === "sm" ? "px-3.5" : "px-4";
+  // "!": the app's `.fd-app button { font: inherit }` would otherwise win and blow the text up to the page size
+  const text = size === "sm" ? "!text-xs" : "!text-sm";
 
   const showSheen = variant === "secondary";
 
@@ -180,7 +181,7 @@ export function Button({
       aria-busy={busy || undefined}
       className={cx(
         "relative inline-flex items-center justify-center gap-2 overflow-hidden",
-        "rounded-xl font-medium",
+        "rounded-xl !font-medium",
         "transition-all duration-200",
         "disabled:opacity-50 disabled:pointer-events-none",
         dimension,
