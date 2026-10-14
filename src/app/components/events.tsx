@@ -26,6 +26,7 @@ import { NO_REPEAT, RepeatEditor, parseRepeat, repeatError, repeatRule, sameRule
 import { TagList, TagPicker } from "./tags";
 import { TimeField } from "@/components/ui/time-field";
 import { Badge, Button, Field, Switch } from "./ui";
+import { LOCALE, tr } from "@/i18n";
 
 export function EventRow({ event, showDate = false, extra }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode }) {
   const start = new Date(event.start_at);
@@ -60,7 +61,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
         type="button"
         role="checkbox"
         aria-checked={done}
-        aria-label={done ? `Снять отметку: ${event.title}` : `Выполнено: ${event.title}`}
+        aria-label={done ? `${tr("Снять отметку", "Unmark")}: ${event.title}` : `${tr("Выполнено", "Done")}: ${event.title}`}
         className={`event-check ${done ? "checked" : ""}`}
         disabled={busy}
         onClick={toggle}
@@ -69,7 +70,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
       </button>
       <Link to={`/events/${event.id}`} className={`event-row priority-${event.priority} ${done ? "done" : ""}`}>
         <span className={`event-time ${event.all_day ? "untimed" : ""} ${showDate ? "with-date" : ""}`}>
-          {showDate && <span className="event-date">{start.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</span>}
+          {showDate && <span className="event-date">{start.toLocaleDateString(LOCALE, { day: "numeric", month: "short" })}</span>}
           {/* No time: the column stays empty, the titles stay aligned */}
           {!event.all_day && (
             <>
@@ -82,7 +83,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
           <span className="event-title">{event.title}</span>
           {hasMeta && (
             <span className="event-meta">
-              {multiDay && <span>по {formatDate(last, { day: "numeric", month: "short" })}</span>}
+              {multiDay && <span>{tr("по", "until")} {formatDate(last, { day: "numeric", month: "short" })}</span>}
               {event.recurrence && (
                 <span className="inline-flex items-center gap-1">
                   <Icon name="sync" size={13} /> {event.recurrence}
@@ -99,7 +100,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
         </span>
         {(event.priority === "high" || event.priority === "urgent") && (
           <span className="event-badge">
-            <Badge tone={event.priority === "urgent" ? "bad" : "warn"}>{event.priority === "urgent" ? "срочно" : "важно"}</Badge>
+            <Badge tone={event.priority === "urgent" ? "bad" : "warn"}>{event.priority === "urgent" ? tr("срочно", "urgent") : tr("важно", "important")}</Badge>
           </span>
         )}
       </Link>
@@ -195,11 +196,11 @@ function at(day: Date, value: string): Date {
 
 function toPayload(state: FormState, timezone: string): EventCreate | string {
   const title = state.title.trim();
-  if (!title) return "Введите название";
+  if (!title) return tr("Введите название", "Enter a title");
   const day = parseDayKey(state.date);
-  if (!day) return "Выберите дату";
+  if (!day) return tr("Выберите дату", "Pick a date");
   const last = state.multiDay ? parseDayKey(state.endDate) ?? day : day;
-  if (last < day) return "Последний день раньше первого";
+  if (last < day) return tr("Последний день раньше первого", "The last day is before the first");
   let start: Date;
   let end: Date;
   if (!state.time) {
@@ -208,7 +209,7 @@ function toPayload(state: FormState, timezone: string): EventCreate | string {
   } else {
     start = at(day, state.time);
     end = state.endTime ? at(last, state.endTime) : new Date(at(last, state.time).getTime() + 3_600_000);
-    if (end <= start) return "Окончание должно быть позже начала";
+    if (end <= start) return tr("Окончание должно быть позже начала", "The end must be after the start");
   }
   const deadlineDay = parseDayKey(state.deadlineDate);
   const repeatProblem = repeatError(state.repeat, state.date);
@@ -250,8 +251,8 @@ export function EventForm({
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setState((current) => ({ ...current, [key]: value }));
   const today = startOfDay(new Date());
   const quickDays = [
-    { label: "Сегодня", value: dayKey(today) },
-    { label: "Завтра", value: dayKey(addDays(today, 1)) },
+    { label: tr("Сегодня", "Today"), value: dayKey(today) },
+    { label: tr("Завтра", "Tomorrow"), value: dayKey(addDays(today, 1)) },
   ];
   const hasDetails = !!(event && (event.deadline_at || event.is_fixed || event.location || event.description || event.reminder_minutes != null || event.priority !== "medium"));
 
@@ -292,20 +293,20 @@ export function EventForm({
 
   return (
     <form className="form" onSubmit={submit}>
-      <Field label="Название">
-        <input value={state.title} onChange={(e) => set("title", e.target.value)} placeholder="Что сделать?" maxLength={300} autoFocus required />
+      <Field label={tr("Название", "Title")}>
+        <input value={state.title} onChange={(e) => set("title", e.target.value)} placeholder={tr("Что сделать?", "What needs doing?")} maxLength={300} autoFocus required />
       </Field>
 
       <div className="form-row form-row-when">
-        <Field label={state.multiDay ? "С" : state.repeat.freq ? "Начало" : "Дата"} className="picker-field">
+        <Field label={state.multiDay ? tr("С", "From") : state.repeat.freq ? tr("Начало", "Starts") : tr("Дата", "Date")} className="picker-field">
           <input type="date" value={state.date} onChange={(e) => set("date", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} required />
         </Field>
         {state.multiDay ? (
-          <Field label="По" className="picker-field">
+          <Field label={tr("По", "Until")} className="picker-field">
             <input type="date" value={state.endDate} min={state.date} onChange={(e) => set("endDate", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} required />
           </Field>
         ) : (
-          <div className="quick-days" role="group" aria-label="Быстрый выбор даты">
+          <div className="quick-days" role="group" aria-label={tr("Быстрый выбор даты", "Quick date choice")}>
             {quickDays.map((item) => (
               <button key={item.value} type="button" className={`chip-toggle ${state.date === item.value ? "active" : ""}`} aria-pressed={state.date === item.value} onClick={() => set("date", item.value)}>
                 {item.label}
@@ -316,47 +317,47 @@ export function EventForm({
       </div>
 
       <div className="form-row form-row-time">
-        <Field label="Время" className="picker-field">
-          <TimeField value={state.time} onChange={changeTime} allowEmpty label="Время начала" />
+        <Field label={tr("Время", "Time")} className="picker-field">
+          <TimeField value={state.time} onChange={changeTime} allowEmpty label={tr("Время начала", "Start time")} />
         </Field>
-        <Field label="До" className="picker-field">
-          <TimeField value={state.endTime} onChange={(value) => set("endTime", value)} allowEmpty disabled={!state.time} label="Время окончания" />
+        <Field label={tr("До", "To")} className="picker-field">
+          <TimeField value={state.endTime} onChange={(value) => set("endTime", value)} allowEmpty disabled={!state.time} label={tr("Время окончания", "End time")} />
         </Field>
         {/* Empty time fields already say there is no time */}
         {state.time && (
           <Button variant="ghost" size="sm" onClick={() => changeTime("")}>
-            Без времени
+            {tr("Без времени", "No time")}
           </Button>
         )}
       </div>
 
       <label className="check">
         <input type="checkbox" checked={state.multiDay} onChange={(e) => setState((current) => ({ ...current, multiDay: e.target.checked, endDate: e.target.checked ? current.endDate || current.date : "" }))} />
-        Несколько дней
+        {tr("Несколько дней", "Several days")}
       </label>
 
       <RepeatEditor value={state.repeat} onChange={(repeat) => set("repeat", repeat)} start={parseDayKey(state.date) ?? today} existing={!!event?.recurrence_rule} />
 
-      <Field label="Теги">
+      <Field label={tr("Теги", "Tags")}>
         <TagPicker value={state.tagIds} onChange={(ids) => set("tagIds", ids)} />
       </Field>
 
       <details className="more" open={hasDetails}>
-        <summary>Дедлайн и детали</summary>
+        <summary>{tr("Дедлайн и детали", "Deadline and details")}</summary>
         <div className="form">
           <div className="form-row">
-            <Field label="Дедлайн" className="picker-field">
+            <Field label={tr("Дедлайн", "Deadline")} className="picker-field">
               <input type="date" value={state.deadlineDate} onChange={(e) => set("deadlineDate", e.target.value)} onClick={(e) => openPicker(e.currentTarget)} />
             </Field>
-            <Field label="Время дедлайна" className="picker-field">
-              <TimeField value={state.deadlineTime} onChange={(value) => set("deadlineTime", value)} allowEmpty disabled={!state.deadlineDate} label="Время дедлайна" />
+            <Field label={tr("Время дедлайна", "Deadline time")} className="picker-field">
+              <TimeField value={state.deadlineTime} onChange={(value) => set("deadlineTime", value)} allowEmpty disabled={!state.deadlineDate} label={tr("Время дедлайна", "Deadline time")} />
             </Field>
           </div>
 
-          <Switch checked={state.fixed} onChange={(value) => set("fixed", value)} label="Нельзя переносить" hint="Dayla будет планировать вокруг этой задачи" />
+          <Switch checked={state.fixed} onChange={(value) => set("fixed", value)} label={tr("Нельзя переносить", "Can't be moved")} hint={tr("Dayla будет планировать вокруг этой задачи", "Dayla will plan around this task")} />
 
           <div className="form-row">
-            <Field label="Приоритет">
+            <Field label={tr("Приоритет", "Priority")}>
               <select value={state.priority} onChange={(e) => set("priority", e.target.value as Priority)}>
                 {PRIORITIES.map((item) => (
                   <option key={item.value} value={item.value}>
@@ -365,12 +366,12 @@ export function EventForm({
                 ))}
               </select>
             </Field>
-            <Field label="Напоминание">
+            <Field label={tr("Напоминание", "Reminder")}>
               <select value={state.reminder} onChange={(e) => set("reminder", e.target.value)}>
-                <option value="">По настройкам</option>
+                <option value="">{tr("По настройкам", "As in settings")}</option>
                 {REMINDER_OPTIONS.map((minutes) => (
                   <option key={minutes} value={minutes}>
-                    {minutes === 0 ? "В момент начала" : `За ${formatLead(minutes)}`}
+                    {minutes === 0 ? tr("В момент начала", "At the start") : tr(`За ${formatLead(minutes)}`, `${formatLead(minutes)} before`)}
                   </option>
                 ))}
               </select>
@@ -378,9 +379,9 @@ export function EventForm({
           </div>
 
           {!event && localCalendars.length > 1 && (
-            <Field label="Календарь">
+            <Field label={tr("Календарь", "Calendar")}>
               <select value={state.calendarId} onChange={(e) => set("calendarId", e.target.value)}>
-                <option value="">Основной</option>
+                <option value="">{tr("Основной", "Main")}</option>
                 {localCalendars.map((calendar) => (
                   <option key={calendar.id} value={calendar.id}>
                     {calendar.name}
@@ -390,11 +391,11 @@ export function EventForm({
             </Field>
           )}
 
-          <Field label="Место">
-            <input value={state.location} onChange={(e) => set("location", e.target.value)} placeholder="Адрес или ссылка" maxLength={500} />
+          <Field label={tr("Место", "Location")}>
+            <input value={state.location} onChange={(e) => set("location", e.target.value)} placeholder={tr("Адрес или ссылка", "Address or link")} maxLength={500} />
           </Field>
 
-          <Field label="Описание">
+          <Field label={tr("Описание", "Description")}>
             <textarea value={state.description} onChange={(e) => set("description", e.target.value)} rows={3} />
           </Field>
         </div>
@@ -405,11 +406,11 @@ export function EventForm({
       <div className="form-actions">
         {onCancel && (
           <Button variant="ghost" onClick={onCancel}>
-            Отмена
+            {tr("Отмена", "Cancel")}
           </Button>
         )}
         <Button type="submit" variant="primary" busy={saving} icon="check">
-          {event ? "Сохранить" : "Создать"}
+          {event ? tr("Сохранить", "Save") : tr("Создать", "Create")}
         </Button>
       </div>
     </form>

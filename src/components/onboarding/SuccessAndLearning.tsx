@@ -11,6 +11,7 @@ import {
 import { OnboardingLayout } from "./OnboardingLayout";
 import { applyOnboarding, useOnboarding } from "./OnboardingContext";
 import { cn } from "@/utils/cn";
+import { pluralWord, tr } from "@/i18n";
 
 const TOTAL = 10;
 
@@ -68,22 +69,22 @@ export const SuccessAndLearning: React.FC = () => {
     if (data.spheres.length > 0) {
       items.push({
         icon: Target,
-        label: "Сферы",
-        value: `${data.spheres.length} ${plural(data.spheres.length, "сфера", "сферы", "сфер")}`,
+        label: tr("Сферы", "Areas"),
+        value: `${data.spheres.length} ${pluralWord(data.spheres.length, ["сфера", "сферы", "сфер"], ["area", "areas"])}`,
       });
     }
     if (data.goals.length > 0) {
       items.push({
         icon: Sparkles,
-        label: "Намерения",
-        value: `${data.goals.length} ${plural(data.goals.length, "цель", "цели", "целей")}`,
+        label: tr("Намерения", "Intentions"),
+        value: `${data.goals.length} ${pluralWord(data.goals.length, ["цель", "цели", "целей"], ["goal", "goals"])}`,
       });
     }
     if ((data.integrations ?? []).length > 0) {
       items.push({
         icon: Link2,
-        label: "Интеграции",
-        value: `${data.integrations.length} ${plural(data.integrations.length, "сервис", "сервиса", "сервисов")}`,
+        label: tr("Интеграции", "Integrations"),
+        value: `${data.integrations.length} ${pluralWord(data.integrations.length, ["сервис", "сервиса", "сервисов"], ["service", "services"])}`,
       });
     }
     return items;
@@ -93,8 +94,8 @@ export const SuccessAndLearning: React.FC = () => {
     <OnboardingLayout
       step={TOTAL}
       totalSteps={TOTAL}
-      title="Всё готово!"
-      subtitle="Дальше — только вы и ваш план. Я рядом."
+      title={tr("Всё готово!", "All set!")}
+      subtitle={tr("Дальше — только вы и ваш план. Я рядом.", "From here on it's you and your plan. I'm right here.")}
       onBack={() => navigate("/onboarding/integrations")}
     >
       <div className="relative space-y-4 sm:space-y-5">
@@ -120,7 +121,7 @@ export const SuccessAndLearning: React.FC = () => {
             </div>
 
             <p className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
-              Онбординг пройден
+              {tr("Онбординг пройден", "Onboarding complete")}
             </p>
           </div>
         </div>
@@ -148,7 +149,7 @@ export const SuccessAndLearning: React.FC = () => {
               className="relative transition-transform duration-300 group-hover:-translate-y-0.5"
               aria-hidden="true"
             />
-            <span className="relative">Начать</span>
+            <span className="relative">{tr("Начать", "Start")}</span>
             <ArrowRight
               size={18}
               className="relative transition-transform duration-300 group-hover:translate-x-0.5"
@@ -160,11 +161,3 @@ export const SuccessAndLearning: React.FC = () => {
     </OnboardingLayout>
   );
 };
-
-function plural(n: number, one: string, few: string, many: string): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
-  return many;
-}

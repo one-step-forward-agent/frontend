@@ -57,7 +57,7 @@ server {
     proxy_set_header X-Forwarded-Proto https;
     proxy_ssl_server_name on;
     proxy_read_timeout 120s;
-    client_max_body_size 25m;
+    client_max_body_size 30m;
 
     location ~ ^/auth/(login|register|token)$ {
         limit_req zone=auth burst=5 nodelay;

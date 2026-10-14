@@ -6,6 +6,7 @@ import { Icon } from "./icons";
 import { Button, useErrorToast } from "./ui";
 import { errorText } from "../lib/format";
 import { cn } from "@/utils/cn";
+import { tr } from "@/i18n";
 
 const HIDDEN_KEY = "dayla.telegram-prompt.hidden";
 // After the bot is opened the card checks the account until the link arrives
@@ -83,7 +84,7 @@ export function TelegramPrompt({ place, compact = false, closable = true }: { pl
         <button
           type="button"
           onClick={hide}
-          aria-label="Скрыть"
+          aria-label={tr("Скрыть", "Hide")}
           className="absolute top-2 right-2 w-7 h-7 inline-flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-500/10"
         >
           <Icon name="close" size={14} />
@@ -96,37 +97,39 @@ export function TelegramPrompt({ place, compact = false, closable = true }: { pl
           </svg>
         </span>
         <div className="min-w-0 space-y-2">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">Подключите Telegram — это 1 минута</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr("Подключите Telegram — это 1 минута", "Connect Telegram — it takes a minute")}</p>
           {!compact && (
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              В Telegram приходят напоминания и план на утро, а боту можно писать и надиктовывать задачи, пересылать
-              билеты и документы.
+              {tr(
+                "В Telegram приходят напоминания и план на утро, а боту можно писать и надиктовывать задачи, пересылать билеты и документы.",
+                "Telegram brings reminders and the morning plan, and you can type or dictate tasks to the bot and forward tickets and documents."
+              )}
             </p>
           )}
           {link ? (
             <ol className="text-sm text-gray-600 dark:text-gray-300 list-decimal pl-4 space-y-0.5">
               <li>
-                В открывшемся Telegram нажмите <strong>«Запустить»</strong> (Start).
+                {tr("В открывшемся Telegram нажмите", "In Telegram, press")} <strong>{tr("«Запустить»", "Start")}</strong>{tr(" (Start).", ".")}
                 {link.deep_link && (
                   <>
                     {" "}
-                    Не открылся?{" "}
+                    {tr("Не открылся?", "Did not open?")}{" "}
                     <a href={link.deep_link} target="_blank" rel="noreferrer noopener" className="text-sky-700 dark:text-sky-300 underline">
-                      Открыть бота
+                      {tr("Открыть бота", "Open the bot")}
                     </a>
                   </>
                 )}
               </li>
               {!link.deep_link && (
                 <li>
-                  Отправьте боту: <code className="px-1 rounded bg-gray-500/10">/start {link.code}</code>
+                  {tr("Отправьте боту:", "Send the bot:")} <code className="px-1 rounded bg-gray-500/10">/start {link.code}</code>
                 </li>
               )}
-              <li>Готово — эта карточка исчезнет сама.</li>
+              <li>{tr("Готово — эта карточка исчезнет сама.", "Done — this card will disappear by itself.")}</li>
             </ol>
           ) : (
             <Button size="sm" variant="primary" icon="external" busy={busy} onClick={open}>
-              Подключить Telegram
+              {tr("Подключить Telegram", "Connect Telegram")}
             </Button>
           )}
         </div>

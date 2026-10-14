@@ -1,7 +1,7 @@
 import { ApiError, SERVER_ERROR } from "../api/client";
 import type { CalendarEvent, Priority } from "../api/types";
+import { LOCALE, tr } from "@/i18n";
 
-const LOCALE = "ru-RU";
 
 export const browserTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -61,7 +61,7 @@ export function dayTitle(date: Date, now = new Date()): string {
   const options: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "long" };
   if (date.getFullYear() !== now.getFullYear()) options.year = "numeric";
   const base = formatDate(date, options).replace(/\s*г\.$/, "");
-  const relative = diff === 0 ? "Сегодня" : diff === 1 ? "Завтра" : diff === -1 ? "Вчера" : null;
+  const relative = diff === 0 ? tr("Сегодня", "Today") : diff === 1 ? tr("Завтра", "Tomorrow") : diff === -1 ? tr("Вчера", "Yesterday") : null;
   return relative ? `${relative}, ${base}` : base.charAt(0).toUpperCase() + base.slice(1);
 }
 
@@ -78,9 +78,10 @@ export function lastDay(event: Pick<CalendarEvent, "start_at" | "end_at" | "all_
 export function formatDeadline(value: string, now = new Date()): string {
   const moment = new Date(value);
   const diff = Math.round((startOfDay(moment).getTime() - startOfDay(now).getTime()) / DAY);
-  const day = diff === 0 ? "сегодня" : diff === 1 ? "завтра" : formatDate(moment, { day: "numeric", month: "short" });
+  const day = diff === 0 ? tr("сегодня", "today") : diff === 1 ? tr("завтра", "tomorrow") : formatDate(moment, { day: "numeric", month: "short" });
   const endOfDay = moment.getHours() === 23 && moment.getMinutes() === 59;
-  return endOfDay ? `до ${day}` : `до ${day} ${formatTime(moment)}`;
+  const by = tr("до", "by");
+  return endOfDay ? `${by} ${day}` : `${by} ${day} ${formatTime(moment)}`;
 }
 
 /** Насколько близок дедлайн: прошёл, меньше суток, меньше трёх дней. */
@@ -92,16 +93,18 @@ export function deadlineTone(value: string, now = new Date()): "bad" | "warn" | 
 
 export function relativeDay(date: Date, now = new Date()): string {
   const diff = Math.round((startOfDay(date).getTime() - startOfDay(now).getTime()) / DAY);
-  if (diff === 0) return "Сегодня";
-  if (diff === 1) return "Завтра";
-  if (diff === -1) return "Вчера";
+  if (diff === 0) return tr("Сегодня", "Today");
+  if (diff === 1) return tr("Завтра", "Tomorrow");
+  if (diff === -1) return tr("Вчера", "Yesterday");
   return formatDate(date, { weekday: "short", day: "numeric", month: "long" });
 }
 
 export function eventTimeRange(event: CalendarEvent): string {
   if (event.all_day) {
     const last = lastDay(event);
-    return sameDay(last, new Date(event.start_at)) ? "Без времени" : `Без времени, по ${formatDate(last, { day: "numeric", month: "long" })}`;
+    return sameDay(last, new Date(event.start_at))
+      ? tr("Без времени", "Any time")
+      : `${tr("Без времени, по", "Any time, until")} ${formatDate(last, { day: "numeric", month: "long" })}`;
   }
   const start = new Date(event.start_at);
   const end = new Date(event.end_at);
@@ -116,29 +119,29 @@ export function occursOn(event: CalendarEvent, day: Date): boolean {
 }
 
 export function formatLead(minutes: number): string {
-  if (minutes === 0) return "в момент начала";
+  if (minutes === 0) return tr("в момент начала", "at the start");
   const days = Math.floor(minutes / 1440);
   const hours = Math.floor((minutes % 1440) / 60);
   const mins = minutes % 60;
-  return [days && `${days} дн`, hours && `${hours} ч`, mins && `${mins} мин`].filter(Boolean).join(" ");
+  return [days && `${days} ${tr("дн", "d")}`, hours && `${hours} ${tr("ч", "h")}`, mins && `${mins} ${tr("мин", "min")}`].filter(Boolean).join(" ");
 }
 
 export function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} Б`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} КБ`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} МБ`;
+  if (bytes < 1024) return `${bytes} ${tr("Б", "B")}`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} ${tr("КБ", "KB")}`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} ${tr("МБ", "MB")}`;
 }
 
 export const PRIORITIES: { value: Priority; label: string }[] = [
-  { value: "low", label: "Низкий" },
-  { value: "medium", label: "Обычный" },
-  { value: "high", label: "Высокий" },
-  { value: "urgent", label: "Срочно" },
+  { value: "low", label: tr("Низкий", "Low") },
+  { value: "medium", label: tr("Обычный", "Normal") },
+  { value: "high", label: tr("Высокий", "High") },
+  { value: "urgent", label: tr("Срочно", "Urgent") },
 ];
 
 export const SOURCE_LABELS: Record<string, string> = {
   local: "Dayla",
-  ai: "Ассистент",
+  ai: tr("Ассистент", "Assistant"),
   google: "Google",
   apple: "Apple",
   jira: "Jira",
@@ -146,11 +149,11 @@ export const SOURCE_LABELS: Record<string, string> = {
 };
 
 export const RECURRENCE_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "Не повторять" },
-  { value: "FREQ=DAILY", label: "Каждый день" },
-  { value: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", label: "По будням" },
-  { value: "WEEKLY", label: "Каждую неделю" },
-  { value: "FREQ=MONTHLY", label: "Каждый месяц" },
+  { value: "", label: tr("Не повторять", "Does not repeat") },
+  { value: "FREQ=DAILY", label: tr("Каждый день", "Every day") },
+  { value: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", label: tr("По будням", "Weekdays") },
+  { value: "WEEKLY", label: tr("Каждую неделю", "Every week") },
+  { value: "FREQ=MONTHLY", label: tr("Каждый месяц", "Every month") },
 ];
 
 const RRULE_DAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
@@ -184,6 +187,7 @@ export function openPicker(input: HTMLInputElement) {
   }
 }
 
+/** Russian plural forms; in English pass the forms through tr() or use pluralWord from "@/i18n" */
 export function plural(count: number, one: string, few: string, many: string): string {
   const tail = count % 100;
   if (tail >= 11 && tail <= 14) return many;
@@ -192,7 +196,7 @@ export function plural(count: number, one: string, few: string, many: string): s
   return many;
 }
 
-export const TEMPORARY_ERROR = "Ошибка сервера. Попробуйте ещё раз позже.";
+export const TEMPORARY_ERROR = tr("Ошибка сервера. Попробуйте ещё раз позже.", "Server error. Please try again later.");
 
 export const stripTags = (text: string) =>
   text.replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");

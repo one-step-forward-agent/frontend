@@ -2,6 +2,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import LandingHeader from '@/components/landing/LandingHeader';
+import { isEn } from '@/i18n';
 import termsMarkdown from './md_texts/consent.md?raw';
 
 const PersonalDataConsentPage: React.FC = () => {
@@ -12,6 +13,12 @@ const PersonalDataConsentPage: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl rounded-2xl border border-white/20 dark:border-gray-700/30 p-6 sm:p-8 md:p-12 transition-all duration-300">
+            {/* The legal text exists in Russian only: the Russian version is the one that applies */}
+            {isEn && (
+              <p className="mb-6 rounded-xl bg-blue-50 dark:bg-blue-950/40 px-4 py-3 text-sm text-blue-900 dark:text-blue-100">
+                This document is available in Russian only. The Russian version is legally binding.
+              </p>
+            )}
             <div className="prose prose-lg max-w-none prose-slate dark:prose-invert
               prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-gray-900 dark:prose-headings:text-white
               prose-h1:text-4xl prose-h1:font-extrabold prose-h1:tracking-tight prose-h1:mb-6

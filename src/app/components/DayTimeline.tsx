@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CalendarEvent } from "../api/types";
 import { Link } from "../router";
 import { cn } from "@/utils/cn";
+import { LOCALE, tr } from "@/i18n";
 
 /**
  * Today as a time line: the hours down the side, timed tasks as blocks in their place, overlapping ones side by
@@ -14,7 +15,7 @@ const DAY_FROM = 8;
 const DAY_TO = 22;
 
 const minutesOf = (date: Date) => date.getHours() * 60 + date.getMinutes();
-const clock = (date: Date) => date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+const clock = (date: Date) => date.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
 
 type Placed = { event: CalendarEvent; top: number; height: number; lane: number; lanes: number };
 
@@ -96,7 +97,7 @@ export function DayTimeline({ events, day }: { events: CalendarEvent[]; day: Dat
   return (
     <div className="space-y-2">
       {allDay.length > 0 && (
-        <div className="flex flex-wrap gap-1.5" aria-label="Задачи без времени">
+        <div className="flex flex-wrap gap-1.5" aria-label={tr("Задачи без времени", "Tasks without a time")}>
           {allDay.map((event) => (
             <Link
               key={event.id}
@@ -111,7 +112,7 @@ export function DayTimeline({ events, day }: { events: CalendarEvent[]; day: Dat
           ))}
         </div>
       )}
-      <div ref={scrollRef} className="relative max-h-[420px] overflow-y-auto overscroll-contain pr-1" role="list" aria-label="Задачи по времени">
+      <div ref={scrollRef} className="relative max-h-[420px] overflow-y-auto overscroll-contain pr-1" role="list" aria-label={tr("Задачи по времени", "Tasks by time")}>
         <div className="relative" style={{ height: (toHour - fromHour) * HOUR_PX + 8 }}>
           {hours.map((hour) => (
             <div key={hour} className="absolute inset-x-0 flex items-start gap-2" style={{ top: (hour - fromHour) * HOUR_PX }}>
@@ -159,7 +160,7 @@ export function DayTimeline({ events, day }: { events: CalendarEvent[]; day: Dat
           </div>
 
           {isToday && nowTop >= 0 && nowTop <= (toHour - fromHour) * HOUR_PX && (
-            <div className="absolute right-0 z-10 flex items-center pointer-events-none" style={{ top: nowTop, left: 40 }} aria-label={`Сейчас ${clock(now)}`}>
+            <div className="absolute right-0 z-10 flex items-center pointer-events-none" style={{ top: nowTop, left: 40 }} aria-label={`${tr("Сейчас", "Now")} ${clock(now)}`}>
               <span className="w-2.5 h-2.5 -ml-1 -mt-px rounded-full bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.2)]" />
               <span className="flex-1 h-0.5 bg-red-500" />
               <span className="ml-1 -mt-px px-1 rounded text-[10px] font-semibold tabular-nums text-white bg-red-500">{clock(now)}</span>
@@ -167,7 +168,7 @@ export function DayTimeline({ events, day }: { events: CalendarEvent[]; day: Dat
           )}
         </div>
       </div>
-      {timed.length === 0 && <p className="text-xs text-gray-500 dark:text-gray-400">Задач со временем сегодня нет — день свободен.</p>}
+      {timed.length === 0 && <p className="text-xs text-gray-500 dark:text-gray-400">{tr("Задач со временем сегодня нет — день свободен.", "No timed tasks today — the day is free.")}</p>}
     </div>
   );
 }

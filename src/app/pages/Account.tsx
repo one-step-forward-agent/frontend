@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api } from "../api/client";
 import type { ReminderSettings, Source, Tag, TagColor, TelegramLink } from "../api/types";
-import { ThemePicker } from "@/theme";
+import { LanguagePicker, ThemePicker } from "@/theme";
 import { useAuth, useSignOut, useUser } from "../auth";
 import { Icon } from "../components/icons";
 import { Avatar } from "../components/Layout";
@@ -35,16 +35,17 @@ import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/authStore";
 import { useNavigate } from "react-router-dom";
+import { LOCALE, isEn, tr } from "@/i18n";
 
 const SECTIONS = [
-  { id: "profile", label: "Профиль" },
-  { id: "tags", label: "Теги" },
-  { id: "reminders", label: "Уведомления" },
+  { id: "profile", label: tr("Профиль", "Profile") },
+  { id: "tags", label: tr("Теги", "Tags") },
+  { id: "reminders", label: tr("Уведомления", "Notifications") },
   { id: "telegram", label: "Telegram" },
-  { id: "appearance", label: "Оформление" },
-  { id: "integrations", label: "Интеграции" },
-  { id: "calendars", label: "Календари" },
-  { id: "security", label: "Безопасность" },
+  { id: "appearance", label: tr("Оформление и язык", "Appearance & language") },
+  { id: "integrations", label: tr("Интеграции", "Integrations") },
+  { id: "calendars", label: tr("Календари", "Calendars") },
+  { id: "security", label: tr("Безопасность", "Security") },
 ];
 
 /** Раздел, который сейчас на экране: подсвечивается в меню. */
@@ -77,7 +78,7 @@ function goTo(id: string) {
 }
 
 export function AccountPage() {
-  useTitle("Аккаунт");
+  useTitle(tr("Аккаунт", "Account"));
   const user = useUser();
   const stats = useAsync(() => api.stats(7), []);
   const active = useActiveSection();
@@ -109,7 +110,7 @@ export function AccountPage() {
               <Avatar user={user} size={56} />
               <div className="min-w-0 flex-1">
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-                  {user.name || "Аккаунт"}
+                  {user.name || tr("Аккаунт", "Account")}
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                   {user.email}
@@ -122,9 +123,9 @@ export function AccountPage() {
                 <Icon name="fire" size={14} />
                 <span
                   className="tabular-nums"
-                  title={`Лучшая серия: ${stats.data.best_streak} дн.`}
+                  title={`${tr("Лучшая серия", "Best streak")}: ${stats.data.best_streak} ${tr("дн.", "d")}`}
                 >
-                  {stats.data.streak} дн.
+                  {stats.data.streak} {tr("дн.", "d")}
                 </span>
               </GlassPill>
             )}
@@ -135,7 +136,7 @@ export function AccountPage() {
       {/* ─── Layout: меню + секции ─────────────────── */}
       <div className="grid lg:grid-cols-[220px_minmax(0,1fr)] gap-6 lg:gap-8">
         {wide ? (
-          <nav className="sticky top-6 self-start space-y-1" aria-label="Разделы аккаунта">
+          <nav className="sticky top-6 self-start space-y-1" aria-label={tr("Разделы аккаунта", "Account sections")}>
             {SECTIONS.map((section) => (
               <GlassNavItem
                 key={section.id}
@@ -199,7 +200,7 @@ function ProfileSection() {
     setBusy(true);
     try {
       setUser(await api.me.update({ name: name.trim() || null, timezone }));
-      toast("Профиль сохранён");
+      toast(tr("Профиль сохранён", "Profile saved"));
     } catch (error) {
       reportError(errorText(error));
     } finally {
@@ -210,16 +211,16 @@ function ProfileSection() {
   return (
     <div id="profile" className="anchor">
       <GlassCard
-        title="Профиль"
+        title={tr("Профиль", "Profile")}
         actions={
           <button type="button" className="btn btn-ghost btn-sm h-8 px-3 text-xs" onClick={restartTour}>
-            Как пользоваться Dayla
+            {tr("Как пользоваться Dayla", "How to use Dayla")}
           </button>
         }
       >
         <form className={cn("form", COMPACT_FIELD)} onSubmit={save}>
           <div className="form-row">
-            <Field label="Имя">
+            <Field label={tr("Имя", "Name")}>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -232,11 +233,11 @@ function ProfileSection() {
             </Field>
           </div>
           <Field
-            label="Часовой пояс"
+            label={tr("Часовой пояс", "Time zone")}
             hint={
               timezone !== browserTimezone()
-                ? `На этом устройстве: ${browserTimezone()}`
-                : "Совпадает с этим устройством"
+                ? `${tr("На этом устройстве", "On this device")}: ${browserTimezone()}`
+                : tr("Совпадает с этим устройством", "Same as this device")
             }
           >
             <select value={timezone} onChange={(e) => setTimezone(e.target.value)}>
@@ -249,7 +250,7 @@ function ProfileSection() {
           </Field>
           <div className="form-actions">
             <Button size="sm" type="submit" variant="primary" busy={busy}>
-              Сохранить
+              {tr("Сохранить", "Save")}
             </Button>
           </div>
         </form>
@@ -272,7 +273,7 @@ function TagsSection() {
       notifyTagsChanged([...tags, tag]);
       setName("");
       setColor(TAG_COLORS[(tags.length + 1) % TAG_COLORS.length]);
-      toast("Тег создан");
+      toast(tr("Тег создан", "Tag created"));
     });
   };
 
@@ -286,23 +287,28 @@ function TagsSection() {
     run(`counts-${tag.id}`, async () => {
       const saved = await api.tags.update(tag.id, { counts_progress: counts });
       notifyTagsChanged(tags.map((item) => (item.id === tag.id ? saved : item)));
-      toast(counts ? `«${tag.name}» снова считается в прогрессе` : `Задачи с тегом «${tag.name}» больше не влияют на прогресс`);
+      toast(
+        counts
+          ? tr(`«${tag.name}» снова считается в прогрессе`, `“${tag.name}” counts towards progress again`)
+          : tr(`Задачи с тегом «${tag.name}» больше не влияют на прогресс`, `Tasks tagged “${tag.name}” no longer affect progress`)
+      );
     });
 
   const remove = (tag: Tag) =>
     run(`delete-${tag.id}`, async () => {
       await api.tags.remove(tag.id);
       notifyTagsChanged(tags.filter((item) => item.id !== tag.id));
-      toast(`Тег «${tag.name}» удалён`);
+      toast(tr(`Тег «${tag.name}» удалён`, `Tag “${tag.name}” deleted`));
     });
 
   return (
     <div id="tags" className="anchor">
-      <GlassCard title="Теги">
+      <GlassCard title={tr("Теги", "Tags")}>
         <p className="muted small">
-          Отмечайте задачи тегами и фильтруйте по ним в «Задачах». В чате тег
-          ставится так: «отчёт завтра #работа». Снимите «в прогрессе» у тегов
-          вроде «прогулка» — такие задачи не будут влиять на процент и серию.
+          {tr(
+            "Отмечайте задачи тегами и фильтруйте по ним в «Задачах». В чате тег ставится так: «отчёт завтра #работа». Снимите «в прогрессе» у тегов вроде «прогулка» — такие задачи не будут влиять на процент и серию.",
+            "Tag your tasks and filter by tags in Tasks. In the chat, add a tag like this: “report tomorrow #work”. Untick “in progress” for tags like “walk” — such tasks won't affect the percentage and the streak."
+          )}
         </p>
         {tags.length > 0 && (
           <ul className="simple-list tag-manage">
@@ -312,7 +318,7 @@ function TagsSection() {
                 <span
                   className="color-dots"
                   role="group"
-                  aria-label={`Цвет тега ${tag.name}`}
+                  aria-label={`${tr("Цвет тега", "Tag colour")} ${tag.name}`}
                 >
                   {TAG_COLORS.map((item) => (
                     <button
@@ -329,7 +335,7 @@ function TagsSection() {
                 </span>
                 <label
                   className="inline-flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 cursor-pointer select-none"
-                  title="Учитывать задачи с этим тегом в прогрессе и серии"
+                  title={tr("Учитывать задачи с этим тегом в прогрессе и серии", "Count tasks with this tag towards progress and the streak")}
                 >
                   <input
                     type="checkbox"
@@ -337,13 +343,13 @@ function TagsSection() {
                     disabled={pending === `counts-${tag.id}`}
                     onChange={(event) => setCounts(tag, event.target.checked)}
                   />
-                  в прогрессе
+                  {tr("в прогрессе", "in progress")}
                 </label>
                 <ConfirmButton
                   size="sm"
                   icon="trash"
-                  label={`Удалить тег ${tag.name}`}
-                  confirmLabel="Удалить?"
+                  label={`${tr("Удалить тег", "Delete tag")} ${tag.name}`}
+                  confirmLabel={tr("Удалить?", "Delete?")}
                   busy={pending === `delete-${tag.id}`}
                   onConfirm={() => remove(tag)}
                 />
@@ -358,11 +364,11 @@ function TagsSection() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Новый тег, например «работа»"
+            placeholder={tr("Новый тег, например «работа»", "New tag, e.g. “work”")}
             maxLength={40}
-            aria-label="Название тега"
+            aria-label={tr("Название тега", "Tag name")}
           />
-          <span className="color-dots" role="group" aria-label="Цвет">
+          <span className="color-dots" role="group" aria-label={tr("Цвет", "Colour")}>
             {TAG_COLORS.map((item) => (
               <button
                 key={item}
@@ -381,7 +387,7 @@ function TagsSection() {
             busy={pending === "create"}
             disabled={!name.trim()}
           >
-            Создать
+            {tr("Создать", "Create")}
           </Button>
         </form>
       </GlassCard>
@@ -392,12 +398,17 @@ function TagsSection() {
 function AppearanceSection() {
   return (
     <div id="appearance" className="anchor">
-      <GlassCard title="Оформление">
+      <GlassCard title={tr("Оформление и язык", "Appearance & language")}>
         <p className="muted small">
-          Тема сохраняется в этом браузере и действует на всём сайте.
+          {tr("Тема и язык сохраняются в этом браузере и действуют на всём сайте.", "The theme and language are saved in this browser and apply to the whole site.")}
         </p>
         <div style={{ marginTop: 12 }}>
           <ThemePicker />
+        </div>
+        {/* Named in both languages: whoever switched by mistake still finds the way back */}
+        <p className="field-label" style={{ marginTop: 16 }}>Язык · Language</p>
+        <div style={{ marginTop: 8 }}>
+          <LanguagePicker />
         </div>
       </GlassCard>
     </div>
@@ -407,9 +418,9 @@ function AppearanceSection() {
 // Offered until chosen; any other time is added by hand
 const LEAD_SUGGESTIONS = [0, 15, 60, 1440];
 const LEAD_UNITS = [
-  { value: 1, label: "мин" },
-  { value: 60, label: "ч" },
-  { value: 1440, label: "дн" },
+  { value: 1, label: tr("мин", "min") },
+  { value: 60, label: tr("ч", "h") },
+  { value: 1440, label: tr("дн", "days") },
 ];
 const SOURCES: Source[] = ["local", "ai", "google", "apple"];
 
@@ -445,7 +456,7 @@ function RemindersSection() {
         quiet_hours_end: draft.quiet_hours_end.slice(0, 5),
       });
       settings.setData(saved);
-      toast("Настройки уведомлений сохранены");
+      toast(tr("Настройки уведомлений сохранены", "Notification settings saved"));
     } catch (error) {
       reportError(errorText(error));
     } finally {
@@ -458,7 +469,7 @@ function RemindersSection() {
 
   return (
     <div id="reminders" className="anchor">
-      <GlassCard title="Уведомления">
+      <GlassCard title={tr("Уведомления", "Notifications")}>
         {settings.error && (
           <ErrorNote message={settings.error} onRetry={settings.reload} />
         )}
@@ -469,82 +480,82 @@ function RemindersSection() {
             <Switch
               checked={draft.enabled}
               onChange={(enabled) => update({ enabled })}
-              label="Напоминать о событиях"
-              hint="Сообщения приходят в Telegram-бота"
+              label={tr("Напоминать о событиях", "Remind me about events")}
+              hint={tr("Сообщения приходят в Telegram-бота", "Messages come from the Telegram bot")}
             />
 
             <fieldset className="fieldset" disabled={!draft.enabled}>
-              <legend className="field-label">Когда напоминать</legend>
+              <legend className="field-label">{tr("Когда напоминать", "When to remind")}</legend>
               <LeadTimes
                 value={draft.lead_times}
                 onChange={(lead_times) => update({ lead_times })}
               />
               <span className="field-hint">
-                Для отдельного события можно задать своё время в его настройках.
+                {tr("Для отдельного события можно задать своё время в его настройках.", "A single event can have its own time in its settings.")}
               </span>
             </fieldset>
 
             <Switch
               checked={draft.daily_digest_enabled}
               onChange={(value) => update({ daily_digest_enabled: value })}
-              label="План дня по утрам"
+              label={tr("План дня по утрам", "Morning plan for the day")}
             />
             {draft.daily_digest_enabled && (
-              <Field label="Время плана" className="field-inline">
-                <TimeField value={draft.daily_digest_time.slice(0, 5)} onChange={(value) => update({ daily_digest_time: value })} label="Время плана" />
+              <Field label={tr("Время плана", "Plan time")} className="field-inline">
+                <TimeField value={draft.daily_digest_time.slice(0, 5)} onChange={(value) => update({ daily_digest_time: value })} label={tr("Время плана", "Plan time")} />
               </Field>
             )}
 
             <Switch
               checked={draft.checkin_enabled}
               onChange={(value) => update({ checkin_enabled: value })}
-              label="Проверка в середине дня"
-              hint="Спрошу, успеваете ли вы, и предложу перенести часть задач на менее загруженный день"
+              label={tr("Проверка в середине дня", "Midday check-in")}
+              hint={tr("Спрошу, успеваете ли вы, и предложу перенести часть задач на менее загруженный день", "I'll ask whether you're keeping up and offer to move some tasks to a lighter day")}
             />
             {draft.checkin_enabled && (
-              <Field label="Время проверки" className="field-inline">
-                <TimeField value={draft.checkin_time.slice(0, 5)} onChange={(value) => update({ checkin_time: value })} label="Время проверки" />
+              <Field label={tr("Время проверки", "Check-in time")} className="field-inline">
+                <TimeField value={draft.checkin_time.slice(0, 5)} onChange={(value) => update({ checkin_time: value })} label={tr("Время проверки", "Check-in time")} />
               </Field>
             )}
 
             <Switch
               checked={draft.evening_enabled}
               onChange={(value) => update({ evening_enabled: value })}
-              label="Итоги дня вечером"
-              hint="Прогресс за день, план на завтра и перенос невыполненного"
+              label={tr("Итоги дня вечером", "Evening summary")}
+              hint={tr("Прогресс за день, план на завтра и перенос невыполненного", "The day's progress, tomorrow's plan and moving what's left")}
             />
             {draft.evening_enabled && (
-              <Field label="Время итогов" className="field-inline">
-                <TimeField value={draft.evening_time.slice(0, 5)} onChange={(value) => update({ evening_time: value })} label="Время итогов" />
+              <Field label={tr("Время итогов", "Summary time")} className="field-inline">
+                <TimeField value={draft.evening_time.slice(0, 5)} onChange={(value) => update({ evening_time: value })} label={tr("Время итогов", "Summary time")} />
               </Field>
             )}
 
             <Switch
               checked={draft.deadline_enabled}
               onChange={(value) => update({ deadline_enabled: value })}
-              label="Приближение дедлайнов"
-              hint="За 3 дня, за день и за 2 часа до срока"
+              label={tr("Приближение дедлайнов", "Upcoming deadlines")}
+              hint={tr("За 3 дня, за день и за 2 часа до срока", "3 days, 1 day and 2 hours before the deadline")}
             />
 
             <Switch
               checked={draft.quiet_hours_enabled}
               onChange={(value) => update({ quiet_hours_enabled: value })}
-              label="Тихие часы"
-              hint="Ничего не присылать в это время"
+              label={tr("Тихие часы", "Quiet hours")}
+              hint={tr("Ничего не присылать в это время", "Send nothing during these hours")}
             />
             {draft.quiet_hours_enabled && (
               <div className="form-row">
-                <Field label="С">
-                  <TimeField value={draft.quiet_hours_start.slice(0, 5)} onChange={(value) => update({ quiet_hours_start: value })} label="Тихие часы с" />
+                <Field label={tr("С", "From")}>
+                  <TimeField value={draft.quiet_hours_start.slice(0, 5)} onChange={(value) => update({ quiet_hours_start: value })} label={tr("Тихие часы с", "Quiet hours from")} />
                 </Field>
-                <Field label="До">
-                  <TimeField value={draft.quiet_hours_end.slice(0, 5)} onChange={(value) => update({ quiet_hours_end: value })} label="Тихие часы до" />
+                <Field label={tr("До", "To")}>
+                  <TimeField value={draft.quiet_hours_end.slice(0, 5)} onChange={(value) => update({ quiet_hours_end: value })} label={tr("Тихие часы до", "Quiet hours to")} />
                 </Field>
               </div>
             )}
 
             <fieldset className="fieldset">
-              <legend className="field-label">Источники</legend>
+              <legend className="field-label">{tr("Источники", "Sources")}</legend>
               <div className="chips">
                 {SOURCES.map((source) => (
                   <button
@@ -564,8 +575,8 @@ function RemindersSection() {
               </div>
               <span className="field-hint">
                 {draft.sources.length
-                  ? "Напоминания только для выбранных источников."
-                  : "Ничего не выбрано — напоминания для всех событий."}
+                  ? tr("Напоминания только для выбранных источников.", "Reminders only for the chosen sources.")
+                  : tr("Ничего не выбрано — напоминания для всех событий.", "Nothing chosen — reminders for all events.")}
               </span>
             </fieldset>
 
@@ -577,7 +588,7 @@ function RemindersSection() {
                 disabled={!dirty}
                 onClick={save}
               >
-                Сохранить
+                {tr("Сохранить", "Save")}
               </Button>
             </div>
           </div>
@@ -592,19 +603,21 @@ function IntegrationsSection() {
   return (
     <div id="integrations" className="anchor">
       <GlassCard
-        title="Интеграции"
+        title={tr("Интеграции", "Integrations")}
         actions={
           <Link
             to="/integrations"
             className="btn btn-secondary btn-sm h-8 px-3 text-xs"
           >
-            Управлять
+            {tr("Управлять", "Manage")}
           </Link>
         }
       >
         <p className="muted small">
-          Google Calendar, Яндекс Календарь, Apple Calendar и Samsung Calendar:
-          подключение, импорт и отправка задач.
+          {tr(
+            "Google Calendar, Яндекс Календарь, Apple Calendar и Samsung Calendar: подключение, импорт и отправка задач.",
+            "Google Calendar, Yandex Calendar, Apple Calendar and Samsung Calendar: connecting, importing and sending tasks."
+          )}
         </p>
         {integrations.error && (
           <ErrorNote message={integrations.error} onRetry={integrations.reload} />
@@ -618,14 +631,14 @@ function IntegrationsSection() {
                   <Badge
                     tone={item.connection.status === "error" ? "bad" : "ok"}
                   >
-                    {item.connection.status === "error" ? "ошибка" : "подключено"}
+                    {item.connection.status === "error" ? tr("ошибка", "error") : tr("подключено", "connected")}
                   </Badge>
                 ) : (
                   <Link
                     to="/integrations"
                     className="btn btn-ghost btn-sm h-8 px-3 text-xs"
                   >
-                    Подключить
+                    {tr("Подключить", "Connect")}
                   </Link>
                 )}
               </li>
@@ -648,8 +661,8 @@ function TelegramSection() {
   const copy = (text: string) =>
     navigator.clipboard
       .writeText(text)
-      .then(() => toast("Скопировано"))
-      .catch(() => toast("Не удалось скопировать", "error"));
+      .then(() => toast(tr("Скопировано", "Copied")))
+      .catch(() => toast(tr("Не удалось скопировать", "Could not copy"), "error"));
 
   return (
     <div id="telegram" className="anchor">
@@ -662,19 +675,20 @@ function TelegramSection() {
         ) : status.data.linked ? (
           <div className="form">
             <p>
-              <Badge tone="ok">подключён</Badge>{" "}
+              <Badge tone="ok">{tr("подключён", "connected")}</Badge>{" "}
               {status.data.username
                 ? `@${status.data.username}`
-                : "чат привязан"}
+                : tr("чат привязан", "chat linked")}
               <span className="muted">
                 {" "}
-                · с {formatDateTime(status.data.linked_at)}
+                · {tr("с", "since")} {formatDateTime(status.data.linked_at)}
               </span>
             </p>
             <p className="muted small">
-              Пишите боту планы обычными словами, голосом или файлом PDF/DOCX —
-              события появятся в календаре. Спросите «что у меня завтра?», чтобы
-              увидеть план.
+              {tr(
+                "Пишите боту планы обычными словами, голосом или файлом PDF/DOCX — события появятся в календаре. Спросите «что у меня завтра?», чтобы увидеть план.",
+                "Send the bot your plans in plain words, by voice or as a PDF/DOCX file — the events will appear in the calendar. Ask “what do I have tomorrow?” to see the plan."
+              )}
             </p>
             <div className="button-row">
               <Button
@@ -684,16 +698,16 @@ function TelegramSection() {
                 onClick={() =>
                   run("test", async () => {
                     await api.reminders.test();
-                    toast("Тестовое уведомление отправлено");
+                    toast(tr("Тестовое уведомление отправлено", "Test notification sent"));
                     window.setTimeout(history.reload, 3000);
                   })
                 }
               >
-                Отправить тест
+                {tr("Отправить тест", "Send a test")}
               </Button>
               <ConfirmButton
                 size="sm"
-                confirmLabel="Отвязать?"
+                confirmLabel={tr("Отвязать?", "Unlink?")}
                 busy={pending === "unlink"}
                 onConfirm={() =>
                   run("unlink", async () => {
@@ -702,16 +716,17 @@ function TelegramSection() {
                   })
                 }
               >
-                Отвязать
+                {tr("Отвязать", "Unlink")}
               </ConfirmButton>
             </div>
           </div>
         ) : (
           <div className="form">
             <p className="muted">
-              Привяжите Telegram, чтобы планировать в чате с Dayla: пишите или
-              надиктовывайте планы, спрашивайте о расписании и получайте
-              напоминания и план на утро.
+              {tr(
+                "Привяжите Telegram, чтобы планировать в чате с Dayla: пишите или надиктовывайте планы, спрашивайте о расписании и получайте напоминания и план на утро.",
+                "Link Telegram to plan in a chat with Dayla: type or dictate plans, ask about your schedule and get reminders and a morning plan."
+              )}
             </p>
             {link ? (
               <div className="link-code">
@@ -722,25 +737,25 @@ function TelegramSection() {
                     target="_blank"
                     rel="noreferrer noopener"
                   >
-                    Открыть бота <Icon name="external" size={14} />
+                    {tr("Открыть бота", "Open the bot")} <Icon name="external" size={14} />
                   </a>
                 )}
                 <p className="small">
                   {link.deep_link
-                    ? "Или отправьте боту команду:"
-                    : "Отправьте боту команду:"}
+                    ? tr("Или отправьте боту команду:", "Or send the bot this command:")
+                    : tr("Отправьте боту команду:", "Send the bot this command:")}
                 </p>
                 <button
                   type="button"
                   className="code h-8 px-3 text-xs rounded-lg"
                   onClick={() => copy(`/start ${link.code}`)}
-                  title="Скопировать"
+                  title={tr("Скопировать", "Copy")}
                 >
                   /start {link.code}
                 </button>
                 <p className="muted small">
-                  Код действует до{" "}
-                  {new Date(link.expires_at).toLocaleTimeString("ru-RU", {
+                  {tr("Код действует до", "The code is valid until")}{" "}
+                  {new Date(link.expires_at).toLocaleTimeString(LOCALE, {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
@@ -753,7 +768,7 @@ function TelegramSection() {
                   busy={status.loading}
                   onClick={status.reload}
                 >
-                  Я отправил — проверить
+                  {tr("Я отправил — проверить", "I've sent it — check")}
                 </Button>
               </div>
             ) : (
@@ -765,7 +780,7 @@ function TelegramSection() {
                   run("link", async () => setLink(await api.telegram.link()))
                 }
               >
-                Подключить Telegram
+                {tr("Подключить Telegram", "Connect Telegram")}
               </Button>
             )}
           </div>
@@ -773,7 +788,7 @@ function TelegramSection() {
 
         {history.data && history.data.length > 0 && (
           <details className="history">
-            <summary>Последние уведомления</summary>
+            <summary>{tr("Последние уведомления", "Recent notifications")}</summary>
             <ul>
               {history.data.map((item) => (
                 <li key={item.id}>
@@ -818,7 +833,7 @@ function CalendarsSection() {
       });
       setName("");
       await calendars.reload();
-      toast("Календарь создан");
+      toast(tr("Календарь создан", "Calendar created"));
     });
   };
 
@@ -836,7 +851,7 @@ function CalendarsSection() {
   return (
     <div id="calendars" className="anchor">
       <GlassCard
-        title="Календари"
+        title={tr("Календари", "Calendars")}
         actions={
           <Button
             size="sm"
@@ -845,7 +860,7 @@ function CalendarsSection() {
             busy={pending === "export"}
             onClick={exportIcs}
           >
-            Экспорт .ics
+            {tr("Экспорт .ics", "Export .ics")}
           </Button>
         }
       >
@@ -871,9 +886,9 @@ function CalendarsSection() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Новый календарь, например «Учёба»"
+            placeholder={tr("Новый календарь, например «Учёба»", "New calendar, e.g. “Study”")}
             maxLength={200}
-            aria-label="Название календаря"
+            aria-label={tr("Название календаря", "Calendar name")}
           />
           <Button
             size="sm"
@@ -882,7 +897,7 @@ function CalendarsSection() {
             busy={pending === "create"}
             disabled={!name.trim()}
           >
-            Создать
+            {tr("Создать", "Create")}
           </Button>
         </form>
       </GlassCard>
@@ -911,24 +926,26 @@ function SecuritySection() {
 
   return (
     <div id="security" className="anchor">
-      <GlassCard title="Безопасность">
+      <GlassCard title={tr("Безопасность", "Security")}>
         <div className="button-row">
           <Button size="sm" icon="logout" onClick={() => logout()}>
-            Выйти
+            {tr("Выйти", "Sign out")}
           </Button>
           <ConfirmButton
             size="sm"
-            confirmLabel="Выйти на всех устройствах?"
+            confirmLabel={tr("Выйти на всех устройствах?", "Sign out on all devices?")}
             onConfirm={() => logout(true)}
           >
-            Выйти везде
+            {tr("Выйти везде", "Sign out everywhere")}
           </ConfirmButton>
         </div>
         <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
-          Удаление аккаунта стирает все ваши задачи, файлы, переписку с ассистентом и подключения и отзывает доступ
-          Dayla к Google Calendar. Отменить его нельзя. Подробнее — в{" "}
+          {tr(
+            "Удаление аккаунта стирает все ваши задачи, файлы, переписку с ассистентом и подключения и отзывает доступ Dayla к Google Calendar. Отменить его нельзя. Подробнее — в",
+            "Deleting the account erases all your tasks, files, chats with the assistant and connections, and revokes Dayla's access to Google Calendar. It cannot be undone. More in the"
+          )}{" "}
           <a href="/privacy-policy" className="text-sky-600 dark:text-sky-400 hover:underline">
-            политике конфиденциальности
+            {tr("политике конфиденциальности", "privacy policy")}
           </a>
           .
         </p>
@@ -937,10 +954,10 @@ function SecuritySection() {
             size="sm"
             icon="trash"
             busy={deleting}
-            confirmLabel="Удалить аккаунт навсегда?"
+            confirmLabel={tr("Удалить аккаунт навсегда?", "Delete the account for good?")}
             onConfirm={deleteAccount}
           >
-            Удалить аккаунт
+            {tr("Удалить аккаунт", "Delete account")}
           </ConfirmButton>
         </div>
       </GlassCard>
@@ -952,7 +969,7 @@ function LeadTimes({ value, onChange }: { value: number[]; onChange: (value: num
   const [amount, setAmount] = useState("");
   const [unit, setUnit] = useState(1);
   const sorted = [...value].sort((a, b) => a - b);
-  const label = (minutes: number) => (minutes === 0 ? "в момент начала" : `за ${formatLead(minutes)}`);
+  const label = (minutes: number) => (minutes === 0 ? tr("в момент начала", "at the start") : tr(`за ${formatLead(minutes)}`, `${formatLead(minutes)} before`));
   const add = (minutes: number) => {
     if (!Number.isFinite(minutes) || minutes < 0 || minutes > 10080 || value.includes(minutes)) return;
     onChange([...value, minutes].slice(-10));
@@ -968,13 +985,13 @@ function LeadTimes({ value, onChange }: { value: number[]; onChange: (value: num
   return (
     <div className="space-y-2">
       <div className="chips">
-        {sorted.length === 0 && <span className="field-hint">Пока не выбрано — добавьте время ниже.</span>}
+        {sorted.length === 0 && <span className="field-hint">{tr("Пока не выбрано — добавьте время ниже.", "Nothing chosen yet — add a time below.")}</span>}
         {sorted.map((minutes) => (
           <span key={minutes} className="chip-toggle active inline-flex items-center gap-1">
             {label(minutes)}
             <button
               type="button"
-              aria-label={`Убрать «${label(minutes)}»`}
+              aria-label={tr(`Убрать «${label(minutes)}»`, `Remove “${label(minutes)}”`)}
               className="opacity-70 hover:opacity-100"
               onClick={() => onChange(value.filter((item) => item !== minutes))}
             >
@@ -989,13 +1006,13 @@ function LeadTimes({ value, onChange }: { value: number[]; onChange: (value: num
         ))}
       </div>
       <div className="flex items-center gap-2 max-w-xs">
-        <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">за</span>
+        {!isEn && <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">за</span>}
         <input
           type="text"
           inputMode="decimal"
           value={amount}
           placeholder="20"
-          aria-label="Своё время напоминания"
+          aria-label={tr("Своё время напоминания", "Your own reminder time")}
           onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, "").slice(0, 4))}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
@@ -1005,15 +1022,16 @@ function LeadTimes({ value, onChange }: { value: number[]; onChange: (value: num
           }}
           className="!w-20"
         />
-        <select value={unit} onChange={(event) => setUnit(Number(event.target.value))} aria-label="Единица" className="!w-24">
+        <select value={unit} onChange={(event) => setUnit(Number(event.target.value))} aria-label={tr("Единица", "Unit")} className="!w-24">
           {LEAD_UNITS.map((item) => (
             <option key={item.value} value={item.value}>
               {item.label}
             </option>
           ))}
         </select>
+        {isEn && <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">before</span>}
         <Button size="sm" onClick={addOwn} disabled={!amount}>
-          Добавить
+          {tr("Добавить", "Add")}
         </Button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 // src/pages/EventPage.tsx
 import { useRef, useState } from "react";
 import { api } from "../api/client";
-import type { CalendarEvent, EventFile, Integration } from "../api/types";
+import type { CalendarEvent, EventFile } from "../api/types";
 import { EventForm } from "../components/events";
 import { TagList } from "../components/tags";
 import { Icon } from "../components/icons";
@@ -31,6 +31,7 @@ import { notifyTasksChanged, useAction, useAsync } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
+import { tr } from "@/i18n";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
 
@@ -43,20 +44,20 @@ const PAGE = "relative max-w-3xl mx-auto pt-[1.5vh]";
 /* ─── NewEventPage ──────────────────────────────────────── */
 
 export function NewEventPage() {
-  useTitle("Новая задача");
+  useTitle(tr("Новая задача", "New task"));
   const { query } = useLocation();
   const calendars = useAsync(() => api.calendars.list(), []);
   const toast = useToast();
 
   return (
     <div className={PAGE}>
-      <PageHeader title="Новая задача" />
+      <PageHeader title={tr("Новая задача", "New task")} />
       <GlassCard>
         <EventForm
           day={query.get("day")}
           calendars={calendars.data}
           onSaved={(event) => {
-            toast("Задача создана");
+            toast(tr("Задача создана", "Task created"));
             navigate(`/events/${event.id}`, { replace: true });
           }}
           onCancel={() => window.history.back()}
@@ -73,7 +74,7 @@ export function EventPage({ id }: { id: number }) {
   const [editing, setEditing] = useState(false);
   const toast = useToast();
   const { pending, run } = useAction(useErrorToast());
-  useTitle(event.data?.title ?? "Событие");
+  useTitle(event.data?.title ?? tr("Событие", "Event"));
 
   if (event.error) {
     return (
@@ -88,7 +89,7 @@ export function EventPage({ id }: { id: number }) {
           )}
         >
           <Icon name="left" size={14} />
-          К календарю
+          {tr("К календарю", "To the calendar")}
         </Link>
       </div>
     );
@@ -100,7 +101,7 @@ export function EventPage({ id }: { id: number }) {
     run(scope === "series" ? "delete-series" : "delete", async () => {
       await api.events.remove(item.id, scope);
       notifyTasksChanged();
-      toast(scope === "series" ? "Серия удалена" : "Удалено");
+      toast(scope === "series" ? tr("Серия удалена", "Series deleted") : tr("Удалено", "Deleted"));
       navigate("/calendar", { replace: true });
     });
 
@@ -113,14 +114,14 @@ export function EventPage({ id }: { id: number }) {
   if (editing) {
     return (
       <div className={PAGE}>
-        <PageHeader title="Редактирование" />
+        <PageHeader title={tr("Редактирование", "Editing")} />
         <GlassCard>
           <EventForm
             event={item}
             onSaved={(saved) => {
               event.setData(saved);
               setEditing(false);
-              toast("Сохранено");
+              toast(tr("Сохранено", "Saved"));
             }}
             onCancel={() => setEditing(false)}
           />
@@ -143,7 +144,7 @@ export function EventPage({ id }: { id: number }) {
         )}
       >
         <Icon name="left" size={14} />
-        Календарь
+        {tr("Календарь", "Calendar")}
       </Link>
 
       <PageHeader
@@ -157,29 +158,29 @@ export function EventPage({ id }: { id: number }) {
               busy={pending === "done"}
               onClick={toggleDone}
             >
-              {item.completed_at ? "Выполнено" : "Отметить выполненной"}
+              {item.completed_at ? tr("Выполнено", "Done") : tr("Отметить выполненной", "Mark as done")}
             </Button>
             <Button size="sm" icon="settings" onClick={() => setEditing(true)}>
-              Изменить
+              {tr("Изменить", "Edit")}
             </Button>
             <ConfirmButton
               size="sm"
               icon="trash"
-              confirmLabel="Удалить?"
+              confirmLabel={tr("Удалить?", "Delete?")}
               busy={pending === "delete"}
               onConfirm={() => remove()}
             >
-              {item.series_id ? "Удалить эту" : "Удалить"}
+              {item.series_id ? tr("Удалить эту", "Delete this one") : tr("Удалить", "Delete")}
             </ConfirmButton>
             {item.series_id && (
               <ConfirmButton
                 size="sm"
                 icon="trash"
-                confirmLabel="Удалить серию?"
+                confirmLabel={tr("Удалить серию?", "Delete the series?")}
                 busy={pending === "delete-series"}
                 onConfirm={() => remove("series")}
               >
-                Удалить серию
+                {tr("Удалить серию", "Delete series")}
               </ConfirmButton>
             )}
           </>
@@ -188,7 +189,7 @@ export function EventPage({ id }: { id: number }) {
 
       <GlassCard>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-          <DetailRow icon="calendar" label="Когда">
+          <DetailRow icon="calendar" label={tr("Когда", "When")}>
             {formatDate(start, {
               weekday: "long",
               day: "numeric",
@@ -202,7 +203,7 @@ export function EventPage({ id }: { id: number }) {
           </DetailRow>
 
           {item.deadline_at && (
-            <DetailRow icon="flag" label="Дедлайн">
+            <DetailRow icon="flag" label={tr("Дедлайн", "Deadline")}>
               <Badge
                 tone={item.completed_at ? "ok" : deadlineTone(item.deadline_at)}
               >
@@ -212,28 +213,28 @@ export function EventPage({ id }: { id: number }) {
           )}
 
           {item.recurrence && (
-            <DetailRow icon="sync" label="Повтор">
+            <DetailRow icon="sync" label={tr("Повтор", "Repeat")}>
               {item.recurrence}
             </DetailRow>
           )}
 
           {item.location && (
-            <DetailRow icon="location" label="Где">
+            <DetailRow icon="location" label={tr("Где", "Where")}>
               {item.location}
             </DetailRow>
           )}
 
-          <DetailRow icon="bell" label="Напоминание">
+          <DetailRow icon="bell" label={tr("Напоминание", "Reminder")}>
             {item.reminder_minutes == null
-              ? "По настройкам"
+              ? tr("По настройкам", "As in settings")
               : item.reminder_minutes === 0
-              ? "В момент начала"
-              : `За ${formatLead(item.reminder_minutes)}`}
+              ? tr("В момент начала", "At the start")
+              : tr(`За ${formatLead(item.reminder_minutes)}`, `${formatLead(item.reminder_minutes)} before`)}
           </DetailRow>
 
           <div className="sm:col-span-2">
             <dt className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
-              Детали
+              {tr("Детали", "Details")}
             </dt>
             <dd className="flex flex-wrap gap-1.5">
               <Badge
@@ -248,13 +249,13 @@ export function EventPage({ id }: { id: number }) {
                 {priority?.label ?? item.priority}
               </Badge>
               <Badge>{SOURCE_LABELS[item.source] ?? item.source}</Badge>
-              {item.is_fixed && <Badge tone="accent">нельзя переносить</Badge>}
+              {item.is_fixed && <Badge tone="accent">{tr("нельзя переносить", "can't be moved")}</Badge>}
               <TagList ids={item.tag_ids} />
               {item.sync_status === "synced" && (
-                <Badge tone="ok">синхронизировано</Badge>
+                <Badge tone="ok">{tr("синхронизировано", "synced")}</Badge>
               )}
               {item.sync_status === "error" && (
-                <Badge tone="bad">ошибка синхронизации</Badge>
+                <Badge tone="bad">{tr("ошибка синхронизации", "sync error")}</Badge>
               )}
             </dd>
           </div>
@@ -275,7 +276,6 @@ export function EventPage({ id }: { id: number }) {
 
       <div className="mt-6 space-y-6">
         <EventFiles eventId={item.id} />
-        <EventExport event={item} onChange={event.setData} />
       </div>
     </div>
   );
@@ -327,12 +327,12 @@ function EventFiles({ eventId }: { eventId: number }) {
   const showText = (file: EventFile) =>
     run(`text-${file.id}`, async () => {
       const result = await api.files.text(file.id);
-      setPreview({ name: file.filename, text: result.text || "Текст не найден." });
+      setPreview({ name: file.filename, text: result.text || tr("Текст не найден.", "No text found.") });
     });
 
   return (
     <GlassCard
-      title="Файлы"
+      title={tr("Файлы", "Files")}
       actions={
         <>
           <input
@@ -350,7 +350,7 @@ function EventFiles({ eventId }: { eventId: number }) {
             busy={pending === "upload"}
             onClick={() => input.current?.click()}
           >
-            Прикрепить
+            {tr("Прикрепить", "Attach")}
           </Button>
         </>
       }
@@ -388,13 +388,13 @@ function EventFiles({ eventId }: { eventId: number }) {
                   busy={pending === `text-${file.id}`}
                   onClick={() => showText(file)}
                 >
-                  Текст
+                  {tr("Текст", "Text")}
                 </Button>
               )}
               <ConfirmButton
                 size="sm"
                 icon="trash"
-                confirmLabel="Удалить?"
+                confirmLabel={tr("Удалить?", "Delete?")}
                 busy={pending === `delete-${file.id}`}
                 onConfirm={() =>
                   run(`delete-${file.id}`, async () => {
@@ -402,7 +402,7 @@ function EventFiles({ eventId }: { eventId: number }) {
                     await files.reload();
                   })
                 }
-                label="Удалить файл"
+                label={tr("Удалить файл", "Delete file")}
               />
             </li>
           ))}
@@ -410,7 +410,7 @@ function EventFiles({ eventId }: { eventId: number }) {
       ) : (
         !files.loading && (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            PDF, Word, Excel или изображения — до 20 МБ.
+            {tr("PDF, Word, Excel или изображения — до 25 МБ.", "PDF, Word, Excel or images — up to 25 MB.")}
           </p>
         )
       )}
@@ -430,111 +430,6 @@ function EventFiles({ eventId }: { eventId: number }) {
           {preview?.text}
         </pre>
       </Dialog>
-    </GlassCard>
-  );
-}
-
-/* ─── EventExport ───────────────────────────────────────── */
-
-function EventExport({
-  event,
-  onChange,
-}: {
-  event: CalendarEvent;
-  onChange: (event: CalendarEvent) => void;
-}) {
-  const integrations = useAsync(() => api.integrations.list(), []);
-  const links = useAsync(() => api.events.links(event.id), [event.id]);
-  const toast = useToast();
-  const { pending, run } = useAction(useErrorToast());
-
-  const connected = (integrations.data ?? []).filter((item) => item.connection);
-  const google = connected.find((item) => item.slug === "google");
-  const targets = connected.filter(
-    (item: Integration) =>
-      item.supports_push &&
-      item.slug !== "google" &&
-      item.slug !== event.source &&
-      !links.data?.some((link) => link.provider === item.slug)
-  );
-
-  if (!connected.length && !links.data?.length) return null;
-
-  return (
-    <GlassCard title="Отправить в сервисы">
-      {links.data && links.data.length > 0 && (
-        <ul className="space-y-1.5 mb-4">
-          {links.data.map((link) => (
-            <li
-              key={link.id}
-              className={cn(
-                "relative flex items-center gap-2 overflow-hidden",
-                "px-3 py-2 rounded-xl",
-                GLASS_BODY
-              )}
-            >
-              <Badge tone="ok">
-                {SOURCE_LABELS[link.provider] ?? link.provider}
-              </Badge>
-              {link.url ? (
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className={cn(
-                    "inline-flex items-center gap-1 text-sm",
-                    "text-sky-700 dark:text-sky-300",
-                    "hover:text-sky-900 dark:hover:text-sky-100 transition-colors"
-                  )}
-                >
-                  Открыть <Icon name="external" size={12} />
-                </a>
-              ) : (
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  экспортировано
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="flex flex-wrap gap-1.5">
-        {google && event.source !== "google" && (
-          <Button
-            size="sm"
-            icon="sync"
-            busy={pending === "google"}
-            onClick={() =>
-              run("google", async () => {
-                onChange(await api.events.syncGoogle(event.id));
-                toast("Отправлено в Google Calendar");
-              })
-            }
-          >
-            {event.sync_status === "synced"
-              ? "Обновить в Google"
-              : "Google Calendar"}
-          </Button>
-        )}
-        {targets.map((item) => (
-          <Button
-            key={item.slug}
-            size="sm"
-            icon="external"
-            busy={pending === item.slug}
-            onClick={() =>
-              run(item.slug, async () => {
-                await api.integrations.exportEvent(item.slug, event.id);
-                await links.reload();
-                toast(`Отправлено в ${item.title}`);
-              })
-            }
-          >
-            {item.title}
-          </Button>
-        ))}
-      </div>
     </GlassCard>
   );
 }

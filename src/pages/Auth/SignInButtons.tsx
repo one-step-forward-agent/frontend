@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // src/pages/Auth/SignInButtons.tsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -42,8 +43,8 @@ const GOOGLE_BODY =
 
 // Two buttons: the button shows the service, the line above says what it does
 const PROVIDERS: { id: SignInProvider; name: string; label: string; signUp: string; Mark: React.FC; body: string }[] = [
-  { id: 'google', name: 'Google', label: 'Войти через Google', signUp: 'Регистрация через Google', Mark: GoogleMark, body: GOOGLE_BODY },
-  { id: 'yandex', name: 'Яндекс ID', label: 'Войти с Яндекс ID', signUp: 'Регистрация с Яндекс ID', Mark: YandexMark, body: cn("text-gray-800 dark:text-gray-100", GLASS_BODY) },
+  { id: 'google', name: 'Google', label: tr('Войти через Google', 'Sign in with Google'), signUp: tr('Регистрация через Google', 'Sign up with Google'), Mark: GoogleMark, body: GOOGLE_BODY },
+  { id: 'yandex', name: tr('Яндекс ID', 'Yandex ID'), label: tr('Войти с Яндекс ID', 'Sign in with Yandex ID'), signUp: tr('Регистрация с Яндекс ID', 'Sign up with Yandex ID'), Mark: YandexMark, body: cn("text-gray-800 dark:text-gray-100", GLASS_BODY) },
 ];
 
 const LINK = "font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300";
@@ -87,7 +88,7 @@ export const SignInButtons: React.FC<SignInButtonsProps> = ({ returnTo, register
   return (
     <div className="space-y-2.5">
       <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-        {register ? 'Зарегистрироваться через' : 'Войти через'}
+        {register ? tr('Зарегистрироваться через', 'Sign up with') : tr('Войти через', 'Sign in with')}
       </p>
       <div className="grid grid-cols-2 gap-2.5">
         {PROVIDERS.map(({ id, name, label, signUp, Mark, body }) => (
@@ -107,16 +108,16 @@ export const SignInButtons: React.FC<SignInButtonsProps> = ({ returnTo, register
             )}
           >
             <Mark />
-            {busy === id ? 'Переходим…' : name}
+            {busy === id ? tr('Переходим…', 'Redirecting…') : name}
           </button>
         ))}
       </div>
       {!register && (
         <p className="text-center text-[11px] leading-snug text-gray-500 dark:text-gray-400">
-          Нет аккаунта — создадим его. Продолжая, вы принимаете{' '}
-          <Link to="/terms-of-use" target="_blank" rel="noopener noreferrer" className={LINK}>пользовательское соглашение</Link>{' '}
-          и даёте{' '}
-          <Link to="/personal-data-consent" target="_blank" rel="noopener noreferrer" className={LINK}>согласие на обработку персональных данных</Link>.
+          {tr('Нет аккаунта — создадим его. Продолжая, вы принимаете', 'No account? We\'ll create one. By continuing you accept the')}{' '}
+          <Link to="/terms-of-use" target="_blank" rel="noopener noreferrer" className={LINK}>{tr('пользовательское соглашение', 'terms of use')}</Link>{' '}
+          {tr('и даёте', 'and give')}{' '}
+          <Link to="/personal-data-consent" target="_blank" rel="noopener noreferrer" className={LINK}>{tr('согласие на обработку персональных данных', 'consent to the processing of personal data')}</Link>.
         </p>
       )}
       {error && (

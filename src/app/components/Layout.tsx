@@ -11,14 +11,15 @@ import { AssistantChat } from "../pages/Assistant";
 import { Tour } from "./Tour";
 import { cn } from "@/utils/cn";
 import React from "react";
+import { tr, LOCALE } from "@/i18n";
 
 type NavItem = { to: string; label: string; icon: IconName; main?: boolean };
 
 const NAV: NavItem[] = [
-  { to: "/", label: "Сегодня", icon: "today" },
-  { to: "/calendar", label: "Календарь", icon: "calendar" },
-  { to: "/assistant", label: "Ассистент", icon: "assistant", main: true },
-  { to: "/tasks", label: "Задачи", icon: "tasks" },
+  { to: "/", label: tr("Сегодня", "Today"), icon: "today" },
+  { to: "/calendar", label: tr("Календарь", "Calendar"), icon: "calendar" },
+  { to: "/assistant", label: tr("Ассистент", "Assistant"), icon: "assistant", main: true },
+  { to: "/tasks", label: tr("Задачи", "Tasks"), icon: "tasks" },
 ];
 
 // Ассистент — первый пункт списка и выделен цветом; «Dayla» над списком — просто логотип
@@ -27,7 +28,7 @@ const SIDEBAR: NavItem[] = [
   NAV[0],
   NAV[1],
   NAV[3],
-  { to: "/events/new", label: "Новая задача", icon: "plus" },
+  { to: "/events/new", label: tr("Новая задача", "New task"), icon: "plus" },
 ];
 
 const TABS: NavItem[] = [
@@ -35,7 +36,7 @@ const TABS: NavItem[] = [
   NAV[1],
   NAV[2],
   NAV[3],
-  { to: "/account", label: "Аккаунт", icon: "user" },
+  { to: "/account", label: tr("Аккаунт", "Account"), icon: "user" },
 ];
 
 // Where the corner chat would only get in the way: the chat page itself and the task form with its buttons
@@ -172,7 +173,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const connected = query.get("connected");
   useEffect(() => {
     if (connected === "google") {
-      toast("Google Calendar подключён");
+      toast(tr("Google Calendar подключён", "Google Calendar connected"));
       navigate("/integrations", { replace: true });
     }
   }, [connected, toast]);
@@ -198,7 +199,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
           <nav
             className="flex-1 flex flex-col gap-1.5 px-3 py-2 overflow-y-auto"
-            aria-label="Разделы"
+            aria-label={tr("Разделы", "Sections")}
           >
             {SIDEBAR.map((item) => {
               const active = isActive(item.to, path);
@@ -239,7 +240,7 @@ export function Layout({ children }: { children: ReactNode }) {
               to="/account"
               data-tour="account"
               aria-current={accountActive ? "page" : undefined}
-              title="Профиль, настройки и интеграции"
+              title={tr("Профиль, настройки и интеграции", "Profile, settings and integrations")}
               className={cn(
                 "group relative flex items-center gap-2.5 flex-1 min-w-0",
                 "px-2 h-9 rounded-xl transition-colors duration-200",
@@ -250,7 +251,7 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <Avatar user={user} size={26} />
               <span className="min-w-0 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
-                Профиль
+                {tr("Профиль", "Profile")}
               </span>
             </Link>
 
@@ -259,8 +260,8 @@ export function Layout({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={() => signOut()}
-              aria-label="Выйти"
-              title="Выйти"
+              aria-label={tr("Выйти", "Sign out")}
+              title={tr("Выйти", "Sign out")}
               className={cn(
                 GLASS_ICON_BTN,
                 "hover:text-red-600 dark:hover:text-red-400"
@@ -292,10 +293,10 @@ export function Layout({ children }: { children: ReactNode }) {
               {path !== "/events/new" && (
                 <Link
                   to="/events/new"
-                  aria-label="Новая задача"
+                  aria-label={tr("Новая задача", "New task")}
                   className="inline-flex items-center gap-1 h-9 pl-2.5 pr-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-sky-500 to-indigo-500 shadow-sm active:scale-95 transition-transform"
                 >
-                  <Icon name="plus" size={16} /> Задача
+                  <Icon name="plus" size={16} /> {tr("Задача", "Task")}
                 </Link>
               )}
               <ThemeToggle />
@@ -327,7 +328,7 @@ export function Layout({ children }: { children: ReactNode }) {
             "h-16 rounded-2xl overflow-hidden",
             GLASS_MOBILE
           )}
-          aria-label="Разделы"
+          aria-label={tr("Разделы", "Sections")}
         >
           <ul className="grid grid-cols-5 h-full">
             {TABS.map((item) => {
@@ -388,7 +389,7 @@ export function Layout({ children }: { children: ReactNode }) {
 /** The «Сегодня» tab as a tear-off calendar page: today's weekday and date instead of an icon. */
 function TodayMark() {
   const now = new Date();
-  const weekday = now.toLocaleDateString("ru-RU", { weekday: "short" });
+  const weekday = now.toLocaleDateString(LOCALE, { weekday: "short" });
   return (
     <span
       aria-hidden="true"
@@ -415,8 +416,8 @@ function ChatDock({ path }: { path: string }) {
         type="button"
         onClick={() => setOpen(true)}
         data-tour="dock"
-        aria-label="Спросить Dayla"
-        title="Спросить Dayla"
+        aria-label={tr("Спросить Dayla", "Ask Dayla")}
+        title={tr("Спросить Dayla", "Ask Dayla")}
         className={cn(
           // On a phone the chat is the middle button of the tab bar: a second gradient button would only repeat it
           "hidden lg:flex fixed z-30 right-6 bottom-6",
@@ -427,7 +428,7 @@ function ChatDock({ path }: { path: string }) {
         )}
       >
         <Icon name="assistant" size={24} />
-        <span className="text-sm font-semibold">Спросить Dayla</span>
+        <span className="text-sm font-semibold">{tr("Спросить Dayla", "Ask Dayla")}</span>
       </button>
     );
   }
@@ -435,7 +436,7 @@ function ChatDock({ path }: { path: string }) {
   return (
     <div
       role="dialog"
-      aria-label="Чат с Dayla"
+      aria-label={tr("Чат с Dayla", "Chat with Dayla")}
       className={cn(
         "fixed z-40 inset-x-2 top-2 bottom-[5.25rem]",
         "lg:inset-auto lg:right-6 lg:bottom-6 lg:w-[420px] lg:h-[min(660px,calc(100dvh-3rem))]",

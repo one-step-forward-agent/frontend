@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // src/pages/Auth/LoginPage.tsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -54,7 +55,7 @@ const LoginPage: React.FC = () => {
       {/* ─── Заголовок ───────────────────────── */}
       <div className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight">
-          Вход в аккаунт
+          {tr("Вход в аккаунт", "Sign in")}
         </h2>
       </div>
 
@@ -80,7 +81,7 @@ const LoginPage: React.FC = () => {
           )}
         </FormField>
 
-        <FormField id="password" label="Пароль" required>
+        <FormField id="password" label={tr("Пароль", "Password")} required>
           {(field) => (
             <div className="relative">
               <Input
@@ -89,7 +90,7 @@ const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                placeholder="Минимум 8 символов"
+                placeholder={tr("Минимум 8 символов", "At least 8 characters")}
                 className="pr-10"
                 required
               />
@@ -132,11 +133,11 @@ const LoginPage: React.FC = () => {
                   aria-hidden="true"
                   className="w-4 h-4 rounded-full border-2 border-sky-500/40 border-t-sky-600 animate-spin"
                 />
-                Входим…
+                {tr("Входим…", "Signing in…")}
               </>
             ) : (
               <>
-                Войти
+                {tr("Войти", "Sign in")}
                 <ArrowRight
                   size={16}
                   className="transition-transform duration-300 group-hover:translate-x-0.5"
@@ -152,7 +153,7 @@ const LoginPage: React.FC = () => {
       <div className="mt-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
         <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium">
-          или
+          {tr("или", "or")}
         </span>
         <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
       </div>
@@ -163,7 +164,7 @@ const LoginPage: React.FC = () => {
 
       {/* ─── Ссылка на регистрацию ───────────── */}
       <p className="mt-5 text-center text-sm text-gray-600 dark:text-gray-400">
-        Нет аккаунта?{' '}
+        {tr("Нет аккаунта?", "No account?")}{' '}
         <Link
           to="/register"
           className={cn(
@@ -173,7 +174,7 @@ const LoginPage: React.FC = () => {
             "transition-colors"
           )}
         >
-          Зарегистрироваться
+          {tr("Зарегистрироваться", "Sign up")}
           <ArrowRight
             size={13}
             className="transition-transform duration-200 group-hover:translate-x-0.5"
@@ -185,7 +186,7 @@ const LoginPage: React.FC = () => {
       {/* ─── Микро-подпись ───────────────────── */}
       <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-gray-400 dark:text-gray-500">
         <Sparkles size={11} aria-hidden="true" />
-        Ваши данные защищены
+        {tr("Ваши данные защищены", "Your data is protected")}
       </div>
     </div>
   );

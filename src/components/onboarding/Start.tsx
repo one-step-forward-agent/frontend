@@ -32,6 +32,7 @@ import { cn } from "@/utils/cn";
 
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
+import { LOCALE, tr } from "@/i18n";
 
 export const Start: React.FC = () => {
   const navigate = useNavigate();
@@ -73,10 +74,12 @@ type MenuItem = {
   tone?: "default" | "danger";
 };
 
+const FORWARD_LABEL = tr("Переслать Dayla", "Forward to Dayla");
+
 const CONTEXT_MENU_ITEMS: MenuItem[] = [
-  { label: "Ответить",         icon: Reply },
-  { label: "Переслать Dayla",        icon: Forward },
-  { label: "Удалить",          icon: Trash2, tone: "danger" },
+  { label: tr("Ответить", "Reply"), icon: Reply },
+  { label: FORWARD_LABEL, icon: Forward },
+  { label: tr("Удалить", "Delete"), icon: Trash2, tone: "danger" },
 ];
 
 const ChatContextMenu: React.FC = () => (
@@ -88,11 +91,11 @@ const ChatContextMenu: React.FC = () => (
       shadow-2xl
     "
     role="menu"
-    aria-label="Действия с сообщением"
+    aria-label={tr("Действия с сообщением", "Message actions")}
   >
     {CONTEXT_MENU_ITEMS.map(({ label, icon: Icon, tone }, i) => {
       const isDanger = tone === "danger";
-      const isHighlighted = label === "Переслать Dayla";
+      const isHighlighted = label === FORWARD_LABEL;
 
       return (
         <React.Fragment key={label}>
@@ -407,21 +410,21 @@ const GTD_RESPONSE = (
 
       <div className="space-y-2 text-[12px] leading-snug mt-1">
         <div>
-          <p className="font-semibold text-gray-900 dark:text-white">Чт, 03.10</p>
+          <p className="font-semibold text-gray-900 dark:text-white">{tr("Чт, 03.10", "Thu, 03.10")}</p>
           <p className="text-gray-600 dark:text-gray-300">
-            09:00–10:30 — Ревью PR #482 · 11:00–12:00 — Планирование Q4 · 15:00–16:00 — Созвон с продажами
+            {tr("09:00–10:30 — Ревью PR #482 · 11:00–12:00 — Планирование Q4 · 15:00–16:00 — Созвон с продажами", "09:00–10:30 — Review PR #482 · 11:00–12:00 — Q4 planning · 15:00–16:00 — Sales call")}
           </p>
         </div>
         <div>
-          <p className="font-semibold text-gray-900 dark:text-white">Пт, 04.10</p>
+          <p className="font-semibold text-gray-900 dark:text-white">{tr("Пт, 04.10", "Fri, 04.10")}</p>
           <p className="text-gray-600 dark:text-gray-300">
-            09:00–10:00 — Ответить клиенту · 10:00–12:00 — Задачи Sprint 24 · 14:00–15:30 — Бюджет на ноябрь
+            {tr("09:00–10:00 — Ответить клиенту · 10:00–12:00 — Задачи Sprint 24 · 14:00–15:30 — Бюджет на ноябрь", "09:00–10:00 — Reply to the client · 10:00–12:00 — Sprint 24 tasks · 14:00–15:30 — November budget")}
           </p>
         </div>
         <div>
-          <p className="font-semibold text-gray-900 dark:text-white">Пн, 07.10</p>
+          <p className="font-semibold text-gray-900 dark:text-white">{tr("Пн, 07.10", "Mon, 07.10")}</p>
           <p className="text-gray-600 dark:text-gray-300">
-            10:00–11:00 — Разбор входящих · 14:00–15:00 — Подготовка к демо
+            {tr("10:00–11:00 — Разбор входящих · 14:00–15:00 — Подготовка к демо", "10:00–11:00 — Inbox review · 14:00–15:00 — Demo prep")}
           </p>
         </div>
       </div>
@@ -432,13 +435,13 @@ const GTD_RESPONSE = (
         className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 shadow-sm transition-all hover:-translate-y-0.5"
       >
         <Check size={12} aria-hidden="true" />
-        Внести в календарь
+        {tr("Внести в календарь", "Add to calendar")}
       </button>
       <button
         type="button"
         className="inline-flex items-center text-xs font-medium px-3 py-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
       >
-        Отмена
+        {tr("Отмена", "Cancel")}
       </button>
     </div>
   </div>
@@ -554,11 +557,11 @@ const IPhoneScene: React.FC = () => (
     <div className="absolute inset-0 flex flex-col bg-white dark:bg-gray-950">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-semibold shrink-0">
-          п
+          {tr("п", "D")}
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
-            Папа
+            {tr("Папа", "Dad")}
           </p>
           <p className="text-[20px] text-emerald-500">online</p>
         </div>
@@ -568,7 +571,7 @@ const IPhoneScene: React.FC = () => (
         <div className="flex justify-start">
           <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5">
             <p className="text-[20px] text-gray-800 dark:text-gray-200">
-              Привет! Не забудь про рейс ✈️
+              {tr("Привет! Не забудь про рейс ✈️", "Hi! Don't forget your flight ✈️")}
             </p>
           </div>
         </div>
@@ -577,7 +580,7 @@ const IPhoneScene: React.FC = () => (
 
     <img
       src="/images/AirPlaneTicket.jpeg"
-      alt="Сообщение с авиабилетом"
+      alt={tr("Сообщение с авиабилетом", "A message with a plane ticket")}
       className="
         absolute left-[3%] top-[22%] z-20
         w-[84%] h-auto
@@ -627,14 +630,14 @@ const IPhoneSceneFinance: React.FC = () => (
             "
           >
             <Sparkles size={13} aria-hidden="true" />
-            В этом диалоге сидит Dayla
+            {tr("В этом диалоге сидит Dayla", "Dayla is in this chat")}
           </div>
         </div>
 
         <div className="flex justify-start">
           <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-3 py-2">
             <p className="text-[20px] text-gray-800 dark:text-gray-200">
-              Пришлите отчётность к концу квартала
+              {tr("Пришлите отчётность к концу квартала", "Send the reports by the end of the quarter")}
             </p>
           </div>
         </div>
@@ -718,7 +721,7 @@ const DaylaChatCard: React.FC<DaylaChatCardProps> = ({
     <div className="relative px-4 py-3 border-t border-white/40 dark:border-white/5 bg-white/25 dark:bg-white/[0.02] backdrop-blur-md">
       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
         <Send size={14} aria-hidden="true" />
-        <span>Сообщение Dayla…</span>
+        <span>{tr("Сообщение Dayla…", "Message Dayla…")}</span>
       </div>
     </div>
   </div>
@@ -889,7 +892,7 @@ const MonitorScene: React.FC = () => {
       >
         <img
           src="/images/Monitor.webp"
-          alt="Монитор с финансовым отчётом"
+          alt={tr("Монитор с финансовым отчётом", "A monitor with a financial report")}
           className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
           loading="lazy"
           draggable={false}
@@ -908,7 +911,7 @@ const MonitorScene: React.FC = () => {
           <div className="absolute inset-0 flex flex-col bg-white dark:bg-gray-950">
             <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100 dark:border-gray-800">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
-                СН
+                {tr("СН", "SN")}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[20px] font-medium text-gray-900 dark:text-white truncate">
@@ -932,7 +935,7 @@ const MonitorScene: React.FC = () => {
                   "
                 >
                   <Sparkles size={13} aria-hidden="true" />
-                  В этом диалоге сидит Dayla
+                  {tr("В этом диалоге сидит Dayla", "Dayla is in this chat")}
                 </div>
               </div>
 
@@ -940,7 +943,7 @@ const MonitorScene: React.FC = () => {
                 <div className="max-w-[60%] space-y-2.5">
                   <div className="rounded-2xl rounded-bl-sm bg-gray-100 dark:bg-gray-800 px-3.5 py-2">
                     <p className="text-[20px] text-gray-800 dark:text-gray-200">
-                      Пришлите отчётность к концу квартала
+                      {tr("Пришлите отчётность к концу квартала", "Send the reports by the end of the quarter")}
                     </p>
                   </div>
                 </div>
@@ -966,7 +969,7 @@ const HeroScene: React.FC = () => (
       containerType: "inline-size",
       aspectRatio: `${HERO_SCENE_W / HERO_SCENE_H}`,
     }}
-    aria-label="Календарь и голосовой ассистент Dayla"
+    aria-label={tr("Календарь и голосовой ассистент Dayla", "The calendar and Dayla's voice assistant")}
     role="img"
   >
     <div
@@ -1000,7 +1003,7 @@ const HeroScene: React.FC = () => (
       >
         <MascotFade
           src="/images/MaskotWB.webp"
-          alt="Ассистент Dayla говорит по телефону"
+          alt={tr("Ассистент Dayla говорит по телефону", "The Dayla assistant on the phone")}
           fadeStart={40}
           fadeLength={60}
           blend
@@ -1031,19 +1034,21 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
     <div className="text-eyebrow min-w-0">
         <Badge variant="default" className="mb-4">
           <Sparkles size={12} className="mr-1" aria-hidden="true" />
-          Бесплатный персональный ИИ-ассистент
+          {tr("Бесплатный персональный ИИ-ассистент", "A free personal AI assistant")}
         </Badge>
 
         <h1 className="text-eyebrowtext-4xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
-          Планируйте день{" "}
+          {tr("Планируйте день", "Plan your day")}{" "}
           <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-            за минуту
+            {tr("за минуту", "in a minute")}
           </span>
         </h1>
 
         <p className="mt-5 text-lg text-gray-600 dark:text-gray-400 max-w-xl">
-          Скажите о своих планах — Dayla найдёт время в календаре, расставит
-          приоритеты и напомнит
+          {tr(
+            "Скажите о своих планах — Dayla найдёт время в календаре, расставит приоритеты и напомнит",
+            "Tell Dayla your plans — it finds time in your calendar, sets priorities and reminds you"
+          )}
         </p>
 
         <div className="mt-2 flex flex-col sm:flex-row gap-3">
@@ -1077,7 +1082,7 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
   />
 
   <span className="relative inline-flex items-center gap-1.5">
-    Начать бесплатно
+    {tr("Начать бесплатно", "Start for free")}
     <ArrowRight
       size={16}
       className="transition-transform duration-300 group-hover:translate-x-0.5"
@@ -1102,7 +1107,7 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
             )}
           >
             <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
-            <span className="relative">Как это работает</span>
+            <span className="relative">{tr("Как это работает", "How it works")}</span>
           </button>
         </div>
 
@@ -1128,7 +1133,7 @@ const SpeechBubble: React.FC = () => (
 
         <div className="min-w-0">
           <p className="text-lg md:text-xl leading-snug text-gray-900 dark:text-white">
-            Завтра в 16 созвон с командой
+            {tr("Завтра в 16 созвон с командой", "Team call tomorrow at 4 pm")}
           </p>
         </div>
       </div>
@@ -1147,16 +1152,17 @@ const MOCK_TASKS: Array<{
   done?: boolean;
   isNew?: boolean;   // ← новое
 }> = [
-  { time: "09:30", title: "Лекция по программированию" },
-  { time: "11:10", title: "Лекция по экономике" },
-  { time: "16:00", title: "Созвон с командой", isNew: true },
-  { time: "18:30", title: "Сделать лабораторную работу" },
+  { time: "09:30", title: tr("Лекция по программированию", "Programming lecture") },
+  { time: "11:10", title: tr("Лекция по экономике", "Economics lecture") },
+  { time: "16:00", title: tr("Созвон с командой", "Team call"), isNew: true },
+  { time: "18:30", title: tr("Сделать лабораторную работу", "Do the lab assignment") },
 ];
 
-const AI_RECOMMENDATION_STUDENT =
-  "Не успели задачу? Могу перенести на завтра в свободное окно";
-const AI_RECOMMENDATION_PRO =
-  "Уделим больше времени изучению английского?";
+const AI_RECOMMENDATION_STUDENT = tr(
+  "Не успели задачу? Могу перенести на завтра в свободное окно",
+  "Didn't finish a task? I can move it to a free slot tomorrow"
+);
+const AI_RECOMMENDATION_PRO = tr("Уделим больше времени изучению английского?", "Shall we spend more time on English?");
 
 const HeroMockup: React.FC = () => (
   <div className="relative w-full">
@@ -1164,9 +1170,9 @@ const HeroMockup: React.FC = () => (
     <Card className="relative w-full p-0 overflow-hidden shadow-xl">
       <div className="p-5 flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Завтра</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{tr("Завтра", "Tomorrow")}</p>
           <p className="text-base md:text-lg font-medium">
-            {new Intl.DateTimeFormat("ru-RU", {
+            {new Intl.DateTimeFormat(LOCALE, {
               weekday: "long",
               day: "numeric",
               month: "long",
@@ -1226,7 +1232,7 @@ const HeroMockup: React.FC = () => (
                   )}
                 >
                   <Sparkles size={10} aria-hidden="true" />
-                  Новое
+                  {tr("Новое", "New")}
                 </span>
               )}
             </li>
@@ -1243,7 +1249,7 @@ const HeroMockup: React.FC = () => (
               />
             </span>
 
-            <div className="relative flex-1 min-w-0 h-6" aria-label="Рекомендация ИИ">
+            <div className="relative flex-1 min-w-0 h-6" aria-label={tr("Рекомендация ИИ", "AI recommendation")}>
               <span className="ai-reco-a absolute inset-0 flex items-center text-base text-blue-800 dark:text-blue-200 text-ellipsis">
                 {AI_RECOMMENDATION_STUDENT}
               </span>
@@ -1264,7 +1270,7 @@ const HeroMockup: React.FC = () => (
                 bg-blue-600 text-white hover:bg-blue-700 transition-colors
               "
             >
-              Давай
+              {tr("Давай", "Sure")}
             </button>
 
             <button
@@ -1275,7 +1281,7 @@ const HeroMockup: React.FC = () => (
                 transition-colors
               "
             >
-              Позже
+              {tr("Позже", "Later")}
             </button>
           </div>
         </li>
@@ -1537,16 +1543,16 @@ const FinalCTA: React.FC<{
       >
         <div className="text-center max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
-            Ваш день живёт в&nbsp;Google, Jira и&nbsp;блокноте.{" "}
+            {tr("Ваш день живёт в\u00a0Google, Jira и\u00a0блокноте.", "Your day lives in\u00a0Google, Jira and\u00a0a notebook.")}{" "}
             <span className="text-white/85">
-              Dayla задаёт единый ритм.
+              {tr("Dayla задаёт единый ритм.", "Dayla sets one rhythm.")}
             </span>
           </h2>
         </div>
 
         <div className="mt-16 flex flex-col items-center text-center">
           <p className="text-lg md:text-xl font-medium">
-            Личный ассистент, который держит день в&nbsp;форме.
+            {tr("Личный ассистент, который держит день в\u00a0форме.", "A personal assistant that keeps your day in\u00a0shape.")}
           </p>
 
           <div className="relative mt-10 flex justify-center">
@@ -1609,7 +1615,7 @@ const FinalCTA: React.FC<{
                 className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/60 mix-blend-overlay"
               />
               <span className="relative inline-flex items-center">
-                Начать бесплатно
+                {tr("Начать бесплатно", "Start for free")}
                 <ArrowRight
                   size={22}
                   className="ml-2 transition-transform duration-300 group-hover:translate-x-0.5"
@@ -1682,9 +1688,9 @@ const SlideFlight: React.FC = () => (
   <div className="py-16">
     <div className="max-w-5xl mx-auto px-6">
       <div className="max-w-2xl mb-14">
-        <Badge className="text-eyebrow mb-3">Парсинг документов</Badge>
+        <Badge className="text-eyebrow mb-3">{tr("Парсинг документов", "Document parsing")}</Badge>
         <h2 className="text-4xl font-semibold tracking-tight">
-          Пересылайте события — Dayla всё спланирует
+          {tr("Пересылайте события — Dayla всё спланирует", "Forward events — Dayla plans the rest")}
         </h2>
       </div>
 
@@ -1696,14 +1702,14 @@ const SlideFlight: React.FC = () => (
         </div>
         <div className="relative">
           <DaylaChatCard
-            forwardedFrom="Переслано от Папы"
-            userMessage="Авиабилет PD-205 · VKO → LED"
+            forwardedFrom={tr("Переслано от Папы", "Forwarded from Dad")}
+            userMessage={tr("Авиабилет PD-205 · VKO → LED", "Plane ticket PD-205 · VKO → LED")}
             daylaMessage={
               <>
-                Распознала авиабилет:{' '}
-                <strong className="font-semibold">дата — 05 апреля, 21:55</strong>,{' '}
-                <strong className="font-semibold">место посадки — Внуково, терминал A</strong>.
-                Добавила событие в календарь, заранее напомню о вылете
+                {tr("Распознала авиабилет:", "I read the plane ticket:")}{' '}
+                <strong className="font-semibold">{tr("дата — 05 апреля, 21:55", "date — 5 April, 21:55")}</strong>,{' '}
+                <strong className="font-semibold">{tr("место посадки — Внуково, терминал A", "boarding — Vnukovo, terminal A")}</strong>.
+                {tr("Добавила событие в календарь, заранее напомню о вылете", " Added the event to your calendar and will remind you before the flight")}
               </>
             }
           />
@@ -1713,7 +1719,7 @@ const SlideFlight: React.FC = () => (
       <div className="mt-16 max-w-2xl mx-auto text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
           <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-          Dayla ничего не меняет без подтверждения — вы решаете, что делать с&nbsp;событием
+          {tr("Dayla ничего не меняет без подтверждения — вы решаете, что делать с\u00a0событием", "Dayla changes nothing without your confirmation — you decide what to do with\u00a0the event")}
         </p>
       </div>
     </div>
@@ -1724,12 +1730,12 @@ const SlideFinance: React.FC = () => (
   <div className="py-16">
     <div className="max-w-6xl mx-auto px-6">
       <div className="max-w-2xl mb-14">
-        <Badge className="text-eyebrow mb-3">Из рабочего чата — в план</Badge>
+        <Badge className="text-eyebrow mb-3">{tr("Из рабочего чата — в план", "From a work chat to your plan")}</Badge>
         <h2 className="text-4xl font-semibold tracking-tight">
-          Прислали задачу? Dayla внесёт её в ваш план
+          {tr("Прислали задачу? Dayla внесёт её в ваш план", "Got a task? Dayla puts it in your plan")}
         </h2>
         <p className="mt-3 text-gray-600 dark:text-gray-400">
-          Добавьте Dayla в рабочий чат и упомяните её — задача и напоминание появятся в вашем календаре
+          {tr("Добавьте Dayla в рабочий чат и упомяните её — задача и напоминание появятся в вашем календаре", "Add Dayla to a work chat and mention it — the task and a reminder appear in your calendar")}
         </p>
       </div>
 
@@ -1743,9 +1749,12 @@ const SlideFinance: React.FC = () => (
           <DaylaChatCard
             daylaMessage={
               <>
-                Записала «Отчётность за квартал» на{" "}
-                <strong className="font-semibold">27 декабря</strong> и напомню за день. Подтвердите в личных
-                сообщениях — всё уже в календаре
+                {tr("Записала «Отчётность за квартал» на", "Saved “Quarterly reports” for")}{" "}
+                <strong className="font-semibold">{tr("27 декабря", "27 December")}</strong>{" "}
+                {tr(
+                  "и напомню за день. Подтвердите в личных сообщениях — всё уже в календаре",
+                  "and will remind you a day before. Confirm in a private message — it's all in the calendar"
+                )}
               </>
             }
           />
@@ -1759,9 +1768,9 @@ const SlideGTD: React.FC = () => (
   <div className="py-16">
     <div className="max-w-6xl mx-auto px-6">
       <div className="max-w-2xl mb-14">
-        <Badge className="text-eyebrow mb-3">Систематизация и дисциплина</Badge>
+        <Badge className="text-eyebrow mb-3">{tr("Систематизация и дисциплина", "Structure and discipline")}</Badge>
         <h2 className="text-4xl font-semibold tracking-tight">
-          Одна фраза — и всё разложено по полочкам
+          {tr("Одна фраза — и всё разложено по полочкам", "One sentence — and everything is in order")}
         </h2>
       </div>
 
@@ -1771,7 +1780,7 @@ const SlideGTD: React.FC = () => (
         </div>
         <div className="relative">
           <DaylaChatCard
-            userMessage="Систематизируй задачи по GTD из рабочих чатов и Telegram"
+            userMessage={tr("Систематизируй задачи по GTD из рабочих чатов и Telegram", "Organise my tasks from work chats and Telegram using GTD")}
             daylaMessage={GTD_RESPONSE}
           />
         </div>
@@ -1780,7 +1789,7 @@ const SlideGTD: React.FC = () => (
       <div className="mt-16 max-w-2xl mx-auto text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
           <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
-          Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь
+          {tr("Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь", "You approve the plan with one tap — Dayla puts everything in the calendar")}
         </p>
       </div>
     </div>
@@ -1892,7 +1901,7 @@ const UserCaseCarousel: React.FC<{
       id="usecases"
       className="relative"
       aria-roledescription="carousel"
-      aria-label="Сценарии использования"
+      aria-label={tr("Сценарии использования", "Use cases")}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onKeyDown={(e) => {
@@ -1941,7 +1950,7 @@ const UserCaseCarousel: React.FC<{
               "flex items-center gap-3"
             )}
           >
-            <button type="button" onClick={() => go(index - 1)} aria-label="Предыдущий сценарий" className={arrowClass}>
+            <button type="button" onClick={() => go(index - 1)} aria-label={tr("Предыдущий сценарий", "Previous use case")} className={arrowClass}>
               <ChevronLeft size={18} aria-hidden="true" />
             </button>
 
@@ -1951,7 +1960,7 @@ const UserCaseCarousel: React.FC<{
                   key={slide.id}
                   type="button"
                   onClick={() => go(i)}
-                  aria-label={`Перейти к сценарию ${i + 1}`}
+                  aria-label={tr(`Перейти к сценарию ${i + 1}`, `Go to use case ${i + 1}`)}
                   aria-current={i === index}
                   className={cn(
                     "h-2 rounded-full transition-all duration-300",
@@ -1963,7 +1972,7 @@ const UserCaseCarousel: React.FC<{
               ))}
             </div>
 
-            <button type="button" onClick={() => go(index + 1)} aria-label="Следующий сценарий" className={arrowClass}>
+            <button type="button" onClick={() => go(index + 1)} aria-label={tr("Следующий сценарий", "Next use case")} className={arrowClass}>
               <ChevronRight size={18} aria-hidden="true" />
             </button>
           </div>

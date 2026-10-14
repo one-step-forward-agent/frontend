@@ -11,6 +11,16 @@ import { sendMetricGoal } from "@/utils/metrics";
 import { safeNext } from "./LoginPage";
 import { SignInButtons } from "./SignInButtons";
 import { cn } from "@/utils/cn";
+import { tr } from "@/i18n";
+
+const CONSENT_ERROR = tr(
+  "Для регистрации необходимо дать согласие на обработку персональных данных",
+  "To sign up, please consent to the processing of personal data"
+);
+const TERMS_ERROR = tr(
+  "Для регистрации необходимо принять условия пользовательского соглашения",
+  "To sign up, please accept the terms of use"
+);
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -32,9 +42,9 @@ export const PasswordToggle: React.FC<{ shown: boolean; onToggle: () => void }> 
   <button
     type="button"
     onClick={onToggle}
-    aria-label={shown ? "Скрыть пароль" : "Показать пароль"}
+    aria-label={shown ? tr("Скрыть пароль", "Hide password") : tr("Показать пароль", "Show password")}
     aria-pressed={shown}
-    title={shown ? "Скрыть пароль" : "Показать пароль"}
+    title={shown ? tr("Скрыть пароль", "Hide password") : tr("Показать пароль", "Show password")}
     className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition-colors"
   >
     {shown ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
@@ -66,19 +76,15 @@ const RegisterPage: React.FC = () => {
     setLocalError(null);
 
     if (password !== confirmPassword) {
-      setLocalError("Пароли не совпадают");
+      setLocalError(tr("Пароли не совпадают", "The passwords don't match"));
       return;
     }
     if (!isConsentGiven) {
-      setLocalError(
-        "Для регистрации необходимо дать согласие на обработку персональных данных"
-      );
+      setLocalError(CONSENT_ERROR);
       return;
     }
     if (!isTermsAccepted) {
-      setLocalError(
-        "Для регистрации необходимо принять условия пользовательского соглашения"
-      );
+      setLocalError(TERMS_ERROR);
       return;
     }
 
@@ -98,12 +104,12 @@ const RegisterPage: React.FC = () => {
 
   const handleConsentChange = (checked: boolean) => {
     setIsConsentGiven(checked);
-    if (localError?.includes("согласие")) setLocalError(null);
+    if (localError === CONSENT_ERROR) setLocalError(null);
   };
 
   const handleTermsChange = (checked: boolean) => {
     setIsTermsAccepted(checked);
-    if (localError?.includes("пользовательского соглашения")) setLocalError(null);
+    if (localError === TERMS_ERROR) setLocalError(null);
   };
 
   return (
@@ -111,7 +117,7 @@ const RegisterPage: React.FC = () => {
       {/* ─── Заголовок ───────────────────────── */}
       <div className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight">
-          Создать аккаунт
+          {tr("Создать аккаунт", "Create an account")}
         </h2>
       </div>
 
@@ -147,7 +153,7 @@ const RegisterPage: React.FC = () => {
 
         <FormField
           id="password"
-          label="Пароль"
+          label={tr("Пароль", "Password")}
           required
         >
           {(field) => (
@@ -163,7 +169,7 @@ const RegisterPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
-                placeholder="Минимум 8 символов"
+                placeholder={tr("Минимум 8 символов", "At least 8 characters")}
                 className="pl-9 pr-10"
                 required
                 minLength={8}
@@ -173,7 +179,7 @@ const RegisterPage: React.FC = () => {
           )}
         </FormField>
 
-        <FormField id="confirmPassword" label="Подтверждение пароля" required>
+        <FormField id="confirmPassword" label={tr("Подтверждение пароля", "Confirm password")} required>
           {(field) => (
             <div className="relative">
               <Lock
@@ -187,7 +193,7 @@ const RegisterPage: React.FC = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 autoComplete="new-password"
-                placeholder="Повторите пароль"
+                placeholder={tr("Повторите пароль", "Repeat the password")}
                 className="pl-9 pr-10"
                 required
               />
@@ -203,25 +209,27 @@ const RegisterPage: React.FC = () => {
             checked={isConsentGiven}
             onChange={handleConsentChange}
           >
-            Я даю согласие на обработку моих персональных данных (имя, email)
-            в целях регистрации и предоставления доступа к сервису. С{" "}
+            {tr(
+              "Я даю согласие на обработку моих персональных данных (имя, email) в целях регистрации и предоставления доступа к сервису. С",
+              "I consent to the processing of my personal data (name, email) for registration and access to the service. I have read and agree to the"
+            )}{" "}
             <Link
               to="/personal-data-consent"
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
             >
-              условиями обработки ПД
+              {tr("условиями обработки ПД", "personal data terms")}
             </Link>{" "}
-            ознакомлен(а) и согласен(а), с{" "}
+            {tr("ознакомлен(а) и согласен(а), с", "and the")}{" "}
             <a
               href="/privacy-policy"
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
             >
-              политикой конфиденциальности
-            </a> — тоже.
+              {tr("политикой конфиденциальности", "privacy policy")}
+            </a>{tr(" — тоже.", ".")}
           </ConsentCheckbox>
 
           <ConsentCheckbox
@@ -229,16 +237,16 @@ const RegisterPage: React.FC = () => {
             checked={isTermsAccepted}
             onChange={handleTermsChange}
           >
-            Я принимаю условия{" "}
+            {tr("Я принимаю условия", "I accept the")}{" "}
             <Link
               to="/terms-of-use"
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
             >
-              пользовательского соглашения
+              {tr("пользовательского соглашения", "terms of use")}
             </Link>{" "}
-            и обязуюсь их соблюдать.
+            {tr("и обязуюсь их соблюдать.", "and agree to follow them.")}
           </ConsentCheckbox>
         </div>
 
@@ -276,11 +284,11 @@ const RegisterPage: React.FC = () => {
                   aria-hidden="true"
                   className="w-4 h-4 rounded-full border-2 border-sky-500/40 border-t-sky-600 animate-spin"
                 />
-                Создаём…
+                {tr("Создаём…", "Creating…")}
               </>
             ) : (
               <>
-                Зарегистрироваться
+                {tr("Зарегистрироваться", "Sign up")}
                 <ArrowRight
                   size={16}
                   className="transition-transform duration-300 group-hover:translate-x-0.5"
@@ -296,7 +304,7 @@ const RegisterPage: React.FC = () => {
       <div className="mt-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
         <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium">
-          или
+          {tr("или", "or")}
         </span>
         <div className="h-px flex-1 bg-white/30 dark:bg-white/10" />
       </div>
@@ -308,7 +316,7 @@ const RegisterPage: React.FC = () => {
           returnTo={searchParams.get("next") ? safeNext(searchParams.get("next")) : undefined}
           blocked={() =>
             !isConsentGiven || !isTermsAccepted
-              ? "Отметьте согласие на обработку данных и пользовательское соглашение выше"
+              ? tr("Отметьте согласие на обработку данных и пользовательское соглашение выше", "Tick the data consent and the terms of use above")
               : null
           }
         />
@@ -316,7 +324,7 @@ const RegisterPage: React.FC = () => {
 
       {/* ─── Ссылка на вход ──────────────────── */}
       <p className="mt-5 text-center text-sm text-gray-600 dark:text-gray-400">
-        Уже есть аккаунт?{" "}
+        {tr("Уже есть аккаунт?", "Already have an account?")}{" "}
         <Link
           to="/login"
           className={cn(
@@ -326,7 +334,7 @@ const RegisterPage: React.FC = () => {
             "transition-colors"
           )}
         >
-          Войти
+          {tr("Войти", "Sign in")}
           <ArrowRight
             size={13}
             className="transition-transform duration-200 group-hover:translate-x-0.5"

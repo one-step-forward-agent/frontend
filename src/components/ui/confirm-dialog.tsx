@@ -2,6 +2,7 @@ import * as React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "./button";
+import { tr } from "@/i18n";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -15,7 +16,7 @@ interface ConfirmDialogProps {
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
-  open, onOpenChange, title, description, confirmLabel = "Подтвердить", onConfirm, isDestructive = true,
+  open, onOpenChange, title, description, confirmLabel = tr("Подтвердить", "Confirm"), onConfirm, isDestructive = true,
   isLoading = false,
 }) => (
   <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -39,7 +40,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </div>
         <div className="mt-6 flex justify-end gap-3">
           <Dialog.Close asChild>
-            <Button variant="outline" disabled={isLoading}>Отмена</Button>
+            <Button variant="outline" disabled={isLoading}>{tr("Отмена", "Cancel")}</Button>
           </Dialog.Close>
           <Button
             variant={isDestructive ? "destructive" : "default"}

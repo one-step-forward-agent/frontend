@@ -2,9 +2,10 @@
 import React from "react";
 import { ArrowLeft, Check } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
-import { ThemeToggle } from "@/theme";
+import { LanguageToggle, ThemeToggle } from "@/theme";
 import { MascotFade } from "@/components/MascotFade";
 import { cn } from "@/utils/cn";
+import { tr } from "@/i18n";
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -53,9 +54,12 @@ const AuthLayout: React.FC = () => {
         >
           <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
           <ArrowLeft size={16} className="relative shrink-0" aria-hidden="true" />
-          <span className="relative truncate">На главную</span>
+          <span className="relative truncate">{tr("На главную", "Home")}</span>
         </Link>
-        <ThemeToggle />
+        <span className="flex items-center gap-1">
+          <LanguageToggle />
+          <ThemeToggle />
+        </span>
       </div>
 
       {/* ─── Левая колонка — брендинг и маскот ──────── */}
@@ -69,7 +73,7 @@ const AuthLayout: React.FC = () => {
             />
             <MascotFade
               src="/images/MaskotGirl.webp"
-              alt="Ассистент Dayla говорит по телефону"
+              alt={tr("Ассистент Dayla говорит по телефону", "The Dayla assistant on the phone")}
               fadeStart={48}
               fadeLength={38}
               blend
@@ -82,7 +86,7 @@ const AuthLayout: React.FC = () => {
           </h1>
 
           <p className="mt-3 text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
-            Личный ИИ-ассистент, который планирует ваш день за минуту.
+            {tr("Личный ИИ-ассистент, который планирует ваш день за минуту.", "A personal AI assistant that plans your day in a minute.")}
           </p>
 
           <div className="mt-6 flex justify-center gap-x-5 gap-y-2 flex-wrap">
@@ -98,7 +102,7 @@ const AuthLayout: React.FC = () => {
               >
                 <Check size={10} strokeWidth={3.5} className="relative" />
               </span>
-              Бесплатно
+              {tr("Бесплатно", "Free")}
             </div>
 
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
@@ -113,7 +117,7 @@ const AuthLayout: React.FC = () => {
               >
                 <Check size={10} strokeWidth={3.5} className="relative" />
               </span>
-              Для жизни и работы
+              {tr("Для жизни и работы", "For life and work")}
             </div>
           </div>
         </div>

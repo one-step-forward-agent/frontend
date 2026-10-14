@@ -5,6 +5,7 @@ import { errorText } from "../lib/format";
 import { notifyTagsChanged, useTags } from "../lib/hooks";
 import { Icon } from "./icons";
 import { useErrorToast } from "./ui";
+import { tr } from "@/i18n";
 
 export const TAG_COLORS: TagColor[] = ["indigo", "blue", "green", "amber", "red", "pink", "violet", "slate"];
 
@@ -13,7 +14,7 @@ export function TagChip({ tag, onRemove }: { tag: Tag; onRemove?: () => void }) 
     <span className={`tag tag-${tag.color}`}>
       #{tag.name}
       {onRemove && (
-        <button type="button" onClick={onRemove} aria-label={`Удалить тег ${tag.name}`}>
+        <button type="button" onClick={onRemove} aria-label={`${tr("Удалить тег", "Remove tag")} ${tag.name}`}>
           <Icon name="close" size={12} />
         </button>
       )}
@@ -87,8 +88,8 @@ export function TagPicker({ value, onChange }: { value: number[]; onChange: (ids
           if (e.key === "Enter") create(e);
         }}
         onBlur={() => name.trim() && create()}
-        placeholder={tags.length ? "+ новый" : "+ новый тег"}
-        aria-label="Новый тег"
+        placeholder={tags.length ? tr("+ новый", "+ new") : tr("+ новый тег", "+ new tag")}
+        aria-label={tr("Новый тег", "New tag")}
         maxLength={40}
         disabled={busy}
       />

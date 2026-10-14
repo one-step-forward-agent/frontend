@@ -33,6 +33,7 @@ import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { TimeField } from "@/components/ui/time-field";
 import { GLASS_BODY_FLAT, GLASS_ERROR, GLASS_PRIMARY, GLASS_CHIP } from "@/components/dashboard/glass";
+import { LOCALE, isEn, pluralWord, tr } from "@/i18n";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
 
@@ -45,21 +46,32 @@ type Message =
 
 // Everything else is asked in words; the day, the calendar and the stats have their own screens
 const QUICK_ACTIONS: { label: string; fill?: string }[] = [
-  { label: "Советы" },
-  { label: "Анализ недели" },
+  { label: tr("Советы", "Advice") },
+  { label: tr("Анализ недели", "Week analysis") },
 ];
 
-const TOPIC_REPLIES = ["Как это сделать?", "Помоги перепланировать", "Что можно перенести?"];
+const TOPIC_REPLIES = isEn
+  ? ["How do I do it?", "Help me replan", "What can I move?"]
+  : ["Как это сделать?", "Помоги перепланировать", "Что можно перенести?"];
 
 // What the chat can do, said once on an empty chat: plain text, not buttons to press
-const ABILITIES = [
-  ["Планирует", "«созвон с командой завтра в 11 на час», «каждую пятницу спортзал #спорт»"],
-  ["Находит", "«что у меня в пятницу?», «когда встреча с Олей?»"],
-  ["Меняет", "«перенеси всё на завтра», «удали отчёт», «я сделала уборку»"],
-  ["Напоминает в Telegram", "«напомни через 20 минут выключить духовку»"],
-  ["Разбивает на шаги", "«разбей на шаги: выучить SQL до 1 декабря»"],
-  ["Советует", "«как мне всё успеть на этой неделе?»"],
-];
+const ABILITIES = isEn
+  ? [
+      ["Plans", "“team call tomorrow at 11 for an hour”, “gym every Friday #sport”"],
+      ["Finds", "“what do I have on Friday?”, “when is the meeting with Olya?”"],
+      ["Changes", "“move everything to tomorrow”, “delete the report”, “I've done the cleaning”"],
+      ["Reminds in Telegram", "“remind me in 20 minutes to turn off the oven”"],
+      ["Breaks into steps", "“break into steps: learn SQL by 1 December”"],
+      ["Advises", "“how do I get everything done this week?”"],
+    ]
+  : [
+      ["Планирует", "«созвон с командой завтра в 11 на час», «каждую пятницу спортзал #спорт»"],
+      ["Находит", "«что у меня в пятницу?», «когда встреча с Олей?»"],
+      ["Меняет", "«перенеси всё на завтра», «удали отчёт», «я сделала уборку»"],
+      ["Напоминает в Telegram", "«напомни через 20 минут выключить духовку»"],
+      ["Разбивает на шаги", "«разбей на шаги: выучить SQL до 1 декабря»"],
+      ["Советует", "«как мне всё успеть на этой неделе?»"],
+    ];
 
 let messageId = 0;
 
@@ -80,7 +92,7 @@ function fromHistory(items: HistoryMessage[]): Message[] {
 /* ─── Страница ──────────────────────────────────────────── */
 
 export function AssistantPage() {
-  useTitle("Ассистент");
+  useTitle(tr("Ассистент", "Assistant"));
   return <AssistantChat />;
 }
 
@@ -122,7 +134,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
   const [clearing, setClearing] = useState(false);
   const reportError = useErrorToast();
   const clearHistory = async () => {
-    if (!messages.length || !window.confirm("Очистить историю чата? Задачи в календаре останутся.")) return;
+    if (!messages.length || !window.confirm(tr("Очистить историю чата? Задачи в календаре останутся.", "Clear the chat history? The tasks in the calendar will stay."))) return;
     setClearing(true);
     try {
       await api.assistant.clearHistory();
@@ -139,8 +151,8 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       onClick={clearHistory}
       disabled={clearing || busy || !messages.length}
       className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-gray-500/10 disabled:opacity-40 disabled:pointer-events-none"
-      aria-label="Очистить историю чата"
-      title="Очистить историю"
+      aria-label={tr("Очистить историю чата", "Clear chat history")}
+      title={tr("Очистить историю", "Clear history")}
     >
       <Icon name="trash" size={15} />
     </button>
@@ -236,21 +248,21 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       {panel ? (
         <div className="shrink-0 flex items-center gap-2 px-4 pt-3 pb-2">
           <span className="text-sm font-semibold text-gray-900 dark:text-white">Dayla</span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">ассистент</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{tr("ассистент", "assistant")}</span>
           <span className="ml-auto flex items-center gap-1">
             <Link
               to="/events/new"
               className="inline-flex items-center gap-1 px-2 h-8 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-500/10"
-              title="Новая задача вручную"
+              title={tr("Новая задача вручную", "New task by hand")}
             >
-              <Icon name="plus" size={14} /> Задача
+              <Icon name="plus" size={14} /> {tr("Задача", "Task")}
             </Link>
             {clearButton}
             <Link
               to="/assistant"
               className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-500/10"
-              aria-label="Открыть чат на весь экран"
-              title="На весь экран"
+              aria-label={tr("Открыть чат на весь экран", "Open the chat full screen")}
+              title={tr("На весь экран", "Full screen")}
             >
               <Icon name="external" size={15} />
             </Link>
@@ -258,7 +270,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
               type="button"
               onClick={onClose}
               className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-500/10"
-              aria-label="Свернуть чат"
+              aria-label={tr("Свернуть чат", "Minimise chat")}
             >
               <Icon name="close" size={16} />
             </button>
@@ -267,13 +279,13 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       ) : (
         // Just the name and the bin: the screen belongs to the conversation
         <div className="shrink-0 flex items-center gap-2 px-1 sm:px-2 pb-2">
-          <h1 className="text-base font-semibold text-gray-900 dark:text-white">Ассистент</h1>
+          <h1 className="text-base font-semibold text-gray-900 dark:text-white">{tr("Ассистент", "Assistant")}</h1>
           <span className="ml-auto">{clearButton}</span>
         </div>
       )}
 
       {/* ─── Чат: прокручивается только он ─────────── */}
-      <div ref={listRef} role="log" aria-label="Переписка с Dayla" className={cn("relative flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4", panel ? "px-3 py-2" : "p-1 sm:p-2")}>
+      <div ref={listRef} role="log" aria-label={tr("Переписка с Dayla", "Conversation with Dayla")} className={cn("relative flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4", panel ? "px-3 py-2" : "p-1 sm:p-2")}>
         {loaded && messages.length === 0 && (
           <div className="flex flex-col items-center text-center py-8">
             <span
@@ -289,7 +301,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
               <Icon name="assistant" size={26} className="relative" />
             </span>
             <p className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-              Напишите, что нужно, — своими словами
+              {tr("Напишите, что нужно, — своими словами", "Say what you need — in your own words")}
             </p>
             <ul className="w-full max-w-md space-y-1.5 text-left text-sm text-gray-600 dark:text-gray-300">
               {ABILITIES.map(([what, example]) => (
@@ -322,7 +334,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
               GLASS_BODY,
               "text-gray-500 dark:text-gray-400"
             )}
-            aria-label="Dayla думает"
+            aria-label={tr("Dayla думает", "Dayla is thinking")}
           >
             <i className="relative w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
             <i
@@ -342,7 +354,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
         <div
           className="mb-2 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]"
           role="group"
-          aria-label="Быстрые команды"
+          aria-label={tr("Быстрые команды", "Quick commands")}
         >
           {QUICK_ACTIONS.map((action) => (
             <button
@@ -432,7 +444,7 @@ function ChatMessage({
         >
           <span className="relative inline-flex items-center gap-1.5 text-[11px] uppercase tracking-widest font-medium text-sky-700 dark:text-sky-300 mb-2">
             <Icon name="assistant" size={12} />
-            Рекомендация
+            {tr("Рекомендация", "Recommendation")}
           </span>
           <p className="relative">
             <strong className="font-semibold">{reply.title}.</strong>{" "}
@@ -485,7 +497,7 @@ function ChatMessage({
             <>
               <p className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
                 <Icon name="check" size={16} />{" "}
-                {reply.kind === "updated" ? reply.text ?? "Изменила" : "Добавила в календарь"}
+                {reply.kind === "updated" ? reply.text ?? tr("Изменила", "Updated") : tr("Добавила в календарь", "Added to the calendar")}
               </p>
               {reply.note && <p className="text-xs text-gray-500 dark:text-gray-400">{reply.note}</p>}
               <AssistantEvents events={reply.events} />
@@ -504,8 +516,10 @@ function ChatMessage({
           {reply.kind === "help" && (
             <div className="space-y-3">
               <p>
-                Пишите как другу — текстом, голосом или документом. Всё, что
-                меняет календарь, я сначала покажу на подтверждение.
+                {tr(
+                  "Пишите как другу — текстом, голосом или документом. Всё, что меняет календарь, я сначала покажу на подтверждение.",
+                  "Write as you would to a friend — by text, voice or document. Anything that changes the calendar I'll show you to confirm first."
+                )}
               </p>
               {reply.sections.map((section) => (
                 <div key={section.title} className="space-y-1.5">
@@ -542,8 +556,10 @@ function ChatMessage({
             reply.kind === "cancelled") && <RichText text={reply.text} />}
           {reply.kind === "nothing" && (
             <p>
-              Я лучше всего помогаю с планами: добавить задачу, перенести встречу, напомнить о деле. Напишите,
-              например, «созвон с Олей завтра в 15:00» или «что у меня на завтра?».
+              {tr(
+                "Я лучше всего помогаю с планами: добавить задачу, перенести встречу, напомнить о деле. Напишите, например, «созвон с Олей завтра в 15:00» или «что у меня на завтра?».",
+                "I'm best at plans: adding a task, moving a meeting, reminding you of something. Try “call with Olya tomorrow at 3 pm” or “what do I have tomorrow?”."
+              )}
             </p>
           )}
           {rating}
@@ -577,11 +593,11 @@ function AgendaReply({
       <p>
         {count
           ? reply.mark
-            ? `Отметьте выполненное · ${reply.title}`
+            ? `${tr("Отметьте выполненное", "Tick what's done")} · ${reply.title}`
             : moving
-              ? `Что перенести? · ${reply.title}`
+              ? `${tr("Что перенести?", "What to move?")} · ${reply.title}`
               : reply.title
-          : "Ничего не запланировано."}
+          : tr("Ничего не запланировано.", "Nothing planned.")}
       </p>
       {reply.days.map((day) => (
         <div key={day.date} className="space-y-1.5">
@@ -603,11 +619,11 @@ function AgendaReply({
             to="/calendar?view=week"
             className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg text-xs font-medium text-sky-700 dark:text-sky-300 hover:bg-sky-500/10"
           >
-            <Icon name="calendar" size={13} /> Неделя в календаре
+            <Icon name="calendar" size={13} /> {tr("Неделя в календаре", "Week in the calendar")}
           </Link>
           {count > 0 && !reply.mark && (
             <Button variant="ghost" size="sm" icon={moving ? "left" : "sync"} disabled={busy} onClick={() => setMoving((value) => !value)}>
-              {moving ? "Готово" : "Перенести"}
+              {moving ? tr("Готово", "Done") : tr("Перенести", "Move")}
             </Button>
           )}
         </div>
@@ -644,7 +660,7 @@ function MarkList({ events }: { events: AssistantEvent[] }) {
             type="button"
             role="checkbox"
             aria-checked={done[event.id]}
-            aria-label={done[event.id] ? `Снять отметку: ${event.title}` : `Выполнено: ${event.title}`}
+            aria-label={done[event.id] ? `${tr("Снять отметку", "Unmark")}: ${event.title}` : `${tr("Выполнено", "Done")}: ${event.title}`}
             className={cn(
               "relative shrink-0 w-5 h-5 rounded-md flex items-center justify-center overflow-hidden",
               "border-2 transition-colors",
@@ -687,9 +703,9 @@ function MoveList({ events, onMoved }: { events: AssistantEvent[]; onMoved: (rep
   const reportError = useErrorToast();
   const today = new Date();
   const quick = [
-    { label: "Сегодня", day: dayKey(today) },
-    { label: "Завтра", day: dayKey(addDays(today, 1)) },
-    { label: "Послезавтра", day: dayKey(addDays(today, 2)) },
+    { label: tr("Сегодня", "Today"), day: dayKey(today) },
+    { label: tr("Завтра", "Tomorrow"), day: dayKey(addDays(today, 1)) },
+    { label: tr("Послезавтра", "Day after tomorrow"), day: dayKey(addDays(today, 2)) },
   ];
 
   const move = async (event: AssistantEvent, day: string) => {
@@ -710,7 +726,7 @@ function MoveList({ events, onMoved }: { events: AssistantEvent[]; onMoved: (rep
   };
 
   const open = events.filter((event) => !event.completed);
-  if (!open.length) return <p className="text-sm text-gray-500 dark:text-gray-400">Переносить нечего.</p>;
+  if (!open.length) return <p className="text-sm text-gray-500 dark:text-gray-400">{tr("Переносить нечего.", "Nothing to move.")}</p>;
 
   return (
     <ul className="space-y-2">
@@ -731,7 +747,7 @@ function MoveList({ events, onMoved }: { events: AssistantEvent[]; onMoved: (rep
             </span>
             {done ? (
               <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                Перенесено на {relativeDay(parseDayKey(done) ?? today).toLowerCase()}
+                {tr("Перенесено на", "Moved to")} {relativeDay(parseDayKey(done) ?? today).toLowerCase()}
               </p>
             ) : (
               <div className="flex flex-wrap items-center gap-1.5">
@@ -749,10 +765,10 @@ function MoveList({ events, onMoved }: { events: AssistantEvent[]; onMoved: (rep
                     </button>
                   ))}
                 <label className={cn("relative inline-flex items-center gap-1 px-2.5 h-7 rounded-full text-xs font-medium cursor-pointer", GLASS_CHIP)}>
-                  <Icon name="calendar" size={12} /> Другой день
+                  <Icon name="calendar" size={12} /> {tr("Другой день", "Another day")}
                   <input
                     type="date"
-                    aria-label={`Другой день для «${event.title}»`}
+                    aria-label={tr(`Другой день для «${event.title}»`, `Another day for “${event.title}”`)}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     min={dayKey(today)}
                     disabled={busy !== null}
@@ -795,7 +811,7 @@ function MoveBackButton({
   return (
     <div className="flex flex-wrap gap-1.5">
       <Button variant="ghost" size="sm" icon="left" busy={busy} onClick={back}>
-        Вернуть на {moved.from_label}
+        {tr("Вернуть на", "Move back to")} {moved.from_label}
       </Button>
     </div>
   );
@@ -818,7 +834,11 @@ function UndoButton({
     try {
       const { deleted } = await api.assistant.undo(eventIds);
       notifyTasksChanged();
-      onDone(deleted ? `Отменено — удалила добавленное (${deleted}).` : "Эти задачи уже удалены или изменены.");
+      onDone(
+        deleted
+          ? tr(`Отменено — удалила добавленное (${deleted}).`, `Undone — removed what was added (${deleted}).`)
+          : tr("Эти задачи уже удалены или изменены.", "These tasks have already been deleted or changed.")
+      );
     } catch {
       reportError(TEMPORARY_ERROR);
     } finally {
@@ -829,7 +849,7 @@ function UndoButton({
   return (
     <div className="flex flex-wrap gap-1.5">
       <Button variant="ghost" size="sm" icon="left" busy={busy} onClick={undo}>
-        Отменить
+        {tr("Отменить", "Undo")}
       </Button>
     </div>
   );
@@ -851,9 +871,9 @@ function ReminderReply({
     setBusy(id);
     try {
       const result = await api.assistant.cancelReminder(id);
-      onDone(result.kind === "cancelled" ? result.text : "Напоминание отменено");
+      onDone(result.kind === "cancelled" ? result.text : tr("Напоминание отменено", "Reminder cancelled"));
     } catch {
-      reportError("Напоминание уже пришло или отменено");
+      reportError(tr("Напоминание уже пришло или отменено", "The reminder has already come or been cancelled"));
     } finally {
       setBusy(null);
     }
@@ -869,21 +889,25 @@ function ReminderReply({
             <p className="text-sm">
               {item.repeat ? (
                 <>
-                  Повтор: {item.repeat}
-                  <span className="text-gray-500 dark:text-gray-400"> · первое — {item.label}</span>
+                  {tr("Повтор", "Repeat")}: {item.repeat}
+                  <span className="text-gray-500 dark:text-gray-400"> · {tr("первое", "first")} — {item.label}</span>
                 </>
               ) : (
-                <>Напомню {item.label}</>
+                <>{tr("Напомню", "I'll remind you")} {item.label}</>
               )}
             </p>
           </div>
         </div>
       ))}
-      <p className="text-xs text-gray-500 dark:text-gray-400">Напоминание придёт в Telegram.</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{tr("Напоминание придёт в Telegram.", "The reminder will come to Telegram.")}</p>
       <div className="flex flex-wrap gap-1.5">
         {reply.reminders.map((item) => (
           <Button key={item.id} variant="ghost" size="sm" icon="close" busy={busy === item.id} onClick={() => cancel(item.id)}>
-            {reply.reminders.length > 1 ? `Отменить «${item.text}»` : item.repeat ? "Отменить повтор" : "Отменить"}
+            {reply.reminders.length > 1
+              ? tr(`Отменить «${item.text}»`, `Cancel “${item.text}”`)
+              : item.repeat
+                ? tr("Отменить повтор", "Cancel the repeat")
+                : tr("Отменить", "Cancel")}
           </Button>
         ))}
       </div>
@@ -900,12 +924,17 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
   const habits = stats.habits ?? {};
   const noticed = [
     habits.done_per_day != null &&
-      `Обычно вы выполняете ${habits.done_per_day} ${plural(Math.round(habits.done_per_day), "задачу", "задачи", "задач")} в день${
-        habits.planned_per_day ? `, а планируете ${habits.planned_per_day}` : ""
-      }.`,
-    habits.most_done && `Вы ${habits.most_done}.`,
-    habits.weak_weekday && `Слабее всего день — ${habits.weak_weekday}.`,
-    ...(habits.slipping ?? []).slice(0, 2).map((text) => `Откладывается: ${text}.`),
+      tr(
+        `Обычно вы выполняете ${habits.done_per_day} ${plural(Math.round(habits.done_per_day), "задачу", "задачи", "задач")} в день${
+          habits.planned_per_day ? `, а планируете ${habits.planned_per_day}` : ""
+        }.`,
+        `You usually complete ${habits.done_per_day} ${habits.done_per_day === 1 ? "task" : "tasks"} a day${
+          habits.planned_per_day ? ` and plan ${habits.planned_per_day}` : ""
+        }.`
+      ),
+    habits.most_done && tr(`Вы ${habits.most_done}.`, `You: ${habits.most_done}.`),
+    habits.weak_weekday && `${tr("Слабее всего день", "Weakest day")} — ${habits.weak_weekday}.`,
+    ...(habits.slipping ?? []).slice(0, 2).map((text) => `${tr("Откладывается", "Keeps slipping")}: ${text}.`),
   ].filter(Boolean) as string[];
 
   return (
@@ -914,11 +943,11 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
-            Выполнено за 7 дней
+            {tr("Выполнено за 7 дней", "Done in 7 days")}
           </p>
           <p className="text-3xl font-semibold tabular-nums leading-tight">{stats.percent}%</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {stats.done} из {stats.total} {plural(stats.total, "задачи", "задач", "задач")}
+            {stats.done} {tr("из", "of")} {stats.total} {pluralWord(stats.total, ["задачи", "задач", "задач"], ["task", "tasks"])}
           </p>
         </div>
         {delta !== null && (
@@ -930,14 +959,14 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
                 : "bg-rose-500/15 text-rose-700 dark:text-rose-300"
             )}
           >
-            {delta >= 0 ? "↑" : "↓"} {Math.abs(delta)}% к прошлой неделе
+            {delta >= 0 ? "↑" : "↓"} {Math.abs(delta)}% {tr("к прошлой неделе", "vs last week")}
           </span>
         )}
       </div>
 
       {/* ─── По дням: синее — сделано, красное — не сделано ─── */}
       <div>
-        <div className="flex items-end gap-1.5 h-28" aria-label="Выполнение по дням">
+        <div className="flex items-end gap-1.5 h-28" aria-label={tr("Выполнение по дням", "Completion by day")}>
           {stats.days.map((day) => {
             const isToday = day.date === todayKey;
             const missed = day.total - day.done;
@@ -950,7 +979,7 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
                   <span
                     className="w-full flex flex-col rounded-md overflow-hidden"
                     style={{ height: `${(day.total / max) * 100}%` }}
-                    title={`${day.done} из ${day.total}`}
+                    title={`${day.done} ${tr("из", "of")} ${day.total}`}
                   >
                     {missed > 0 && (
                       <span
@@ -968,8 +997,8 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
                   )}
                 >
                   {isToday
-                    ? "сег."
-                    : (parseDayKey(day.date) ?? new Date()).toLocaleDateString("ru-RU", { weekday: "short" })}
+                    ? tr("сег.", "today")
+                    : (parseDayKey(day.date) ?? new Date()).toLocaleDateString(LOCALE, { weekday: "short" })}
                 </span>
               </div>
             );
@@ -977,23 +1006,24 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
         </div>
         <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500 dark:text-gray-400">
           <span className="inline-flex items-center gap-1">
-            <i className="w-2 h-2 rounded-sm bg-blue-500/85" /> сделано
+            <i className="w-2 h-2 rounded-sm bg-blue-500/85" /> {tr("сделано", "done")}
           </span>
           <span className="inline-flex items-center gap-1">
-            <i className="w-2 h-2 rounded-sm bg-rose-400/70" /> не сделано
+            <i className="w-2 h-2 rounded-sm bg-rose-400/70" /> {tr("не сделано", "not done")}
           </span>
           <span className="inline-flex items-center gap-1">
-            <i className="w-2 h-2 rounded-sm bg-gray-400/35" /> сегодня ещё впереди
+            <i className="w-2 h-2 rounded-sm bg-gray-400/35" /> {tr("сегодня ещё впереди", "still ahead today")}
           </span>
         </p>
       </div>
 
       <p className="text-sm">
-        Сегодня: <strong className="font-semibold">{stats.today.done}</strong> из {stats.today.total}
+        {tr("Сегодня", "Today")}: <strong className="font-semibold">{stats.today.done}</strong> {tr("из", "of")} {stats.today.total}
         {stats.streak > 0 && (
           <span className="text-gray-500 dark:text-gray-400">
-            {" "}· 🔥 {stats.streak} {plural(stats.streak, "день", "дня", "дней")} подряд всё выполнено
-            {stats.best_streak > stats.streak ? ` (рекорд — ${stats.best_streak})` : ""}
+            {" "}· 🔥 {stats.streak} {pluralWord(stats.streak, ["день", "дня", "дней"], ["day", "days"])}{" "}
+            {tr("подряд всё выполнено", "in a row with everything done")}
+            {stats.best_streak > stats.streak ? ` (${tr("рекорд", "record")} — ${stats.best_streak})` : ""}
           </span>
         )}
       </p>
@@ -1002,7 +1032,7 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
       {habits.spheres_done && habits.spheres_done.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
-            По сферам за 4 недели
+            {tr("По сферам за 4 недели", "By area over 4 weeks")}
           </p>
           {habits.spheres_done.map((line) => {
             const [name, rest] = line.split(": ");
@@ -1025,7 +1055,7 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
 
       {noticed.length > 0 && (
         <div className="space-y-1">
-          <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">Что я заметила</p>
+          <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">{tr("Что я заметила", "What I noticed")}</p>
           <ul className="space-y-1 text-sm">
             {noticed.map((line) => (
               <li key={line} className="flex gap-2">
@@ -1050,7 +1080,7 @@ function AdviceReply({
   onAppend: (reply: AssistantReply) => void;
 }) {
   const reportError = useErrorToast();
-  if (!items.length) return <p>Пока советовать нечего — план в порядке.</p>;
+  if (!items.length) return <p>{tr("Пока советовать нечего — план в порядке.", "Nothing to advise yet — the plan looks fine.")}</p>;
 
   const discuss = async (index: number) => {
     try {
@@ -1062,7 +1092,7 @@ function AdviceReply({
 
   return (
     <>
-      <p>Советы на сегодня:</p>
+      <p>{tr("Советы на сегодня:", "Tips for today:")}</p>
       <RecommendationList items={items} full onDiscuss={discuss} />
     </>
   );
@@ -1087,26 +1117,26 @@ function RemindersReply({ initial }: { initial: ReminderSettings }) {
 
   return (
     <div className="space-y-2.5">
-      <p>Напоминания приходят в Telegram.</p>
+      <p>{tr("Напоминания приходят в Telegram.", "Reminders come to Telegram.")}</p>
       <Switch
         checked={settings.enabled}
         onChange={(enabled) => toggle({ enabled })}
-        label="Напоминать о событиях"
+        label={tr("Напоминать о событиях", "Remind me about events")}
       />
       <Switch
         checked={settings.daily_digest_enabled}
         onChange={(value) => toggle({ daily_digest_enabled: value })}
-        label={`Утренний план · ${settings.daily_digest_time.slice(0, 5)}`}
+        label={`${tr("Утренний план", "Morning plan")} · ${settings.daily_digest_time.slice(0, 5)}`}
       />
       <Switch
         checked={settings.evening_enabled}
         onChange={(value) => toggle({ evening_enabled: value })}
-        label={`Итоги дня · ${settings.evening_time.slice(0, 5)}`}
+        label={`${tr("Итоги дня", "Evening summary")} · ${settings.evening_time.slice(0, 5)}`}
       />
       <Switch
         checked={settings.deadline_enabled}
         onChange={(value) => toggle({ deadline_enabled: value })}
-        label="Приближение дедлайнов"
+        label={tr("Приближение дедлайнов", "Upcoming deadlines")}
       />
       <Link
         to="/account#reminders"
@@ -1117,7 +1147,7 @@ function RemindersReply({ initial }: { initial: ReminderSettings }) {
           "text-gray-700 dark:text-gray-300"
         )}
       >
-        <span className="relative">Время и остальные настройки</span>
+        <span className="relative">{tr("Время и остальные настройки", "Times and other settings")}</span>
       </Link>
     </div>
   );
@@ -1137,7 +1167,7 @@ function Rating({ messageId, initial }: { messageId: number; initial: -1 | 1 | n
       await api.assistant.rate(messageId, chosen ?? 0);
     } catch {
       setValue(previous);
-      reportError("Не удалось сохранить оценку");
+      reportError(tr("Не удалось сохранить оценку", "Could not save the rating"));
     }
   };
 
@@ -1145,15 +1175,15 @@ function Rating({ messageId, initial }: { messageId: number; initial: -1 | 1 | n
     <div
       className="flex items-center gap-1 pt-1"
       role="group"
-      aria-label="Оцените ответ"
+      aria-label={tr("Оцените ответ", "Rate the answer")}
     >
       {([1, -1] as const).map((v) => (
         <button
           key={v}
           type="button"
           aria-pressed={value === v}
-          aria-label={v === 1 ? "Хороший ответ" : "Плохой ответ"}
-          title={v === 1 ? "Хороший ответ" : "Плохой ответ"}
+          aria-label={v === 1 ? tr("Хороший ответ", "Good answer") : tr("Плохой ответ", "Bad answer")}
+          title={v === 1 ? tr("Хороший ответ", "Good answer") : tr("Плохой ответ", "Bad answer")}
           onClick={() => rate(v)}
           className={cn(
             "w-7 h-7 rounded-full text-sm flex items-center justify-center transition-colors",
@@ -1194,7 +1224,7 @@ function DeleteProposal({
       onReply(result);
     } catch (error) {
       if (error instanceof ApiError && (error.status === 404 || error.status === 410)) {
-        onReply({ kind: "cancelled", text: "Этот запрос уже обработан или устарел." });
+        onReply({ kind: "cancelled", text: tr("Этот запрос уже обработан или устарел.", "This request has already been handled or is out of date.") });
       } else {
         reportError(TEMPORARY_ERROR);
       }
@@ -1205,11 +1235,11 @@ function DeleteProposal({
 
   return (
     <div className="space-y-2.5">
-      <RichText text={reply.answer ?? `Удалить ${reply.count}?`} />
+      <RichText text={reply.answer ?? tr(`Удалить ${reply.count}?`, `Delete ${reply.count}?`)} />
       <AssistantEvents events={reply.events} />
       {reply.count > reply.events.length && (
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          …и ещё {reply.count - reply.events.length}
+          {tr("…и ещё", "…and")} {reply.count - reply.events.length}{tr("", " more")}
         </p>
       )}
       <div className="flex flex-wrap gap-1.5">
@@ -1220,10 +1250,10 @@ function DeleteProposal({
           busy={busy === "confirm"}
           onClick={() => run("confirm")}
         >
-          Удалить ({reply.count})
+          {tr("Удалить", "Delete")} ({reply.count})
         </Button>
         <Button variant="ghost" size="sm" busy={busy === "cancel"} onClick={() => run("cancel")}>
-          Не удалять
+          {tr("Не удалять", "Keep")}
         </Button>
       </div>
     </div>
@@ -1277,7 +1307,7 @@ function AssistantEvents({ events, showDay = true }: { events: AssistantEvent[];
                 <span className="mt-1 flex flex-wrap gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
                   {multiDay(event) && (
                     <span>
-                      по{" "}
+                      {tr("по", "until")}{" "}
                       {formatDate(parseDayKey(event.end_date ?? null) ?? new Date(), {
                         day: "numeric",
                         month: "short",
@@ -1332,7 +1362,7 @@ function describeBefore(before: NonNullable<DraftItem["before"]>): string {
   const when = day ? relativeDay(day).toLowerCase() : before.date;
   return [
     when,
-    before.time ? `${before.time}${before.end_time ? `–${before.end_time}` : ""}` : "без времени",
+    before.time ? `${before.time}${before.end_time ? `–${before.end_time}` : ""}` : tr("без времени", "no time"),
   ].join(", ");
 }
 
@@ -1364,7 +1394,7 @@ function Proposal({
       onReply(result);
     } catch (error) {
       if (error instanceof ApiError && (error.status === 404 || error.status === 410)) {
-        onReply({ kind: "cancelled", text: "Этот черновик уже обработан или устарел." });
+        onReply({ kind: "cancelled", text: tr("Этот черновик уже обработан или устарел.", "This draft has already been handled or is out of date.") });
       } else {
         reportError(TEMPORARY_ERROR);
       }
@@ -1407,8 +1437,8 @@ function Proposal({
         text={
           reply.answer ??
           (items.length > 1
-            ? "Вот что я поняла — проверьте задачи и добавьте:"
-            : "Вот что я поняла — проверьте и добавьте:")
+            ? tr("Вот что я поняла — проверьте задачи и добавьте:", "Here is what I understood — check the tasks and add them:")
+            : tr("Вот что я поняла — проверьте и добавьте:", "Here is what I understood — check and add it:"))
         }
       />
       {reply.note && <p className="text-xs text-gray-500 dark:text-gray-400">{reply.note}</p>}
@@ -1416,7 +1446,7 @@ function Proposal({
       {plan && <DraftPreview items={items} />}
       {plan && (
         <Button variant="ghost" size="sm" icon={editing ? "left" : "settings"} onClick={() => setEditing(!editing)}>
-          {editing ? "Свернуть правку" : "Поправить шаги"}
+          {editing ? tr("Свернуть правку", "Close editing") : tr("Поправить шаги", "Edit the steps")}
         </Button>
       )}
 
@@ -1427,7 +1457,7 @@ function Proposal({
         >
           {item.before && (
             <span className="relative block text-[11px] text-gray-500 dark:text-gray-400">
-              Было: {item.before.title !== item.title ? `«${item.before.title}», ` : ""}
+              {tr("Было", "Was")}: {item.before.title !== item.title ? tr(`«${item.before.title}», `, `“${item.before.title}”, `) : ""}
               {describeBefore(item.before)}
             </span>
           )}
@@ -1435,7 +1465,7 @@ function Proposal({
           <input
             value={item.title}
             onChange={(e) => patch(index, { title: e.target.value })}
-            aria-label="Название"
+            aria-label={tr("Название", "Title")}
             maxLength={300}
             className={cn(
               "relative w-full h-9 px-3 text-sm rounded-lg",
@@ -1449,7 +1479,7 @@ function Proposal({
           <div className="relative flex flex-wrap items-end gap-2">
             <label className="flex-1 min-w-[7rem]">
               <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">
-                Дата
+                {tr("Дата", "Date")}
               </span>
               <input
                 type="date"
@@ -1468,7 +1498,7 @@ function Proposal({
             </label>
             <label className="flex-1 min-w-[7rem]">
               <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">
-                Время
+                {tr("Время", "Time")}
               </span>
               <TimeField
                 value={item.time ?? ""}
@@ -1479,19 +1509,19 @@ function Proposal({
                   })
                 }
                 allowEmpty
-                label="Время"
+                label={tr("Время", "Time")}
                 className={DRAFT_TIME}
               />
             </label>
             {item.time && (
               <label className="flex-1 min-w-[7rem]">
                 <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">
-                  До
+                  {tr("До", "To")}
                 </span>
                 <TimeField
                   value={item.end_time ?? hourLater(item.time)}
                   onChange={(value) => patch(index, { end_time: value || null })}
-                  label="Время окончания"
+                  label={tr("Время окончания", "End time")}
                   className={cn(DRAFT_TIME, !item.end_time && "text-gray-500 dark:text-gray-400")}
                 />
               </label>
@@ -1499,7 +1529,7 @@ function Proposal({
             {item.end_date && (
               <label className="flex-1 min-w-[7rem]">
                 <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">
-                  По
+                  {tr("По", "Until")}
                 </span>
                 <input
                   type="date"
@@ -1523,7 +1553,7 @@ function Proposal({
                 size="sm"
                 onClick={() => patch(index, { time: null, end_time: null })}
               >
-                Без времени
+                {tr("Без времени", "No time")}
               </Button>
             ) : null}
           </div>
@@ -1533,10 +1563,10 @@ function Proposal({
               <TagList ids={item.tag_ids} />
               {item.deadline && (
                 <Badge tone={deadlineTone(item.deadline)}>
-                  дедлайн {formatDeadline(item.deadline).replace(/^до /, "")}
+                  {tr("дедлайн", "deadline")} {formatDeadline(item.deadline).replace(/^(до|by) /, "")}
                 </Badge>
               )}
-              {item.fixed && <Badge tone="accent">нельзя переносить</Badge>}
+              {item.fixed && <Badge tone="accent">{tr("нельзя переносить", "can't be moved")}</Badge>}
             </div>
           )}
 
@@ -1544,7 +1574,7 @@ function Proposal({
             <div className="relative flex items-center justify-between gap-2">
               {item.recurrence && (
                 <span className="inline-flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
-                  <Icon name="sync" size={11} /> {item.recurrence}, с{" "}
+                  <Icon name="sync" size={11} /> {item.recurrence}, {tr("с", "from")}{" "}
                   {relativeDay(parseDayKey(item.date) ?? new Date()).toLowerCase()}
                 </span>
               )}
@@ -1555,7 +1585,7 @@ function Proposal({
                   icon="trash"
                   onClick={() => setItems(items.filter((_, position) => position !== index))}
                 >
-                  Убрать
+                  {tr("Убрать", "Remove")}
                 </Button>
               )}
             </div>
@@ -1567,7 +1597,7 @@ function Proposal({
         <fieldset className="space-y-1.5">
           <legend className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
             <Icon name="calendar" size={13} />
-            Добавить также в
+            {tr("Добавить также в", "Also add to")}
           </legend>
           <div className="flex flex-wrap gap-1.5">
             {targets.map((option) => {
@@ -1590,7 +1620,7 @@ function Proposal({
             })}
           </div>
           <p className="text-[11px] text-gray-500 dark:text-gray-400">
-            {calendars.length ? "И, как всегда, в Dayla." : "Только в Dayla."}
+            {calendars.length ? tr("И, как всегда, в Dayla.", "And, as always, to Dayla.") : tr("Только в Dayla.", "Dayla only.")}
           </p>
         </fieldset>
       )}
@@ -1604,7 +1634,7 @@ function Proposal({
           disabled={!items.length || items.some((item) => !item.title.trim())}
           onClick={confirm}
         >
-          {isChange ? "Сохранить" : "Добавить"} {items.length > 1 ? `(${items.length})` : ""}
+          {isChange ? tr("Сохранить", "Save") : tr("Добавить", "Add")} {items.length > 1 ? `(${items.length})` : ""}
         </Button>
         <Button
           variant="ghost"
@@ -1612,7 +1642,7 @@ function Proposal({
           busy={busy === "cancel"}
           onClick={() => run("cancel", () => api.assistant.cancelDraft(reply.draft_id))}
         >
-          Отмена
+          {tr("Отмена", "Cancel")}
         </Button>
       </div>
     </div>
@@ -1640,8 +1670,8 @@ function DraftPreview({ items }: { items: DraftItem[] }) {
   }, [days[0], days[days.length - 1]]);
 
   return (
-    <div className={cn("relative rounded-xl p-3 space-y-2.5", GLASS_BODY)} aria-label="Как это будет в календаре">
-      <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">В календаре</p>
+    <div className={cn("relative rounded-xl p-3 space-y-2.5", GLASS_BODY)} aria-label={tr("Как это будет в календаре", "How it will look in the calendar")}>
+      <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">{tr("В календаре", "In the calendar")}</p>
       {days.map((key) => {
         const day = parseDayKey(key) ?? new Date();
         const fresh = items.filter((item) => item.date === key);
@@ -1687,7 +1717,7 @@ function DraftPreview({ items }: { items: DraftItem[] }) {
         );
       })}
       <p className="text-[11px] text-gray-500 dark:text-gray-400">
-        Выделены новые шаги, серым — то, что уже есть в эти дни.
+        {tr("Выделены новые шаги, серым — то, что уже есть в эти дни.", "New steps are highlighted; what's already on those days is grey.")}
       </p>
     </div>
   );
@@ -1762,7 +1792,7 @@ function Composer({
       media.start();
       setRecording(true);
     } catch {
-      reportError("Нет доступа к микрофону");
+      reportError(tr("Нет доступа к микрофону", "No access to the microphone"));
     }
   };
 
@@ -1810,8 +1840,8 @@ function Composer({
       <Button
         variant="ghost"
         icon="clip"
-        aria-label="Прочитать PDF или DOCX"
-        title="PDF или DOCX"
+        aria-label={tr("Прочитать PDF или DOCX", "Read a PDF or DOCX")}
+        title={tr("PDF или DOCX", "PDF or DOCX")}
         busy={working === "file"}
         onClick={() => fileInput.current?.click()}
       />
@@ -1821,8 +1851,8 @@ function Composer({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
         rows={1}
-        placeholder={recording ? "Говорите…" : narrow ? "Напишите Dayla…" : "Запланировать, найти, перенести…"}
-        aria-label="Сообщение"
+        placeholder={recording ? tr("Говорите…", "Speak…") : narrow ? tr("Напишите Dayla…", "Message Dayla…") : tr("Запланировать, найти, перенести…", "Plan, find, move…")}
+        aria-label={tr("Сообщение", "Message")}
         maxLength={50000}
         className={cn(
           "relative flex-1 min-w-0 resize-none",
@@ -1850,7 +1880,7 @@ function Composer({
         <Button
           variant={recording ? "danger" : "ghost"}
           icon={recording ? "stop" : "mic"}
-          aria-label={recording ? "Остановить запись" : "Записать голосом"}
+          aria-label={recording ? tr("Остановить запись", "Stop recording") : tr("Записать голосом", "Record a voice message")}
           busy={working === "voice"}
           onClick={toggleRecording}
         />
@@ -1859,7 +1889,7 @@ function Composer({
         type="submit"
         variant="primary"
         icon="send"
-        aria-label="Отправить"
+        aria-label={tr("Отправить", "Send")}
         disabled={!value.trim() || busy}
       />
     </form>

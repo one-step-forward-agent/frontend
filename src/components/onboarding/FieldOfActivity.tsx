@@ -14,6 +14,7 @@ import { useOnboarding, Sphere } from "./OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-field";
 import { cn } from "@/utils/cn";
+import { tr } from "@/i18n";
 
 const TOTAL = 10;
 
@@ -41,12 +42,12 @@ type Preset = {
 };
 
 const PRESETS: Preset[] = [
-  { name: "Работа",       icon: Briefcase,     tint: "text-slate-600 dark:text-slate-300",   tintSoft: "bg-slate-500/15 dark:bg-slate-400/15",   tintRing: "ring-slate-400/40 dark:ring-slate-400/30" },
-  { name: "Учёба",        icon: GraduationCap, tint: "text-teal-600 dark:text-teal-300",     tintSoft: "bg-teal-500/15 dark:bg-teal-400/15",     tintRing: "ring-teal-400/40 dark:ring-teal-400/30" },
-  { name: "Спорт",        icon: Dumbbell,      tint: "text-orange-600 dark:text-orange-300", tintSoft: "bg-orange-500/15 dark:bg-orange-400/15", tintRing: "ring-orange-400/40 dark:ring-orange-400/30" },
-  { name: "Языки",        icon: Languages,     tint: "text-violet-600 dark:text-violet-300", tintSoft: "bg-violet-500/15 dark:bg-violet-400/15", tintRing: "ring-violet-400/40 dark:ring-violet-400/30" },
-  { name: "Отдых",        icon: Coffee,        tint: "text-cyan-600 dark:text-cyan-300",     tintSoft: "bg-cyan-500/15 dark:bg-cyan-400/15",     tintRing: "ring-cyan-400/40 dark:ring-cyan-400/30" },
-  { name: "Отношения",    icon: Users,         tint: "text-pink-600 dark:text-pink-300",     tintSoft: "bg-pink-500/15 dark:bg-pink-400/15",     tintRing: "ring-pink-400/40 dark:ring-pink-400/30" },
+  { name: tr("Работа", "Work"), icon: Briefcase,     tint: "text-slate-600 dark:text-slate-300",   tintSoft: "bg-slate-500/15 dark:bg-slate-400/15",   tintRing: "ring-slate-400/40 dark:ring-slate-400/30" },
+  { name: tr("Учёба", "Study"), icon: GraduationCap, tint: "text-teal-600 dark:text-teal-300",     tintSoft: "bg-teal-500/15 dark:bg-teal-400/15",     tintRing: "ring-teal-400/40 dark:ring-teal-400/30" },
+  { name: tr("Спорт", "Sport"), icon: Dumbbell,      tint: "text-orange-600 dark:text-orange-300", tintSoft: "bg-orange-500/15 dark:bg-orange-400/15", tintRing: "ring-orange-400/40 dark:ring-orange-400/30" },
+  { name: tr("Языки", "Languages"), icon: Languages,     tint: "text-violet-600 dark:text-violet-300", tintSoft: "bg-violet-500/15 dark:bg-violet-400/15", tintRing: "ring-violet-400/40 dark:ring-violet-400/30" },
+  { name: tr("Отдых", "Rest"), icon: Coffee,        tint: "text-cyan-600 dark:text-cyan-300",     tintSoft: "bg-cyan-500/15 dark:bg-cyan-400/15",     tintRing: "ring-cyan-400/40 dark:ring-cyan-400/30" },
+  { name: tr("Отношения", "Relationships"), icon: Users,         tint: "text-pink-600 dark:text-pink-300",     tintSoft: "bg-pink-500/15 dark:bg-pink-400/15",     tintRing: "ring-pink-400/40 dark:ring-pink-400/30" },
 ];
 
 const PALETTE = [
@@ -163,12 +164,12 @@ export const FieldOfActivity: React.FC = () => {
     <OnboardingLayout
       step={2}
       totalSteps={TOTAL}
-      title="Отметьте важные для вас сферы"
-      subtitle="Я учту их и помогу не потерять важное из виду."
+      title={tr("Отметьте важные для вас сферы", "Pick the areas that matter to you")}
+      subtitle={tr("Я учту их и помогу не потерять важное из виду.", "I'll keep them in mind and help you not lose sight of what matters.")}
       onBack={() => navigate("/")}
       onNext={handleNext}
       nextDisabled={spheres.length === 0}
-      nextLabel={`Далее${spheres.length > 0 ? ` · ${spheres.length}` : ""}`}
+      nextLabel={`${tr("Далее", "Next")}${spheres.length > 0 ? ` · ${spheres.length}` : ""}`}
     >
       <div className="relative">
         {/* ─── Eyebrow ─────────────────────────────── */}
@@ -184,7 +185,7 @@ export const FieldOfActivity: React.FC = () => {
           >
             <span aria-hidden="true" className={cn(GLASS_SHEEN, "rounded-full")} />
             <Sparkles size={11} aria-hidden="true" className="relative" />
-            <span className="relative">Ваши сферы</span>
+            <span className="relative">{tr("Ваши сферы", "Your areas")}</span>
           </span>
         </div>
 
@@ -299,7 +300,7 @@ export const FieldOfActivity: React.FC = () => {
                 <Plus size={18} />
               </div>
               <span className="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Своя сфера
+                {tr("Своя сфера", "Your own area")}
               </span>
             </div>
           </button>
@@ -318,12 +319,12 @@ export const FieldOfActivity: React.FC = () => {
                   setCustom("");
                 }
               }}
-              placeholder="Например: Пилатес, Волонтёрство, Книги..."
-              aria-label="Название новой сферы"
+              placeholder={tr("Например: Пилатес, Волонтёрство, Книги...", "E.g. Pilates, Volunteering, Books...")}
+              aria-label={tr("Название новой сферы", "New area name")}
               autoFocus
             />
             <Button type="button" onClick={addCustom} disabled={!custom.trim()}>
-              Добавить
+              {tr("Добавить", "Add")}
             </Button>
           </div>
         )}
@@ -343,7 +344,7 @@ export const FieldOfActivity: React.FC = () => {
                   )}
                 >
                   <span aria-hidden="true" className={cn(GLASS_SHEEN, "rounded-full")} />
-                  <span className="relative">Приоритеты</span>
+                  <span className="relative">{tr("Приоритеты", "Priorities")}</span>
                 </span>
               </div>
             </div>
@@ -394,7 +395,7 @@ export const FieldOfActivity: React.FC = () => {
                             "text-gray-600 dark:text-gray-300",
                             "shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
                           )}
-                          aria-label={`Приоритет ${i + 1}`}
+                          aria-label={`${tr("Приоритет", "Priority")} ${i + 1}`}
                         >
                           {i + 1}
                         </span>
@@ -410,7 +411,7 @@ export const FieldOfActivity: React.FC = () => {
                             type="button"
                             onClick={() => setSpheres((prev) => moveByIndex(prev, s.id, -1))}
                             disabled={i === 0}
-                            aria-label={`Поднять ${s.name} выше`}
+                            aria-label={tr(`Поднять ${s.name} выше`, `Move ${s.name} up`)}
                             className={cn(
                               "w-7 h-7 rounded-lg flex items-center justify-center",
                               "text-gray-400 dark:text-gray-500",
@@ -425,7 +426,7 @@ export const FieldOfActivity: React.FC = () => {
                             type="button"
                             onClick={() => setSpheres((prev) => moveByIndex(prev, s.id, 1))}
                             disabled={i === spheres.length - 1}
-                            aria-label={`Опустить ${s.name} ниже`}
+                            aria-label={tr(`Опустить ${s.name} ниже`, `Move ${s.name} down`)}
                             className={cn(
                               "w-7 h-7 rounded-lg flex items-center justify-center",
                               "text-gray-400 dark:text-gray-500",
@@ -449,7 +450,7 @@ export const FieldOfActivity: React.FC = () => {
 
         {spheres.length === 0 && (
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            Выберите хотя бы одну сферу, чтобы продолжить
+            {tr("Выберите хотя бы одну сферу, чтобы продолжить", "Pick at least one area to continue")}
           </p>
         )}
       </div>

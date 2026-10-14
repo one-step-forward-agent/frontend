@@ -22,17 +22,16 @@ import {
   dayKey,
   dayTitle,
   errorText,
-  eventTimeRange,
   formatWeekday,
   occursOn,
   parseDayKey,
-  plural,
   startOfDay,
 } from "../lib/format";
 import { notifyTasksChanged, useAsync, useTasksChanged, useToday } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
+import { pluralWord, tr } from "@/i18n";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
 
@@ -57,7 +56,7 @@ const calendarLink = (view: "day" | "week", day: Date) =>
   `/calendar?view=${view}&month=${dayKey(day).slice(0, 7)}&day=${dayKey(day)}`;
 
 export function TodayPage() {
-  useTitle("Сегодня");
+  useTitle(tr("Сегодня", "Today"));
   const user = useUser();
   const now = new Date();
   const today = useToday();
@@ -83,17 +82,12 @@ export function TodayPage() {
   useTasksChanged(reloadAll);
 
   const todays = (events.data ?? []).filter((event) => occursOn(event, today));
-  const timed = todays.filter((event) => !event.all_day);
   const untimed = todays.filter((event) => event.all_day);
   const overdue = (events.data ?? []).filter(
     (event) => unfinished(event) && new Date(event.end_at) <= today
   );
   const leftToday =
     now.getHours() >= EVENING_HOUR ? untimed.filter(movable) : [];
-  const next =
-    timed.find(
-      (event) => !event.completed_at && new Date(event.end_at) > now
-    ) ?? null;
 
   return (
     <div className="relative max-w-3xl mx-auto pt-[1.5vh]">
@@ -101,17 +95,17 @@ export function TodayPage() {
       <PageHeader
         title={
           <span className="inline-block first-letter:uppercase">
-            {dayTitle(now).replace(/^Сегодня,?\s*/i, "")}
+            {dayTitle(now).replace(/^(Сегодня|Today),?\s*/i, "")}
           </span>
         }
         actions={
           // Tomorrow and this week open in the calendar: the day itself and its week
           <>
             <Link to={calendarLink("day", addDays(now, 1))} className="chip-toggle inline-flex items-center gap-1.5">
-              <Icon name="right" size={14} /> Завтра
+              <Icon name="right" size={14} /> {tr("Завтра", "Tomorrow")}
             </Link>
             <Link to={calendarLink("week", now)} className="chip-toggle inline-flex items-center gap-1.5">
-              <Icon name="calendar" size={14} /> Неделя
+              <Icon name="calendar" size={14} /> {tr("Неделя", "Week")}
             </Link>
           </>
         }
@@ -134,31 +128,22 @@ export function TodayPage() {
       />
 
       <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
-        {/* ─── Задачи на сегодня, под ними советы ─── */}
+        {/* ─── День по часам, под ним советы: сами задачи — в разделе «Задачи» ─── */}
         <div className="min-w-0">
         <GlassCard
           title={
             todays.length
-              ? `Задачи · ${todays.filter((event) => event.completed_at).length}/${
-                  todays.length
-                }`
-              : "Задачи"
+              ? `${tr("День по часам", "Day by hour")} · ${todays.filter((event) => event.completed_at).length}/${todays.length}`
+              : tr("День по часам", "Day by hour")
           }
         >
           {events.loading && !events.data ? (
             <Loading />
           ) : todays.length ? (
-            <div className="space-y-4">
-              {next && <NextUp event={next} now={now} />}
-
-              {timed.length > 0 && <EventList events={timed} />}
-
-              {/* No heading: a task without a time already shows none */}
-              {untimed.length > 0 && <EventList events={untimed} />}
-            </div>
+            <DayTimeline events={todays} day={today} />
           ) : (
-            <Empty icon="today" title="На сегодня ничего">
-              Свободный день — или самое время что-нибудь запланировать.
+            <Empty icon="today" title={tr("На сегодня ничего", "Nothing for today")}>
+              {tr("Свободный день — или самое время что-нибудь запланировать.", "A free day — or a good time to plan something.")}
             </Empty>
           )}
         </GlassCard>
@@ -168,15 +153,9 @@ export function TodayPage() {
 
         {/* ─── Правая колонка ───────────────────── */}
         <div className="space-y-6">
-          <GlassCard title="Прогресс">
+          <GlassCard title={tr("Прогресс", "Progress")}>
             {stats.data ? <Progress stats={stats.data} /> : <Loading />}
           </GlassCard>
-
-          {todays.length > 0 && (
-            <GlassCard title="День по часам">
-              <DayTimeline events={todays} day={today} />
-            </GlassCard>
-          )}
 
         </div>
       </div>
@@ -236,7 +215,7 @@ function MoveSuggestion({
         moving.map((event) => event.id),
         dayKey(target === "today" ? today : addDays(today, 1))
       );
-      toast(`Перенесено: ${moved}`);
+      toast(`${tr("Перенесено", "Moved")}: ${moved}`);
       notifyTasksChanged();
     } catch (error) {
       reportError(errorText(error));
@@ -249,7 +228,7 @@ function MoveSuggestion({
     setBusy("done");
     try {
       await Promise.all(items.map((event) => api.events.complete(event.id, true)));
-      toast(`Отмечено выполненными: ${items.length}`);
+      toast(`${tr("Отмечено выполненными", "Marked done")}: ${items.length}`);
       notifyTasksChanged();
     } catch (error) {
       reportError(errorText(error));
@@ -263,7 +242,7 @@ function MoveSuggestion({
     const next = [...dismissed, ...items.map((event) => event.id)];
     saveDismissed(userId, next);
     setDismissed(next);
-    toast("Хорошо, не напоминаю о них. Они остались в «Задачах».");
+    toast(tr("Хорошо, не напоминаю о них. Они остались в «Задачах».", "OK, no more reminders about them. They are still in Tasks."));
   };
 
   return (
@@ -272,7 +251,7 @@ function MoveSuggestion({
         "relative overflow-hidden rounded-2xl p-4 mb-6",
         GLASS_BODY
       )}
-      aria-label="Незавершённые задачи"
+      aria-label={tr("Незавершённые задачи", "Unfinished tasks")}
     >
       <div className="flex items-start gap-3">
         <span
@@ -290,14 +269,17 @@ function MoveSuggestion({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-gray-900 dark:text-white">
             {overdue.length
-              ? `Не завершено с прошлых дней: ${overdue.length}`
-              : `Не успеваете? Осталось задач: ${leftToday.length}`}
+              ? `${tr("Не завершено с прошлых дней", "Unfinished from previous days")}: ${overdue.length}`
+              : `${tr("Не успеваете? Осталось задач", "Running late? Tasks left")}: ${leftToday.length}`}
           </p>
 
           {expanded ? (
             <>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Отметьте сделанное галочкой — или всё сразу кнопкой «Всё сделано». Остальное можно перенести.
+                {tr(
+                  "Отметьте сделанное галочкой — или всё сразу кнопкой «Всё сделано». Остальное можно перенести.",
+                  "Tick what you have done — or everything at once with “All done”. The rest can be moved."
+                )}
               </p>
               <div className="mt-3">
                 <EventList events={items} showDate />
@@ -317,7 +299,7 @@ function MoveSuggestion({
                     className="text-sky-700 dark:text-sky-300 hover:underline"
                     onClick={() => setExpanded(true)}
                   >
-                    и ещё {items.length - 4} — показать все
+                    {tr(`и ещё ${items.length - 4} — показать все`, `and ${items.length - 4} more — show all`)}
                   </button>
                 </>
               ) : (
@@ -328,7 +310,7 @@ function MoveSuggestion({
                     className="text-sky-700 dark:text-sky-300 hover:underline"
                     onClick={() => setExpanded(true)}
                   >
-                    открыть список
+                    {tr("открыть список", "open the list")}
                   </button>
                 </>
               )}
@@ -345,7 +327,7 @@ function MoveSuggestion({
           busy={busy === "done"}
           onClick={markAll}
         >
-          {items.length > 1 ? `Всё сделано (${items.length})` : "Сделано"}
+          {items.length > 1 ? `${tr("Всё сделано", "All done")} (${items.length})` : tr("Сделано", "Done")}
         </Button>
         {overdue.length > 0 && (
           <Button
@@ -354,7 +336,7 @@ function MoveSuggestion({
             busy={busy === "today"}
             onClick={() => move("today")}
           >
-            На сегодня
+            {tr("На сегодня", "To today")}
           </Button>
         )}
         <Button
@@ -363,19 +345,19 @@ function MoveSuggestion({
           busy={busy === "tomorrow"}
           onClick={() => move("tomorrow")}
         >
-          На завтра
+          {tr("На завтра", "To tomorrow")}
         </Button>
         <Button
           size="sm"
           variant="ghost"
           onClick={dismiss}
-          title="Скрыть: задачи останутся в разделе «Задачи»"
+          title={tr("Скрыть: задачи останутся в разделе «Задачи»", "Hide: the tasks stay in Tasks")}
         >
-          Не надо
+          {tr("Не надо", "Dismiss")}
         </Button>
         {expanded && (
           <Button size="sm" variant="ghost" onClick={() => setExpanded(false)}>
-            Свернуть
+            {tr("Свернуть", "Collapse")}
           </Button>
         )}
       </div>
@@ -446,10 +428,10 @@ function Progress({ stats }: { stats: Stats }) {
   return (
     <div className="space-y-3">
       <p className="text-base">
-        <strong className="font-semibold">{stats.today.done}</strong> из{" "}
+        <strong className="font-semibold">{stats.today.done}</strong> {tr("из", "of")}{" "}
         {stats.today.total}{" "}
         <span className="text-gray-500 dark:text-gray-400">
-          выполнено сегодня
+          {tr("выполнено сегодня", "done today")}
         </span>
       </p>
 
@@ -467,11 +449,11 @@ function Progress({ stats }: { stats: Stats }) {
       </div>
 
       {/* The week as bars: deep blue — the whole day done, light — part of it */}
-      <div className="flex items-end gap-1.5 h-16" aria-label="Выполнение за 7 дней">
+      <div className="flex items-end gap-1.5 h-16" aria-label={tr("Выполнение за 7 дней", "Completion over 7 days")}>
         {stats.days.map((day) => (
           <div
             key={day.date}
-            title={`${day.done} из ${day.total}`}
+            title={`${day.done} ${tr("из", "of")} ${day.total}`}
             className="flex-1 flex flex-col items-center gap-1 h-full"
           >
             <span
@@ -499,16 +481,16 @@ function Progress({ stats }: { stats: Stats }) {
       </div>
 
       <Link
-        to={`/assistant?q=${encodeURIComponent("Статистика")}`}
+        to={`/assistant?q=${encodeURIComponent(tr("Статистика", "Statistics"))}`}
         className="inline-flex items-center gap-1 text-xs font-medium text-sky-700 dark:text-sky-300 hover:underline"
       >
-        Подробнее в чате <Icon name="right" size={12} />
+        {tr("Подробнее в чате", "More in the chat")} <Icon name="right" size={12} />
       </Link>
 
       {/* The week's numbers are in the bars above; below them only the streak */}
       {stats.streak > 0 ? (
         <span
-          title={`Дней подряд, когда выполнено всё запланированное. Лучшая серия: ${stats.best_streak}`}
+          title={`${tr("Дней подряд, когда выполнено всё запланированное. Лучшая серия", "Days in a row with everything planned done. Best streak")}: ${stats.best_streak}`}
           className={cn(
             "relative inline-flex items-center gap-1.5 overflow-hidden",
             "px-2.5 h-7 rounded-full text-xs font-medium",
@@ -518,50 +500,14 @@ function Progress({ stats }: { stats: Stats }) {
         >
           <Icon name="fire" size={13} className="relative" />
           <span className="relative tabular-nums">
-            {stats.streak} {plural(stats.streak, "день", "дня", "дней")} подряд
+            {stats.streak} {pluralWord(stats.streak, ["день", "дня", "дней"], ["day", "days"])} {tr("подряд", "in a row")}
           </span>
         </span>
       ) : (
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Выполните все задачи дня, чтобы начать серию
+          {tr("Выполните все задачи дня, чтобы начать серию", "Finish all of a day's tasks to start a streak")}
         </p>
       )}
     </div>
-  );
-}
-
-/* ─── NextUp ───────────────────────────────────────────── */
-
-function NextUp({ event, now }: { event: CalendarEvent; now: Date }) {
-  const start = new Date(event.start_at);
-  const minutes = Math.round((start.getTime() - now.getTime()) / 60_000);
-  const label =
-    minutes <= 0
-      ? "Идёт сейчас"
-      : minutes < 60
-      ? `Через ${minutes} мин`
-      : `Через ${Math.floor(minutes / 60)} ч ${minutes % 60} мин`;
-
-  return (
-    <Link
-      to={`/events/${event.id}`}
-      className={cn(
-        "relative flex flex-col gap-1 overflow-hidden",
-        "px-4 py-3 rounded-xl",
-        "transition-transform duration-200 hover:-translate-y-0.5",
-        GLASS_BODY
-      )}
-    >
-      <span className="text-[11px] uppercase tracking-widest font-medium text-sky-700 dark:text-sky-300">
-        {label}
-      </span>
-      <span className="text-base font-medium text-gray-900 dark:text-white truncate">
-        {event.title}
-      </span>
-      <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-        {eventTimeRange(event)}
-        {event.location ? ` · ${event.location}` : ""}
-      </span>
-    </Link>
   );
 }

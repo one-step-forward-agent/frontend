@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Send, Mail, FileText, ArrowUpRight, Sparkles } from "lucide-react";
 import { telegramUrl, usePublicConfig } from "@/hooks/usePublicConfig";
 import { cn } from "@/utils/cn";
+import { tr } from "@/i18n";
 
 const linkClass = "group inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors";
 
@@ -44,29 +45,29 @@ const LandingFooter: React.FC = () => {
             </Link>
 
             <p className="text-sm leading-relaxed text-gray-400 max-w-[220px]">
-              Порядок в планировании, задачах и целях — за минуту в день.
+              {tr("Порядок в планировании, задачах и целях — за минуту в день.", "Order in your plans, tasks and goals — in a minute a day.")}
             </p>
 
             {config?.online && (
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Все системы работают
+                {tr("Все системы работают", "All systems operational")}
               </div>
             )}
           </div>
 
           <div>
-            <h4 className="text-white font-semibold text-sm uppercase tracking-widest mb-5">Продукт</h4>
+            <h4 className="text-white font-semibold text-sm uppercase tracking-widest mb-5">{tr("Продукт", "Product")}</h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <a href="/#usecases" className={linkClass}>
-                  Как это работает
+                  {tr("Как это работает", "How it works")}
                   <Arrow />
                 </a>
               </li>
               <li>
                 <Link to="/app" className={linkClass}>
-                  Открыть приложение
+                  {tr("Открыть приложение", "Open the app")}
                   <Arrow />
                 </Link>
               </li>
@@ -74,7 +75,7 @@ const LandingFooter: React.FC = () => {
                 <li>
                   <a href={bot} target="_blank" rel="noopener noreferrer" className={linkClass}>
                     <Send size={14} aria-hidden="true" />
-                    Телеграм-бот
+                    {tr("Телеграм-бот", "Telegram bot")}
                   </a>
                 </li>
               )}
@@ -82,19 +83,19 @@ const LandingFooter: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold text-sm uppercase tracking-widest mb-5">Поддержка</h4>
+            <h4 className="text-white font-semibold text-sm uppercase tracking-widest mb-5">{tr("Поддержка", "Support")}</h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <a href="mailto:mentrixlabs@yandex.ru" className={linkClass}>
                   <Mail size={14} aria-hidden="true" />
-                  Написать на почту
+                  {tr("Написать на почту", "Email us")}
                 </a>
               </li>
               {bot && (
                 <li>
                   <a href={bot} target="_blank" rel="noopener noreferrer" className={linkClass}>
                     <Send size={14} aria-hidden="true" />
-                    Написать в Telegram
+                    {tr("Написать в Telegram", "Message us on Telegram")}
                   </a>
                 </li>
               )}
@@ -102,24 +103,24 @@ const LandingFooter: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold text-sm uppercase tracking-widest mb-5">Юридическое</h4>
+            <h4 className="text-white font-semibold text-sm uppercase tracking-widest mb-5">{tr("Юридическое", "Legal")}</h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <Link to="/terms-of-use" className={linkClass}>
                   <FileText size={14} aria-hidden="true" />
-                  Условия использования
+                  {tr("Условия использования", "Terms of use")}
                 </Link>
               </li>
               <li>
                 <a href="/privacy-policy" className={linkClass}>
                   <FileText size={14} aria-hidden="true" />
-                  Политика конфиденциальности
+                  {tr("Политика конфиденциальности", "Privacy policy")}
                 </a>
               </li>
               <li>
                 <Link to="/personal-data-consent" className={linkClass}>
                   <FileText size={14} aria-hidden="true" />
-                  Обработка персональных данных
+                  {tr("Обработка персональных данных", "Personal data processing")}
                 </Link>
               </li>
             </ul>
@@ -127,13 +128,13 @@ const LandingFooter: React.FC = () => {
         </div>
 
         <div className="mt-10 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} Dayla. Все права защищены.</p>
+          <p>&copy; {new Date().getFullYear()} Dayla. {tr("Все права защищены.", "All rights reserved.")}</p>
           <p className="flex items-center gap-1.5 text-xs">
-            Сделано с
-            <span className="text-red-400" aria-label="любовью">
+            {tr("Сделано с", "Made with")}
+            <span className="text-red-400" aria-label={tr("любовью", "love")}>
               ♥
             </span>
-            для тех, кто ценит своё время
+            {tr("для тех, кто ценит своё время", "for those who value their time")}
           </p>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { api, ApiError, onUnauthorized } from "@/app/api/client";
 import { errorText } from "@/app/lib/format";
 import type { User } from "@/app/api/types";
 import { DEV_AUTH_BYPASS, DEV_USER } from "@/config/devAuth";
+import { tr } from "@/i18n";
 
 interface RegisterInput {
   email: string;
@@ -72,7 +73,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       await api.auth.login(email.trim().toLowerCase(), password);
       await get().loadUser();
     } catch (error) {
-      set({ error: message(error, "Ошибка входа") });
+      set({ error: message(error, tr("Ошибка входа", "Sign-in failed")) });
       throw error;
     } finally {
       set({ isSubmitting: false });
@@ -102,7 +103,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       });
       await get().loadUser();
     } catch (error) {
-      set({ error: message(error, "Ошибка регистрации") });
+      set({ error: message(error, tr("Ошибка регистрации", "Sign-up failed")) });
       throw error;
     } finally {
       set({ isSubmitting: false });

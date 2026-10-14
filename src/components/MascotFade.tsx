@@ -1,6 +1,7 @@
 // src/components/MascotFade.tsx
 import * as React from "react";
 import { cn } from "@/utils/cn";
+import { tr } from "@/i18n";
 
 interface MascotFadeProps {
   src?: string;
@@ -23,7 +24,7 @@ interface MascotFadeProps {
 
 export const MascotFade: React.FC<MascotFadeProps> = ({
   src = "/images/MaskotWB.webp",
-  alt = "Ассистент Dayla",
+  alt = tr("Ассистент Dayla", "Dayla assistant"),
   className,
   wrapperClassName,
   fadeStart = 42,

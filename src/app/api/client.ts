@@ -26,6 +26,7 @@ import type {
   User,
   AiChatSource
 } from "./types";
+import { tr, lang } from "@/i18n";
 
 /** A reminder the user asked for: once, or repeating (repeat says it in words) */
 export interface CustomReminder {
@@ -58,9 +59,9 @@ export class ApiError extends Error {
 }
 
 // What the user sees when a request fails: never status texts, HTML of a proxy page or English internals
-export const SERVER_ERROR = "Ошибка сервера. Попробуйте ещё раз позже.";
-const NO_CONNECTION = "Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.";
-const TOO_MANY_REQUESTS = "Слишком много запросов — подождите минуту.";
+export const SERVER_ERROR = tr("Ошибка сервера. Попробуйте ещё раз позже.", "Server error. Please try again later.");
+const NO_CONNECTION = tr("Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.", "No connection to the server. Check your internet and try again.");
+const TOO_MANY_REQUESTS = tr("Слишком много запросов — подождите минуту.", "Too many requests — please wait a minute.");
 
 let unauthorizedHandler: () => void = () => {};
 export const onUnauthorized = (handler: () => void) => {
@@ -81,7 +82,10 @@ function refreshSession(): Promise<boolean> {
 async function send(path: string, init: RequestInit = {}, retry = true): Promise<Response> {
   let response: Response;
   try {
-    response = await fetch(path, { credentials: "same-origin", ...init });
+    // The chosen language goes along, so the server can answer in it
+    const headers = new Headers(init.headers);
+    headers.set("Accept-Language", lang);
+    response = await fetch(path, { credentials: "same-origin", ...init, headers });
   } catch {
     throw new ApiError(0, NO_CONNECTION);
   }

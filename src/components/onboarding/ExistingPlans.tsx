@@ -10,6 +10,7 @@ import { useOnboarding, type DayShort } from "./OnboardingContext";
 import { Input } from "@/components/ui/form-field";
 import { TimeField } from "@/components/ui/time-field";
 import { cn } from "@/utils/cn";
+import { tr } from "@/i18n";
 
 const TOTAL = 10;
 
@@ -30,14 +31,15 @@ const TIME_FIELD_CLASS =
   "justify-center h-11 px-3 rounded border border-gray-200 dark:border-gray-700 " +
   "bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-within:border-blue-500";
 
-const DAYS: { short: DayShort; full: string }[] = [
-  { short: "Пн", full: "Понедельник" },
-  { short: "Вт", full: "Вторник" },
-  { short: "Ср", full: "Среда" },
-  { short: "Чт", full: "Четверг" },
-  { short: "Пт", full: "Пятница" },
-  { short: "Сб", full: "Суббота" },
-  { short: "Вс", full: "Воскресенье" },
+// short is the stored key ("Пн"), label what is shown
+const DAYS: { short: DayShort; label: string; full: string }[] = [
+  { short: "Пн", label: tr("Пн", "Mon"), full: tr("Понедельник", "Monday") },
+  { short: "Вт", label: tr("Вт", "Tue"), full: tr("Вторник", "Tuesday") },
+  { short: "Ср", label: tr("Ср", "Wed"), full: tr("Среда", "Wednesday") },
+  { short: "Чт", label: tr("Чт", "Thu"), full: tr("Четверг", "Thursday") },
+  { short: "Пт", label: tr("Пт", "Fri"), full: tr("Пятница", "Friday") },
+  { short: "Сб", label: tr("Сб", "Sat"), full: tr("Суббота", "Saturday") },
+  { short: "Вс", label: tr("Вс", "Sun"), full: tr("Воскресенье", "Sunday") },
 ];
 
 const SectionDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -140,11 +142,11 @@ export const ExistingPlans: React.FC = () => {
     <OnboardingLayout
       step={5}
       totalSteps={TOTAL}
-      title="Укажите свой рабочий график"
+      title={tr("Укажите свой рабочий график", "Set your work schedule")}
       onBack={() => navigate("/onboarding/goals-and-habits")}
       onNext={handleNext}
       nextDisabled={days.length === 0}
-      nextLabel={`Далее${weeklyHours > 0 ? ` · ${Math.round(weeklyHours)} ч/нед` : ""}`}
+      nextLabel={`${tr("Далее", "Next")}${weeklyHours > 0 ? ` · ${Math.round(weeklyHours)} ${tr("ч/нед", "h/week")}` : ""}`}
     >
       <div className="relative space-y-4 sm:space-y-5 overflow-x-hidden">
 
@@ -186,7 +188,7 @@ export const ExistingPlans: React.FC = () => {
                   >
                     <span aria-hidden="true" className={GLASS_SHEEN} />
                     <span className="relative text-xs sm:text-sm font-semibold">
-                      {d.short}
+                      {d.label}
                     </span>
                     <span
                       className={cn(
@@ -200,13 +202,13 @@ export const ExistingPlans: React.FC = () => {
               })}
             </div>
 
-            <SectionDivider>Рабочие часы</SectionDivider>
+            <SectionDivider>{tr("Рабочие часы", "Working hours")}</SectionDivider>
 
             {/* Switch */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                  Одинаковое время во все дни
+                  {tr("Одинаковое время во все дни", "Same hours every day")}
                 </p>
               </div>
 
@@ -214,7 +216,7 @@ export const ExistingPlans: React.FC = () => {
                 type="button"
                 role="switch"
                 aria-checked={!perDay}
-                aria-label="Одинаковое время во все дни"
+                aria-label={tr("Одинаковое время во все дни", "Same hours every day")}
                 onClick={() => setPerDay((v) => !v)}
                 className={cn(
                   "relative shrink-0 w-11 h-6 rounded-full overflow-hidden transition-colors duration-200",
@@ -247,21 +249,21 @@ export const ExistingPlans: React.FC = () => {
             {!perDay && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div className="min-w-0">
-                  <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">Начало</p>
+                  <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">{tr("Начало", "Start")}</p>
                   <TimeField
                     value={uniformFrom}
                     onChange={setUniformFrom}
-                    label="Начало работы"
+                    label={tr("Начало работы", "Work starts")}
                     className={TIME_FIELD_CLASS}
                   />
                 </div>
 
                 <div className="min-w-0">
-                  <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">Конец</p>
+                  <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">{tr("Конец", "End")}</p>
                   <TimeField
                     value={uniformTo}
                     onChange={setUniformTo}
-                    label="Конец работы"
+                    label={tr("Конец работы", "Work ends")}
                     className={TIME_FIELD_CLASS}
                   />
                 </div>
@@ -273,7 +275,7 @@ export const ExistingPlans: React.FC = () => {
               <div className="space-y-2 min-w-0">
                 {activeDays.length === 0 && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-3">
-                    Сначала выберите хотя бы один рабочий день
+                    {tr("Сначала выберите хотя бы один рабочий день", "First pick at least one working day")}
                   </p>
                 )}
 
@@ -297,21 +299,21 @@ export const ExistingPlans: React.FC = () => {
                       <div className="relative flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2 min-w-0">
                         <span className="shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-200">
                           <span className="sm:hidden">{d.full}</span>
-                          <span className="hidden sm:inline">{d.short}</span>
+                          <span className="hidden sm:inline">{d.label}</span>
                         </span>
 
                         <div className="flex-1 min-w-0 grid grid-cols-2 gap-1.5">
                           <TimeField
                             value={t.from}
                             onChange={(value) => updateDayTime(d.short, "from", value)}
-                            label={`Начало работы, ${d.full}`}
+                            label={`${tr("Начало работы", "Work starts")}, ${d.full}`}
                             icon={false}
                             className={cn("text-sm", TIME_FIELD_CLASS)}
                           />
                           <TimeField
                             value={t.to}
                             onChange={(value) => updateDayTime(d.short, "to", value)}
-                            label={`Конец работы, ${d.full}`}
+                            label={`${tr("Конец работы", "Work ends")}, ${d.full}`}
                             icon={false}
                             className={cn("text-sm", TIME_FIELD_CLASS)}
                           />
@@ -323,7 +325,7 @@ export const ExistingPlans: React.FC = () => {
               </div>
             )}
 
-            <SectionDivider>Часовой пояс</SectionDivider>
+            <SectionDivider>{tr("Часовой пояс", "Time zone")}</SectionDivider>
 
             <label className="block">
               <div className="relative">

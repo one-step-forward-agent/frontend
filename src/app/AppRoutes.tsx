@@ -12,6 +12,7 @@ import { TasksPage } from "./pages/Tasks";
 import { TodayPage } from "./pages/Today";
 import { Link, match, useLocation, useTitle } from "./router";
 import "./app.css";
+import { tr } from "@/i18n";
 
 const ROUTES: [string, (params: Record<string, string>) => ReactNode][] = [
   ["/", () => <TodayPage />],
@@ -59,11 +60,11 @@ export default function AppRoutes() {
 }
 
 function NotFound() {
-  useTitle("Не найдено");
+  useTitle(tr("Не найдено", "Not found"));
   return (
     <div className="page">
-      <Empty icon="search" title="Страница не найдена">
-        <Link to="/">На главную</Link>
+      <Empty icon="search" title={tr("Страница не найдена", "Page not found")}>
+        <Link to="/">{tr("На главную", "Go home")}</Link>
       </Empty>
     </div>
   );

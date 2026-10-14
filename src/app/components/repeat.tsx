@@ -1,5 +1,6 @@
-import { openPicker, plural } from "../lib/format";
+import { openPicker } from "../lib/format";
 import { Field } from "./ui";
+import { LOCALE, isEn, pluralWord, tr } from "@/i18n";
 
 /**
  * The repeat of a task: how often (every N days, weeks on chosen weekdays, months, years) and until when
@@ -21,8 +22,10 @@ export interface Repeat {
 }
 
 const RRULE_DAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
-const WEEKDAY_SHORT = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-const WEEKDAY_FULL = ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"];
+const WEEKDAY_SHORT = isEn ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] : ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const WEEKDAY_FULL = isEn
+  ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+  : ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"];
 const MAX_COUNT = 500;
 const MAX_INTERVAL = 99;
 
@@ -77,11 +80,11 @@ export function sameRule(a: string | null | undefined, b: string | null | undefi
 export function repeatError(repeat: Repeat, startDay: string): string | null {
   if (!repeat.freq) return null;
   if (repeat.end === "until") {
-    if (!repeat.until) return "Укажите, до какого дня повторять";
-    if (startDay && repeat.until < startDay) return "Повтор заканчивается раньше, чем начинается";
+    if (!repeat.until) return tr("Укажите, до какого дня повторять", "Choose the day the repeat ends");
+    if (startDay && repeat.until < startDay) return tr("Повтор заканчивается раньше, чем начинается", "The repeat ends before it starts");
   }
-  if (repeat.end === "count" && !(repeat.count >= 1 && repeat.count <= MAX_COUNT)) return `Повторений — от 1 до ${MAX_COUNT}`;
-  if (!(repeat.interval >= 1 && repeat.interval <= MAX_INTERVAL)) return `Интервал — от 1 до ${MAX_INTERVAL}`;
+  if (repeat.end === "count" && !(repeat.count >= 1 && repeat.count <= MAX_COUNT)) return tr(`Повторений — от 1 до ${MAX_COUNT}`, `Repeats: from 1 to ${MAX_COUNT}`);
+  if (!(repeat.interval >= 1 && repeat.interval <= MAX_INTERVAL)) return tr(`Интервал — от 1 до ${MAX_INTERVAL}`, `Interval: from 1 to ${MAX_INTERVAL}`);
   return null;
 }
 
@@ -125,19 +128,29 @@ const UNITS: Record<Exclude<Frequency, "">, [string, string, string]> = {
   MONTHLY: ["месяц", "месяца", "месяцев"],
   YEARLY: ["год", "года", "лет"],
 };
+const EN_UNITS: Record<Exclude<Frequency, "">, [string, string]> = {
+  DAILY: ["day", "days"],
+  WEEKLY: ["week", "weeks"],
+  MONTHLY: ["month", "months"],
+  YEARLY: ["year", "years"],
+};
+const unit = (freq: Exclude<Frequency, "">, count: number) => pluralWord(count, UNITS[freq], EN_UNITS[freq]);
 
 /** "Каждую неделю: пн, ср · 10 раз" — what the series will be, said in words. */
 export function describeRepeat(repeat: Repeat, start: Date): string {
-  if (!repeat.freq) return "Не повторяется";
-  const [one, few, many] = UNITS[repeat.freq];
-  const every = repeat.interval === 1 ? `Каждый ${one}`.replace("Каждый неделю", "Каждую неделю") : `Каждые ${repeat.interval} ${plural(repeat.interval, one, few, many)}`;
+  if (!repeat.freq) return tr("Не повторяется", "Does not repeat");
+  const one = unit(repeat.freq, 1);
+  const every =
+    repeat.interval === 1
+      ? tr(`Каждый ${one}`.replace("Каждый неделю", "Каждую неделю"), `Every ${one}`)
+      : tr(`Каждые ${repeat.interval} ${unit(repeat.freq, repeat.interval)}`, `Every ${repeat.interval} ${unit(repeat.freq, repeat.interval)}`);
   const days = repeat.freq === "WEEKLY" ? (repeat.days.length ? [...repeat.days].sort() : [weekdayOf(start)]) : [];
-  const on = days.length ? `: ${days.map((day) => WEEKDAY_SHORT[day].toLowerCase()).join(", ")}` : "";
+  const on = days.length ? `: ${days.map((day) => (isEn ? WEEKDAY_SHORT[day] : WEEKDAY_SHORT[day].toLowerCase())).join(", ")}` : "";
   const end =
     repeat.end === "count"
-      ? ` · ${repeat.count} ${plural(repeat.count, "раз", "раза", "раз")}`
+      ? ` · ${repeat.count} ${pluralWord(repeat.count, ["раз", "раза", "раз"], ["time", "times"])}`
       : repeat.end === "until" && repeat.until
-        ? ` · до ${new Date(`${repeat.until}T00:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}`
+        ? ` · ${tr("до", "until")} ${new Date(`${repeat.until}T00:00`).toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" })}`
         : "";
   return `${every}${on}${end}`;
 }
@@ -153,15 +166,15 @@ export function RepeatEditor({ value, onChange, start, existing }: { value: Repe
 
   return (
     <div className="form">
-      <Field label="Повтор">
+      <Field label={tr("Повтор", "Repeat")}>
         <select value={preset} onChange={(e) => onChange(fromPreset(e.target.value as Preset, value, start))}>
-          <option value="">Не повторять</option>
-          <option value="daily">Каждый день</option>
-          <option value="weekdays">По будням (пн–пт)</option>
-          <option value="weekly">Каждую неделю ({WEEKDAY_FULL[weekdayOf(start)]})</option>
-          <option value="monthly">Каждый месяц ({start.getDate()}-го)</option>
-          <option value="yearly">Каждый год</option>
-          <option value="custom">Настроить…</option>
+          <option value="">{tr("Не повторять", "Does not repeat")}</option>
+          <option value="daily">{tr("Каждый день", "Every day")}</option>
+          <option value="weekdays">{tr("По будням (пн–пт)", "Weekdays (Mon–Fri)")}</option>
+          <option value="weekly">{tr("Каждую неделю", "Every week")} ({WEEKDAY_FULL[weekdayOf(start)]})</option>
+          <option value="monthly">{tr(`Каждый месяц (${start.getDate()}-го)`, `Every month (day ${start.getDate()})`)}</option>
+          <option value="yearly">{tr("Каждый год", "Every year")}</option>
+          <option value="custom">{tr("Настроить…", "Custom…")}</option>
         </select>
       </Field>
 
@@ -169,7 +182,7 @@ export function RepeatEditor({ value, onChange, start, existing }: { value: Repe
         <>
           {preset === "custom" && (
             <div className="form-row">
-              <Field label="Каждые">
+              <Field label={tr("Каждые", "Every")}>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -179,11 +192,11 @@ export function RepeatEditor({ value, onChange, start, existing }: { value: Repe
                   onChange={(e) => set({ interval: Math.max(1, Math.min(MAX_INTERVAL, Number(e.target.value) || 1)) })}
                 />
               </Field>
-              <Field label="Единица">
+              <Field label={tr("Единица", "Unit")}>
                 <select value={value.freq} onChange={(e) => set({ freq: e.target.value as Frequency, days: [] })}>
                   {(Object.keys(UNITS) as Exclude<Frequency, "">[]).map((freq) => (
                     <option key={freq} value={freq}>
-                      {plural(value.interval, ...UNITS[freq])}
+                      {unit(freq, value.interval)}
                     </option>
                   ))}
                 </select>
@@ -192,7 +205,7 @@ export function RepeatEditor({ value, onChange, start, existing }: { value: Repe
           )}
 
           {value.freq === "WEEKLY" && (
-            <div className="quick-days" role="group" aria-label="Дни недели">
+            <div className="quick-days" role="group" aria-label={tr("Дни недели", "Days of the week")}>
               {WEEKDAY_SHORT.map((label, day) => {
                 const active = (value.days.length ? value.days : [weekdayOf(start)]).includes(day);
                 return (
@@ -205,20 +218,20 @@ export function RepeatEditor({ value, onChange, start, existing }: { value: Repe
           )}
 
           <div className="form-row">
-            <Field label="Окончание">
+            <Field label={tr("Окончание", "Ends")}>
               <select value={value.end} onChange={(e) => set({ end: e.target.value as Repeat["end"] })}>
-                <option value="never">Никогда</option>
-                <option value="until">В дату</option>
-                <option value="count">После N повторений</option>
+                <option value="never">{tr("Никогда", "Never")}</option>
+                <option value="until">{tr("В дату", "On a date")}</option>
+                <option value="count">{tr("После N повторений", "After N times")}</option>
               </select>
             </Field>
             {value.end === "until" && (
-              <Field label="Последний день" className="picker-field">
+              <Field label={tr("Последний день", "Last day")} className="picker-field">
                 <input type="date" value={value.until} onChange={(e) => set({ until: e.target.value })} onClick={(e) => openPicker(e.currentTarget)} required />
               </Field>
             )}
             {value.end === "count" && (
-              <Field label="Сколько раз">
+              <Field label={tr("Сколько раз", "How many times")}>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -232,8 +245,8 @@ export function RepeatEditor({ value, onChange, start, existing }: { value: Repe
           </div>
 
           <p className="muted small">
-            {describeRepeat(value, start)}, начиная с {start.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}.
-            {existing && " Изменение повтора применится к этой и следующим задачам серии."}
+            {describeRepeat(value, start)}, {tr("начиная с", "starting")} {start.toLocaleDateString(LOCALE, { day: "numeric", month: "long" })}.
+            {existing && tr(" Изменение повтора применится к этой и следующим задачам серии.", " The change applies to this and the following tasks of the series.")}
           </p>
         </>
       )}

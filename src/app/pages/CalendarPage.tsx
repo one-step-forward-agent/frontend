@@ -21,22 +21,23 @@ import { useAsync, useTags, useTasksChanged, useToday } from "../lib/hooks";
 import { navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
+import { LOCALE, isEn, tr } from "@/i18n";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
 
-const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const WEEKDAYS = isEn ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] : ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const MAX_CHIPS = 3;
 const VIEWS = [
-  { value: "day", label: "День" },
-  { value: "week", label: "Неделя" },
-  { value: "month", label: "Месяц" },
+  { value: "day", label: tr("День", "Day") },
+  { value: "week", label: tr("Неделя", "Week") },
+  { value: "month", label: tr("Месяц", "Month") },
 ] as const;
 type View = (typeof VIEWS)[number]["value"];
 const VIEW_KEY = "dayla-calendar-view";
 const STEP_LABELS: Record<View, [string, string]> = {
-  day: ["Предыдущий день", "Следующий день"],
-  week: ["Предыдущая неделя", "Следующая неделя"],
-  month: ["Предыдущий месяц", "Следующий месяц"],
+  day: [tr("Предыдущий день", "Previous day"), tr("Следующий день", "Next day")],
+  week: [tr("Предыдущая неделя", "Previous week"), tr("Следующая неделя", "Next week")],
+  month: [tr("Предыдущий месяц", "Previous month"), tr("Следующий месяц", "Next month")],
 };
 
 /* ─── Стили стеклянных элементов ────────────────────────── */
@@ -97,7 +98,7 @@ const untimedFirst = (events: CalendarEvent[]) => [
 /* ─── Страница ──────────────────────────────────────────── */
 
 export function CalendarPage() {
-  useTitle("Календарь");
+  useTitle(tr("Календарь", "Calendar"));
   const { query } = useLocation();
   const now = new Date();
   const today = useToday();
@@ -241,7 +242,7 @@ export function CalendarPage() {
           <div
             className={cn(SEGMENTED, "min-w-0")}
             role="tablist"
-            aria-label="Вид календаря"
+            aria-label={tr("Вид календаря", "Calendar view")}
           >
             {VIEWS.map((item) => (
               <button
@@ -264,7 +265,7 @@ export function CalendarPage() {
               className={TODAY_BUTTON}
               onClick={() => go(today, view, startOfMonth(today))}
             >
-              Сегодня
+              {tr("Сегодня", "Today")}
             </button>
           )}
         </div>
@@ -291,8 +292,8 @@ export function CalendarPage() {
                 items={recommendations.data}
                 label={
                   view === "month"
-                    ? "Dayla анализирует месяц…"
-                    : "Dayla анализирует неделю…"
+                    ? tr("Dayla анализирует месяц…", "Dayla is analysing the month…")
+                    : tr("Dayla анализирует неделю…", "Dayla is analysing the week…")
                 }
               />
             </div>
@@ -315,7 +316,7 @@ export function CalendarPage() {
                 <button
                   type="button"
                   className="mb-2 flex items-baseline gap-2 text-left hover:underline"
-                  title="Открыть день"
+                  title={tr("Открыть день", "Open the day")}
                   onClick={() => go(day, "day")}
                 >
                   <span
@@ -327,14 +328,14 @@ export function CalendarPage() {
                     {formatDate(day, { weekday: "long", day: "numeric", month: "long" })}
                   </span>
                   {isToday && (
-                    <span className="text-xs text-sky-700 dark:text-sky-300">сегодня</span>
+                    <span className="text-xs text-sky-700 dark:text-sky-300">{tr("сегодня", "today")}</span>
                   )}
                 </button>
                 {items.length ? (
                   <EventList events={items} />
                 ) : (
                   <p className="px-3 text-sm text-gray-400 dark:text-gray-500">
-                    {events.loading ? "Загружаем…" : "Свободно"}
+                    {events.loading ? tr("Загружаем…", "Loading…") : tr("Свободно", "Free")}
                   </p>
                 )}
               </GlassCard>
@@ -379,7 +380,7 @@ export function CalendarPage() {
                     aria-label={`${formatDate(day, {
                       day: "numeric",
                       month: "long",
-                    })}, событий: ${items.length}`}
+                    })}, ${tr("событий", "events")}: ${items.length}`}
                     className={cn(
                       "group relative overflow-hidden rounded-xl aspect-square sm:aspect-auto sm:min-h-[124px]",
                       "transition-colors duration-200",
@@ -414,7 +415,7 @@ export function CalendarPage() {
                           const tag = event.tag_ids?.map((id) => tagsById.get(id)).find(Boolean);
                           const time = event.all_day
                             ? ""
-                            : new Date(event.start_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+                            : new Date(event.start_at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
                           return (
                             <span
                               key={event.id}
@@ -484,7 +485,7 @@ function DayEvents({ events, loading }: { events: CalendarEvent[]; loading: bool
   const timed = events.filter((event) => !event.all_day);
 
   if (!events.length)
-    return <Empty title="Нет задач">{loading ? "Загружаем…" : "Свободный день."}</Empty>;
+    return <Empty title={tr("Нет задач", "No tasks")}>{loading ? tr("Загружаем…", "Loading…") : tr("Свободный день.", "A free day.")}</Empty>;
 
   // No "Без времени" headings: a task without a time simply shows none
   return (

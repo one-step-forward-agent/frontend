@@ -23,6 +23,7 @@ import { useAction, useAsync } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
+import { tr } from "@/i18n";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
 
@@ -41,13 +42,13 @@ const OAUTH_INTEGRATIONS: Record<
   google: {
     title: "Google Calendar",
     description:
-      "Двусторонняя синхронизация событий Google Calendar с Dayla.",
+      tr("Двусторонняя синхронизация событий Google Calendar с Dayla.", "Two-way sync of Google Calendar events with Dayla."),
     src: "/images/google-calendar.png",
   },
   yandex: {
-    title: "Яндекс Календарь",
+    title: tr("Яндекс Календарь", "Yandex Calendar"),
     description:
-      "Импорт событий Яндекс Календаря в Dayla и экспорт обратно.",
+      tr("Импорт событий Яндекс Календаря в Dayla и экспорт обратно.", "Import Yandex Calendar events into Dayla and export them back."),
     src: "/images/yandexcalendar.png",
   },
 };
@@ -57,7 +58,7 @@ const isOAuth = (slug: string): slug is OAuthProvider =>
 
 const PROVIDER_LABELS: Record<string, string> = {
   google: "Google Calendar",
-  yandex: "Яндекс Календарь",
+  yandex: tr("Яндекс Календарь", "Yandex Calendar"),
 };
 
 const PAGE = "relative max-w-5xl mx-auto pt-[1.5vh]";
@@ -100,7 +101,7 @@ function mergeIntegrations(fromBackend: Integration[]): Integration[] {
 /* ─── Страница ──────────────────────────────────────────── */
 
 export function IntegrationsPage() {
-  useTitle("Интеграции");
+  useTitle(tr("Интеграции", "Integrations"));
   const integrations = useAsync(() => api.integrations.list(), []);
   const [editing, setEditing] = useState<Integration | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -124,7 +125,7 @@ export function IntegrationsPage() {
     handledRef.current = key;
 
     if (connected) {
-      toast(`${PROVIDER_LABELS[connected] ?? connected} подключён`);
+      toast(`${PROVIDER_LABELS[connected] ?? connected} ${tr("подключён", "connected")}`);
       integrations.reload();
     }
     if (errorParam) {
@@ -148,12 +149,12 @@ export function IntegrationsPage() {
           "hover:text-gray-800 dark:hover:text-gray-200 transition-colors",
         )}
       >
-        <Icon name="left" size={14} /> Аккаунт
+        <Icon name="left" size={14} /> {tr("Аккаунт", "Account")}
       </Link>
 
       <PageHeader
-        title="Интеграции"
-        subtitle="Импортируйте события и задачи из сервисов и отправляйте события Dayla обратно."
+        title={tr("Интеграции", "Integrations")}
+        subtitle={tr("Импортируйте события и задачи из сервисов и отправляйте события Dayla обратно.", "Import events and tasks from other services and send Dayla events back.")}
       />
 
       <div className="mb-4">
@@ -184,7 +185,7 @@ export function IntegrationsPage() {
 
       <Dialog
         open={editing !== null}
-        title={editing ? `${editing.title}: подключение` : ""}
+        title={editing ? `${editing.title}: ${tr("подключение", "connection")}` : ""}
         onClose={() => setEditing(null)}
       >
         {editing && (
@@ -215,16 +216,16 @@ function SamsungCard() {
     run(reset ? "reset" : "link", async () => {
       const result = await api.calendars.feed(reset);
       setPath(result.path);
-      if (reset) toast("Новая ссылка готова, старая больше не работает");
+      if (reset) toast(tr("Новая ссылка готова, старая больше не работает", "The new link is ready; the old one no longer works"));
     });
 
   const copy = async () => {
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
-      toast("Ссылка скопирована");
+      toast(tr("Ссылка скопирована", "Link copied"));
     } catch {
-      toast("Не удалось скопировать — выделите ссылку вручную");
+      toast(tr("Не удалось скопировать — выделите ссылку вручную", "Could not copy — select the link by hand"));
     }
   };
 
@@ -243,32 +244,36 @@ function SamsungCard() {
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate">Samsung Calendar</h2>
           <div className="mt-1">
-            <Badge>{url ? "ссылка готова" : "через Google"}</Badge>
+            <Badge>{url ? tr("ссылка готова", "link ready") : tr("через Google", "via Google")}</Badge>
           </div>
         </div>
       </div>
 
       <p className="mb-2 text-xs text-gray-700 dark:text-gray-200 leading-relaxed">
-        В обычном Samsung Calendar Dayla появляется через Google-аккаунт телефона — без сторонних приложений:
+        {tr("В обычном Samsung Calendar Dayla появляется через Google-аккаунт телефона — без сторонних приложений:", "Dayla shows up in the regular Samsung Calendar through the phone's Google account — no extra apps:")}
       </p>
       <ol className="mb-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
-        <li>Подключите выше Google Calendar.</li>
+        <li>{tr("Подключите выше Google Calendar.", "Connect Google Calendar above.")}</li>
         <li>
-          В Samsung Calendar: ☰ → ⚙ Настройки → Управление календарями (или «Календари») → включите календарь вашего
-          Google-аккаунта. Если аккаунта нет — Настройки телефона → Учётные записи → Добавить → Google.
+          {tr(
+            "В Samsung Calendar: ☰ → ⚙ Настройки → Управление календарями (или «Календари») → включите календарь вашего Google-аккаунта. Если аккаунта нет — Настройки телефона → Учётные записи → Добавить → Google.",
+            "In Samsung Calendar: ☰ → ⚙ Settings → Manage calendars (or “Calendars”) → turn on your Google account's calendar. No account there? Phone Settings → Accounts → Add → Google."
+          )}
         </li>
-        <li>Задачи из Dayla сразу появятся в Samsung Calendar, а события, созданные в нём в Google-календаре, — в Dayla.</li>
+        <li>{tr("Задачи из Dayla сразу появятся в Samsung Calendar, а события, созданные в нём в Google-календаре, — в Dayla.", "Dayla tasks will appear in Samsung Calendar right away, and events you create there in the Google calendar will appear in Dayla.")}</li>
       </ol>
       <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
-        Без Google: ссылка ниже — для подписки в Outlook, Apple Calendar и других приложениях. Samsung Calendar сам
-        подписываться на ссылки не умеет — его календари приходят только из аккаунтов телефона.
+        {tr(
+          "Без Google: ссылка ниже — для подписки в Outlook, Apple Calendar и других приложениях. Samsung Calendar сам подписываться на ссылки не умеет — его календари приходят только из аккаунтов телефона.",
+          "Without Google: the link below is for subscribing in Outlook, Apple Calendar and other apps. Samsung Calendar can't subscribe to links itself — its calendars only come from the phone's accounts."
+        )}
       </p>
 
       {url && (
         <input
           readOnly
           value={url}
-          aria-label="Ссылка на календарь Dayla"
+          aria-label={tr("Ссылка на календарь Dayla", "Dayla calendar link")}
           onFocus={(e) => e.currentTarget.select()}
           className="mb-3 w-full rounded-lg px-2.5 py-2 text-xs bg-white/50 dark:bg-white/5 ring-1 ring-white/30 dark:ring-white/10 text-gray-900 dark:text-white"
         />
@@ -278,27 +283,27 @@ function SamsungCard() {
         {url ? (
           <>
             <Button variant="primary" size="sm" icon="clip" onClick={copy}>
-              Скопировать ссылку
+              {tr("Скопировать ссылку", "Copy link")}
             </Button>
             <ConfirmButton
               size="sm"
               icon="sync"
-              label="Новая ссылка"
-              confirmLabel="Старая перестанет работать"
+              label={tr("Новая ссылка", "New link")}
+              confirmLabel={tr("Старая перестанет работать", "The old one will stop working")}
               busy={pending === "reset"}
               onConfirm={() => load(true)}
             >
-              Новая ссылка
+              {tr("Новая ссылка", "New link")}
             </ConfirmButton>
           </>
         ) : (
           <Button variant="primary" size="sm" icon="external" busy={pending === "link"} onClick={() => load()}>
-            Получить ссылку
+            {tr("Получить ссылку", "Get the link")}
           </Button>
         )}
       </div>
       <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-        Ссылка личная: по ней видно ваше расписание, не пересылайте её.
+        {tr("Ссылка личная: по ней видно ваше расписание, не пересылайте её.", "The link is personal: it shows your schedule, so don't share it.")}
       </p>
     </GlassCard>
   );
@@ -340,11 +345,11 @@ function IntegrationCard({
     });
 
   const status = !connection ? (
-    <Badge>не подключено</Badge>
+    <Badge>{tr("не подключено", "not connected")}</Badge>
   ) : connection.status === "connected" ? (
-    <Badge tone="ok">подключено</Badge>
+    <Badge tone="ok">{tr("подключено", "connected")}</Badge>
   ) : (
-    <Badge tone="bad">ошибка</Badge>
+    <Badge tone="bad">{tr("ошибка", "error")}</Badge>
   );
 
   const logoSrc = isOAuth(item.slug)
@@ -393,7 +398,7 @@ function IntegrationCard({
           {connection.account_email && (
             <div className="flex gap-2 min-w-0">
               <dt className="shrink-0 text-gray-500 dark:text-gray-400">
-                Аккаунт
+                {tr("Аккаунт", "Account")}
               </dt>
               <dd className="truncate text-gray-900 dark:text-white">
                 {connection.account_email}
@@ -402,12 +407,12 @@ function IntegrationCard({
           )}
           <div className="flex gap-2 min-w-0">
             <dt className="shrink-0 text-gray-500 dark:text-gray-400">
-              Синхронизация
+              {tr("Синхронизация", "Sync")}
             </dt>
             <dd className="text-gray-900 dark:text-white">
               {connection.last_sync_at
                 ? formatDateTime(connection.last_sync_at)
-                : "ещё не было"}
+                : tr("ещё не было", "not yet")}
             </dd>
           </div>
         </dl>
@@ -427,7 +432,7 @@ function IntegrationCard({
             busy={pending === "connect"}
             onClick={oauth ? connectOAuth : onEdit}
           >
-            Подключить
+            {tr("Подключить", "Connect")}
           </Button>
         ) : (
           <>
@@ -439,13 +444,16 @@ function IntegrationCard({
                 run("sync", async () => {
                   const result = await api.integrations.sync(item.slug);
                   toast(
-                    `Получено ${result.fetched}: новых ${result.created}, обновлено ${result.updated}`,
+                    tr(
+                      `Получено ${result.fetched}: новых ${result.created}, обновлено ${result.updated}`,
+                      `Fetched ${result.fetched}: ${result.created} new, ${result.updated} updated`,
+                    ),
                   );
                   onChanged();
                 })
               }
             >
-              Синхронизировать
+              {tr("Синхронизировать", "Sync")}
             </Button>
             <Button
               size="sm"
@@ -454,12 +462,12 @@ function IntegrationCard({
               onClick={() =>
                 run("test", async () => {
                   const result = await api.integrations.test(item.slug);
-                  toast(`Работает: ${result.account}`);
+                  toast(`${tr("Работает", "Working")}: ${result.account}`);
                   onChanged();
                 })
               }
             >
-              Проверить
+              {tr("Проверить", "Test")}
             </Button>
             {oauth ? (
               <Button
@@ -468,11 +476,11 @@ function IntegrationCard({
                 busy={pending === "connect"}
                 onClick={connectOAuth}
               >
-                Переподключить
+                {tr("Переподключить", "Reconnect")}
               </Button>
             ) : (
               <Button size="sm" variant="ghost" onClick={onEdit}>
-                Настройки
+                {tr("Настройки", "Settings")}
               </Button>
             )}
           </>
@@ -488,21 +496,21 @@ function IntegrationCard({
               onChange={(e) => setPurge(e.target.checked)}
               className="w-3.5 h-3.5 rounded accent-sky-500"
             />
-            удалить импортированные
+            {tr("удалить импортированные", "delete imported")}
           </label>
           <ConfirmButton
             size="sm"
-            confirmLabel="Отключить?"
+            confirmLabel={tr("Отключить?", "Disconnect?")}
             busy={pending === "disconnect"}
             onConfirm={() =>
               run("disconnect", async () => {
                 await api.integrations.disconnect(item.slug, purge);
-                toast(`${item.title} отключён`);
+                toast(`${item.title} ${tr("отключён", "disconnected")}`);
                 onChanged();
               })
             }
           >
-            Отключить
+            {tr("Отключить", "Disconnect")}
           </ConfirmButton>
         </div>
       )}
@@ -542,7 +550,7 @@ function ConnectForm({
     setBusy(true);
     try {
       await api.integrations.connect(item.slug, values);
-      toast(`${item.title} подключён`);
+      toast(`${item.title} ${tr("подключён", "connected")}`);
       onDone();
     } catch (err) {
       setError(errorText(err));
@@ -571,7 +579,7 @@ function ConnectForm({
         ) : (
           <Field
             key={field.name}
-            label={field.label + (field.required ? "" : " (необязательно)")}
+            label={field.label + (field.required ? "" : tr(" (необязательно)", " (optional)"))}
             hint={field.help || undefined}
           >
             <input
@@ -585,7 +593,7 @@ function ConnectForm({
               value={String(values[field.name] ?? "")}
               placeholder={
                 field.secret && item.connection
-                  ? "Сохранено — оставьте пустым, чтобы не менять"
+                  ? tr("Сохранено — оставьте пустым, чтобы не менять", "Saved — leave empty to keep it")
                   : field.placeholder
               }
               required={field.required && !(field.secret && item.connection)}
@@ -623,7 +631,7 @@ function ConnectForm({
           busy={busy}
           icon="check"
         >
-          {item.connection ? "Сохранить" : "Подключить"}
+          {item.connection ? tr("Сохранить", "Save") : tr("Подключить", "Connect")}
         </Button>
       </div>
     </form>

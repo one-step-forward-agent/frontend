@@ -1,6 +1,7 @@
 import { Monitor, Moon, Sun } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/utils/cn";
+import { lang, setLang, tr, type Lang } from "@/i18n";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -76,8 +77,8 @@ export function ThemeToggle({ className }: { className?: string }) {
       type="button"
       onClick={() => setMode(next)}
       className={cn("theme-toggle", className)}
-      aria-label={next === "dark" ? "Включить тёмную тему" : "Включить светлую тему"}
-      title={next === "dark" ? "Тёмная тема" : "Светлая тема"}
+      aria-label={next === "dark" ? tr("Включить тёмную тему", "Switch to dark theme") : tr("Включить светлую тему", "Switch to light theme")}
+      title={next === "dark" ? tr("Тёмная тема", "Dark theme") : tr("Светлая тема", "Light theme")}
     >
       {theme === "dark" ? <Sun size={18} strokeWidth={1.8} /> : <Moon size={18} strokeWidth={1.8} />}
     </button>
@@ -85,18 +86,52 @@ export function ThemeToggle({ className }: { className?: string }) {
 }
 
 const OPTIONS: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
-  { value: "light", label: "Светлая", icon: Sun },
-  { value: "dark", label: "Тёмная", icon: Moon },
-  { value: "system", label: "Как в системе", icon: Monitor },
+  { value: "light", label: tr("Светлая", "Light"), icon: Sun },
+  { value: "dark", label: tr("Тёмная", "Dark"), icon: Moon },
+  { value: "system", label: tr("Как в системе", "System"), icon: Monitor },
 ];
 
 export function ThemePicker() {
   const { mode, setMode } = useTheme();
   return (
-    <div className="segmented" role="radiogroup" aria-label="Тема оформления">
+    <div className="segmented" role="radiogroup" aria-label={tr("Тема оформления", "Theme")}>
       {OPTIONS.map(({ value, label, icon: Icon }) => (
         <button key={value} type="button" role="radio" aria-checked={mode === value} className={mode === value ? "active" : ""} onClick={() => setMode(value)}>
           <Icon size={16} strokeWidth={1.8} />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** The other language in one tap: for the public pages, where there are no settings */
+export function LanguageToggle({ className }: { className?: string }) {
+  const next: Lang = lang === "ru" ? "en" : "ru";
+  return (
+    <button
+      type="button"
+      onClick={() => setLang(next)}
+      className={cn("theme-toggle text-xs font-semibold tracking-wide", className)}
+      aria-label={next === "en" ? "Switch to English" : "Переключить на русский"}
+      title={next === "en" ? "English" : "Русский"}
+      lang={next}
+    >
+      {next.toUpperCase()}
+    </button>
+  );
+}
+
+const LANGUAGES: { value: Lang; label: string }[] = [
+  { value: "ru", label: "Русский" },
+  { value: "en", label: "English" },
+];
+
+export function LanguagePicker() {
+  return (
+    <div className="segmented" role="radiogroup" aria-label={tr("Язык", "Language")}>
+      {LANGUAGES.map(({ value, label }) => (
+        <button key={value} type="button" role="radio" lang={value} aria-checked={lang === value} className={lang === value ? "active" : ""} onClick={() => setLang(value)}>
           {label}
         </button>
       ))}

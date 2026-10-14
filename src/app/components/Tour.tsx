@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
 import { Icon } from "./icons";
+import { tr } from "@/i18n";
 
 /**
  * Hints on the first visit to the app: what each section is for and how to talk to the assistant.
@@ -12,43 +13,46 @@ type Step = { target?: string; title: string; text: string };
 
 const STEPS: Step[] = [
   {
-    title: "Добро пожаловать в Dayla",
-    text: "За минуту покажу, что где. Подсказки можно пропустить и открыть снова в профиле.",
+    title: tr("Добро пожаловать в Dayla", "Welcome to Dayla"),
+    text: tr("За минуту покажу, что где. Подсказки можно пропустить и открыть снова в профиле.", "In a minute I'll show you what's where. You can skip the tips and open them again from your profile."),
   },
   {
     target: "assistant",
-    title: "Ассистент — главное",
-    text: "Пишите как человеку: «созвон с Олей завтра в 15:00», «перенеси отчёт на пятницу», «напоминай пить воду каждые 2 часа», «что у меня на неделе?». Можно голосом или файлом PDF/DOCX.",
+    title: tr("Ассистент — главное", "The assistant comes first"),
+    text: tr(
+      "Пишите как человеку: «созвон с Олей завтра в 15:00», «перенеси отчёт на пятницу», «напоминай пить воду каждые 2 часа», «что у меня на неделе?». Можно голосом или файлом PDF/DOCX.",
+      "Write as you would to a person: “call with Olya tomorrow at 3 pm”, “move the report to Friday”, “remind me to drink water every 2 hours”, “what do I have this week?”. Voice and PDF/DOCX files work too."
+    ),
   },
   {
     target: "today",
-    title: "Сегодня",
-    text: "План на день: задачи по времени, отметка «выполнено» одним касанием и советы, как всё успеть.",
+    title: tr("Сегодня", "Today"),
+    text: tr("План на день: задачи по времени, отметка «выполнено» одним касанием и советы, как всё успеть.", "The plan for the day: your tasks hour by hour, progress and tips on getting it all done."),
   },
   {
     target: "calendar",
-    title: "Календарь",
-    text: "Неделя и месяц целиком. Нажмите на день, чтобы посмотреть его или добавить задачу.",
+    title: tr("Календарь", "Calendar"),
+    text: tr("Неделя и месяц целиком. Нажмите на день, чтобы посмотреть его или добавить задачу.", "The whole week and month. Tap a day to see it or add a task."),
   },
   {
     target: "tasks",
-    title: "Задачи",
-    text: "Все дела списком: теги, дедлайны, повторы. Просроченное видно сразу.",
+    title: tr("Задачи", "Tasks"),
+    text: tr("Все дела списком: теги, дедлайны, повторы. Просроченное видно сразу.", "Everything as a list: tags, deadlines, repeats. Overdue items stand out."),
   },
   {
     target: "new",
-    title: "Новая задача",
-    text: "Задачу можно добавить и вручную: дата, время, повтор, напоминание.",
+    title: tr("Новая задача", "New task"),
+    text: tr("Задачу можно добавить и вручную: дата, время, повтор, напоминание.", "You can also add a task by hand: date, time, repeat, reminder."),
   },
   {
     target: "dock",
-    title: "Чат в любом разделе",
-    text: "«Спросить Dayla» открывает ассистента поверх любой страницы.",
+    title: tr("Чат в любом разделе", "Chat from anywhere"),
+    text: tr("«Спросить Dayla» открывает ассистента поверх любой страницы.", "“Ask Dayla” opens the assistant over any page."),
   },
   {
     target: "account",
-    title: "Профиль и интеграции",
-    text: "Подключите Telegram — туда приходят напоминания. В «Интеграциях» — Google, Яндекс, Apple и Samsung Calendar.",
+    title: tr("Профиль и интеграции", "Profile and integrations"),
+    text: tr("Подключите Telegram — туда приходят напоминания. В «Интеграциях» — Google, Яндекс, Apple и Samsung Calendar.", "Connect Telegram — reminders arrive there. Integrations has Google, Yandex, Apple and Samsung Calendar."),
   },
 ];
 
@@ -223,7 +227,7 @@ export function Tour({ userId }: { userId: number }) {
         </div>
 
         <div className="mt-4 flex items-center gap-2">
-          <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400" aria-label={`Подсказка ${index + 1} из ${steps.length}`}>
+          <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400" aria-label={tr(`Подсказка ${index + 1} из ${steps.length}`, `Tip ${index + 1} of ${steps.length}`)}>
             {index + 1} / {steps.length}
           </span>
           <span className="ml-auto flex items-center gap-1.5">
@@ -233,14 +237,14 @@ export function Tour({ userId }: { userId: number }) {
                 onClick={finish}
                 className="h-9 px-3 rounded-xl text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-500/10"
               >
-                Пропустить
+                {tr("Пропустить", "Skip")}
               </button>
             )}
             {index > 0 && (
               <button
                 type="button"
                 onClick={() => setIndex(index - 1)}
-                aria-label="Назад"
+                aria-label={tr("Назад", "Back")}
                 className="h-9 w-9 inline-flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-500/10"
               >
                 <Icon name="left" size={16} />
@@ -252,7 +256,7 @@ export function Tour({ userId }: { userId: number }) {
               onClick={() => (last ? finish() : setIndex(index + 1))}
               className="h-9 px-4 rounded-xl text-sm font-medium text-white bg-gradient-to-br from-sky-500 to-violet-500 hover:brightness-105"
             >
-              {last ? "Начать" : "Далее"}
+              {last ? tr("Начать", "Start") : tr("Далее", "Next")}
             </button>
           </span>
         </div>

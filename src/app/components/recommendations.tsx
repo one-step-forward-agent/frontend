@@ -2,14 +2,12 @@ import type { Recommendation } from "../api/types";
 import { Link } from "../router";
 import { RichText } from "./RichText";
 import { Icon } from "./icons";
+import { tr } from "@/i18n";
 
 /** Ссылка в чат, которая передаёт ассистенту саму рекомендацию как тему разговора. */
 export function discussLink(item: Recommendation): string {
   return `/assistant?${new URLSearchParams({ topic: item.title, text: item.text })}`;
 }
-
-// Два цвета на все советы: обычный — синий, предупреждение (перенос, плотный день) — оранжевый
-const tone = (item: Recommendation) => (item.kind === "warning" ? "warn" : "info");
 
 /**
  * На экранах — только заголовки (до 4 слов): каждая строка открывает чат, где совет расписан подробно.
@@ -17,7 +15,7 @@ const tone = (item: Recommendation) => (item.kind === "warning" ? "warn" : "info
  */
 export function RecommendationList({
   items,
-  label = "Dayla анализирует ваш день…",
+  label = tr("Dayla анализирует ваш день…", "Dayla is analysing your day…"),
   full = false,
   onDiscuss,
 }: {
@@ -35,7 +33,7 @@ export function RecommendationList({
       <ul className="recommendations-compact">
         {items.map((item) => (
           <li key={item.title}>
-            <Link to={discussLink(item)} className={`recommendation-line rec-${tone(item)}`} title={item.text}>
+            <Link to={discussLink(item)} className="recommendation-line" title={item.text}>
               <i aria-hidden="true" className="rec-dot" />
               <span className="truncate">{item.title}</span>
               <Icon name="right" size={14} className="rec-arrow" />
@@ -49,17 +47,17 @@ export function RecommendationList({
   return (
     <div className="recommendations-list">
       {items.map((item, index) => (
-        <div key={item.title} className={`recommendation rec-${tone(item)}`}>
+        <div key={item.title} className="recommendation">
           <p>
             <strong>{item.title}.</strong> <RichText text={item.text} inline />
           </p>
           {onDiscuss ? (
-            <button type="button" className="btn btn-ghost btn-sm" aria-label={`Обсудить: ${item.title}`} onClick={() => onDiscuss(index)}>
-              Обсудить
+            <button type="button" className="btn btn-ghost btn-sm" aria-label={`${tr("Обсудить", "Discuss")}: ${item.title}`} onClick={() => onDiscuss(index)}>
+              {tr("Обсудить", "Discuss")}
             </button>
           ) : (
-            <Link to={discussLink(item)} className="btn btn-ghost btn-sm" aria-label={`Обсудить: ${item.title}`}>
-              Обсудить
+            <Link to={discussLink(item)} className="btn btn-ghost btn-sm" aria-label={`${tr("Обсудить", "Discuss")}: ${item.title}`}>
+              {tr("Обсудить", "Discuss")}
             </Link>
           )}
         </div>

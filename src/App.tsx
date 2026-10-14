@@ -9,7 +9,8 @@ import LoginPage from "@/pages/Auth/LoginPage";
 import RegisterPage from "@/pages/Auth/RegisterPage";
 import { YandexMetrika } from "@/components/YandexMetrika";
 import { useAuthStore } from "@/store/authStore";
-import { ThemeProvider, ThemeToggle } from "@/theme";
+import { LanguageToggle, ThemeProvider, ThemeToggle } from "@/theme";
+import { tr } from "@/i18n";
 
 const AppRoutes = lazy(() => import("@/app/AppRoutes"));
 const FieldOfActivity = lazy(() => import("@/components/onboarding/FieldOfActivity").then((module) => ({ default: module.FieldOfActivity })));
@@ -23,7 +24,7 @@ const AdminDashboard = lazy(() => import("@/pages/Admin/AdminDashboard"));
 
 function FullScreenLoader() {
   return (
-    <div className="flex h-dvh items-center justify-center bg-white dark:bg-gray-950" role="status" aria-label="Загрузка">
+    <div className="flex h-dvh items-center justify-center bg-white dark:bg-gray-950" role="status" aria-label={tr("Загрузка", "Loading")}>
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
     </div>
   );
@@ -67,11 +68,14 @@ function NotFoundPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-white px-4 text-center dark:bg-gray-950">
       <p className="text-7xl font-semibold tracking-tight text-gray-900 dark:text-white">404</p>
-      <p className="text-lg text-gray-600 dark:text-gray-400">Страница не найдена</p>
+      <p className="text-lg text-gray-600 dark:text-gray-400">{tr("Страница не найдена", "Page not found")}</p>
       <Link to="/" className="rounded-full bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-3 font-medium text-white hover:opacity-90">
-        На главную
+        {tr("На главную", "Go home")}
       </Link>
-      <ThemeToggle className="fixed right-4 top-4" />
+      <div className="fixed right-4 top-4 flex items-center gap-1">
+        <LanguageToggle />
+        <ThemeToggle />
+      </div>
     </div>
   );
 }

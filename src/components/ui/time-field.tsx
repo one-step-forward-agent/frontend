@@ -2,6 +2,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Clock } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { tr } from "@/i18n";
 
 /**
  * A time the way calendars do it: one field where the time is typed ("14:30", "1430", "9", "9.15") or picked
@@ -194,7 +195,7 @@ export function TimeField({ value, onChange, allowEmpty = false, disabled = fals
                     !option && "text-gray-500 dark:text-gray-400"
                   )}
                 >
-                  {option || "Без времени"}
+                  {option || tr("Без времени", "No time")}
                 </li>
               );
             })}
@@ -225,7 +226,7 @@ export function TimeField({ value, onChange, allowEmpty = false, disabled = fals
         aria-label={label}
         aria-expanded={open}
         aria-controls={listId}
-        placeholder={allowEmpty ? "--:--" : "чч:мм"}
+        placeholder={allowEmpty ? "--:--" : tr("чч:мм", "hh:mm")}
         value={text}
         disabled={disabled}
         maxLength={5}

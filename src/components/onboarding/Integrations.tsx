@@ -13,6 +13,7 @@ import { api, type SignInProvider } from "@/app/api/client";
 import { errorText } from "@/app/lib/format";
 import { ConsentCheckbox } from "@/pages/Auth/RegisterPage";
 import { useAuthStore } from "@/store/authStore";
+import { tr } from "@/i18n";
 
 const TOTAL = 10;
 
@@ -52,7 +53,7 @@ type Integration = {
 
 const INTEGRATIONS: Integration[] = [
   { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
-  { id: "yandex", name: "Яндекс Календарь", src: "/images/yandexcalendar.png",      w: 40, kind: "oauth" },
+  { id: "yandex", name: tr("Яндекс Календарь", "Yandex Calendar"), src: "/images/yandexcalendar.png",      w: 40, kind: "oauth" },
 ];
 
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
@@ -61,7 +62,7 @@ const isOAuthProvider = (id: Provider): id is OAuthProvider =>
 // Without an account the first of these creates it: its email becomes the Dayla account, no password needed
 const SIGN_UP_WITH: { id: SignInProvider; name: string }[] = [
   { id: "google", name: "Google" },
-  { id: "yandex", name: "Яндекс ID" },
+  { id: "yandex", name: tr("Яндекс ID", "Yandex ID") },
 ];
 
 // Back here after signing up or logging in: ?resume=1 connects the remaining chosen services
@@ -202,7 +203,7 @@ export const Integrations: React.FC = () => {
   const createAccount = async () => {
     if (signUpWith) {
       if (!consentGiven || !termsAccepted) {
-        setError("Чтобы создать аккаунт, примите пользовательское соглашение и дайте согласие на обработку персональных данных");
+        setError(tr("Чтобы создать аккаунт, примите пользовательское соглашение и дайте согласие на обработку персональных данных", "To create an account, accept the terms of use and consent to the processing of personal data"));
         return;
       }
       setBusy(true);
@@ -242,21 +243,21 @@ export const Integrations: React.FC = () => {
       <OnboardingLayout
         step={6}
         totalSteps={TOTAL}
-        title="Что подключим?"
+        title={tr("Что подключим?", "What shall we connect?")}
         onBack={() => navigate("/onboarding/existing-plans")}
         onNext={handleNext}
         nextDisabled={busy}
         onSkip={() => navigate("/onboarding/success-and-learning")}
         nextLabel={
           busy
-            ? "Подключаем…"
+            ? tr("Подключаем…", "Connecting…")
             : needsAccount && signUpWith
-              ? `Продолжить с ${signUpWith.name}`
+              ? `${tr("Продолжить с", "Continue with")} ${signUpWith.name}`
               : needsAccount
-                ? "Далее"
+                ? tr("Далее", "Next")
                 : pending.length > 0
-              ? `Подключить${pending.length > 1 ? ` (${pending.length})` : ""}`
-              : "Далее"
+              ? `${tr("Подключить", "Connect")}${pending.length > 1 ? ` (${pending.length})` : ""}`
+              : tr("Далее", "Next")
         }
       >
         <div className="relative space-y-4 sm:space-y-5">
@@ -273,7 +274,7 @@ export const Integrations: React.FC = () => {
             >
               <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
               <Link2 size={11} aria-hidden="true" className="relative" />
-              <span className="relative">Интеграции</span>
+              <span className="relative">{tr("Интеграции", "Integrations")}</span>
             </span>
           </div>
 
@@ -349,7 +350,7 @@ export const Integrations: React.FC = () => {
                       {connected.includes(i.id) && (
                         <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-300">
                           <Check size={12} aria-hidden="true" />
-                          Подключено
+                          {tr("Подключено", "Connected")}
                         </p>
                       )}
                     </div>
@@ -363,48 +364,52 @@ export const Integrations: React.FC = () => {
           {needsAccount && signUpWith && (
             <div className="space-y-2.5">
               <p className="text-sm text-gray-600 dark:text-gray-300 leading-snug">
-                Аккаунт Dayla создадим по email вашего аккаунта {signUpWith.name} — пароль не нужен.
-                Остальные выбранные сервисы подключим следом.
+                {tr(
+                  `Аккаунт Dayla создадим по email вашего аккаунта ${signUpWith.name} — пароль не нужен. Остальные выбранные сервисы подключим следом.`,
+                  `We'll create your Dayla account with your ${signUpWith.name} email — no password needed. The other chosen services will be connected next.`
+                )}
               </p>
               <ConsentCheckbox id="onboarding-consent" checked={consentGiven} onChange={setConsentGiven}>
-                Я даю согласие на обработку моих персональных данных (имя, email)
-                в целях регистрации и предоставления доступа к сервису. С{" "}
+                {tr(
+                  "Я даю согласие на обработку моих персональных данных (имя, email) в целях регистрации и предоставления доступа к сервису. С",
+                  "I consent to the processing of my personal data (name, email) for registration and access to the service. I have read and agree to the"
+                )}{" "}
                 <Link
                   to="/personal-data-consent"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
                 >
-                  условиями обработки ПД
+                  {tr("условиями обработки ПД", "personal data terms")}
                 </Link>{" "}
-                ознакомлен(а) и согласен(а), с{" "}
+                {tr("ознакомлен(а) и согласен(а), с", "and the")}{" "}
                 <a
                   href="/privacy-policy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
                 >
-                  политикой конфиденциальности
-                </a> — тоже.
+                  {tr("политикой конфиденциальности", "privacy policy")}
+                </a>{tr(" — тоже.", ".")}
               </ConsentCheckbox>
               <ConsentCheckbox id="onboarding-terms" checked={termsAccepted} onChange={setTermsAccepted}>
-                Я принимаю условия{" "}
+                {tr("Я принимаю условия", "I accept the")}{" "}
                 <Link
                   to="/terms-of-use"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
                 >
-                  пользовательского соглашения
+                  {tr("пользовательского соглашения", "terms of use")}
                 </Link>{" "}
-                и обязуюсь их соблюдать.
+                {tr("и обязуюсь их соблюдать.", "and agree to follow them.")}
               </ConsentCheckbox>
             </div>
           )}
 
           {needsAccount && !signUpWith && selected.some(isOAuthProvider) && (
             <p className="text-sm text-gray-600 dark:text-gray-300 leading-snug">
-              Сначала создадим аккаунт, затем подключим выбранные сервисы.
+              {tr("Сначала создадим аккаунт, затем подключим выбранные сервисы.", "First we'll create the account, then connect the chosen services.")}
             </p>
           )}
 
@@ -434,7 +439,7 @@ export const Integrations: React.FC = () => {
 
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-900 dark:text-white">
-                    Покажем, как импортировать расписание пар.
+                    {tr("Покажем, как импортировать расписание пар.", "We'll show you how to import your class timetable.")}
                   </p>
                 </div>
 
@@ -449,9 +454,9 @@ export const Integrations: React.FC = () => {
               {showGuide && (
                 <ol className="mt-4 sm:ml-12 space-y-2 text-sm text-gray-600 dark:text-gray-400 animate-in fade-in slide-in-from-top-1 duration-300">
                   {[
-                    "Откройте личный кабинет университета → раздел «Расписание».",
-                    "Выгрузите расписание в формате ICS.",
-                    "Отправьте расписание в чат к Dayla."
+                    tr("Откройте личный кабинет университета → раздел «Расписание».", "Open your university account → the “Timetable” section."),
+                    tr("Выгрузите расписание в формате ICS.", "Export the timetable as ICS."),
+                    tr("Отправьте расписание в чат к Dayla.", "Send the timetable to the Dayla chat.")
                   ].map((step, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <span

@@ -438,8 +438,8 @@
 .fd-app .recommendations { display: flex; align-items: flex-start; gap: 14px; padding: 12px 10px 12px 18px; border: 1px solid var(--glass-border); border-radius: var(--radius); background: var(--surface); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); box-shadow: var(--shadow); }
 .fd-app .recommendations > svg { color: var(--accent); flex: none; margin-top: 6px; }
 /* Recommendations: one colour per kind — blue for advice, orange for warnings (moves, a busy day) */
-.fd-app .rec-info { --rec: #3b82f6; }
-.fd-app .rec-warn { --rec: #f59e0b; }
+/* One colour for every tip: the app accent, like the block's icon */
+.fd-app .recommendation-line, .fd-app .recommendation { --rec: var(--accent); }
 .fd-app .recommendations-compact { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .fd-app .recommendation-line { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px 8px; border-radius: 10px; font-size: 14px; font-weight: 550; text-decoration: none; }
 .fd-app .recommendation-line:hover { background: var(--surface-2); }

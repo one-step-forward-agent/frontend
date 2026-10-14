@@ -23,6 +23,7 @@ import { notifyTasksChanged, useAsync, useTags, useTasksChanged, useToday } from
 import { useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
+import { tr } from "@/i18n";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
 
@@ -31,9 +32,9 @@ const AHEAD_DAYS = 90;
 const DAY_GROUPS = 7;
 type Filter = "all" | "untimed" | "deadline";
 const FILTERS: [Filter, string][] = [
-  ["all", "Все задачи"],
-  ["untimed", "Без времени"],
-  ["deadline", "С дедлайном"],
+  ["all", tr("Все задачи", "All tasks")],
+  ["untimed", tr("Без времени", "No time")],
+  ["deadline", tr("С дедлайном", "With a deadline")],
 ];
 
 /* ─── Общие стили ───────────────────────────────────────── */
@@ -100,7 +101,7 @@ export function TasksPage() {
     overdue?: boolean;
   }[] = [
     {
-      title: "Просроченные",
+      title: tr("Просроченные", "Overdue"),
       items: active.filter((event) => day(event) < todayKey),
       showDate: true,
       overdue: true,
@@ -117,7 +118,7 @@ export function TasksPage() {
 
   const laterKey = dayKey(addDays(today, DAY_GROUPS));
   groups.push({
-    title: "Позже",
+    title: tr("Позже", "Later"),
     items: active.filter((event) => day(event) >= laterKey),
     showDate: true,
   });
@@ -139,13 +140,13 @@ export function TasksPage() {
   return (
     <div className={PAGE}>
       <PageHeader
-        title="Задачи"
+        title={tr("Задачи", "Tasks")}
         actions={
-          <div className={SEGMENTED} role="tablist" aria-label="Список">
+          <div className={SEGMENTED} role="tablist" aria-label={tr("Список", "List")}>
             {(
               [
-                ["active", "Активные"],
-                ["done", "Выполненные"],
+                ["active", tr("Активные", "Active")],
+                ["done", tr("Выполненные", "Done")],
               ] as const
             ).map(([value, label]) => (
               <button
@@ -166,9 +167,9 @@ export function TasksPage() {
       />
 
       {/* ─── Фильтры: два выпадающих списка, сколько бы ни было сфер ─── */}
-      <div className="mb-6 flex flex-wrap gap-1.5" role="group" aria-label="Фильтр задач">
+      <div className="mb-6 flex flex-wrap gap-1.5" role="group" aria-label={tr("Фильтр задач", "Task filter")}>
         <Dropdown
-          label={filter === "all" ? "Фильтры" : FILTERS.find(([value]) => value === filter)?.[1] ?? "Фильтры"}
+          label={filter === "all" ? tr("Фильтры", "Filters") : FILTERS.find(([value]) => value === filter)?.[1] ?? tr("Фильтры", "Filters")}
           active={filter !== "all"}
         >
           {(close) =>
@@ -189,7 +190,7 @@ export function TasksPage() {
 
         {tags.length > 0 && (
           <Dropdown
-            label={tags.find((tag) => tag.id === tagId)?.name ?? "Сферы"}
+            label={tags.find((tag) => tag.id === tagId)?.name ?? tr("Сферы", "Areas")}
             active={tagId !== null}
           >
             {(close) => (
@@ -201,7 +202,7 @@ export function TasksPage() {
                     close();
                   }}
                 >
-                  Все сферы
+                  {tr("Все сферы", "All areas")}
                 </DropdownOption>
                 {tags.map((tag) => (
                   <DropdownOption
@@ -258,12 +259,14 @@ export function TasksPage() {
               icon="check"
               title={
                 filter === "all" && tagId === null
-                  ? "Задач нет"
-                  : "Ничего не найдено"
+                  ? tr("Задач нет", "No tasks")
+                  : tr("Ничего не найдено", "Nothing found")
               }
             >
-              Добавьте задачу кнопкой в меню или напишите ассистенту: «купить
-              продукты завтра».
+              {tr(
+                "Добавьте задачу кнопкой в меню или напишите ассистенту: «купить продукты завтра».",
+                "Add a task with the menu button or tell the assistant: “buy groceries tomorrow”."
+              )}
             </Empty>
           </GlassCard>
         )
@@ -272,7 +275,7 @@ export function TasksPage() {
           {done.length ? (
             <EventList events={done} showDate />
           ) : (
-            <Empty icon="check" title="Пока ничего не выполнено" />
+            <Empty icon="check" title={tr("Пока ничего не выполнено", "Nothing done yet")} />
           )}
         </GlassCard>
       )}
@@ -301,7 +304,7 @@ function CompleteAll({ events }: { events: CalendarEvent[] }) {
 
   return (
     <Button variant="ghost" size="sm" icon="check" busy={busy} onClick={complete}>
-      Всё сделано
+      {tr("Всё сделано", "All done")}
     </Button>
   );
 }
@@ -332,10 +335,10 @@ function MoveTomorrow({ event }: { event: CalendarEvent }) {
       busy={busy}
       onClick={move}
       className="move-tomorrow"
-      aria-label={`Перенести «${event.title}» на завтра`}
-      title="На завтра"
+      aria-label={tr(`Перенести «${event.title}» на завтра`, `Move “${event.title}” to tomorrow`)}
+      title={tr("На завтра", "To tomorrow")}
     >
-      <span className="move-label">На завтра</span>
+      <span className="move-label">{tr("На завтра", "To tomorrow")}</span>
     </Button>
   );
 }

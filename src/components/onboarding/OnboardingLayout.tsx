@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/theme";
 import { cn } from "@/utils/cn";
 import { PageBackdrop } from "@/components/onboarding/PageBackdrop";
 import LandingHeader from "@/components/landing/LandingHeader";
+import { tr } from "@/i18n";
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -41,7 +42,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   onBack,
   onNext,
   onSkip,
-  nextLabel = "Далее",
+  nextLabel = tr("Далее", "Next"),
   nextDisabled,
   loading,
 }) => {
@@ -108,7 +109,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
             >
               <span aria-hidden="true" className={GLASS_SHEEN} />
               <ChevronLeft size={16} className="relative" aria-hidden="true" />
-              <span className="relative">Назад</span>
+              <span className="relative">{tr("Назад", "Back")}</span>
             </button>
           )}
 
@@ -127,7 +128,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
                 "hover:text-gray-900 dark:hover:text-gray-100"
               )}
             >
-              Пропустить
+              {tr("Пропустить", "Skip")}
             </button>
           )}
 
@@ -154,7 +155,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
                     aria-hidden="true"
                     className="w-3.5 h-3.5 rounded-full border-2 border-blue-500/40 border-t-blue-600 animate-spin"
                   />
-                  <span>Подождите…</span>
+                  <span>{tr("Подождите…", "Please wait…")}</span>
                 </span>
               ) : (
                 <span className="relative inline-flex items-center gap-1.5">

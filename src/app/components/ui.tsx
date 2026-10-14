@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { Icon, type IconName } from "./icons";
+import { tr } from "@/i18n";
 
 /* ─── Мини-утилита для склейки классов ──────────────────── */
 type ClassValue = string | number | false | null | undefined;
@@ -316,7 +317,7 @@ export function Empty({
 }
 
 /* ─── Loading ────────────────────────────────────────────── */
-export function Loading({ label = "Загрузка…" }: { label?: string }) {
+export function Loading({ label = tr("Загрузка…", "Loading…") }: { label?: string }) {
   return (
     <div
       className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 py-6"
@@ -360,7 +361,7 @@ export function ErrorNote({
             "hover:bg-red-100/0 transition-colors"
           )}
         >
-          Повторить
+          {tr("Повторить", "Retry")}
         </button>
       )}
     </div>
@@ -540,7 +541,7 @@ export function Dialog({
             <Button
               variant="ghost"
               icon="close"
-              aria-label="Закрыть"
+              aria-label={tr("Закрыть", "Close")}
               onClick={onClose}
               size="sm"
             />
@@ -556,7 +557,7 @@ export function Dialog({
 export function ConfirmButton({
   children,
   label,
-  confirmLabel = "Точно?",
+  confirmLabel = tr("Точно?", "Sure?"),
   onConfirm,
   busy,
   icon,
@@ -627,7 +628,7 @@ export class ErrorBoundary extends Component<
     return (
       <div className="p-6 max-w-2xl mx-auto">
         <ErrorNote
-          message="Что-то пошло не так. Обновите страницу."
+          message={tr("Что-то пошло не так. Обновите страницу.", "Something went wrong. Please reload the page.")}
           onRetry={() => window.location.reload()}
         />
       </div>

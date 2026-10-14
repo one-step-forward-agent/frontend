@@ -13,6 +13,7 @@ import { useOnboarding, type Sphere } from "./OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-field";
 import { cn } from "@/utils/cn";
+import { isEn, tr } from "@/i18n";
 
 const TOTAL = 10;
 
@@ -65,7 +66,18 @@ const visualForGoal = (text: string): GoalVisual => {
 };
 
 /* ─── Подсказки по сферам ───────────────────────────────── */
-const SUGGESTIONS_BY_SPHERE: Record<string, string[]> = {
+const SUGGESTIONS_BY_SPHERE: Record<string, string[]> = isEn ? {
+  "Work": ["Find a work-life balance", "Build a skill for my career", "Keep a work journal"],
+  "Study": ["Study 1 hour a day", "Take a new course every week", "Take notes on what I read"],
+  "Sport": ["Exercise 3 times a week", "Do morning exercises", "Run 5 km"],
+  "Languages": ["Learn English for 20 minutes", "Learn 10 new words a day", "Watch series in the original"],
+  "Health": ["Sleep 8 hours", "Drink 2 litres of water", "Meditate"],
+  "Home": ["Tidy up 15 minutes a day", "Cook at home", "Sort out the wardrobe"],
+  "Rest": ["Walk more", "Read before bed", "Have screen-free weekends"],
+  "Relationships": ["Spend time with loved ones", "Call my parents once a week", "Message friends"],
+  "Self-development": ["Read every day", "Keep a journal", "Get up early"],
+  "Hobbies": ["Draw", "Play the guitar", "Learn photography"],
+} : {
   "Работа": ["Наладить work-life balance", "Прокачать навык для карьеры", "Вести рабочий дневник"],
   "Учёба": ["Учиться 1 час в день", "Проходить новый курс каждую неделю", "Конспектировать прочитанное"],
   "Спорт": ["Заниматься спортом 3 раза в неделю", "Делать зарядку по утрам", "Пробегать 5 км"],
@@ -78,7 +90,10 @@ const SUGGESTIONS_BY_SPHERE: Record<string, string[]> = {
   "Хобби": ["Рисовать", "Играть на гитаре", "Учиться фотографии"],
 };
 
-const FALLBACK_SUGGESTIONS = [
+const FALLBACK_SUGGESTIONS = isEn ? [
+  "Walk more", "Read every day", "Get up early",
+  "Meditate", "Exercise 3 times a week", "Learn English for 20 minutes",
+] : [
   "Больше гулять", "Читать каждый день", "Рано вставать",
   "Медитировать", "Заниматься спортом 3 раза в неделю", "Учить английский по 20 минут",
 ];
@@ -94,9 +109,9 @@ type AiChatSource = {
 };
 
 const NOTE_KINDS: { id: string; label: string }[] = [
-  { id: "goals",         label: "Цели и планы" },
-  { id: "personal",      label: "Личные обстоятельства" },
-  { id: "constraints",   label: "Ограничения и запреты" },
+  { id: "goals",         label: tr("Цели и планы", "Goals and plans") },
+  { id: "personal",      label: tr("Личные обстоятельства", "Personal circumstances") },
+  { id: "constraints",   label: tr("Ограничения и запреты", "Limits and no-gos") },
 ];
 
 const CUSTOM_NOTE_PREFIX = "custom:";
@@ -285,11 +300,11 @@ export const GoalsAndHabits: React.FC = () => {
     <OnboardingLayout
       step={4}
       totalSteps={TOTAL}
-      title="Что Dayla может о вас узнать?"
+      title={tr("Что Dayla может о вас узнать?", "What can Dayla learn about you?")}
       onBack={() => navigate("/onboarding/field-of-activity")}
       onNext={handleNext}
       onSkip={handleSkip}
-      nextLabel={`Далее${goals.length > 0 ? ` · ${goals.length}` : ""}`}
+      nextLabel={`${tr("Далее", "Next")}${goals.length > 0 ? ` · ${goals.length}` : ""}`}
     >
       <div className="relative space-y-8">
         {/* ═══════════════════════════════════════════════ */}
@@ -308,11 +323,11 @@ export const GoalsAndHabits: React.FC = () => {
             >
               <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
               <Brain size={11} aria-hidden="true" className="relative" />
-              <span className="relative">Персонализация</span>
+              <span className="relative">{tr("Персонализация", "Personalisation")}</span>
             </span>
           </div>
           <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
-            Пришлите ссылки на чаты с ChatGPT, Claude, Gemini или другими ассистентами
+            {tr("Пришлите ссылки на чаты с ChatGPT, Claude, Gemini или другими ассистентами", "Share links to your chats with ChatGPT, Claude, Gemini or other assistants")}
           </p>
 
           {/* Плашка про приватность */}
@@ -336,7 +351,7 @@ export const GoalsAndHabits: React.FC = () => {
               </span>
               <div className="min-w-0 flex-1 allign-center">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Dayla не станет читать то, что вы не отметили.
+                  {tr("Dayla не станет читать то, что вы не отметили.", "Dayla won't read anything you haven't ticked.")}
                 </p>
               </div>
             </div>
@@ -476,14 +491,14 @@ const SourceCard: React.FC<{
           {/* Комментарий */}
           {source.comment.trim() && (
             <p className="mt-2 text-xs text-gray-600 dark:text-gray-400 leading-snug italic">
-              «{source.comment.trim()}»
+              {tr("«", "“")}{source.comment.trim()}{tr("»", "”")}
             </p>
           )}
 
           {/* Пустое состояние */}
           {source.spheres.length === 0 && source.notes.length === 0 && !source.comment.trim() && (
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Без ограничений — Dayla возьмёт всё, что покажется полезным.
+              {tr("Без ограничений — Dayla возьмёт всё, что покажется полезным.", "No limits — Dayla will take whatever seems useful.")}
             </p>
           )}
         </div>
@@ -492,7 +507,7 @@ const SourceCard: React.FC<{
           <button
             type="button"
             onClick={onEdit}
-            aria-label="Изменить источник"
+            aria-label={tr("Изменить источник", "Edit source")}
             className={cn(
               "w-8 h-8 rounded-lg flex items-center justify-center",
               "text-gray-400 hover:text-violet-700 hover:bg-white/40",
@@ -505,7 +520,7 @@ const SourceCard: React.FC<{
           <button
             type="button"
             onClick={onRemove}
-            aria-label="Удалить источник"
+            aria-label={tr("Удалить источник", "Remove source")}
             className={cn(
               "w-8 h-8 rounded-lg flex items-center justify-center",
               "text-gray-400 hover:text-red-500 hover:bg-white/40",
@@ -574,7 +589,7 @@ const SourceForm: React.FC<{
   const submit = () => {
     const trimmed = url.trim();
     if (!isValidHttpUrl(trimmed)) {
-      setError("Вставьте полную ссылку, начинающуюся с https://");
+      setError(tr("Вставьте полную ссылку, начинающуюся с https://", "Paste the full link starting with https://"));
       return;
     }
     setError(null);
@@ -623,7 +638,7 @@ const SourceForm: React.FC<{
               }}
               onKeyDown={(e) => e.key === "Enter" && submit()}
               placeholder="https://chat.openai.com/share/..."
-              aria-label="Ссылка на чат с нейросетью"
+              aria-label={tr("Ссылка на чат с нейросетью", "Link to an AI chat")}
               className="pl-9"
             />
           </div>
@@ -645,7 +660,7 @@ const SourceForm: React.FC<{
             )}
           >
             <Info size={12} aria-hidden="true" />
-            Уточнить, что Dayla может взять
+            {tr("Уточнить, что Dayla может взять", "Specify what Dayla may take")}
           </button>
         ) : (
           <div className="space-y-3.5 pt-1 border-t border-violet-400/20">
@@ -658,7 +673,7 @@ const SourceForm: React.FC<{
                     onClick={() => setPickedNotes([])}
                     className="text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   >
-                    Сбросить
+                    {tr("Сбросить", "Reset")}
                   </button>
                 )}
               </div>
@@ -693,7 +708,7 @@ const SourceForm: React.FC<{
                     type="button"
                     onClick={() => toggleNote(id)}
                     aria-pressed
-                    title="Убрать"
+                    title={tr("Убрать", "Remove")}
                     className={cn(
                       "group/custom inline-flex items-center gap-1 h-6 px-2.5 rounded-full",
                       "text-[11px] font-medium leading-none transition-all",
@@ -728,8 +743,8 @@ const SourceForm: React.FC<{
                       }
                     }}
                     onBlur={commitCustomNote}
-                    placeholder="финансы"
-                    aria-label="Свой вариант типа заметок"
+                    placeholder={tr("финансы", "finances")}
+                    aria-label={tr("Свой вариант типа заметок", "Your own note type")}
                     maxLength={40}
                     autoComplete="off"
                     autoCorrect="off"
@@ -759,7 +774,7 @@ const SourceForm: React.FC<{
                     )}
                   >
                     <Plus size={11} aria-hidden="true" />
-                    Свой вариант
+                    {tr("Свой вариант", "Your own")}
                   </button>
                 )}
               </div>
@@ -771,7 +786,7 @@ const SourceForm: React.FC<{
                 onClick={() => setShowAdvanced(false)}
                 className="text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               >
-                Свернуть уточнения
+                {tr("Свернуть уточнения", "Hide the details")}
               </button>
             )}
           </div>
@@ -790,7 +805,7 @@ const SourceForm: React.FC<{
                 "transition-colors"
               )}
             >
-              Отмена
+              {tr("Отмена", "Cancel")}
             </button>
           )}
           <Button
@@ -800,7 +815,7 @@ const SourceForm: React.FC<{
             size="sm"
           >
             <Plus size={14} className="mr-1" aria-hidden="true" />
-            {isEditing ? "Сохранить" : "Добавить источник"}
+            {isEditing ? tr("Сохранить", "Save") : tr("Добавить источник", "Add source")}
           </Button>
         </div>
       </div>
