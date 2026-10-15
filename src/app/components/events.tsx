@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { api } from "../api/client";
-import type { Calendar, CalendarEvent, EventCreate, Priority } from "../api/types";
+import type { Calendar, CalendarEvent, DeleteScope, EventCreate, Priority } from "../api/types";
 import { useAuth } from "../auth";
 import {
   PRIORITIES,
@@ -116,6 +116,40 @@ export function EventList({ events, showDate, extra }: { events: CalendarEvent[]
         <EventRow key={event.id} event={event} showDate={showDate} extra={extra?.(event)} />
       ))}
     </ul>
+  );
+}
+
+/** The question a deletion of a repeated task asks: just this day, it and the later ones, or the whole series. */
+export function DeleteScopeButtons({
+  busy,
+  several = false,
+  onPick,
+}: {
+  busy: DeleteScope | null;
+  several?: boolean;
+  onPick: (scope: DeleteScope) => void;
+}) {
+  const options: { scope: DeleteScope; label: string }[] = [
+    { scope: "one", label: several ? tr("Только эти", "Only these") : tr("Только эту", "Only this one") },
+    { scope: "following", label: several ? tr("Эти и следующие", "These and following") : tr("Эту и следующие", "This and following") },
+    { scope: "all", label: tr("Всю серию", "The whole series") },
+  ];
+  return (
+    <>
+      {options.map((option) => (
+        <Button
+          key={option.scope}
+          size="sm"
+          variant={option.scope === "all" ? "danger" : "secondary"}
+          icon={option.scope === "all" ? "trash" : undefined}
+          busy={busy === option.scope}
+          disabled={busy !== null && busy !== option.scope}
+          onClick={() => onPick(option.scope)}
+        >
+          {option.label}
+        </Button>
+      ))}
+    </>
   );
 }
 

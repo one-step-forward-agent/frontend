@@ -17,6 +17,7 @@ import type {
   ReminderHistoryItem,
   ReminderSettings,
   Stats,
+  DeleteScope,
   SyncResult,
   Tag,
   TagColor,
@@ -186,7 +187,7 @@ export const api = {
       request<CalendarEvent>("/api/events", json("POST", body), "event_create"),
     update: (id: number, body: Partial<EventCreate>) =>
       request<CalendarEvent>(`/api/events/${id}`, json("PUT", body), "event_update"),
-    remove: (id: number, scope: "one" | "series" = "one") =>
+    remove: (id: number, scope: DeleteScope = "one") =>
       request<void>(`/api/events/${id}?scope=${scope}`, { method: "DELETE" }, "event_delete"),
     complete: (id: number, completed: boolean) =>
       request<CalendarEvent>(`/api/events/${id}/complete`, json("POST", { completed }), completed ? "event_complete" : "event_uncomplete"),
@@ -245,8 +246,8 @@ export const api = {
       request<AssistantReply>(`/api/assistant/drafts/${draftId}`, json("PUT", { items }), "assistant_draft_edit"),
     setDraftCalendars: (draftId: number, calendars: string[]) =>
       request<AssistantReply>(`/api/assistant/drafts/${draftId}/calendars`, json("POST", { calendars }), "assistant_draft_calendars"),
-    confirmDraft: (draftId: number) =>
-      request<AssistantReply>(`/api/assistant/drafts/${draftId}/confirm`, { method: "POST" }, "assistant_confirm"),
+    confirmDraft: (draftId: number, scope: DeleteScope = "one") =>
+      request<AssistantReply>(`/api/assistant/drafts/${draftId}/confirm?scope=${scope}`, { method: "POST" }, "assistant_confirm"),
     cancelDraft: (draftId: number) =>
       request<AssistantReply>(`/api/assistant/drafts/${draftId}`, { method: "DELETE" }, "assistant_cancel"),
     transcribe: (audio: Blob) =>
@@ -271,6 +272,8 @@ export const api = {
         { method: "POST" },
         { name: "integration_test", params: { integration: slug } },
       ),
+    // Every connected calendar; "Сегодня" calls it on opening, the server skips it when it ran a minute ago
+    syncAll: () => request<{ synced: string[]; changed: boolean }>("/api/integrations/sync", { method: "POST" }),
     sync: (slug: string) =>
       request<SyncResult>(
         `/api/integrations/${slug}/sync`,

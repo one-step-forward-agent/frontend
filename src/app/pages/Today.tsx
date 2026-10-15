@@ -1,5 +1,5 @@
 // src/pages/TodayPage.tsx
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client";
 import { TelegramPrompt } from "../components/TelegramPrompt";
 import { DayTimeline } from "../components/DayTimeline";
@@ -80,6 +80,14 @@ export function TodayPage() {
     recommendations.reload();
   }, [events.reload, stats.reload, recommendations.reload]);
   useTasksChanged(reloadAll);
+
+  // Opening the page brings the connected calendars up to date; failures stay on their cards in "Интеграции"
+  useEffect(() => {
+    api.integrations
+      .syncAll()
+      .then((result) => result.changed && notifyTasksChanged())
+      .catch(() => undefined);
+  }, []);
 
   const todays = (events.data ?? []).filter((event) => occursOn(event, today));
   const untimed = todays.filter((event) => event.all_day);

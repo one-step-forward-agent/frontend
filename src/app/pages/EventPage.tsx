@@ -1,8 +1,8 @@
 // src/pages/EventPage.tsx
 import { useRef, useState } from "react";
 import { api } from "../api/client";
-import type { CalendarEvent, EventFile } from "../api/types";
-import { EventForm } from "../components/events";
+import type { CalendarEvent, DeleteScope, EventFile } from "../api/types";
+import { DeleteScopeButtons, EventForm } from "../components/events";
 import { TagList } from "../components/tags";
 import { Icon } from "../components/icons";
 import {
@@ -72,6 +72,7 @@ export function NewEventPage() {
 export function EventPage({ id }: { id: number }) {
   const event = useAsync(() => api.events.get(id), [id]);
   const [editing, setEditing] = useState(false);
+  const [askScope, setAskScope] = useState(false);
   const toast = useToast();
   const { pending, run } = useAction(useErrorToast());
   useTitle(event.data?.title ?? tr("Событие", "Event"));
@@ -97,11 +98,12 @@ export function EventPage({ id }: { id: number }) {
   if (!event.data) return <Loading />;
   const item = event.data;
 
-  const remove = (scope: "one" | "series" = "one") =>
-    run(scope === "series" ? "delete-series" : "delete", async () => {
+  const remove = (scope: DeleteScope = "one") =>
+    run(`delete-${scope}`, async () => {
       await api.events.remove(item.id, scope);
+      setAskScope(false);
       notifyTasksChanged();
-      toast(scope === "series" ? tr("Серия удалена", "Series deleted") : tr("Удалено", "Deleted"));
+      toast(scope === "all" ? tr("Серия удалена", "Series deleted") : scope === "following" ? tr("Удалено с этого дня", "Deleted from this day on") : tr("Удалено", "Deleted"));
       navigate("/calendar", { replace: true });
     });
 
@@ -163,29 +165,40 @@ export function EventPage({ id }: { id: number }) {
             <Button size="sm" icon="settings" onClick={() => setEditing(true)}>
               {tr("Изменить", "Edit")}
             </Button>
-            <ConfirmButton
-              size="sm"
-              icon="trash"
-              confirmLabel={tr("Удалить?", "Delete?")}
-              busy={pending === "delete"}
-              onConfirm={() => remove()}
-            >
-              {item.series_id ? tr("Удалить эту", "Delete this one") : tr("Удалить", "Delete")}
-            </ConfirmButton>
-            {item.series_id && (
+            {item.series_id ? (
+              // A repeated task asks how much of the series goes
+              <Button size="sm" variant="ghost" icon="trash" onClick={() => setAskScope(true)}>
+                {tr("Удалить", "Delete")}
+              </Button>
+            ) : (
               <ConfirmButton
                 size="sm"
                 icon="trash"
-                confirmLabel={tr("Удалить серию?", "Delete the series?")}
-                busy={pending === "delete-series"}
-                onConfirm={() => remove("series")}
+                confirmLabel={tr("Удалить?", "Delete?")}
+                busy={pending === "delete-one"}
+                onConfirm={() => remove()}
               >
-                {tr("Удалить серию", "Delete series")}
+                {tr("Удалить", "Delete")}
               </ConfirmButton>
             )}
           </>
         }
       />
+
+      <Dialog open={askScope} title={tr("Удалить повторяющуюся задачу", "Delete a repeated task")} onClose={() => setAskScope(false)}>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          {tr(
+            "«" + item.title + "» повторяется. Удалить только эту, эту и следующие или всю серию? Это нельзя отменить.",
+            "“" + item.title + "” repeats. Delete only this one, this and the following ones, or the whole series? This can't be undone."
+          )}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          <DeleteScopeButtons
+            busy={pending?.startsWith("delete-") ? (pending.slice(7) as DeleteScope) : null}
+            onPick={(scope) => remove(scope)}
+          />
+        </div>
+      </Dialog>
 
       <GlassCard>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">

@@ -187,7 +187,7 @@ export type AssistantReply =
       moved?: { event_id: number; from: string; to: string; from_label: string };
     }
   | { kind: "topic"; title: string; text: string }
-  | { kind: "delete_proposal"; draft_id: number; count: number; title: string; events: AssistantEvent[]; answer: string | null }
+  | { kind: "delete_proposal"; draft_id: number; count: number; title: string; events: AssistantEvent[]; series?: boolean; answer: string | null }
   | { kind: "deleted"; count: number; text: string }
   | { kind: "completed"; events: AssistantEvent[]; event_ids: number[]; text: string }
   | {
@@ -285,6 +285,9 @@ export interface Integration {
   fields: IntegrationField[];
   connection: IntegrationConnection | null;
 }
+
+/** How much of a repeated task a deletion takes: just the chosen day, it and the later ones, or the whole series. */
+export type DeleteScope = "one" | "following" | "all";
 
 export interface SyncResult {
   fetched: number;

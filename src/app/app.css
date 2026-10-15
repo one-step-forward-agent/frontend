@@ -307,11 +307,15 @@
 
 .fd-app .form { display: grid; gap: 16px; }
 .fd-app .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 12px; }
-.fd-app .form-row-when { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; }
+/* The date takes what the chips leave: half the row each pushed "Завтра" under the date on a phone */
+.fd-app .form-row-when { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
 .fd-app .form-row-time { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; }
-.fd-app .quick-days { display: flex; gap: 6px; flex-wrap: wrap; padding-bottom: 6px; }
+.fd-app .quick-days { display: flex; gap: 6px; flex-wrap: nowrap; padding-bottom: 6px; }
+.fd-app .quick-days .chip-toggle { white-space: nowrap; }
 .fd-app .no-time { padding: 0 6px 11px; white-space: nowrap; }
 @media (max-width: 420px) {
+  .fd-app .form-row-when { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .fd-app .quick-days { padding-bottom: 0; }
   .fd-app .form-row-time { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .fd-app .form-row-time > :last-child { grid-column: 1 / -1; justify-self: start; padding: 0; }
 }

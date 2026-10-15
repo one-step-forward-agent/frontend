@@ -9,7 +9,9 @@ import type {
   DraftItem,
   HistoryMessage,
   ReminderSettings,
+  DeleteScope,
 } from "../api/types";
+import { DeleteScopeButtons } from "../components/events";
 import { RecommendationList } from "../components/recommendations";
 import { RichText } from "../components/RichText";
 import { TagList } from "../components/tags";
@@ -1210,16 +1212,16 @@ function DeleteProposal({
   reply: DeleteReply;
   onReply: (reply: AssistantReply) => void;
 }) {
-  const [busy, setBusy] = useState<"confirm" | "cancel" | null>(null);
+  const [busy, setBusy] = useState<DeleteScope | "cancel" | null>(null);
   const reportError = useErrorToast();
 
-  const run = async (kind: "confirm" | "cancel") => {
+  const run = async (kind: DeleteScope | "cancel") => {
     setBusy(kind);
     try {
       const result =
-        kind === "confirm"
-          ? await api.assistant.confirmDraft(reply.draft_id)
-          : await api.assistant.cancelDraft(reply.draft_id);
+        kind === "cancel"
+          ? await api.assistant.cancelDraft(reply.draft_id)
+          : await api.assistant.confirmDraft(reply.draft_id, kind);
       if (result.kind === "deleted") notifyTasksChanged();
       onReply(result);
     } catch (error) {
@@ -1243,15 +1245,24 @@ function DeleteProposal({
         </p>
       )}
       <div className="flex flex-wrap gap-1.5">
-        <Button
-          variant="danger"
-          size="sm"
-          icon="trash"
-          busy={busy === "confirm"}
-          onClick={() => run("confirm")}
-        >
-          {tr("Удалить", "Delete")} ({reply.count})
-        </Button>
+        {reply.series ? (
+          // A repeated task: just the found days, them and the later ones, or the whole series
+          <DeleteScopeButtons
+            several={reply.count > 1}
+            busy={busy === "cancel" ? null : busy}
+            onPick={(scope) => run(scope)}
+          />
+        ) : (
+          <Button
+            variant="danger"
+            size="sm"
+            icon="trash"
+            busy={busy === "one"}
+            onClick={() => run("one")}
+          >
+            {tr("Удалить", "Delete")} ({reply.count})
+          </Button>
+        )}
         <Button variant="ghost" size="sm" busy={busy === "cancel"} onClick={() => run("cancel")}>
           {tr("Не удалять", "Keep")}
         </Button>
