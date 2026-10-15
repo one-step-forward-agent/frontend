@@ -414,6 +414,21 @@
 .fd-app .event-item.is-done > .event-row:hover { opacity: 0.7; }
 .fd-app .move-tomorrow { flex: none; }
 
+/* "Сегодня": every task a solid card that stands out from the glass, a red line at the current time */
+.fd-app .schedule-heading { margin: 0 0 8px 4px; font-size: 14px; }
+.fd-app .event-list.is-cards { gap: 8px; }
+.fd-app .event-list.is-cards .event-item { padding-left: 8px; background: var(--surface-solid); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.fd-app .event-list.is-cards .event-item.is-done { background: color-mix(in srgb, #10b981 8%, var(--surface-solid)); }
+.fd-app .event-list.is-cards .event-item.is-missed { background: color-mix(in srgb, #f43f5e 7%, var(--surface-solid)); }
+.fd-app .event-list.is-cards .event-check { width: 24px; height: 24px; }
+.fd-app .event-list.is-cards .event-row:hover { background: transparent; }
+.fd-app .event-list.is-cards .event-item:hover { border-color: var(--line-strong); }
+.fd-app .schedule-now { display: flex; align-items: center; margin: 2px 0; pointer-events: none; }
+.fd-app .schedule-now-dot { flex: none; width: 10px; height: 10px; margin-left: -3px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
+.fd-app .schedule-now-line { flex: 1; height: 2px; background: #ef4444; }
+.fd-app .schedule-now-time { flex: none; margin-left: 6px; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; color: #dc2626; }
+:root.dark .fd-app .schedule-now-time { color: #f87171; }
+
 /* Narrow list: time above the title, no "без времени" filler, the badge on the right, icon-only buttons */
 @container events (max-width: 480px) {
   .fd-app .event-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 1px; padding: 8px 10px; }

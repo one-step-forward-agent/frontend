@@ -55,6 +55,16 @@ export function useTasksChanged(reload: () => void) {
   }, [reload]);
 }
 
+/** The current time, updated every minute: for the red "now" line */
+export function useNow(): Date {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return now;
+}
+
 /** The start of today that moves on at midnight and when the tab comes back after sleep: a page left open
  * overnight would otherwise keep showing yesterday as today. On a new day every screen reloads its tasks. */
 export function useToday(): Date {

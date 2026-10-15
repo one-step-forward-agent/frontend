@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { api } from "../api/client";
 import type { CalendarEvent } from "../api/types";
 import { EventList } from "../components/events";
+import { TimeGrid } from "../components/TimeGrid";
 import { RecommendationList } from "../components/recommendations";
 import { Icon } from "../components/icons";
 import { Empty, ErrorNote } from "../components/ui";
@@ -213,7 +214,7 @@ export function CalendarPage() {
     view === "month" ? sameDay(month, startOfMonth(today)) : days.some((day) => sameDay(day, today));
 
   return (
-    <div className={cn("relative mx-auto pt-[1.5vh]", view === "month" ? "max-w-6xl 2xl:max-w-7xl" : "max-w-4xl")}>
+    <div className={cn("relative mx-auto pt-[1.5vh]", view === "day" ? "max-w-4xl" : "max-w-6xl 2xl:max-w-7xl")}>
       {/* ─── Шапка: период — просто текст; под ним стрелки, вид и «Сегодня» ─── */}
       <header className="mb-6 space-y-3">
         <h1 className="px-1 break-words !text-[22px] sm:!text-[28px] capitalize-first">{title}</h1>
@@ -301,46 +302,13 @@ export function CalendarPage() {
         </GlassCard>
       </div>
 
-      {view === "day" ? (
-        <GlassCard>
-          <DayEvents events={selectedEvents} loading={events.loading} />
-        </GlassCard>
-      ) : view === "week" ? (
-        /* Неделя — крупный план: каждый день раскрыт, задачи написаны целиком */
-        <div className="space-y-3">
-          {days.map((day) => {
-            const items = untimedFirst(byDay.get(dayKey(day)) ?? []);
-            const isToday = sameDay(day, today);
-            return (
-              <GlassCard key={day.getTime()} className={cn(isToday && "ring-1 ring-sky-400/50")}>
-                <button
-                  type="button"
-                  className="mb-2 flex items-baseline gap-2 text-left hover:underline"
-                  title={tr("Открыть день", "Open the day")}
-                  onClick={() => go(day, "day")}
-                >
-                  <span
-                    className={cn(
-                      "text-sm font-semibold capitalize-first",
-                      isToday ? "text-sky-700 dark:text-sky-300" : "text-gray-900 dark:text-white"
-                    )}
-                  >
-                    {formatDate(day, { weekday: "long", day: "numeric", month: "long" })}
-                  </span>
-                  {isToday && (
-                    <span className="text-xs text-sky-700 dark:text-sky-300">{tr("сегодня", "today")}</span>
-                  )}
-                </button>
-                {items.length ? (
-                  <EventList events={items} />
-                ) : (
-                  <p className="px-3 text-sm text-gray-400 dark:text-gray-500">
-                    {events.loading ? tr("Загружаем…", "Loading…") : tr("Свободно", "Free")}
-                  </p>
-                )}
-              </GlassCard>
-            );
-          })}
+      {view !== "month" ? (
+        /* День и неделя — по часам, как в Google Календаре: неделя — семь колонок рядом */
+        <div className={cn("relative overflow-hidden rounded-2xl p-2 sm:p-3", GLASS_BODY)}>
+          <TimeGrid days={days} events={events.data ?? []} onOpenDay={(day) => go(day, "day")} />
+          {events.loading && !events.data && (
+            <p className="px-3 pt-2 text-sm text-gray-400 dark:text-gray-500">{tr("Загружаем…", "Loading…")}</p>
+          )}
         </div>
       ) : (
         <div className="grid 2xl:grid-cols-[minmax(0,1fr)_300px] gap-6">

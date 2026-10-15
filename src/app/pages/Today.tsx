@@ -2,10 +2,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client";
 import { TelegramPrompt } from "../components/TelegramPrompt";
-import { DayTimeline } from "../components/DayTimeline";
 import type { CalendarEvent, Recommendation, Stats } from "../api/types";
 import { useUser } from "../auth";
-import { EventList } from "../components/events";
+import { EventList, EventRow } from "../components/events";
 import { Icon } from "../components/icons";
 import { RecommendationList } from "../components/recommendations";
 import {
@@ -22,12 +21,13 @@ import {
   dayKey,
   dayTitle,
   errorText,
+  formatTime,
   formatWeekday,
   occursOn,
   parseDayKey,
   startOfDay,
 } from "../lib/format";
-import { notifyTasksChanged, useAsync, useTasksChanged, useToday } from "../lib/hooks";
+import { notifyTasksChanged, useAsync, useNow, useTasksChanged, useToday } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -136,19 +136,24 @@ export function TodayPage() {
       />
 
       <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
-        {/* ─── День по часам, под ним советы: сами задачи — в разделе «Задачи» ─── */}
+        {/* ─── Задачи дня по времени; по часам — в календаре ─── */}
         <div className="min-w-0">
         <GlassCard
           title={
             todays.length
-              ? `${tr("День по часам", "Day by hour")} · ${todays.filter((event) => event.completed_at).length}/${todays.length}`
-              : tr("День по часам", "Day by hour")
+              ? `${tr("Задачи", "Tasks")} · ${todays.filter((event) => event.completed_at).length}/${todays.length}`
+              : tr("Задачи", "Tasks")
+          }
+          actions={
+            <Link to={calendarLink("day", now)} className="text-xs font-medium text-sky-700 dark:text-sky-300 hover:underline">
+              {tr("По часам", "By the hour")}
+            </Link>
           }
         >
           {events.loading && !events.data ? (
             <Loading />
           ) : todays.length ? (
-            <DayTimeline events={todays} day={today} />
+            <DaySchedule events={todays} />
           ) : (
             <Empty icon="today" title={tr("На сегодня ничего", "Nothing for today")}>
               {tr("Свободный день — или самое время что-нибудь запланировать.", "A free day — or a good time to plan something.")}
@@ -169,6 +174,54 @@ export function TodayPage() {
       </div>
     </div>
   </div>
+  );
+}
+
+/* ─── DaySchedule ───────────────────────────────────────── */
+
+/** Today's tasks as cards: the timed ones in order of their start with a red line at the current time
+ * (between the tasks already begun and the ones still ahead), then the ones without a time. */
+function DaySchedule({ events }: { events: CalendarEvent[] }) {
+  const now = useNow();
+  const timed = events
+    .filter((event) => !event.all_day)
+    .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
+  const untimed = events.filter((event) => event.all_day);
+  const ahead = timed.findIndex((event) => new Date(event.start_at) > now);
+  const nowAt = ahead < 0 ? timed.length : ahead;
+
+  const nowLine = (
+    <li key="now" className="schedule-now" aria-label={`${tr("Сейчас", "Now")} ${formatTime(now)}`}>
+      <span className="schedule-now-dot" />
+      <span className="schedule-now-line" />
+      <span className="schedule-now-time">{formatTime(now)}</span>
+    </li>
+  );
+
+  return (
+    <div className="space-y-5">
+      {timed.length > 0 && (
+        <section>
+          <h3 className="schedule-heading">{tr("Расписание", "Schedule")}</h3>
+          <ul className="event-list is-cards">
+            {timed.flatMap((event, index) =>
+              index === nowAt ? [nowLine, <EventRow key={event.id} event={event} />] : [<EventRow key={event.id} event={event} />]
+            )}
+            {nowAt === timed.length && nowLine}
+          </ul>
+        </section>
+      )}
+      {untimed.length > 0 && (
+        <section>
+          <h3 className="schedule-heading">{tr("Без времени", "No time")}</h3>
+          <ul className="event-list is-cards">
+            {untimed.map((event) => (
+              <EventRow key={event.id} event={event} />
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
   );
 }
 
