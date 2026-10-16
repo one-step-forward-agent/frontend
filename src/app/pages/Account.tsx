@@ -615,8 +615,8 @@ function IntegrationsSection() {
       >
         <p className="muted small">
           {tr(
-            "Google Calendar, Яндекс Календарь, Apple Calendar и Samsung Calendar: подключение, импорт и отправка задач.",
-            "Google Calendar, Yandex Calendar, Apple Calendar and Samsung Calendar: connecting, importing and sending tasks."
+            "Google Calendar, Яндекс Календарь, Apple Calendar, Samsung Calendar, Jira и Notion: подключение, импорт и отправка задач.",
+            "Google Calendar, Yandex Calendar, Apple Calendar, Samsung Calendar, Jira and Notion: connecting, importing and sending tasks."
           )}
         </p>
         {integrations.error && (

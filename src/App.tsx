@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { NavigationBridge } from "@/app/router";
 import { ToastProvider } from "@/app/components/ui";
-import { OnboardingProvider } from "@/components/onboarding/OnboardingContext";
+import { FinishOnboarding, OnboardingProvider } from "@/components/onboarding/OnboardingContext";
 import { Start } from "@/components/onboarding/Start";
 import AuthLayout from "@/layouts/AuthLayout";
 import LoginPage from "@/pages/Auth/LoginPage";
@@ -14,10 +14,7 @@ import { tr } from "@/i18n";
 
 const AppRoutes = lazy(() => import("@/app/AppRoutes"));
 const FieldOfActivity = lazy(() => import("@/components/onboarding/FieldOfActivity").then((module) => ({ default: module.FieldOfActivity })));
-const GoalsAndHabits = lazy(() => import("@/components/onboarding/GoalsAndHabits").then((module) => ({ default: module.GoalsAndHabits })));
-const ExistingPlans = lazy(() => import("@/components/onboarding/ExistingPlans").then((module) => ({ default: module.ExistingPlans })));
 const Integrations = lazy(() => import("@/components/onboarding/Integrations").then((module) => ({ default: module.Integrations })));
-const SuccessAndLearning = lazy(() => import("@/components/onboarding/SuccessAndLearning").then((module) => ({ default: module.SuccessAndLearning })));
 const TermsOfUsePage = lazy(() => import("@/pages/Documents/TermsOfUsePage"));
 const PersonalDataConsentPage = lazy(() => import("@/pages/Documents/PersonalDataConsentPage"));
 const AdminDashboard = lazy(() => import("@/pages/Admin/AdminDashboard"));
@@ -96,10 +93,12 @@ function Routing() {
           <Route path="/onboarding" element={<Navigate to="/onboarding/field-of-activity" replace />} />
           <Route path="/onboarding/start" element={<Navigate to="/" replace />} />
           <Route path="/onboarding/field-of-activity" element={<FieldOfActivity />} />
-          <Route path="/onboarding/goals-and-habits" element={<GoalsAndHabits />} />
-          <Route path="/onboarding/existing-plans" element={<ExistingPlans />} />
+          {/* Areas are the one question; the rest moved to the app (chats with other assistants: Integrations) */}
+          <Route path="/onboarding/goals-and-habits" element={<Navigate to="/onboarding/integrations" replace />} />
+          <Route path="/onboarding/existing-plans" element={<Navigate to="/onboarding/integrations" replace />} />
           <Route path="/onboarding/integrations" element={<Integrations />} />
-          <Route path="/onboarding/success-and-learning" element={<RequireAccount><SuccessAndLearning /></RequireAccount>} />
+          <Route path="/onboarding/finish" element={<RequireAccount><FinishOnboarding /></RequireAccount>} />
+          <Route path="/onboarding/success-and-learning" element={<Navigate to="/onboarding/finish" replace />} />
         </Route>
 
         <Route element={<AuthLayout />}>

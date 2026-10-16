@@ -1308,10 +1308,13 @@ const futureINTEGRATIONS = [
 ];
 
 const INTEGRATIONS = [
-  { src: "/images/google-calendar.png",      alt: "Google Calendar", w: 44 },
-  { src: "/images/yandexcalendar.png",        alt: "Yandex Calendar", w: 44 },
-  { src: "/images/apple-calendar.webp",       alt: "Apple Calendar",  w: 44 },
-  { src: "/images/TelegramWB.webp",             alt: "Telegram",        w: 44 },
+  { src: "/images/google-calendar.png",       alt: "Google Calendar",  w: 44 },
+  { src: "/images/yandexcalendar.png",        alt: "Yandex Calendar",  w: 44 },
+  { src: "/images/apple-calendar.webp",       alt: "Apple Calendar",   w: 44 },
+  { src: "/images/samsung-calendar.webp",     alt: "Samsung Calendar", w: 44 },
+  { src: "/images/Jira_Software_Logo.svg",    alt: "Jira",             w: 40 },
+  { src: "/images/Notion.webp",               alt: "Notion",           w: 44 },
+  { src: "/images/TelegramWB.webp",           alt: "Telegram",         w: 44 },
 ];
 
 const FINAL_CTA_OVERLAP_TOP_VH = 10;
@@ -1319,9 +1322,13 @@ const FINAL_CTA_EXTRA_BOTTOM_VH = 55;
 
 const ORBIT_PERIOD_MS = 24000;
 const ORBIT_TRANSITION_MS = 700;
-const ROW_ICON_SIZE = 56;
-const ROW_GAP = 12;
-const ROW_Y_OFFSET = 140;
+// On a phone the orbit and the row of calendars are smaller, so all seven icons fit the screen
+const PHONE_MAX_W = 640;
+const isPhoneWidth = () => window.innerWidth <= PHONE_MAX_W;
+const rowIconSize = () => (isPhoneWidth() ? 40 : 56);
+const rowGap = () => (isPhoneWidth() ? 8 : 12);
+const rowYOffset = () => (isPhoneWidth() ? 100 : 140);
+const orbitRadiusScale = () => (isPhoneWidth() ? 0.75 : 1 / 1.2);
 // Иконка рисуется в максимальном размере орбиты и уменьшается через scale():
 // анимация меняет только transform/opacity — без layout на каждом кадре.
 const ORBIT_ICON_BASE = 96;
@@ -1391,9 +1398,8 @@ const FinalCTA: React.FC<{
     const icons = iconRefs.current;
     if (!icons.length) return;
 
-    const ORBIT_RADIUS_SCALE = 1/1.2;
     const computeRadius = () =>
-      Math.min(window.innerWidth * 0.32, 240) * ORBIT_RADIUS_SCALE;
+      Math.min(window.innerWidth * 0.32, 240) * orbitRadiusScale();
 
     const orbitValues = (i: number, angle: number) => {
       const R = computeRadius();
@@ -1407,26 +1413,25 @@ const FinalCTA: React.FC<{
         x,
         y,
         opacity: 0.1 + 0.9 * t,
-        outerSize: 80 + 16 * sf,
+        outerSize: isPhoneWidth() ? 48 + 12 * sf : 80 + 16 * sf,
       };
     };
 
     const staticValues = (i: number, maxWidth: number) => {
-      const perRow = Math.max(
-        1,
-        Math.floor((maxWidth + ROW_GAP) / (ROW_ICON_SIZE + ROW_GAP))
-      );
+      const size = rowIconSize();
+      const gap = rowGap();
+      const perRow = Math.max(1, Math.floor((maxWidth + gap) / (size + gap)));
       const rowIdx = Math.floor(i / perRow);
       const colIdx = i % perRow;
       const itemsInRow = Math.min(perRow, N - rowIdx * perRow);
-      const rowWidth = itemsInRow * ROW_ICON_SIZE + (itemsInRow - 1) * ROW_GAP;
-      const startX = -rowWidth / 2 + ROW_ICON_SIZE / 2;
+      const rowWidth = itemsInRow * size + (itemsInRow - 1) * gap;
+      const startX = -rowWidth / 2 + size / 2;
 
       return {
-        x: startX + colIdx * (ROW_ICON_SIZE + ROW_GAP),
-        y: ROW_Y_OFFSET + rowIdx * (ROW_ICON_SIZE + ROW_GAP),
+        x: startX + colIdx * (size + gap),
+        y: rowYOffset() + rowIdx * (size + gap),
         opacity: 1,
-        outerSize: ROW_ICON_SIZE,
+        outerSize: size,
       };
     };
 
@@ -1477,7 +1482,7 @@ const FinalCTA: React.FC<{
       };
     } else {
       const applyStatic = () => {
-        const maxWidth = Math.min(window.innerWidth - 120, 600);
+        const maxWidth = Math.min(window.innerWidth - (isPhoneWidth() ? 32 : 120), 600);
         setTransition(true);
         icons.forEach((el, i) => {
           if (el) writeIcon(el, staticValues(i, maxWidth));
@@ -1543,7 +1548,7 @@ const FinalCTA: React.FC<{
       >
         <div className="text-center max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
-            {tr("Ваш день живёт в\u00a0Google, Jira и\u00a0блокноте.", "Your day lives in\u00a0Google, Jira and\u00a0a notebook.")}{" "}
+            {tr("Ваш день живёт в\u00a0Google, Jira, Notion и\u00a0блокноте.", "Your day lives in\u00a0Google, Jira, Notion and\u00a0a notebook.")}{" "}
             <span className="text-white/85">
               {tr("Dayla задаёт единый ритм.", "Dayla sets one rhythm.")}
             </span>
@@ -1632,12 +1637,16 @@ const FinalCTA: React.FC<{
 
 
 const SLIDE_DESIGN_WIDTH = 1280;
-const MOBILE_HEIGHT_CAP = 1; // 80vh
+// Below this container width the slides switch to the stacked phone layout, designed 420px wide
+const SLIDE_MOBILE_BREAKPOINT = 768;
+const SLIDE_MOBILE_DESIGN_WIDTH = 420;
 
 interface ScaledSlideProps {
   children: React.ReactNode;
   /** Общий scale для всех слайдов. */
   scale: number;
+  /** The width the slide is laid out at before scaling. */
+  designWidth: number;
   /** Натуральная высота контента в дизайн-пикселях (до transform). */
   onMeasured?: (designHeight: number) => void;
 }
@@ -1645,6 +1654,7 @@ interface ScaledSlideProps {
 const ScaledSlide: React.FC<ScaledSlideProps> = ({
   children,
   scale,
+  designWidth,
   onMeasured,
 }) => {
   const innerRef = React.useRef<HTMLDivElement>(null);
@@ -1669,7 +1679,7 @@ const ScaledSlide: React.FC<ScaledSlideProps> = ({
       <div
         ref={innerRef}
         style={{
-          width: SLIDE_DESIGN_WIDTH,
+          width: designWidth,
           flexShrink: 0,
           transform: `scale(${scale})`,
           transformOrigin: "center center",
@@ -1684,19 +1694,31 @@ const ScaledSlide: React.FC<ScaledSlideProps> = ({
 const AUTO_ADVANCE_MS = 8000;
 const MANUAL_PAUSE_MS = 25000;
 
-const SlideFlight: React.FC = () => (
-  <div className="py-16">
-    <div className="max-w-5xl mx-auto px-6">
-      <div className="max-w-2xl mb-14">
+/* A slide is laid out at a fixed design width and scaled to the screen. On a phone that width is narrow,
+   and the picture and the chat stand one under the other instead of side by side. */
+type SlideProps = { mobile: boolean };
+
+const SLIDE_PAD = (mobile: boolean) => (mobile ? "pt-4 pb-20" : "py-16");
+const SLIDE_INNER = (mobile: boolean) => (mobile ? "px-4" : "px-6");
+const SLIDE_HEAD = (mobile: boolean) => (mobile ? "mb-6" : "max-w-2xl mb-14");
+const SLIDE_TITLE = (mobile: boolean) =>
+  cn("font-semibold tracking-tight", mobile ? "text-[28px] leading-tight" : "text-4xl");
+const SLIDE_PHONE = (mobile: boolean) => (mobile ? "max-w-[300px]" : "max-w-[400px]");
+const SLIDE_NOTE = (mobile: boolean) => (mobile ? "mt-6 text-center" : "mt-16 max-w-2xl mx-auto text-center");
+
+const SlideFlight: React.FC<SlideProps> = ({ mobile }) => (
+  <div className={SLIDE_PAD(mobile)}>
+    <div className={cn("max-w-5xl mx-auto", SLIDE_INNER(mobile))}>
+      <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Парсинг документов", "Document parsing")}</Badge>
-        <h2 className="text-4xl font-semibold tracking-tight">
+        <h2 className={SLIDE_TITLE(mobile)}>
           {tr("Пересылайте события — Dayla всё спланирует", "Forward events — Dayla plans the rest")}
         </h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-20 items-center">
+      <div className={mobile ? "flex flex-col gap-4" : "grid grid-cols-2 gap-20 items-center"}>
         <div className="relative flex justify-center">
-          <div className="relative w-full max-w-[400px]">
+          <div className={cn("relative w-full", SLIDE_PHONE(mobile))}>
             <IPhoneScene />
           </div>
         </div>
@@ -1716,9 +1738,9 @@ const SlideFlight: React.FC = () => (
         </div>
       </div>
 
-      <div className="mt-16 max-w-2xl mx-auto text-center">
+      <div className={SLIDE_NOTE(mobile)}>
         <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+          <Sparkles size={14} className="text-blue-500 shrink-0" aria-hidden="true" />
           {tr("Dayla ничего не меняет без подтверждения — вы решаете, что делать с\u00a0событием", "Dayla changes nothing without your confirmation — you decide what to do with\u00a0the event")}
         </p>
       </div>
@@ -1726,12 +1748,12 @@ const SlideFlight: React.FC = () => (
   </div>
 );
 
-const SlideFinance: React.FC = () => (
-  <div className="py-16">
-    <div className="max-w-6xl mx-auto px-6">
-      <div className="max-w-2xl mb-14">
+const SlideFinance: React.FC<SlideProps> = ({ mobile }) => (
+  <div className={SLIDE_PAD(mobile)}>
+    <div className={cn("max-w-6xl mx-auto", SLIDE_INNER(mobile))}>
+      <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Из рабочего чата — в план", "From a work chat to your plan")}</Badge>
-        <h2 className="text-4xl font-semibold tracking-tight">
+        <h2 className={SLIDE_TITLE(mobile)}>
           {tr("Прислали задачу? Dayla внесёт её в ваш план", "Got a task? Dayla puts it in your plan")}
         </h2>
         <p className="mt-3 text-gray-600 dark:text-gray-400">
@@ -1739,13 +1761,13 @@ const SlideFinance: React.FC = () => (
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-20 items-center">
+      <div className={mobile ? "flex flex-col gap-4" : "grid grid-cols-2 gap-20 items-center"}>
         <div className="relative flex justify-center">
-          <div className="relative w-full max-w-[400px]">
+          <div className={cn("relative w-full", SLIDE_PHONE(mobile))}>
             <IPhoneSceneFinance />
           </div>
         </div>
-        <div className="max-w-sm relative mx-auto">
+        <div className={cn("relative", mobile ? "w-full" : "max-w-sm mx-auto")}>
           <DaylaChatCard
             daylaMessage={
               <>
@@ -1764,18 +1786,18 @@ const SlideFinance: React.FC = () => (
   </div>
 );
 
-const SlideGTD: React.FC = () => (
-  <div className="py-16">
-    <div className="max-w-6xl mx-auto px-6">
-      <div className="max-w-2xl mb-14">
+const SlideGTD: React.FC<SlideProps> = ({ mobile }) => (
+  <div className={SLIDE_PAD(mobile)}>
+    <div className={cn("max-w-6xl mx-auto", SLIDE_INNER(mobile))}>
+      <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Систематизация и дисциплина", "Structure and discipline")}</Badge>
-        <h2 className="text-4xl font-semibold tracking-tight">
+        <h2 className={SLIDE_TITLE(mobile)}>
           {tr("Одна фраза — и всё разложено по полочкам", "One sentence — and everything is in order")}
         </h2>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-16 items-center">
-        <div className="relative flex justify-center">
+      <div className={mobile ? "flex flex-col gap-6" : "grid grid-cols-[minmax(0,4fr)_minmax(0,6fr)] gap-16 items-center"}>
+        <div className={cn("relative flex justify-center", mobile && "mx-auto w-full max-w-[260px]")}>
           <GTDAggregation />
         </div>
         <div className="relative">
@@ -1786,9 +1808,9 @@ const SlideGTD: React.FC = () => (
         </div>
       </div>
 
-      <div className="mt-16 max-w-2xl mx-auto text-center">
+      <div className={SLIDE_NOTE(mobile)}>
         <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-          <Sparkles size={14} className="text-blue-500" aria-hidden="true" />
+          <Sparkles size={14} className="text-blue-500 shrink-0" aria-hidden="true" />
           {tr("Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь", "You approve the plan with one tap — Dayla puts everything in the calendar")}
         </p>
       </div>
@@ -1796,10 +1818,10 @@ const SlideGTD: React.FC = () => (
   </div>
 );
 
-const USE_CASE_SLIDES: { id: string; render: () => React.ReactNode }[] = [
-  { id: "flight",  render: () => <SlideFlight />  },
-  { id: "finance", render: () => <SlideFinance /> },
-  { id: "gtd",     render: () => <SlideGTD />     },
+const USE_CASE_SLIDES: { id: string; render: (mobile: boolean) => React.ReactNode }[] = [
+  { id: "flight",  render: (mobile) => <SlideFlight mobile={mobile} />  },
+  { id: "finance", render: (mobile) => <SlideFinance mobile={mobile} /> },
+  { id: "gtd",     render: (mobile) => <SlideGTD mobile={mobile} />     },
 ];
 
 const SWIPE_MIN_PX = 40;
@@ -1859,6 +1881,10 @@ const UserCaseCarousel: React.FC<{
     [handleMeasured]
   );
 
+  const mobile = containerSize.w > 0 && containerSize.w < SLIDE_MOBILE_BREAKPOINT;
+  // Switching layouts changes every slide's height; ScaledSlide's ResizeObserver reports the new ones
+  const designWidth = mobile ? SLIDE_MOBILE_DESIGN_WIDTH : SLIDE_DESIGN_WIDTH;
+
   const maxDesignHeight = React.useMemo(() => {
     const hs = Object.values(measurementsRef.current);
     return hs.length ? Math.max(...hs) : 0;
@@ -1868,10 +1894,10 @@ const UserCaseCarousel: React.FC<{
   const scale = React.useMemo(() => {
     if (!containerSize.w || !containerSize.h || !maxDesignHeight) return 1;
     return Math.min(
-      containerSize.w / SLIDE_DESIGN_WIDTH,
+      containerSize.w / designWidth,
       containerSize.h / maxDesignHeight
     );
-  }, [containerSize, maxDesignHeight]);
+  }, [containerSize, designWidth, maxDesignHeight]);
 
   const go = React.useCallback(
     (next: number) => {
@@ -1918,7 +1944,8 @@ const UserCaseCarousel: React.FC<{
         if (Math.abs(dx) >= SWIPE_MIN_PX) go(index + (dx < 0 ? 1 : -1));
       }}
     >
-      <div className="h-[100svh] min-h-[480px] w-full overflow-hidden">
+      {/* On a phone the fixed header covers the top: the slides start below it */}
+      <div className="h-[100svh] min-h-[480px] w-full overflow-hidden pt-14 md:pt-0">
         <div ref={containerRef} className="relative w-full h-full">
           {USE_CASE_SLIDES.map((slide, i) => {
             const isActive = i === index;
@@ -1935,9 +1962,10 @@ const UserCaseCarousel: React.FC<{
               >
                 <ScaledSlide
                   scale={scale}
+                  designWidth={designWidth}
                   onMeasured={measuredCallbacks[i]}
                 >
-                  {slide.render()}
+                  {slide.render(mobile)}
                 </ScaledSlide>
               </div>
             );

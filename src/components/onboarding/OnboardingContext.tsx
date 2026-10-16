@@ -1,5 +1,7 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/app/api/client";
+import { tr } from "@/i18n";
 
 export interface Sphere {
   id: string;
@@ -119,6 +121,46 @@ const REMINDER_MINUTES: Record<FirstTask["reminder"], number | null> = {
   "1d": 1440,
 };
 
+// The default personal calendar is the account's first local one, so it is made before the areas' calendars:
+// otherwise every new task would land in the first area's calendar.
+const PERSONAL_CALENDAR = "Личный календарь";
+
+/** A calendar for each area picked in onboarding, in priority order; ones that already exist are kept. */
+async function createSphereCalendars(spheres: Sphere[], timezone: string): Promise<void> {
+  if (spheres.length === 0) return;
+  const existing = await api.calendars.list();
+  const names = new Set(existing.map((calendar) => calendar.name.trim().toLowerCase()));
+  if (!existing.some((calendar) => calendar.provider === "local")) {
+    await api.calendars.create({ name: PERSONAL_CALENDAR, timezone });
+    names.add(PERSONAL_CALENDAR.toLowerCase());
+  }
+  const ordered = [...spheres].sort((a, b) => a.priority - b.priority);
+  for (const sphere of ordered) {
+    const name = sphere.name.trim().slice(0, 100);
+    if (!name || names.has(name.toLowerCase())) continue;
+    names.add(name.toLowerCase());
+    await api.calendars.create({ name, timezone });
+  }
+}
+
+/** The end of onboarding, once there is an account: save the answers and open the app. */
+export const FinishOnboarding: React.FC = () => {
+  const navigate = useNavigate();
+  const started = React.useRef(false);
+
+  React.useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void applyOnboarding().finally(() => navigate("/app", { replace: true }));
+  }, [navigate]);
+
+  return (
+    <div className="flex h-dvh items-center justify-center bg-white dark:bg-gray-950" role="status" aria-label={tr("Готовим ваш календарь", "Preparing your calendar")}>
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+    </div>
+  );
+};
+
 export async function applyOnboarding(): Promise<void> {
   const data = loadStored();
   if (!data) return;
@@ -141,6 +183,7 @@ export async function applyOnboarding(): Promise<void> {
       timezone: data.timezone,
       integrations: data.integrations,
     });
+    await createSphereCalendars(data.spheres, data.timezone);
     const title = data.firstTask.title.trim();
     if (title) {
       const [hours, minutes] = (data.workHoursFrom || "09:00").split(":").map(Number);

@@ -6,7 +6,7 @@ It is served by nginx in Docker (and on Amvera), with the backend proxied on the
 | Path | What it is | Code |
 | --- | --- | --- |
 | `/` | Landing page (logged-in visitors go straight to `/app`) | `src/components/onboarding/Start.tsx`, `src/components/landing/` |
-| `/onboarding/*` | Ten-step onboarding. Answers are kept in `sessionStorage` and applied after sign-up: timezone, plus the first task as an event tomorrow | `src/components/onboarding/` |
+| `/onboarding/*` | Two steps: areas of life, then sign-up and integrations. Answers are kept in `sessionStorage` and applied after sign-up (`/onboarding/finish`): timezone, profile, and a calendar for each chosen area | `src/components/onboarding/` |
 | `/login`, `/register` | Auth screens (`?next=` returns you to the page you came from) | `src/pages/Auth/`, `src/layouts/AuthLayout.tsx` |
 | `/terms-of-use`, `/personal-data-consent` | Legal documents (Markdown) | `src/pages/Documents/` |
 | `/app/*` | The product: Today, Calendar (day/week/month), Tasks, Event, Assistant, Integrations, Account (profile, tags and all settings; `/app/settings` still opens it) | `src/app/` |

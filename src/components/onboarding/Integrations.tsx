@@ -15,7 +15,7 @@ import { ConsentCheckbox } from "@/pages/Auth/RegisterPage";
 import { useAuthStore } from "@/store/authStore";
 import { tr } from "@/i18n";
 
-const TOTAL = 10;
+const TOTAL = 2;
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -54,6 +54,8 @@ type Integration = {
 const INTEGRATIONS: Integration[] = [
   { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
   { id: "yandex", name: tr("Яндекс Календарь", "Yandex Calendar"), src: "/images/yandexcalendar.png",      w: 40, kind: "oauth" },
+  { id: "jira",   name: "Jira",             src: "/images/Jira_Software_Logo.svg", w: 36, kind: "oauth" },
+  { id: "notion", name: "Notion",           src: "/images/Notion.webp",             w: 40, kind: "oauth" },
 ];
 
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
@@ -128,7 +130,7 @@ export const Integrations: React.FC = () => {
   const connectNext = async (queue: Provider[], done: Provider[]) => {
     const next = queue.filter(isOAuthProvider).find((id) => !done.includes(id));
     if (!next) {
-      navigate("/onboarding/success-and-learning");
+      navigate("/onboarding/finish");
       return;
     }
     setBusy(true);
@@ -221,7 +223,7 @@ export const Integrations: React.FC = () => {
       }
       return;
     }
-    const next = selected.some(isOAuthProvider) ? RESUME_PATH : "/onboarding/success-and-learning";
+    const next = selected.some(isOAuthProvider) ? RESUME_PATH : "/onboarding/finish";
     navigate(`/register?next=${encodeURIComponent(next)}`);
   };
 
@@ -241,13 +243,13 @@ export const Integrations: React.FC = () => {
   return (
     <>
       <OnboardingLayout
-        step={6}
+        step={2}
         totalSteps={TOTAL}
         title={tr("Что подключим?", "What shall we connect?")}
-        onBack={() => navigate("/onboarding/existing-plans")}
+        onBack={() => navigate("/onboarding/field-of-activity")}
         onNext={handleNext}
         nextDisabled={busy}
-        onSkip={() => navigate("/onboarding/success-and-learning")}
+        onSkip={() => navigate("/onboarding/finish")}
         nextLabel={
           busy
             ? tr("Подключаем…", "Connecting…")

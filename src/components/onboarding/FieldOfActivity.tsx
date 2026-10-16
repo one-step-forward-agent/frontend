@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/form-field";
 import { cn } from "@/utils/cn";
 import { tr } from "@/i18n";
 
-const TOTAL = 10;
+const TOTAL = 2;
 
 /* ─── Liquid Glass — единый стиль ────────────────────────── */
 const GLASS_BODY =
@@ -134,7 +134,7 @@ export const FieldOfActivity: React.FC = () => {
   const handleNext = () => {
     if (spheres.length === 0) return;
     update("spheres", spheres);
-    navigate("/onboarding/goals-and-habits");
+    navigate("/onboarding/integrations");
   };
 
   const onDragStart = (e: React.DragEvent, id: string) => {
@@ -162,7 +162,7 @@ export const FieldOfActivity: React.FC = () => {
 
   return (
     <OnboardingLayout
-      step={2}
+      step={1}
       totalSteps={TOTAL}
       title={tr("Отметьте важные для вас сферы", "Pick the areas that matter to you")}
       subtitle={tr("Я учту их и помогу не потерять важное из виду.", "I'll keep them in mind and help you not lose sight of what matters.")}

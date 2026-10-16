@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { TelegramPrompt } from "../components/TelegramPrompt";
+import { AiChatTransfer } from "../components/AiChatTransfer";
 import { Icon } from "../components/icons";
 import type { Integration } from "../api/types";
 import {
@@ -29,7 +30,7 @@ const GLASS_BODY = GLASS_BODY_FLAT;
 
 /* ─── OAuth-провайдеры (совпадает с onboarding/Integrations.tsx) ─── */
 
-type OAuthProvider = "google" | "yandex";
+type OAuthProvider = "google" | "yandex" | "notion" | "jira";
 
 const OAUTH_INTEGRATIONS: Record<
   OAuthProvider,
@@ -51,6 +52,23 @@ const OAUTH_INTEGRATIONS: Record<
       tr("Импорт событий Яндекс Календаря в Dayla и экспорт обратно.", "Import Yandex Calendar events into Dayla and export them back."),
     src: "/images/yandexcalendar.png",
   },
+  notion: {
+    title: "Notion",
+    description:
+      tr("Записи из баз Notion с датой появляются в календаре Dayla, а задачи Dayla можно отправить в Notion. При подключении отметьте нужные базы.", "Entries with dates from your Notion databases appear in the Dayla calendar, and Dayla tasks can be sent to Notion. Pick the databases when connecting."),
+    src: "/images/Notion.webp",
+  },
+  jira: {
+    title: "Jira",
+    description:
+      tr("Ваши задачи Jira со сроком (Due date) появляются в календаре Dayla и обновляются при синхронизации.", "Your Jira issues with a due date appear in the Dayla calendar and update on every sync."),
+    src: "/images/Jira_Software_Logo.svg",
+  },
+};
+
+// Logos of services connected with a form rather than OAuth
+const OTHER_LOGOS: Record<string, string> = {
+  apple: "/images/apple-calendar.webp",
 };
 
 const isOAuth = (slug: string): slug is OAuthProvider =>
@@ -59,6 +77,8 @@ const isOAuth = (slug: string): slug is OAuthProvider =>
 const PROVIDER_LABELS: Record<string, string> = {
   google: "Google Calendar",
   yandex: tr("Яндекс Календарь", "Yandex Calendar"),
+  notion: "Notion",
+  jira: "Jira",
 };
 
 const PAGE = "relative max-w-5xl mx-auto pt-[1.5vh]";
@@ -180,6 +200,12 @@ export function IntegrationsPage() {
             />
           ))}
           <SamsungCard />
+        </div>
+      )}
+
+      {integrations.data && (
+        <div className="mt-4">
+          <AiChatTransfer />
         </div>
       )}
 
@@ -309,6 +335,44 @@ function SamsungCard() {
   );
 }
 
+/* ─── Apple Calendar through Google ─────────────────────── */
+
+// The simplest way to see Dayla in Apple Calendar: Dayla syncs with Google, and Apple Calendar shows the Google
+// account's calendars. The iCloud form below stays for those who keep their calendars in iCloud.
+function AppleViaGoogle() {
+  return (
+    <details className="mb-3 rounded-xl p-3 bg-white/[0.04] dark:bg-white/[0.02] ring-1 ring-white/30 dark:ring-white/10 group" open>
+      <summary className="cursor-pointer select-none text-xs font-medium text-gray-900 dark:text-white">
+        {tr("Проще всего — через Google Calendar", "Easiest: through Google Calendar")}
+      </summary>
+      <ol className="mt-2 space-y-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
+        <li>{tr("Подключите выше Google Calendar — задачи Dayla попадут в ваш Google-календарь.", "Connect Google Calendar above — Dayla tasks will go to your Google calendar.")}</li>
+        <li>
+          {tr(
+            "iPhone или iPad: Настройки → Приложения → Календарь → Учётные записи → Добавить учётную запись → Google. Войдите тем же Google-аккаунтом и включите «Календари». (На iOS 17 и раньше: Настройки → Календарь → Учётные записи.)",
+            "iPhone or iPad: Settings → Apps → Calendar → Accounts → Add Account → Google. Sign in with the same Google account and turn on “Calendars”. (On iOS 17 and earlier: Settings → Calendar → Accounts.)"
+          )}
+        </li>
+        <li>
+          {tr(
+            "Mac: Календарь → Настройки → Учётные записи → «+» → Google.",
+            "Mac: Calendar → Settings → Accounts → “+” → Google."
+          )}
+        </li>
+        <li>
+          {tr(
+            "Чтобы события, созданные на iPhone, тоже попадали в Dayla: Настройки → Календарь → Календарь по умолчанию → выберите Google-календарь.",
+            "So that events you create on the iPhone reach Dayla too: Settings → Calendar → Default Calendar → pick the Google calendar."
+          )}
+        </li>
+      </ol>
+      <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+        {tr("Календари в iCloud? Подключите их напрямую кнопкой ниже — понадобится пароль приложения Apple ID.", "Calendars in iCloud? Connect them directly with the button below — you'll need an Apple ID app-specific password.")}
+      </p>
+    </details>
+  );
+}
+
 /* ─── IntegrationCard ───────────────────────────────────── */
 
 function IntegrationCard({
@@ -325,9 +389,7 @@ function IntegrationCard({
   const { pending, run } = useAction(useErrorToast());
   const [purge, setPurge] = useState(false);
 
-  // Решаем по фронтовому белому списку, а не по item.auth_type
-  // с бэкенда: пока в registry.py для notion зарегистрирован
-  // manual-провайдер, бэк отдаёт неправильный auth_type.
+  // OAuth by the page's own list (google, yandex, notion, jira); the others are connected with a form
   const oauth = isOAuth(item.slug);
 
   const connectOAuth = () =>
@@ -354,7 +416,9 @@ function IntegrationCard({
 
   const logoSrc = isOAuth(item.slug)
     ? OAUTH_INTEGRATIONS[item.slug].src
-    : undefined;
+    : OTHER_LOGOS[item.slug];
+  // The page's own wording for OAuth services: the backend's mentions signing in with them, which is off
+  const description = isOAuth(item.slug) ? OAUTH_INTEGRATIONS[item.slug].description : item.description;
 
   return (
     <GlassCard>
@@ -390,8 +454,10 @@ function IntegrationCard({
       </div>
 
       <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
-        {item.description}
+        {description}
       </p>
+
+      {item.slug === "apple" && <AppleViaGoogle />}
 
       {connection && (
         <dl className="mb-3 space-y-1.5 text-xs">
