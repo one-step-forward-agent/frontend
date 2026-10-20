@@ -292,6 +292,11 @@ export const api = {
         { method: "DELETE" },
         { name: "integration_disconnect", params: { integration: slug } },
       ),
+    getCalendars: (slug: string, values: Record<string, unknown>) => 
+      request<{ calendars: { id: string; name: string }[] }>(`/api/integrations/${slug}/calendars`, {
+        method: "POST",
+        body: JSON.stringify({ values, return_to: window.location.pathname }),
+      }),
   },
   reminders: {
     get: () => request<ReminderSettings>("/api/reminders/settings"),

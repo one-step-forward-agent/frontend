@@ -55,13 +55,13 @@ const OAUTH_INTEGRATIONS: Record<
   notion: {
     title: "Notion",
     description:
-      tr("Записи из баз Notion с датой появляются в календаре Dayla, а задачи Dayla можно отправить в Notion. При подключении отметьте нужные базы.", "Entries with dates from your Notion databases appear in the Dayla calendar, and Dayla tasks can be sent to Notion. Pick the databases when connecting."),
+      tr("Записи появляются в календаре Dayla, а задачи Dayla можно отправить в Notion.", "Entries with dates appear in the Dayla calendar, and Dayla tasks can be sent to Notion."),
     src: "/images/Notion.webp",
   },
   jira: {
     title: "Jira",
     description:
-      tr("Ваши задачи Jira со сроком (Due date) появляются в календаре Dayla и обновляются при синхронизации.", "Your Jira issues with a due date appear in the Dayla calendar and update on every sync."),
+      tr("Ваши задачи появляются в календаре Dayla и обновляются при синхронизации.", "Your Jira issues with a due date appear in the Dayla calendar and update on every sync."),
     src: "/images/Jira_Software_Logo.svg",
   },
 };
@@ -174,7 +174,6 @@ export function IntegrationsPage() {
 
       <PageHeader
         title={tr("Интеграции", "Integrations")}
-        subtitle={tr("Импортируйте события и задачи из сервисов и отправляйте события Dayla обратно.", "Import events and tasks from other services and send Dayla events back.")}
       />
 
       <div className="mb-4">
@@ -276,24 +275,18 @@ function SamsungCard() {
       </div>
 
       <p className="mb-2 text-xs text-gray-700 dark:text-gray-200 leading-relaxed">
-        {tr("В обычном Samsung Calendar Dayla появляется через Google-аккаунт телефона — без сторонних приложений:", "Dayla shows up in the regular Samsung Calendar through the phone's Google account — no extra apps:")}
+        {tr("Через Google-аккаунт:", "Through the Google account:")}
       </p>
       <ol className="mb-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
         <li>{tr("Подключите выше Google Calendar.", "Connect Google Calendar above.")}</li>
         <li>
           {tr(
-            "В Samsung Calendar: ☰ → ⚙ Настройки → Управление календарями (или «Календари») → включите календарь вашего Google-аккаунта. Если аккаунта нет — Настройки телефона → Учётные записи → Добавить → Google.",
-            "In Samsung Calendar: ☰ → ⚙ Settings → Manage calendars (or “Calendars”) → turn on your Google account's calendar. No account there? Phone Settings → Accounts → Add → Google."
+            "В Samsung Calendar: ☰ → ⚙ Настройки → Управление календарями (или «Календари») → включите календарь вашего Google-аккаунта.",
+            "In Samsung Calendar: ☰ → ⚙ Settings → Manage calendars (or “Calendars”) → turn on your Google account's calendar."
           )}
         </li>
-        <li>{tr("Задачи из Dayla сразу появятся в Samsung Calendar, а события, созданные в нём в Google-календаре, — в Dayla.", "Dayla tasks will appear in Samsung Calendar right away, and events you create there in the Google calendar will appear in Dayla.")}</li>
+        <li>{tr("Если аккаунта нет — Настройки телефона → Учётные записи → Добавить → Google.", "No account there? Phone Settings → Accounts → Add → Google.")}</li>
       </ol>
-      <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
-        {tr(
-          "Без Google: ссылка ниже — для подписки в Outlook, Apple Calendar и других приложениях. Samsung Calendar сам подписываться на ссылки не умеет — его календари приходят только из аккаунтов телефона.",
-          "Without Google: the link below is for subscribing in Outlook, Apple Calendar and other apps. Samsung Calendar can't subscribe to links itself — its calendars only come from the phone's accounts."
-        )}
-      </p>
 
       {url && (
         <input
@@ -328,29 +321,22 @@ function SamsungCard() {
           </Button>
         )}
       </div>
-      <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-        {tr("Ссылка личная: по ней видно ваше расписание, не пересылайте её.", "The link is personal: it shows your schedule, so don't share it.")}
-      </p>
     </GlassCard>
   );
 }
 
-/* ─── Apple Calendar through Google ─────────────────────── */
-
-// The simplest way to see Dayla in Apple Calendar: Dayla syncs with Google, and Apple Calendar shows the Google
-// account's calendars. The iCloud form below stays for those who keep their calendars in iCloud.
 function AppleViaGoogle() {
   return (
     <details className="mb-3 rounded-xl p-3 bg-white/[0.04] dark:bg-white/[0.02] ring-1 ring-white/30 dark:ring-white/10 group" open>
       <summary className="cursor-pointer select-none text-xs font-medium text-gray-900 dark:text-white">
-        {tr("Проще всего — через Google Calendar", "Easiest: through Google Calendar")}
+        {tr("Через Google Calendar", "Easiest: through Google Calendar")}
       </summary>
       <ol className="mt-2 space-y-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
         <li>{tr("Подключите выше Google Calendar — задачи Dayla попадут в ваш Google-календарь.", "Connect Google Calendar above — Dayla tasks will go to your Google calendar.")}</li>
         <li>
           {tr(
-            "iPhone или iPad: Настройки → Приложения → Календарь → Учётные записи → Добавить учётную запись → Google. Войдите тем же Google-аккаунтом и включите «Календари». (На iOS 17 и раньше: Настройки → Календарь → Учётные записи.)",
-            "iPhone or iPad: Settings → Apps → Calendar → Accounts → Add Account → Google. Sign in with the same Google account and turn on “Calendars”. (On iOS 17 and earlier: Settings → Calendar → Accounts.)"
+            "Настройки → Календарь → Учётные записи → Добавить учётную запись → Google. Войдите тем же Google-аккаунтом и включите «Календари».",
+            "Settings → Calendar → Accounts → Add Account → Google. Sign in with the same Google account and turn on “Calendars”."
           )}
         </li>
         <li>
@@ -367,7 +353,7 @@ function AppleViaGoogle() {
         </li>
       </ol>
       <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-        {tr("Календари в iCloud? Подключите их напрямую кнопкой ниже — понадобится пароль приложения Apple ID.", "Calendars in iCloud? Connect them directly with the button below — you'll need an Apple ID app-specific password.")}
+        {tr("Календари в iCloud? Подключите их напрямую кнопкой ниже.", "Calendars in iCloud? Connect them directly with the button below.")}
       </p>
     </details>
   );
@@ -608,7 +594,27 @@ function ConnectForm({
   );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  
+  // Состояния для списка календарей
+  const [calendars, setCalendars] = useState<{ id: string; name: string }[]>([]);
+  const [loadingCalendars, setLoadingCalendars] = useState(false);
+  
   const toast = useToast();
+
+  // Функция загрузки календарей
+  const fetchCalendars = async () => {
+    setLoadingCalendars(true);
+    setError("");
+    try {
+      const result = await api.integrations.getCalendars(item.slug, values);
+      setCalendars(result.calendars);
+      toast(tr("Список календарей загружен", "Calendar list loaded"));
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setLoadingCalendars(false);
+    }
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -631,18 +637,66 @@ function ConnectForm({
         {item.description}
       </p>
 
-      {item.fields.map((field) =>
-        field.type === "checkbox" ? (
-          <Switch
-            key={field.name}
-            label={field.label}
-            hint={field.help}
-            checked={Boolean(values[field.name])}
-            onChange={(checked) =>
-              setValues((current) => ({ ...current, [field.name]: checked }))
-            }
-          />
-        ) : (
+      {item.fields.map((field) => {
+        // Если это поле для календаря (или если бэкенд прислал type="select")
+        if (field.name === "calendar_name" || field.type === "select") {
+          return (
+            <Field key={field.name} label={field.label}>
+              <div className="flex gap-2 items-center">
+                <select
+                  value={String(values[field.name] ?? "")}
+                  onChange={(e) =>
+                    setValues((current) => ({
+                      ...current,
+                      [field.name]: e.target.value,
+                    }))
+                  }
+                  className={cn(
+                    "w-full h-9 px-3 text-sm rounded-lg",
+                    "bg-white/[0.05] dark:bg-white/[0.02]",
+                    "ring-1 ring-white/20 dark:ring-white/10",
+                    "outline-none focus:ring-sky-400/50",
+                    "text-gray-900 dark:text-white",
+                  )}
+                >
+                  <option value="">{tr("По умолчанию (первый доступный)", "Default (first available)")}</option>
+                  {calendars.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  busy={loadingCalendars}
+                  onClick={fetchCalendars}
+                >
+                  {tr("Загрузить", "Load")}
+                </Button>
+              </div>
+            </Field>
+          );
+        }
+
+        // Стандартный рендер чекбокса
+        if (field.type === "checkbox") {
+          return (
+            <Switch
+              key={field.name}
+              label={field.label}
+              hint={field.help}
+              checked={Boolean(values[field.name])}
+              onChange={(checked) =>
+                setValues((current) => ({ ...current, [field.name]: checked }))
+              }
+            />
+          );
+        }
+
+        // Стандартный рендер текстовых полей
+        return (
           <Field
             key={field.name}
             label={field.label + (field.required ? "" : tr(" (необязательно)", " (optional)"))}
@@ -680,8 +734,8 @@ function ConnectForm({
               )}
             />
           </Field>
-        ),
-      )}
+        );
+      })}
 
       {error && (
         <p className="text-xs text-red-600 dark:text-red-400" role="alert">

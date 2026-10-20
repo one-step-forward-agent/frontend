@@ -258,7 +258,7 @@ export interface Recommendation {
 export interface IntegrationField {
   name: string;
   label: string;
-  type: "text" | "password" | "url" | "checkbox";
+  type: "text" | "password" | "url" | "checkbox" | "select";
   secret: boolean;
   required: boolean;
   placeholder: string;
