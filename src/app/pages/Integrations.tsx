@@ -237,23 +237,6 @@ function SamsungCard() {
   const [path, setPath] = useState<string | null>(null);
   const url = path ? `${window.location.origin}${path}` : null;
 
-  const load = (reset = false) =>
-    run(reset ? "reset" : "link", async () => {
-      const result = await api.calendars.feed(reset);
-      setPath(result.path);
-      if (reset) toast(tr("Новая ссылка готова, старая больше не работает", "The new link is ready; the old one no longer works"));
-    });
-
-  const copy = async () => {
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast(tr("Ссылка скопирована", "Link copied"));
-    } catch {
-      toast(tr("Не удалось скопировать — выделите ссылку вручную", "Could not copy — select the link by hand"));
-    }
-  };
-
   return (
     <GlassCard>
       <div className="flex items-center gap-3 mb-3">
@@ -269,7 +252,7 @@ function SamsungCard() {
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate">Samsung Calendar</h2>
           <div className="mt-1">
-            <Badge>{url ? tr("ссылка готова", "link ready") : tr("через Google", "via Google")}</Badge>
+            <Badge>{ tr("через Google", "via Google")}</Badge>
           </div>
         </div>
       </div>
@@ -298,29 +281,6 @@ function SamsungCard() {
         />
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {url ? (
-          <>
-            <Button variant="primary" size="sm" icon="clip" onClick={copy}>
-              {tr("Скопировать ссылку", "Copy link")}
-            </Button>
-            <ConfirmButton
-              size="sm"
-              icon="sync"
-              label={tr("Новая ссылка", "New link")}
-              confirmLabel={tr("Старая перестанет работать", "The old one will stop working")}
-              busy={pending === "reset"}
-              onConfirm={() => load(true)}
-            >
-              {tr("Новая ссылка", "New link")}
-            </ConfirmButton>
-          </>
-        ) : (
-          <Button variant="primary" size="sm" icon="external" busy={pending === "link"} onClick={() => load()}>
-            {tr("Получить ссылку", "Get the link")}
-          </Button>
-        )}
-      </div>
     </GlassCard>
   );
 }
