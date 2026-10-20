@@ -399,9 +399,11 @@ function IntegrationCard({
         </div>
       </div>
 
-      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
-        {description}
-      </p>
+      {item.slug !== "apple" && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
+          {description}
+        </p>
+      )}
 
       {item.slug === "apple" && <AppleViaGoogle />}
 
