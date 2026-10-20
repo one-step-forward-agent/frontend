@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useMemo, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { TelegramPrompt } from "../components/TelegramPrompt";
-import { AiChatTransfer } from "../components/AiChatTransfer";
+// Temporarily off: "Перенос из чатов с нейросетями" only kept links, it never read the chats
+// import { AiChatTransfer } from "../components/AiChatTransfer";
 import { Icon } from "../components/icons";
 import type { Integration } from "../api/types";
 import {
@@ -20,7 +21,8 @@ import {
   useToast,
 } from "../components/ui";
 import { errorText, formatDateTime } from "../lib/format";
-import { useAction, useAsync } from "../lib/hooks";
+import { notifyTasksChanged, useAction, useAsync } from "../lib/hooks";
+import { useGoogleNotice } from "../components/GoogleNotice";
 import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -202,11 +204,13 @@ export function IntegrationsPage() {
         </div>
       )}
 
+      {/* Temporarily off, see the import above
       {integrations.data && (
         <div className="mt-4">
           <AiChatTransfer />
         </div>
       )}
+      */}
 
       <Dialog
         open={editing !== null}
@@ -338,8 +342,10 @@ function IntegrationCard({
   // OAuth by the page's own list (google, yandex, notion, jira); the others are connected with a form
   const oauth = isOAuth(item.slug);
 
+  const google = useGoogleNotice();
   const connectOAuth = () =>
     run("connect", async () => {
+      if (item.slug === "google" && !(await google.confirm())) return;
       const result = await api.integrations.connect(
         item.slug,
         {},
@@ -368,6 +374,7 @@ function IntegrationCard({
 
   return (
     <GlassCard>
+      {google.notice}
       <div className="flex items-center gap-3 mb-3">
         <span
           aria-hidden="true"
@@ -459,10 +466,11 @@ function IntegrationCard({
                   const result = await api.integrations.sync(item.slug);
                   toast(
                     tr(
-                      `Получено ${result.fetched}: новых ${result.created}, обновлено ${result.updated}`,
-                      `Fetched ${result.fetched}: ${result.created} new, ${result.updated} updated`,
+                      `Получено ${result.fetched}: новых ${result.created}, обновлено ${result.updated}, удалено ${result.deleted ?? 0}`,
+                      `Fetched ${result.fetched}: ${result.created} new, ${result.updated} updated, ${result.deleted ?? 0} deleted`,
                     ),
                   );
+                  notifyTasksChanged();
                   onChanged();
                 })
               }

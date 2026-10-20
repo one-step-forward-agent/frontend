@@ -1456,7 +1456,19 @@ const FinalCTA: React.FC<{
       void (icons[0]?.offsetWidth ?? 0);
     };
 
-    if (active) {
+    if (active && isPhoneWidth()) {
+      // On a phone the icons stand still on the ring: no rotation, all of them equally visible
+      const applyRing = () => {
+        if (!isPhoneWidth()) return;
+        setTransition(true);
+        icons.forEach((el, i) => {
+          if (el) writeIcon(el, { ...orbitValues(i, 0), opacity: 1, outerSize: 56 });
+        });
+      };
+      applyRing();
+      window.addEventListener("resize", applyRing);
+      return () => window.removeEventListener("resize", applyRing);
+    } else if (active) {
       setTransition(true);
       icons.forEach((el, i) => {
         if (el) writeIcon(el, orbitValues(i, 0));
@@ -1493,7 +1505,7 @@ const FinalCTA: React.FC<{
       window.addEventListener("resize", applyStatic);
       return () => window.removeEventListener("resize", applyStatic);
     }
-  }, [active]);
+  }, [active, isNarrow]);
 
   return (
     <section

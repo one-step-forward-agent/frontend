@@ -18,7 +18,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "../lib/format";
-import { useAsync, useTags, useTasksChanged, useToday } from "../lib/hooks";
+import { useAsync, useCalendarSync, useTags, useTasksChanged, useToday } from "../lib/hooks";
 import { navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -143,6 +143,7 @@ export function CalendarPage() {
     recommendations.reload();
   }, [events.reload, recommendations.reload]);
   useTasksChanged(reloadAll);
+  useCalendarSync();
 
   const byDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();

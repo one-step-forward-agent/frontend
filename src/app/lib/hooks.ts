@@ -55,6 +55,23 @@ export function useTasksChanged(reload: () => void) {
   }, [reload]);
 }
 
+/** Brings the connected calendars up to date when the page opens and when the user comes back to the tab (after
+ * changing or deleting events in Google Calendar, say); the server syncs at most every 2 minutes. Failures stay on
+ * their cards in "Интеграции". */
+export function useCalendarSync() {
+  useEffect(() => {
+    const sync = () =>
+      api.integrations
+        .syncAll()
+        .then((result) => result.changed && notifyTasksChanged())
+        .catch(() => undefined);
+    const onVisible = () => document.visibilityState === "visible" && sync();
+    sync();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+}
+
 /** The current time, updated every minute: for the red "now" line */
 export function useNow(): Date {
   const [now, setNow] = useState(() => new Date());

@@ -6,6 +6,7 @@ import type {
   AssistantEvent,
   CalendarEvent,
   AssistantReply,
+  ChatFile,
   DraftItem,
   HistoryMessage,
   ReminderSettings,
@@ -42,7 +43,7 @@ const GLASS_BODY = GLASS_BODY_FLAT;
 /* ─── Модель данных ──────────────────────────────────────── */
 
 type Message =
-  | { id: number; role: "user"; text: string }
+  | { id: number; role: "user"; text: string; file?: ChatFile }
   | { id: number; role: "assistant"; reply: AssistantReply; serverId?: number; rating?: -1 | 1 | null }
   | { id: number; role: "error"; text: string };
 
@@ -80,11 +81,13 @@ let messageId = 0;
 function fromHistory(items: HistoryMessage[]): Message[] {
   return items.map((item) =>
     item.role === "user"
-      ? { id: ++messageId, role: "user", text: item.text }
+      ? item.reply?.kind === "file"
+        ? { id: ++messageId, role: "user", text: item.reply.caption, file: item.reply.file }
+        : { id: ++messageId, role: "user", text: item.text }
       : {
           id: ++messageId,
           role: "assistant",
-          reply: item.reply ?? { kind: "answer", text: item.text },
+          reply: (item.reply as AssistantReply | null) ?? { kind: "answer", text: item.text },
           serverId: item.id,
           rating: item.rating,
         }
@@ -106,6 +109,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
   const { query } = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -165,22 +169,24 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
 
   const push = (message: Message) => setMessages((items) => [...items, message]);
 
-  const send = async (input: string) => {
+  const send = async (input: string, attached: File | null = null) => {
     const value = input.trim();
-    if (!value || busy) return;
+    if ((!value && !attached) || busy) return;
     setText("");
-    push({ id: ++messageId, role: "user", text: value });
+    setFile(null);
+    push({ id: ++messageId, role: "user", text: value, file: attached ? { name: attached.name, size: attached.size } : undefined });
     setBusy(true);
     try {
-      const { message_id: serverId, ...reply } = await api.assistant.chat(value);
+      const { message_id: serverId, ...reply } = attached ? await api.assistant.chatFile(attached, value) : await api.assistant.chat(value);
       push({ id: ++messageId, role: "assistant", reply: reply as AssistantReply, serverId });
       if (reply.kind === "completed") notifyTasksChanged();
       const events = "events" in reply && Array.isArray(reply.events) ? (reply.events as { tag_ids?: number[] }[]) : [];
       if (events.some((event) => event.tag_ids?.some((id) => !tagsById.has(id)))) notifyTagsChanged();
     } catch (error) {
       // A limit reached is not a failure to retry at once: the user is told when the assistant answers again
-      const limited = error instanceof ApiError && error.status === 429;
-      push({ id: ++messageId, role: "error", text: limited ? error.message : TEMPORARY_ERROR });
+      // A limit reached, or a file that cannot be read: said in words, not as a failure to retry
+      const told = error instanceof ApiError && [413, 422, 429].includes(error.status);
+      push({ id: ++messageId, role: "error", text: told ? error.message : TEMPORARY_ERROR });
     } finally {
       setBusy(false);
     }
@@ -370,7 +376,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
             </button>
           ))}
         </div>
-        <Composer value={text} onChange={setText} onSend={() => send(text)} busy={busy} inputRef={inputRef} />
+        <Composer value={text} onChange={setText} file={file} onFile={setFile} onSend={() => send(text, file)} busy={busy} inputRef={inputRef} />
       </div>
     </div>
   );
@@ -405,7 +411,8 @@ function ChatMessage({
             GLASS_PRIMARY
           )}
         >
-          <p className="relative whitespace-pre-wrap">{message.text}</p>
+          {message.file && <FileChip file={message.file} />}
+          {message.text && <p className={cn("relative whitespace-pre-wrap", message.file && "mt-1.5")}>{message.text}</p>}
         </div>
       </div>
     );
@@ -1736,15 +1743,44 @@ function DraftPreview({ items }: { items: DraftItem[] }) {
 
 /* ─── Composer ───────────────────────────────────────────── */
 
+function fileSize(bytes: number): string {
+  return bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))} ${tr("КБ", "KB")}`
+    : `${(bytes / 1024 / 1024).toFixed(1)} ${tr("МБ", "MB")}`;
+}
+
+/** A file in a message, the way messengers show one: its icon, name and size. */
+function FileChip({ file, onRemove }: { file: ChatFile; onRemove?: () => void }) {
+  return (
+    <span className="relative inline-flex items-center gap-2 max-w-full rounded-xl bg-white/15 dark:bg-white/10 px-2.5 py-1.5 text-xs">
+      <Icon name="file" size={15} />
+      <span className="truncate min-w-0">{file.name}</span>
+      {file.size > 0 && <span className="shrink-0 opacity-70">{fileSize(file.size)}</span>}
+      {onRemove && (
+        <button type="button" className="shrink-0 opacity-70 hover:opacity-100" aria-label={tr("Убрать файл", "Remove the file")} onClick={onRemove}>
+          <Icon name="close" size={13} />
+        </button>
+      )}
+    </span>
+  );
+}
+
+// Files the server reads: documents, tables, text and photos
+const CHAT_FILES = ".pdf,.docx,.xlsx,.csv,.tsv,.txt,.md,.ics,.jpg,.jpeg,.png,.webp,.gif";
+
 function Composer({
   value,
   onChange,
+  file,
+  onFile,
   onSend,
   busy,
   inputRef,
 }: {
   value: string;
   onChange: (value: string) => void;
+  file: File | null;
+  onFile: (file: File | null) => void;
   onSend: () => void;
   busy: boolean;
   inputRef?: RefObject<HTMLTextAreaElement | null>;
@@ -1752,7 +1788,7 @@ function Composer({
   const fileInput = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const [recording, setRecording] = useState(false);
-  const [working, setWorking] = useState<"voice" | "file" | null>(null);
+  const [working, setWorking] = useState<"voice" | null>(null);
   const reportError = useErrorToast();
   const ownRef = useRef<HTMLTextAreaElement>(null);
   const textarea = inputRef ?? ownRef;
@@ -1807,18 +1843,9 @@ function Composer({
     }
   };
 
-  const readFile = async (file: File | undefined) => {
-    if (!file) return;
-    setWorking("file");
-    try {
-      const result = await api.assistant.readFile(file);
-      append(result.text);
-    } catch (error) {
-      reportError(errorText(error));
-    } finally {
-      setWorking(null);
-      if (fileInput.current) fileInput.current.value = "";
-    }
+  const pickFile = (picked: File | undefined) => {
+    if (picked) onFile(picked);
+    if (fileInput.current) fileInput.current.value = "";
   };
 
   const submit = (event: FormEvent) => {
@@ -1834,8 +1861,30 @@ function Composer({
   };
 
   return (
+    <div className="space-y-1.5">
+    {file && (
+      <div className="flex">
+        <FileChip file={{ name: file.name, size: file.size }} onRemove={() => onFile(null)} />
+      </div>
+    )}
     <form
       onSubmit={submit}
+      // A screenshot pasted or a file dropped on the field is attached, as in any messenger
+      onPaste={(event) => {
+        const pasted = event.clipboardData.files[0];
+        if (pasted) {
+          event.preventDefault();
+          onFile(pasted);
+        }
+      }}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        const dropped = event.dataTransfer.files[0];
+        if (dropped) {
+          event.preventDefault();
+          onFile(dropped);
+        }
+      }}
       className={cn(
         "relative overflow-hidden rounded-2xl flex items-end gap-1 p-1.5",
         GLASS_BODY
@@ -1844,16 +1893,16 @@ function Composer({
       <input
         ref={fileInput}
         type="file"
-        accept=".pdf,.docx"
+        accept={CHAT_FILES}
         hidden
-        onChange={(e) => readFile(e.target.files?.[0])}
+        onChange={(e) => pickFile(e.target.files?.[0])}
       />
       <Button
         variant="ghost"
         icon="clip"
-        aria-label={tr("Прочитать PDF или DOCX", "Read a PDF or DOCX")}
-        title={tr("PDF или DOCX", "PDF or DOCX")}
-        busy={working === "file"}
+        aria-label={tr("Прикрепить файл или фото", "Attach a file or photo")}
+        title={tr("Файл или фото с планами: PDF, Word, Excel, CSV, текст, картинка", "A file or photo with plans: PDF, Word, Excel, CSV, text, image")}
+        disabled={busy}
         onClick={() => fileInput.current?.click()}
       />
       <textarea
@@ -1901,8 +1950,9 @@ function Composer({
         variant="primary"
         icon="send"
         aria-label={tr("Отправить", "Send")}
-        disabled={!value.trim() || busy}
+        disabled={(!value.trim() && !file) || busy}
       />
     </form>
+    </div>
   );
 }

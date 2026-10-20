@@ -213,11 +213,19 @@ export type AssistantReply =
   | { kind: "answer" | "not_found" | "edit_error" | "cancelled"; text: string }
   | { kind: "nothing" };
 
+/** A file sent with a message: the chat shows its name, the server has read it. */
+export interface ChatFile {
+  name: string;
+  size: number;
+  mime?: string;
+}
+
 export interface HistoryMessage {
   id: number;
   role: "user" | "assistant";
   text: string;
-  reply: AssistantReply | null;
+  /** A user message with a file keeps { kind: "file", caption, file } here */
+  reply: AssistantReply | { kind: "file"; caption: string; file: ChatFile } | null;
   rating: -1 | 1 | null;
   created_at: string;
 }
@@ -293,6 +301,7 @@ export interface SyncResult {
   fetched: number;
   created: number;
   updated: number;
+  deleted: number;
   skipped: number;
 }
 

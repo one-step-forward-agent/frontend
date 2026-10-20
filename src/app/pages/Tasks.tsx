@@ -19,7 +19,7 @@ import {
   errorText,
   parseDayKey,
 } from "../lib/format";
-import { notifyTasksChanged, useAsync, useTags, useTasksChanged, useToday } from "../lib/hooks";
+import { notifyTasksChanged, useAsync, useCalendarSync, useTags, useTasksChanged, useToday } from "../lib/hooks";
 import { useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -77,6 +77,7 @@ export function TasksPage() {
     [today.getTime()]
   );
   useTasksChanged(useCallback(() => events.reload(), [events.reload]));
+  useCalendarSync();
 
   const day = (event: CalendarEvent) => dayKey(new Date(event.start_at));
   const todayKey = dayKey(today);

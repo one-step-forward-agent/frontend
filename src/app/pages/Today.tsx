@@ -27,7 +27,7 @@ import {
   parseDayKey,
   startOfDay,
 } from "../lib/format";
-import { notifyTasksChanged, useAsync, useNow, useTasksChanged, useToday } from "../lib/hooks";
+import { notifyTasksChanged, useAsync, useCalendarSync, useNow, useTasksChanged, useToday } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -81,13 +81,7 @@ export function TodayPage() {
   }, [events.reload, stats.reload, recommendations.reload]);
   useTasksChanged(reloadAll);
 
-  // Opening the page brings the connected calendars up to date; failures stay on their cards in "Интеграции"
-  useEffect(() => {
-    api.integrations
-      .syncAll()
-      .then((result) => result.changed && notifyTasksChanged())
-      .catch(() => undefined);
-  }, []);
+  useCalendarSync();
 
   const todays = (events.data ?? []).filter((event) => occursOn(event, today));
   const untimed = todays.filter((event) => event.all_day);

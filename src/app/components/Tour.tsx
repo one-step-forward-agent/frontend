@@ -54,14 +54,15 @@ const STEPS: Step[] = [
     title: tr("Профиль и интеграции", "Profile and integrations"),
     text: tr("Подключите Telegram — туда приходят напоминания. В «Интеграциях» — Google, Яндекс, Apple и Samsung Calendar, Jira и Notion.", "Connect Telegram — reminders arrive there. Integrations has Google, Yandex, Apple and Samsung Calendar, Jira and Notion."),
   },
-  {
-    target: "account",
-    title: tr("Перенесите чаты с нейросетями", "Bring over your AI chats"),
-    text: tr(
-      "Уже обсуждали цели и планы с ChatGPT, Claude или Gemini? В «Интеграциях» → «Перенос из чатов с нейросетями» пришлите ссылку на чат и напишите, что из него важно, — Dayla учтёт это при планировании.",
-      "Already discussed your goals and plans with ChatGPT, Claude or Gemini? In Integrations → “Bring over chats with other AIs”, share the chat link and say what matters in it — Dayla will use it when planning."
-    ),
-  },
+  // Temporarily off together with "Перенос из чатов с нейросетями" (Integrations.tsx)
+  // {
+  //   target: "account",
+  //   title: tr("Перенесите чаты с нейросетями", "Bring over your AI chats"),
+  //   text: tr(
+  //     "Уже обсуждали цели и планы с ChatGPT, Claude или Gemini? В «Интеграциях» → «Перенос из чатов с нейросетями» пришлите ссылку на чат и напишите, что из него важно, — Dayla учтёт это при планировании.",
+  //     "Already discussed your goals and plans with ChatGPT, Claude or Gemini? In Integrations → “Bring over chats with other AIs”, share the chat link and say what matters in it — Dayla will use it when planning."
+  //   ),
+  // },
 ];
 
 const KEY = "dayla.tour.v1";

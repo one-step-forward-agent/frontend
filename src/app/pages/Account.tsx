@@ -29,7 +29,7 @@ import {
   COMPACT_INLINE_FORM,
   COMPACT_SELECT,
 } from "@/components/dashboard/glass";
-import { SOURCE_LABELS, browserTimezone, errorText, formatDateTime, formatLead, stripTags } from "../lib/format";
+import { SOURCE_LABELS, browserTimezone, errorText, formatDateTime, formatLead } from "../lib/format";
 import { notifyTagsChanged, useAction, useAsync, useMediaQuery, useTags } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
@@ -44,7 +44,6 @@ const SECTIONS = [
   { id: "telegram", label: "Telegram" },
   { id: "appearance", label: tr("Оформление и язык", "Appearance & language") },
   { id: "integrations", label: tr("Интеграции", "Integrations") },
-  { id: "calendars", label: tr("Календари", "Calendars") },
   { id: "security", label: tr("Безопасность", "Security") },
 ];
 
@@ -174,7 +173,6 @@ export function AccountPage() {
           <TelegramSection />
           <AppearanceSection />
           <IntegrationsSection />
-          <CalendarsSection />
           <SecuritySection />
         </div>
       </div>
@@ -652,7 +650,6 @@ function IntegrationsSection() {
 
 function TelegramSection() {
   const status = useAsync(() => api.telegram.status(), []);
-  const history = useAsync(() => api.reminders.history(), []);
   const [link, setLink] = useState<TelegramLink | null>(null);
   const toast = useToast();
   const { pending, run } = useAction(useErrorToast());
@@ -699,7 +696,6 @@ function TelegramSection() {
                   run("test", async () => {
                     await api.reminders.test();
                     toast(tr("Тестовое уведомление отправлено", "Test notification sent"));
-                    window.setTimeout(history.reload, 3000);
                   })
                 }
               >
@@ -785,121 +781,6 @@ function TelegramSection() {
             )}
           </div>
         )}
-
-        {history.data && history.data.length > 0 && (
-          <details className="history">
-            <summary>{tr("Последние уведомления", "Recent notifications")}</summary>
-            <ul>
-              {history.data.map((item) => (
-                <li key={item.id}>
-                  <span className="history-text">{stripTags(item.text)}</span>
-                  <span className="muted small">
-                    {formatDateTime(item.sent_at ?? item.scheduled_for)} ·{" "}
-                    <Badge
-                      tone={
-                        item.status === "sent"
-                          ? "ok"
-                          : item.status === "failed"
-                          ? "bad"
-                          : "neutral"
-                      }
-                    >
-                      {item.status}
-                    </Badge>
-                    {item.error ? ` ${item.error}` : ""}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-      </GlassCard>
-    </div>
-  );
-}
-
-function CalendarsSection() {
-  const calendars = useAsync(() => api.calendars.list(), []);
-  const [name, setName] = useState("");
-  const toast = useToast();
-  const { pending, run } = useAction(useErrorToast());
-
-  const create = (event: FormEvent) => {
-    event.preventDefault();
-    run("create", async () => {
-      await api.calendars.create({
-        name: name.trim(),
-        timezone: browserTimezone(),
-      });
-      setName("");
-      await calendars.reload();
-      toast(tr("Календарь создан", "Calendar created"));
-    });
-  };
-
-  const exportIcs = () =>
-    run("export", async () => {
-      const blob = await api.calendars.exportIcs();
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = "focus-day.ics";
-      anchor.click();
-      URL.revokeObjectURL(url);
-    });
-
-  return (
-    <div id="calendars" className="anchor">
-      <GlassCard
-        title={tr("Календари", "Calendars")}
-        actions={
-          <Button
-            size="sm"
-            variant="ghost"
-            icon="download"
-            busy={pending === "export"}
-            onClick={exportIcs}
-          >
-            {tr("Экспорт .ics", "Export .ics")}
-          </Button>
-        }
-      >
-        {calendars.error && (
-          <ErrorNote message={calendars.error} onRetry={calendars.reload} />
-        )}
-        {calendars.data && (
-          <ul className="simple-list">
-            {calendars.data.map((calendar) => (
-              <li key={calendar.id}>
-                <span className="truncate">{calendar.name}</span>
-                <Badge>
-                  {SOURCE_LABELS[calendar.provider] ?? calendar.provider}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-        )}
-        <form
-          className={cn("inline-form", COMPACT_INLINE_FORM)}
-          onSubmit={create}
-        >
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={tr("Новый календарь, например «Учёба»", "New calendar, e.g. “Study”")}
-            maxLength={200}
-            aria-label={tr("Название календаря", "Calendar name")}
-          />
-          <Button
-            size="sm"
-            type="submit"
-            icon="plus"
-            busy={pending === "create"}
-            disabled={!name.trim()}
-          >
-            {tr("Создать", "Create")}
-          </Button>
-        </form>
       </GlassCard>
     </div>
   );

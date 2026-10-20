@@ -1,12 +1,10 @@
 // src/components/onboarding/Integrations.tsx
 import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import {
-  Check, ChevronDown, ChevronUp,
-  GraduationCap, Link2,
-} from "lucide-react";
+import { Check, Link2 } from "lucide-react";
 
 import { OnboardingLayout } from "./OnboardingLayout";
+import { useGoogleNotice } from "@/app/components/GoogleNotice";
 import { useOnboarding } from "./OnboardingContext";
 import { cn } from "@/utils/cn";
 import { api, type SignInProvider } from "@/app/api/client";
@@ -98,7 +96,6 @@ export const Integrations: React.FC = () => {
   );
 
   const [selected, setSelected] = React.useState<Provider[]>(initialSelected);
-  const [showGuide, setShowGuide] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   // Провайдеры, у которых OAuth уже прошёл (по данным бэкенда и по ?connected=).
@@ -108,6 +105,7 @@ export const Integrations: React.FC = () => {
   const [termsAccepted, setTermsAccepted] = React.useState(false);
 
   const signUpWith = SIGN_UP_WITH.find((provider) => selected.includes(provider.id));
+  const google = useGoogleNotice();
 
   React.useEffect(() => {
     if (!isAuthenticated) return;
@@ -133,6 +131,7 @@ export const Integrations: React.FC = () => {
       navigate("/onboarding/finish");
       return;
     }
+    if (next === "google" && !(await google.confirm())) return;
     setBusy(true);
     try {
       const result = await api.integrations.connect(next, {}, window.location.pathname);
@@ -208,6 +207,7 @@ export const Integrations: React.FC = () => {
         setError(tr("Чтобы создать аккаунт, примите пользовательское соглашение и дайте согласие на обработку персональных данных", "To create an account, accept the terms of use and consent to the processing of personal data"));
         return;
       }
+      if (signUpWith.id === "google" && !(await google.confirm())) return;
       setBusy(true);
       try {
         const { authorization_url } = await api.auth.oauthStart(signUpWith.id, {
@@ -242,6 +242,7 @@ export const Integrations: React.FC = () => {
 
   return (
     <>
+      {google.notice}
       <OnboardingLayout
         step={2}
         totalSteps={TOTAL}
@@ -415,71 +416,6 @@ export const Integrations: React.FC = () => {
             </p>
           )}
 
-          {/* ─── Гайд ВШЭ ─────────────────────────────── */}
-          <div className={cn("relative overflow-hidden rounded-2xl", GLASS_BODY)}>
-            <span aria-hidden="true" className={GLASS_SHEEN} />
-
-            <div className="relative p-3.5 sm:p-5">
-              <button
-                type="button"
-                onClick={() => setShowGuide((v) => !v)}
-                aria-expanded={showGuide}
-                className="w-full flex items-center gap-3 text-left"
-              >
-                <div
-                  aria-hidden="true"
-                  className={cn(
-                    "relative shrink-0 w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden",
-                    "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl",
-                    "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30",
-                    "text-emerald-700 dark:text-emerald-300",
-                    "shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
-                  )}
-                >
-                  <GraduationCap size={16} className="relative" />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {tr("Покажем, как импортировать расписание пар.", "We'll show you how to import your class timetable.")}
-                  </p>
-                </div>
-
-                <span
-                  aria-hidden="true"
-                  className="shrink-0 mt-1 text-gray-400 dark:text-gray-500"
-                >
-                  {showGuide ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </span>
-              </button>
-
-              {showGuide && (
-                <ol className="mt-4 sm:ml-12 space-y-2 text-sm text-gray-600 dark:text-gray-400 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {[
-                    tr("Откройте личный кабинет университета → раздел «Расписание».", "Open your university account → the “Timetable” section."),
-                    tr("Выгрузите расписание в формате ICS.", "Export the timetable as ICS."),
-                    tr("Отправьте расписание в чат к Dayla.", "Send the timetable to the Dayla chat.")
-                  ].map((step, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
-                          "text-[11px] font-semibold",
-                          "bg-emerald-500/15 dark:bg-emerald-500/15",
-                          "text-emerald-700 dark:text-emerald-300",
-                          "ring-1 ring-emerald-400/40 dark:ring-emerald-400/30"
-                        )}
-                      >
-                        {idx + 1}
-                      </span>
-                      <span className="leading-snug">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
-          </div>
         </div>
       </OnboardingLayout>
     </>

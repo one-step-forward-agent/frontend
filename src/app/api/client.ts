@@ -252,8 +252,12 @@ export const api = {
       request<AssistantReply>(`/api/assistant/drafts/${draftId}`, { method: "DELETE" }, "assistant_cancel"),
     transcribe: (audio: Blob) =>
       request<{ text: string }>("/api/assistant/transcribe", upload("audio", audio, "voice.webm"), "assistant_transcribe"),
-    readFile: (file: File) =>
-      request<{ filename: string; text: string }>("/api/assistant/file", upload("file", file), "assistant_file_read"),
+    /** A message with a file (PDF, Word, Excel, CSV, text, photo): the server reads it and answers like any message. */
+    chatFile: (file: File, text: string) => {
+      const init = upload("file", file);
+      (init.body as FormData).append("text", text);
+      return request<AssistantReply & { message_id?: number }>("/api/assistant/chat/file", init, "assistant_file");
+    },
   },
   integrations: {
     list: () => request<Integration[]>("/api/integrations"),
