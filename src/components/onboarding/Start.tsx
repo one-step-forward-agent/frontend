@@ -1457,17 +1457,20 @@ const FinalCTA: React.FC<{
     };
 
     if (active && isPhoneWidth()) {
-      // On a phone the icons stand still on the ring: no rotation, all of them equally visible
-      const applyRing = () => {
+      // On a phone the icons stand still in a row under the button: no rotation,
+      // no ring around the button — exactly the same static row layout as in
+      // the "not active" state, but visible while the section is expanded.
+      const applyStatic = () => {
         if (!isPhoneWidth()) return;
+        const maxWidth = Math.min(window.innerWidth - 32, 600);
         setTransition(true);
         icons.forEach((el, i) => {
-          if (el) writeIcon(el, { ...orbitValues(i, 0), opacity: 1, outerSize: 56 });
+          if (el) writeIcon(el, staticValues(i, maxWidth));
         });
       };
-      applyRing();
-      window.addEventListener("resize", applyRing);
-      return () => window.removeEventListener("resize", applyRing);
+      applyStatic();
+      window.addEventListener("resize", applyStatic);
+      return () => window.removeEventListener("resize", applyStatic);
     } else if (active) {
       setTransition(true);
       icons.forEach((el, i) => {
@@ -1749,13 +1752,6 @@ const SlideFlight: React.FC<SlideProps> = ({ mobile }) => (
           />
         </div>
       </div>
-
-      <div className={SLIDE_NOTE(mobile)}>
-        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-          <Sparkles size={14} className="text-blue-500 shrink-0" aria-hidden="true" />
-          {tr("Dayla ничего не меняет без подтверждения — вы решаете, что делать с\u00a0событием", "Dayla changes nothing without your confirmation — you decide what to do with\u00a0the event")}
-        </p>
-      </div>
     </div>
   </div>
 );
@@ -1818,13 +1814,6 @@ const SlideGTD: React.FC<SlideProps> = ({ mobile }) => (
             daylaMessage={GTD_RESPONSE}
           />
         </div>
-      </div>
-
-      <div className={SLIDE_NOTE(mobile)}>
-        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
-          <Sparkles size={14} className="text-blue-500 shrink-0" aria-hidden="true" />
-          {tr("Вы утверждаете план одним нажатием — Dayla сама внесёт всё в календарь", "You approve the plan with one tap — Dayla puts everything in the calendar")}
-        </p>
       </div>
     </div>
   </div>
