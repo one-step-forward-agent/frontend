@@ -336,7 +336,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
               if (item.main) {
                 return (
-                  <li key={item.to} className="flex items-center justify-center">
+                  <li key={item.to} className="relative flex items-center justify-center">
                     <Link
                       to={item.to}
                       data-tour={TOUR_IDS[item.to]}
@@ -353,6 +353,7 @@ export function Layout({ children }: { children: ReactNode }) {
                     >
                       <Icon name={item.icon} size={22} className="relative" />
                     </Link>
+                    {active && <ActiveDot />}
                   </li>
                 );
               }
@@ -369,11 +370,20 @@ export function Layout({ children }: { children: ReactNode }) {
                       "relative flex items-center justify-center h-full w-full",
                       "transition-colors duration-200",
                       active
-                        ? "text-sky-800 dark:text-sky-100"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                        ? "text-sky-600 dark:text-sky-300"
+                        : "text-gray-500 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
                     )}
                   >
-                    {item.to === "/" ? <TodayMark /> : <Icon name={item.icon} size={22} />}
+                    {/* The section you are in: a tinted pill behind the icon and a dot under it, not only a colour */}
+                    <span
+                      className={cn(
+                        "flex items-center justify-center w-12 h-10 rounded-xl transition-colors duration-200",
+                        active && "bg-sky-500/15 ring-1 ring-sky-500/30 dark:bg-sky-400/20 dark:ring-sky-300/30"
+                      )}
+                    >
+                      {item.to === "/" ? <TodayMark /> : <Icon name={item.icon} size={22} />}
+                    </span>
+                    {active && <ActiveDot />}
                   </Link>
                 </li>
               );
@@ -384,6 +394,13 @@ export function Layout({ children }: { children: ReactNode }) {
     </>
   );
 }
+/* ─── ActiveDot ─────────────────────────────────────────── */
+
+/** The mark under the tab of the section you are in. */
+function ActiveDot() {
+  return <span aria-hidden="true" className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-sky-500 dark:bg-sky-300" />;
+}
+
 /* ─── TodayMark ─────────────────────────────────────────── */
 
 /** The «Сегодня» tab as a tear-off calendar page: today's weekday and date instead of an icon. */
