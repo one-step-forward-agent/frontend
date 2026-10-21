@@ -228,7 +228,7 @@ export interface HistoryMessage {
   reply:
     | AssistantReply
     | { kind: "file"; caption: string; file: ChatFile }
-    | { kind: "voice"; voice: { id: string; duration: number }; transcript: string }
+    | { kind: "voice"; voice: { id: string; duration: number }; transcript: string; file?: ChatFile }
     | null;
   rating: -1 | 1 | null;
   created_at: string;

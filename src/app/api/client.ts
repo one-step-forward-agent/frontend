@@ -257,9 +257,11 @@ export const api = {
     transcribe: (audio: Blob) =>
       request<{ text: string }>("/api/assistant/transcribe", upload("audio", audio, "voice.webm"), "assistant_transcribe"),
     /** A voice message, as in a messenger: the chat keeps the recording, the assistant answers what was said. */
-    chatVoice: (audio: Blob, duration: number) => {
+    chatVoice: (audio: Blob, duration: number, file?: File | null) => {
       const init = upload("audio", audio, `voice${voiceSuffix(audio.type)}`);
       (init.body as FormData).append("duration", String(Math.round(duration * 10) / 10));
+      // A file attached before recording goes with the voice message, as with a typed one
+      if (file) (init.body as FormData).append("file", file, file.name);
       return request<AssistantReply & { message_id?: number }>("/api/assistant/chat/voice", init, "assistant_voice");
     },
     /** Where the chat plays a voice message from */

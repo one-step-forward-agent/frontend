@@ -85,7 +85,13 @@ function fromHistory(items: HistoryMessage[]): Message[] {
       ? item.reply?.kind === "file"
         ? { id: ++messageId, role: "user", text: item.reply.caption, file: item.reply.file }
         : item.reply?.kind === "voice"
-          ? { id: ++messageId, role: "user", text: "", voice: { src: api.assistant.voiceUrl(item.reply.voice.id), duration: item.reply.voice.duration } }
+          ? {
+              id: ++messageId,
+              role: "user",
+              text: "",
+              voice: { src: api.assistant.voiceUrl(item.reply.voice.id), duration: item.reply.voice.duration },
+              file: item.reply.file,
+            }
           : { id: ++messageId, role: "user", text: item.text }
       : {
           id: ++messageId,
@@ -196,12 +202,21 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
   };
 
   // A voice message goes at once, as in a messenger: the chat shows the recording, the server reads what was said
+  // A file attached before recording goes with it, as with a typed message
   const sendVoice = async (audio: Blob, duration: number) => {
     if (busy) return;
-    push({ id: ++messageId, role: "user", text: "", voice: { src: URL.createObjectURL(audio), duration } });
+    const attached = file;
+    setFile(null);
+    push({
+      id: ++messageId,
+      role: "user",
+      text: "",
+      voice: { src: URL.createObjectURL(audio), duration },
+      file: attached ? { name: attached.name, size: attached.size } : undefined,
+    });
     setBusy(true);
     try {
-      const { message_id: serverId, ...reply } = await api.assistant.chatVoice(audio, duration);
+      const { message_id: serverId, ...reply } = await api.assistant.chatVoice(audio, duration, attached);
       push({ id: ++messageId, role: "assistant", reply: reply as AssistantReply, serverId });
       if (reply.kind === "completed") notifyTasksChanged();
     } catch (error) {
@@ -435,8 +450,12 @@ function ChatMessage({
             GLASS_PRIMARY
           )}
         >
-          {message.voice && <VoiceBubble src={message.voice.src} duration={message.voice.duration} />}
           {message.file && <FileChip file={message.file} />}
+          {message.voice && (
+            <div className={cn(message.file && "mt-1.5")}>
+              <VoiceBubble src={message.voice.src} duration={message.voice.duration} />
+            </div>
+          )}
           {message.text && <p className={cn("relative whitespace-pre-wrap", message.file && "mt-1.5")}>{message.text}</p>}
         </div>
       </div>

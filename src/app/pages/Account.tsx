@@ -609,15 +609,17 @@ function RemindersSection() {
   );
 }
 
-const VIA_GOOGLE = new Set(["apple", "samsung"]);
+type ProfileRow = { slug: string; title: string; connection: Integration["connection"]; viaGoogle?: boolean };
 
-// Samsung Calendar has no connection of its own (it shows the phone's Google calendars), so the server does not
-// list it; the profile shows it after Apple Calendar, as the Integrations page does
-function withSamsung(items: Integration[]): Pick<Integration, "slug" | "title" | "connection">[] {
-  const samsung = { slug: "samsung", title: "Samsung Calendar", connection: null };
-  const apple = items.findIndex((item) => item.slug === "apple");
-  const at = apple === -1 ? items.length : apple + 1;
-  return [...items.slice(0, at), samsung, ...items.slice(at)];
+// The profile lists only what works: the connected services, and Apple and Samsung Calendar once Google is
+// connected (they show Dayla's tasks through the Google account). Connecting the rest is on the Integrations page
+function connectedRows(items: Integration[]): ProfileRow[] {
+  const rows: ProfileRow[] = items.filter((item) => item.connection);
+  const google = items.some((item) => item.slug === "google" && item.connection?.status === "connected");
+  if (!google) return rows;
+  if (!rows.some((row) => row.slug === "apple")) rows.push({ slug: "apple", title: "Apple Calendar", connection: null, viaGoogle: true });
+  rows.push({ slug: "samsung", title: "Samsung Calendar", connection: null, viaGoogle: true });
+  return rows;
 }
 
 function IntegrationsSection() {
@@ -644,35 +646,28 @@ function IntegrationsSection() {
         {integrations.error && (
           <ErrorNote message={integrations.error} onRetry={integrations.reload} />
         )}
-        {integrations.data && (
-          <ul className="simple-list">
-            {withSamsung(integrations.data).map((item) => (
-              <li key={item.slug}>
-                <span className="truncate">{item.title}</span>
-                {item.connection ? (
-                  <Badge
-                    tone={item.connection.status === "error" ? "bad" : "ok"}
-                  >
-                    {item.connection.status === "error" ? tr("ошибка", "error") : tr("подключено", "connected")}
-                  </Badge>
-                ) : item.slug === "notion" ? (
-                  // Not open for connecting yet, as on the Integrations page
-                  <span className="muted small">{tr("Скоро", "Coming soon")}</span>
-                ) : VIA_GOOGLE.has(item.slug) ? (
-                  // Apple and Samsung Calendar are set up through the Google account, as on the Integrations page
-                  <Badge>{tr("через Google", "via Google")}</Badge>
-                ) : (
-                  <Link
-                    to="/integrations"
-                    className="btn btn-ghost btn-sm h-8 px-3 text-xs"
-                  >
-                    {tr("Подключить", "Connect")}
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+        {integrations.data &&
+          (connectedRows(integrations.data).length ? (
+            <ul className="simple-list">
+              {connectedRows(integrations.data).map((item) => (
+                <li key={item.slug}>
+                  <span className="truncate">{item.title}</span>
+                  {item.connection ? (
+                    <Badge tone={item.connection.status === "error" ? "bad" : "ok"}>
+                      {item.connection.status === "error" ? tr("ошибка", "error") : tr("подключено", "connected")}
+                    </Badge>
+                  ) : (
+                    <Badge>{tr("через Google", "via Google")}</Badge>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted small">
+              {tr("Пока ничего не подключено.", "Nothing is connected yet.")}{" "}
+              <Link to="/integrations">{tr("Подключить календарь", "Connect a calendar")}</Link>
+            </p>
+          ))}
       </GlassCard>
     </div>
   );
