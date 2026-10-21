@@ -13,6 +13,9 @@ interface RegisterInput {
   // Spam protection: the hidden field people never fill and how long the form was open
   website?: string;
   form_ms?: number;
+  // The code mailed to the email and the token that came with it
+  email_code?: string;
+  email_token?: string;
 }
 
 interface AuthState {
@@ -25,6 +28,8 @@ interface AuthState {
   loadUser: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
+  /** Mails the sign-up code; returns its token, or null when the server needs no code */
+  requestEmailCode: (email: string, website?: string) => Promise<string | null>;
   logout: (everywhere?: boolean) => Promise<void>;
   setUser: (user: User | null) => void;
   clearError: () => void;
@@ -80,7 +85,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     }
   },
 
-  register: async ({ email, password, name, timezone, website, form_ms }) => {
+  register: async ({ email, password, name, timezone, website, form_ms, email_code, email_token }) => {
     if (DEV_AUTH_BYPASS) {
       set({
         user: DEV_USER,
@@ -100,10 +105,26 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         timezone,
         website,
         form_ms,
+        email_code,
+        email_token,
       });
       await get().loadUser();
     } catch (error) {
       set({ error: message(error, tr("Ошибка регистрации", "Sign-up failed")) });
+      throw error;
+    } finally {
+      set({ isSubmitting: false });
+    }
+  },
+
+  requestEmailCode: async (email, website) => {
+    if (DEV_AUTH_BYPASS) return null;
+    set({ isSubmitting: true, error: null });
+    try {
+      const sent = await api.auth.registerCode({ email: email.trim().toLowerCase(), website });
+      return sent.required ? sent.email_token : null;
+    } catch (error) {
+      set({ error: message(error, tr("Не удалось отправить код", "Could not send the code")) });
       throw error;
     } finally {
       set({ isSubmitting: false });

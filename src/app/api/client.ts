@@ -142,8 +142,16 @@ const voiceSuffix = (type: string): string =>
 
 export const api = {
   auth: {
-    register: (body: { email: string; password: string; name?: string | null; timezone?: string; website?: string; form_ms?: number }) =>
+    register: (body: {
+      email: string; password: string; name?: string | null; timezone?: string; website?: string; form_ms?: number;
+      email_code?: string; email_token?: string;
+    }) =>
       request<TokenResponse>("/auth/register", json("POST", body), "register_success"),
+    // Mails a code that confirms the email; required false: the server has no mail set up and needs no code
+    registerCode: (body: { email: string; website?: string }) =>
+      request<{ required: boolean; email_token: string | null; expires_in: number | null }>(
+        "/auth/register/code", json("POST", body), "register_code_sent",
+      ),
     login: (email: string, password: string) =>
       request<TokenResponse>("/auth/login", json("POST", { email, password }), "login_success"),
     logout: () => request<{ status: string }>("/auth/logout", { method: "POST" }, "logout"),

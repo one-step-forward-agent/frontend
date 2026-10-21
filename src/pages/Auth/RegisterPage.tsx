@@ -2,7 +2,7 @@
 import React, { useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
-  User, Mail, Lock, ShieldCheck, Check, Sparkles, ArrowRight, Eye, EyeOff,
+  User, Mail, Lock, ShieldCheck, Check, Sparkles, ArrowRight, Eye, EyeOff, KeyRound,
 } from "lucide-react";
 
 import { useAuthStore } from "@/store/authStore";
@@ -54,7 +54,7 @@ export const PasswordToggle: React.FC<{ shown: boolean; onToggle: () => void }> 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { register, isSubmitting: isLoading, error, clearError } = useAuthStore();
+  const { register, requestEmailCode, isSubmitting: isLoading, error, clearError } = useAuthStore();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -69,6 +69,19 @@ const RegisterPage: React.FC = () => {
   // Spam protection: bots fill every field and submit at once
   const [website, setWebsite] = useState("");
   const openedAt = useRef(Date.now());
+  // The email a code was mailed to, the token that came with it and the code typed from the letter
+  const [codeSentTo, setCodeSentTo] = useState<string | null>(null);
+  const [emailToken, setEmailToken] = useState<string | null>(null);
+  const [emailCode, setEmailCode] = useState("");
+  const codeStep = codeSentTo !== null && codeSentTo === email.trim().toLowerCase();
+
+  const sendCode = async (): Promise<boolean> => {
+    const token = await requestEmailCode(email, website);
+    setCodeSentTo(email.trim().toLowerCase());
+    setEmailToken(token);
+    setEmailCode("");
+    return token === null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,8 +102,17 @@ const RegisterPage: React.FC = () => {
     }
 
     try {
+      // First the code is mailed; the sign-up goes on once it is typed (or at once when the server needs none)
+      if (!codeStep && !(await sendCode())) return;
+      if (codeStep && emailToken && !emailCode.trim()) {
+        setLocalError(tr("Введите код из письма", "Enter the code from the letter"));
+        return;
+      }
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      await register({ email, password, name: username, timezone, website, form_ms: Date.now() - openedAt.current });
+      await register({
+        email, password, name: username, timezone, website, form_ms: Date.now() - openedAt.current,
+        email_code: emailCode.trim() || undefined, email_token: emailToken ?? undefined,
+      });
       sendMetricGoal("registration_success");
       // A fresh account goes through onboarding, which is applied at its last step.
       const next = searchParams.get("next");
@@ -150,6 +172,56 @@ const RegisterPage: React.FC = () => {
             </div>
           )}
         </FormField>
+
+        {codeStep && emailToken && (
+          <FormField id="emailCode" label={tr("Код из письма", "Code from the letter")} required>
+            {(field) => (
+              <div className="space-y-1.5">
+                <div className="relative">
+                  <KeyRound
+                    size={15}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    {...field}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={emailCode}
+                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, ""))}
+                    placeholder="123456"
+                    className="pl-9 tracking-[0.3em]"
+                    autoFocus
+                    required
+                  />
+                </div>
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  {tr(
+                    "Письмо может попасть в папку «Спам» — если его нет во «Входящих», проверьте её.",
+                    "The letter may land in the Spam folder — if it is not in your inbox, check there."
+                  )}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {tr(`Мы отправили код на ${codeSentTo}. Письма нет и в «Спаме»? `, `We sent a code to ${codeSentTo}. Not in Spam either? `)}
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => {
+                      clearError();
+                      setLocalError(null);
+                      sendCode().catch(() => {});
+                    }}
+                    className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 disabled:opacity-60 transition-colors"
+                  >
+                    {tr("Отправьте ещё раз", "Send it again")}
+                  </button>
+                </p>
+              </div>
+            )}
+          </FormField>
+        )}
 
         <FormField
           id="password"
@@ -284,11 +356,11 @@ const RegisterPage: React.FC = () => {
                   aria-hidden="true"
                   className="w-4 h-4 rounded-full border-2 border-sky-500/40 border-t-sky-600 animate-spin"
                 />
-                {tr("Создаём…", "Creating…")}
+                {codeStep ? tr("Создаём…", "Creating…") : tr("Отправляем код…", "Sending the code…")}
               </>
             ) : (
               <>
-                {tr("Зарегистрироваться", "Sign up")}
+                {codeStep ? tr("Зарегистрироваться", "Sign up") : tr("Получить код на email", "Get a code by email")}
                 <ArrowRight
                   size={16}
                   className="transition-transform duration-300 group-hover:translate-x-0.5"
