@@ -208,7 +208,8 @@ export type AssistantReply =
       kind: "reminder";
       text: string;
       /** repeat: "каждый день в 09:00", "каждые 2 часа"; label: when the (first) one comes */
-      reminders: { id: number; text: string; at: string; label: string; repeat?: string | null }[];
+      /** file: the name of the file the bot sends with it ("пришли этот файл в 21:00") */
+      reminders: { id: number; text: string; at: string; label: string; repeat?: string | null; file?: string | null }[];
     }
   | { kind: "answer" | "not_found" | "edit_error" | "cancelled"; text: string }
   | { kind: "nothing" };

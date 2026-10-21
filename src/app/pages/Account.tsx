@@ -833,38 +833,40 @@ function SecuritySection() {
   return (
     <div id="security" className="anchor">
       <GlassCard title={tr("Безопасность", "Security")}>
-        <div className="button-row">
-          <Button size="sm" icon="logout" onClick={() => logout()}>
-            {tr("Выйти", "Sign out")}
-          </Button>
-          <ConfirmButton
-            size="sm"
-            confirmLabel={tr("Выйти на всех устройствах?", "Sign out on all devices?")}
-            onConfirm={() => logout(true)}
-          >
-            {tr("Выйти везде", "Sign out everywhere")}
-          </ConfirmButton>
-        </div>
-        <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
-          {tr(
-            "Удаление аккаунта стирает все ваши задачи, файлы, переписку с ассистентом и подключения и отзывает доступ Dayla к Google Calendar. Отменить его нельзя. Подробнее — в",
-            "Deleting the account erases all your tasks, files, chats with the assistant and connections, and revokes Dayla's access to Google Calendar. It cannot be undone. More in the"
-          )}{" "}
-          <a href="/privacy-policy" className="text-sky-600 dark:text-sky-400 hover:underline">
-            {tr("политике конфиденциальности", "privacy policy")}
-          </a>
-          .
-        </p>
-        <div className="button-row mt-3">
-          <ConfirmButton
-            size="sm"
-            icon="trash"
-            busy={deleting}
-            confirmLabel={tr("Удалить аккаунт навсегда?", "Delete the account for good?")}
-            onConfirm={deleteAccount}
-          >
-            {tr("Удалить аккаунт", "Delete account")}
-          </ConfirmButton>
+        <div className="flex flex-col gap-3">
+          <div className="button-row">
+            <Button size="sm" icon="logout" onClick={() => logout()}>
+              {tr("Выйти", "Sign out")}
+            </Button>
+            <ConfirmButton
+              size="sm"
+              confirmLabel={tr("Выйти на всех устройствах?", "Sign out on all devices?")}
+              onConfirm={() => logout(true)}
+            >
+              {tr("Выйти везде", "Sign out everywhere")}
+            </ConfirmButton>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {tr(
+              "Удаление аккаунта стирает все ваши задачи, файлы, переписку с ассистентом и подключения и отзывает доступ Dayla к Google Calendar. Отменить его нельзя. Подробнее — в",
+              "Deleting the account erases all your tasks, files, chats with the assistant and connections, and revokes Dayla's access to Google Calendar. It cannot be undone. More in the"
+            )}{" "}
+            <a href="/privacy-policy" className="text-sky-600 dark:text-sky-400 hover:underline">
+              {tr("политике конфиденциальности", "privacy policy")}
+            </a>
+            .
+          </p>
+          <div className="button-row">
+            <ConfirmButton
+              size="sm"
+              icon="trash"
+              busy={deleting}
+              confirmLabel={tr("Удалить аккаунт навсегда?", "Delete the account for good?")}
+              onConfirm={deleteAccount}
+            >
+              {tr("Удалить аккаунт", "Delete account")}
+            </ConfirmButton>
+          </div>
         </div>
       </GlassCard>
     </div>

@@ -946,13 +946,23 @@ function ReminderReply({
                   <span className="text-gray-500 dark:text-gray-400"> · {tr("первое", "first")} — {item.label}</span>
                 </>
               ) : (
-                <>{tr("Напомню", "I'll remind you")} {item.label}</>
+                <>{item.file ? tr("Пришлю", "I'll send it") : tr("Напомню", "I'll remind you")} {item.label}</>
               )}
             </p>
+            {item.file && (
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                <Icon name="file" size={14} className="shrink-0" />
+                <span className="truncate">{item.file}</span>
+              </p>
+            )}
           </div>
         </div>
       ))}
-      <p className="text-xs text-gray-500 dark:text-gray-400">{tr("Напоминание придёт в Telegram.", "The reminder will come to Telegram.")}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        {reply.reminders.some((item) => item.file)
+          ? tr("Пришлю файл в Telegram вместе с напоминанием.", "I'll send the file to Telegram with the reminder.")
+          : tr("Напоминание придёт в Telegram.", "The reminder will come to Telegram.")}
+      </p>
       <div className="flex flex-wrap gap-1.5">
         {reply.reminders.map((item) => (
           <Button key={item.id} variant="ghost" size="sm" icon="close" busy={busy === item.id} onClick={() => cancel(item.id)}>
