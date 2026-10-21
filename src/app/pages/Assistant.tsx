@@ -1868,8 +1868,9 @@ function FileChip({ file, onRemove }: { file: ChatFile; onRemove?: () => void })
   );
 }
 
-// Files the server reads: documents, tables, text and photos
-const CHAT_FILES = ".pdf,.docx,.xlsx,.csv,.tsv,.txt,.md,.ics,.jpg,.jpeg,.png,.webp,.gif";
+// Any file up to 20 MB: documents, tables, text and photos are read; any file can be sent back with a reminder
+// ("пришли этот файл в 21:00"). The server says so when it can't read one that was not asked to be sent
+const MAX_CHAT_FILE_MB = 20;
 
 function Composer({
   value,
@@ -1942,8 +1943,17 @@ function Composer({
     }
   };
 
+  // A file over the limit is refused here, before a long upload ends in an error
+  const attach = (picked: File) => {
+    if (picked.size > MAX_CHAT_FILE_MB * 1024 * 1024) {
+      reportError(tr(`Файл больше ${MAX_CHAT_FILE_MB} МБ — выберите файл поменьше`, `The file is larger than ${MAX_CHAT_FILE_MB} MB — pick a smaller one`));
+      return;
+    }
+    onFile(picked);
+  };
+
   const pickFile = (picked: File | undefined) => {
-    if (picked) onFile(picked);
+    if (picked) attach(picked);
     if (fileInput.current) fileInput.current.value = "";
   };
 
@@ -1973,7 +1983,7 @@ function Composer({
         const pasted = event.clipboardData.files[0];
         if (pasted) {
           event.preventDefault();
-          onFile(pasted);
+          attach(pasted);
         }
       }}
       onDragOver={(event) => event.preventDefault()}
@@ -1981,7 +1991,7 @@ function Composer({
         const dropped = event.dataTransfer.files[0];
         if (dropped) {
           event.preventDefault();
-          onFile(dropped);
+          attach(dropped);
         }
       }}
       className={cn(
@@ -1992,7 +2002,6 @@ function Composer({
       <input
         ref={fileInput}
         type="file"
-        accept={CHAT_FILES}
         hidden
         onChange={(e) => pickFile(e.target.files?.[0])}
       />
@@ -2000,7 +2009,10 @@ function Composer({
         variant="ghost"
         icon="clip"
         aria-label={tr("Прикрепить файл или фото", "Attach a file or photo")}
-        title={tr("Файл или фото с планами: PDF, Word, Excel, CSV, текст, картинка", "A file or photo with plans: PDF, Word, Excel, CSV, text, image")}
+        title={tr(
+          "Любой файл до 20 МБ: документы, таблицы и фото Dayla прочитает, а любой файл пришлёт в Telegram к сроку",
+          "Any file up to 20 MB: Dayla reads documents, tables and photos, and sends any file to Telegram when asked"
+        )}
         disabled={busy}
         onClick={() => fileInput.current?.click()}
       />
