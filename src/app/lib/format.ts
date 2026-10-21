@@ -132,12 +132,16 @@ export function formatSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} ${tr("МБ", "MB")}`;
 }
 
+// Two priorities: regular and high (high tasks stand out in lists). Old "low" and "urgent" read as these two
 export const PRIORITIES: { value: Priority; label: string }[] = [
-  { value: "low", label: tr("Низкий", "Low") },
-  { value: "medium", label: tr("Обычный", "Normal") },
+  { value: "medium", label: tr("Обычный", "Regular") },
   { value: "high", label: tr("Высокий", "High") },
-  { value: "urgent", label: tr("Срочно", "Urgent") },
 ];
+
+export const isHighPriority = (priority: Priority | undefined): boolean => priority === "high" || priority === "urgent";
+
+/** The value a form shows and saves: an old "low" is regular, an old "urgent" is high */
+export const plainPriority = (priority: Priority | undefined): Priority => (isHighPriority(priority) ? "high" : "medium");
 
 export const SOURCE_LABELS: Record<string, string> = {
   local: "Dayla",

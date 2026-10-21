@@ -4,10 +4,12 @@ import { RichText } from "./RichText";
 import { Icon } from "./icons";
 import { tr } from "@/i18n";
 
-/** Ссылка в чат, которая передаёт ассистенту саму рекомендацию как тему разговора. */
+/** Ссылка в чат: рекомендация становится темой, и ассистента сразу спрашивают, как её применить (ask=1). */
 export function discussLink(item: Recommendation): string {
-  return `/assistant?${new URLSearchParams({ topic: item.title, text: item.text })}`;
+  return `/assistant?${new URLSearchParams({ topic: item.title, text: item.text, ask: "1" })}`;
 }
+
+const HOW_TO = tr("Как это сделать?", "How do I do it?");
 
 /**
  * На экранах — только заголовки (до 4 слов): каждая строка открывает чат, где совет расписан подробно.
@@ -22,7 +24,7 @@ export function RecommendationList({
   items: Recommendation[] | undefined;
   label?: string;
   full?: boolean;
-  /** В самом чате «Обсудить» открывает тему здесь же, а не переходом. */
+  /** В самом чате «Как это сделать?» открывает тему здесь же, а не переходом. */
   onDiscuss?: (index: number) => void;
 }) {
   if (items === undefined) return <p className="muted small">{label}</p>;
@@ -52,12 +54,12 @@ export function RecommendationList({
             <strong>{item.title}.</strong> <RichText text={item.text} inline />
           </p>
           {onDiscuss ? (
-            <button type="button" className="btn btn-ghost btn-sm" aria-label={`${tr("Обсудить", "Discuss")}: ${item.title}`} onClick={() => onDiscuss(index)}>
-              {tr("Обсудить", "Discuss")}
+            <button type="button" className="btn btn-ghost btn-sm" aria-label={`${HOW_TO} ${item.title}`} onClick={() => onDiscuss(index)}>
+              {HOW_TO}
             </button>
           ) : (
-            <Link to={discussLink(item)} className="btn btn-ghost btn-sm" aria-label={`${tr("Обсудить", "Discuss")}: ${item.title}`}>
-              {tr("Обсудить", "Discuss")}
+            <Link to={discussLink(item)} className="btn btn-ghost btn-sm" aria-label={`${HOW_TO} ${item.title}`}>
+              {HOW_TO}
             </Link>
           )}
         </div>

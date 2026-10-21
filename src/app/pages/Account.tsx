@@ -1,7 +1,7 @@
 // src/pages/Account.tsx
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api } from "../api/client";
-import type { ReminderSettings, Source, Tag, TagColor, TelegramLink } from "../api/types";
+import type { Integration, ReminderSettings, Source, Tag, TagColor, TelegramLink } from "../api/types";
 import { LanguagePicker, ThemePicker } from "@/theme";
 import { useAuth, useSignOut, useUser } from "../auth";
 import { Icon } from "../components/icons";
@@ -420,10 +420,13 @@ const LEAD_UNITS = [
   { value: 60, label: tr("ч", "h") },
   { value: 1440, label: tr("дн", "days") },
 ];
-const SOURCES: Source[] = ["local", "ai", "google", "apple"];
+const OWN_SOURCES: Source[] = ["local", "ai"];
+// Services whose events can be filtered by: offered only once connected
+const EXTERNAL_SOURCES: Source[] = ["google", "apple", "jira", "notion"];
 
 function RemindersSection() {
   const settings = useAsync(() => api.reminders.get(), []);
+  const integrations = useAsync(() => api.integrations.list(), []);
   const [draft, setDraft] = useState<ReminderSettings | null>(null);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
@@ -464,6 +467,16 @@ function RemindersSection() {
 
   const dirty =
     draft && settings.data && JSON.stringify(draft) !== JSON.stringify(settings.data);
+
+  // Connected services, plus any chosen earlier so it can still be turned off
+  const sources = [
+    ...OWN_SOURCES,
+    ...EXTERNAL_SOURCES.filter(
+      (source) =>
+        integrations.data?.some((item) => item.slug === source && item.connection) ||
+        draft?.sources.includes(source),
+    ),
+  ];
 
   return (
     <div id="reminders" className="anchor">
@@ -555,7 +568,7 @@ function RemindersSection() {
             <fieldset className="fieldset">
               <legend className="field-label">{tr("Источники", "Sources")}</legend>
               <div className="chips">
-                {SOURCES.map((source) => (
+                {sources.map((source) => (
                   <button
                     key={source}
                     type="button"
@@ -596,6 +609,17 @@ function RemindersSection() {
   );
 }
 
+const VIA_GOOGLE = new Set(["apple", "samsung"]);
+
+// Samsung Calendar has no connection of its own (it shows the phone's Google calendars), so the server does not
+// list it; the profile shows it after Apple Calendar, as the Integrations page does
+function withSamsung(items: Integration[]): Pick<Integration, "slug" | "title" | "connection">[] {
+  const samsung = { slug: "samsung", title: "Samsung Calendar", connection: null };
+  const apple = items.findIndex((item) => item.slug === "apple");
+  const at = apple === -1 ? items.length : apple + 1;
+  return [...items.slice(0, at), samsung, ...items.slice(at)];
+}
+
 function IntegrationsSection() {
   const integrations = useAsync(() => api.integrations.list(), []);
   return (
@@ -622,7 +646,7 @@ function IntegrationsSection() {
         )}
         {integrations.data && (
           <ul className="simple-list">
-            {integrations.data.map((item) => (
+            {withSamsung(integrations.data).map((item) => (
               <li key={item.slug}>
                 <span className="truncate">{item.title}</span>
                 {item.connection ? (
@@ -631,6 +655,12 @@ function IntegrationsSection() {
                   >
                     {item.connection.status === "error" ? tr("ошибка", "error") : tr("подключено", "connected")}
                   </Badge>
+                ) : item.slug === "notion" ? (
+                  // Not open for connecting yet, as on the Integrations page
+                  <span className="muted small">{tr("Скоро", "Coming soon")}</span>
+                ) : VIA_GOOGLE.has(item.slug) ? (
+                  // Apple and Samsung Calendar are set up through the Google account, as on the Integrations page
+                  <Badge>{tr("через Google", "via Google")}</Badge>
                 ) : (
                   <Link
                     to="/integrations"

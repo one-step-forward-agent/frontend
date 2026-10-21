@@ -406,6 +406,11 @@
 .fd-app .event-item.is-missed .event-clock { color: #e11d48; }
 :root.dark .fd-app .event-item.is-missed .event-clock { color: #fb7185; }
 .fd-app .event-item > .event-row { flex: 1; min-width: 0; }
+/* High priority: an amber bar at the left edge and a light amber tint, so important tasks stand out at a glance.
+   Done and missed keep their own green and red */
+.fd-app .event-item.is-high:not(.is-done):not(.is-missed) { background: color-mix(in srgb, var(--warn) 9%, transparent); box-shadow: inset 3px 0 0 var(--warn); }
+.fd-app .event-item.is-high:not(.is-done) .event-title { font-weight: 650; }
+.fd-app .event-list.is-cards .event-item.is-high:not(.is-done):not(.is-missed) { background: color-mix(in srgb, var(--warn) 8%, var(--surface-solid)); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); box-shadow: inset 3px 0 0 var(--warn), var(--shadow); }
 .fd-app .event-check { flex: none; width: 22px; height: 22px; margin-left: 4px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--prio); border-radius: 50%; background: color-mix(in srgb, var(--prio) 10%, var(--surface-solid)); color: #fff; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
 .fd-app .event-check:hover { border-color: var(--accent); }
 .fd-app .event-check.checked { background: #10b981; border-color: transparent; }
@@ -570,8 +575,8 @@
 .fd-app .chip b { font-weight: 600; color: var(--accent-text); }
 .fd-app .chip.priority-high { background: var(--warn-soft); }
 .fd-app .chip.priority-high b { color: var(--warn); }
-.fd-app .chip.priority-urgent { background: var(--bad-soft); }
-.fd-app .chip.priority-urgent b { color: var(--bad); }
+.fd-app .chip.priority-urgent { background: var(--warn-soft); }
+.fd-app .chip.priority-urgent b { color: var(--warn); }
 .fd-app .chip.chip-done { opacity: 0.45; }
 .fd-app .chip.chip-untimed { background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); }
 .fd-app .month.week .day-cell { min-height: 260px; }

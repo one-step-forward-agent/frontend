@@ -18,6 +18,8 @@ import {
 } from "../components/ui";
 import {
   PRIORITIES,
+  isHighPriority,
+  plainPriority,
   SOURCE_LABELS,
   dayKey,
   deadlineTone,
@@ -133,7 +135,7 @@ export function EventPage({ id }: { id: number }) {
   }
 
   const start = new Date(item.start_at);
-  const priority = PRIORITIES.find((entry) => entry.value === item.priority);
+  const priority = PRIORITIES.find((entry) => entry.value === plainPriority(item.priority));
 
   return (
     <div className={PAGE}>
@@ -250,15 +252,7 @@ export function EventPage({ id }: { id: number }) {
               {tr("Детали", "Details")}
             </dt>
             <dd className="flex flex-wrap gap-1.5">
-              <Badge
-                tone={
-                  item.priority === "urgent"
-                    ? "bad"
-                    : item.priority === "high"
-                    ? "warn"
-                    : "neutral"
-                }
-              >
+              <Badge tone={isHighPriority(item.priority) ? "warn" : "neutral"}>
                 {priority?.label ?? item.priority}
               </Badge>
               <Badge>{SOURCE_LABELS[item.source] ?? item.source}</Badge>

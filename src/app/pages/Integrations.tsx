@@ -76,6 +76,9 @@ const OTHER_LOGOS: Record<string, string> = {
 const isOAuth = (slug: string): slug is OAuthProvider =>
   slug in OAUTH_INTEGRATIONS;
 
+// Not open for connecting yet: the card says "Coming soon" instead of the Connect button
+const COMING_SOON = new Set<string>(["notion"]);
+
 const PROVIDER_LABELS: Record<string, string> = {
   google: "Google Calendar",
   yandex: tr("Яндекс Календарь", "Yandex Calendar"),
@@ -248,10 +251,16 @@ function SamsungCard() {
           aria-hidden="true"
           className={cn(
             "relative shrink-0 w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden",
-            "bg-[#1428A0] text-white",
+            "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl",
+            "ring-1 ring-white/30 dark:ring-white/10",
           )}
         >
-          <Icon name="calendar" size={20} />
+          <img
+            src="/images/samsung-calendar.webp"
+            alt=""
+            className="w-6 h-6 object-contain select-none pointer-events-none"
+            loading="lazy"
+          />
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate">Samsung Calendar</h2>
@@ -289,13 +298,14 @@ function SamsungCard() {
   );
 }
 
+// Laid out like the Samsung card: Apple Calendar is reached through the Google account too
 function AppleViaGoogle() {
   return (
-    <details className="mb-3 rounded-xl p-3 bg-white/[0.04] dark:bg-white/[0.02] ring-1 ring-white/30 dark:ring-white/10 group" open>
-      <summary className="cursor-pointer select-none text-xs font-medium text-gray-900 dark:text-white">
-        {tr("Через Google Calendar", "Easiest: through Google Calendar")}
-      </summary>
-      <ol className="mt-2 space-y-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
+    <>
+      <p className="mb-2 text-xs text-gray-700 dark:text-gray-200 leading-relaxed">
+        {tr("Через Google-аккаунт:", "Through the Google account:")}
+      </p>
+      <ol className="mb-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
         <li>{tr("Подключите выше Google Calendar — задачи Dayla попадут в ваш Google-календарь.", "Connect Google Calendar above — Dayla tasks will go to your Google calendar.")}</li>
         <li>
           {tr(
@@ -316,10 +326,7 @@ function AppleViaGoogle() {
           )}
         </li>
       </ol>
-      <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-        {tr("Календари в iCloud? Подключите их напрямую кнопкой ниже.", "Calendars in iCloud? Connect them directly with the button below.")}
-      </p>
-    </details>
+    </>
   );
 }
 
@@ -358,7 +365,9 @@ function IntegrationCard({
       onChanged();
     });
 
-  const status = !connection ? (
+  const status = !connection && item.slug === "apple" ? (
+    <Badge>{tr("через Google", "via Google")}</Badge>
+  ) : !connection ? (
     <Badge>{tr("не подключено", "not connected")}</Badge>
   ) : connection.status === "connected" ? (
     <Badge tone="ok">{tr("подключено", "connected")}</Badge>
@@ -445,8 +454,14 @@ function IntegrationCard({
         </p>
       )}
 
+      {/* Apple Calendar is set up through Google, like Samsung: no Connect button until it is connected */}
+      {(connection || item.slug !== "apple") && (
       <div className="mt-3 flex flex-wrap gap-2">
-        {!connection ? (
+        {!connection && COMING_SOON.has(item.slug) ? (
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            {tr("Скоро", "Coming soon")}
+          </span>
+        ) : !connection ? (
           <Button
             variant="primary"
             size="sm"
@@ -508,6 +523,7 @@ function IntegrationCard({
           </>
         )}
       </div>
+      )}
 
       {connection && (
         <div className="mt-4 pt-3 border-t border-white/20 dark:border-white/10 flex items-center justify-between gap-2">

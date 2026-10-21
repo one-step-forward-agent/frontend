@@ -224,8 +224,12 @@ export interface HistoryMessage {
   id: number;
   role: "user" | "assistant";
   text: string;
-  /** A user message with a file keeps { kind: "file", caption, file } here */
-  reply: AssistantReply | { kind: "file"; caption: string; file: ChatFile } | null;
+  /** A user message with a file keeps { kind: "file", caption, file } here, a voice message { kind: "voice", voice } */
+  reply:
+    | AssistantReply
+    | { kind: "file"; caption: string; file: ChatFile }
+    | { kind: "voice"; voice: { id: string; duration: number }; transcript: string }
+    | null;
   rating: -1 | 1 | null;
   created_at: string;
 }

@@ -43,7 +43,8 @@ const GLASS_BODY = GLASS_BODY_FLAT;
 /* ─── Модель данных ──────────────────────────────────────── */
 
 type Message =
-  | { id: number; role: "user"; text: string; file?: ChatFile }
+  // `voice`: a voice message, shown as audio as in a messenger (the assistant gets what was said)
+  | { id: number; role: "user"; text: string; file?: ChatFile; voice?: { src: string; duration: number } }
   | { id: number; role: "assistant"; reply: AssistantReply; serverId?: number; rating?: -1 | 1 | null }
   | { id: number; role: "error"; text: string };
 
@@ -83,7 +84,9 @@ function fromHistory(items: HistoryMessage[]): Message[] {
     item.role === "user"
       ? item.reply?.kind === "file"
         ? { id: ++messageId, role: "user", text: item.reply.caption, file: item.reply.file }
-        : { id: ++messageId, role: "user", text: item.text }
+        : item.reply?.kind === "voice"
+          ? { id: ++messageId, role: "user", text: "", voice: { src: api.assistant.voiceUrl(item.reply.voice.id), duration: item.reply.voice.duration } }
+          : { id: ++messageId, role: "user", text: item.text }
       : {
           id: ++messageId,
           role: "assistant",
@@ -192,6 +195,24 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     }
   };
 
+  // A voice message goes at once, as in a messenger: the chat shows the recording, the server reads what was said
+  const sendVoice = async (audio: Blob, duration: number) => {
+    if (busy) return;
+    push({ id: ++messageId, role: "user", text: "", voice: { src: URL.createObjectURL(audio), duration } });
+    setBusy(true);
+    try {
+      const { message_id: serverId, ...reply } = await api.assistant.chatVoice(audio, duration);
+      push({ id: ++messageId, role: "assistant", reply: reply as AssistantReply, serverId });
+      if (reply.kind === "completed") notifyTasksChanged();
+    } catch (error) {
+      // Speech that could not be made out or a limit reached is said in words, not as a failure to retry
+      const told = error instanceof ApiError && [413, 422, 429].includes(error.status);
+      push({ id: ++messageId, role: "error", text: told ? error.message : TEMPORARY_ERROR });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const initial = panel ? null : query.get("q");
   const handled = useRef<string | null>(null);
   useEffect(() => {
@@ -203,13 +224,15 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
 
   const topic = panel ? null : query.get("topic");
   const topicText = panel ? null : query.get("text");
+  // ?ask=1: the recommendation's "Как это сделать?" button — the question is asked right away
+  const askHow = query.get("ask") === "1";
   useEffect(() => {
     if (!loaded || !topic || !topicText || handled.current === `topic:${topic}`) return;
     handled.current = `topic:${topic}`;
     navigate("/assistant", { replace: true });
     api.assistant
       .topic(topic.slice(0, 120), topicText.slice(0, 600))
-      .then((reply) =>
+      .then((reply) => {
         setMessages((items) => {
           const last = items[items.length - 1];
           const same =
@@ -217,8 +240,9 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
             last.reply.kind === "topic" &&
             JSON.stringify(last.reply) === JSON.stringify(reply);
           return same ? items : [...items, { id: ++messageId, role: "assistant", reply }];
-        })
-      )
+        });
+        if (askHow) void send(TOPIC_REPLIES[0]);
+      })
       .catch(() => push({ id: ++messageId, role: "error", text: TEMPORARY_ERROR }));
   }, [topic, topicText, loaded]);
 
@@ -376,7 +400,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
             </button>
           ))}
         </div>
-        <Composer value={text} onChange={setText} file={file} onFile={setFile} onSend={() => send(text, file)} busy={busy} inputRef={inputRef} />
+        <Composer value={text} onChange={setText} file={file} onFile={setFile} onSend={() => send(text, file)} onVoice={sendVoice} busy={busy} inputRef={inputRef} />
       </div>
     </div>
   );
@@ -411,6 +435,7 @@ function ChatMessage({
             GLASS_PRIMARY
           )}
         >
+          {message.voice && <VoiceBubble src={message.voice.src} duration={message.voice.duration} />}
           {message.file && <FileChip file={message.file} />}
           {message.text && <p className={cn("relative whitespace-pre-wrap", message.file && "mt-1.5")}>{message.text}</p>}
         </div>
@@ -551,7 +576,7 @@ function ChatMessage({
               ))}
             </div>
           )}
-          {reply.kind === "advice" && <AdviceReply items={reply.items} onAppend={onAppend} />}
+          {reply.kind === "advice" && <AdviceReply items={reply.items} onAppend={onAppend} send={send} />}
           {reply.kind === "reminders" && <RemindersReply initial={reply.settings} />}
           {reply.kind === "reminder" && (
             <ReminderReply reply={reply} onDone={(text) => onReply(message.id, { kind: "cancelled", text })} />
@@ -1084,16 +1109,20 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
 function AdviceReply({
   items,
   onAppend,
+  send,
 }: {
   items: Extract<AssistantReply, { kind: "advice" }>["items"];
   onAppend: (reply: AssistantReply) => void;
+  send?: (text: string) => void;
 }) {
   const reportError = useErrorToast();
   if (!items.length) return <p>{tr("Пока советовать нечего — план в порядке.", "Nothing to advise yet — the plan looks fine.")}</p>;
 
+  // "Как это сделать?": the recommendation becomes the topic and the question is asked at once
   const discuss = async (index: number) => {
     try {
       onAppend(await api.assistant.topic(items[index].title, items[index].text));
+      send?.(TOPIC_REPLIES[0]);
     } catch {
       reportError(TEMPORARY_ERROR);
     }
@@ -1750,6 +1779,61 @@ function fileSize(bytes: number): string {
 }
 
 /** A file in a message, the way messengers show one: its icon, name and size. */
+const clock = (seconds: number) => {
+  const whole = Math.max(0, Math.round(seconds));
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+};
+
+/** A voice message in the chat, as in a messenger: play/pause, progress and length. */
+function VoiceBubble({ src, duration }: { src: string; duration: number }) {
+  const audio = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [position, setPosition] = useState(0);
+  // A recording that is gone (the chat was cleared elsewhere) says so instead of a silent button
+  const [missing, setMissing] = useState(false);
+  const length = duration || audio.current?.duration || 0;
+
+  const toggle = () => {
+    const element = audio.current;
+    if (!element) return;
+    if (playing) element.pause();
+    else void element.play().catch(() => setMissing(true));
+  };
+
+  return (
+    <div className="relative flex items-center gap-2.5 min-w-[11rem]">
+      <audio
+        ref={audio}
+        src={src}
+        preload="metadata"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false);
+          setPosition(0);
+        }}
+        onTimeUpdate={(event) => setPosition(event.currentTarget.currentTime)}
+        onError={() => setMissing(true)}
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={missing}
+        aria-label={playing ? tr("Пауза", "Pause") : tr("Прослушать голосовое сообщение", "Play the voice message")}
+        className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-white/25 hover:bg-white/35 disabled:opacity-50 transition-colors"
+      >
+        <Icon name={playing ? "pause" : "play"} size={14} />
+      </button>
+      <span className="flex-1 h-1 rounded-full bg-white/25 overflow-hidden" aria-hidden="true">
+        <span className="block h-full bg-current transition-[width]" style={{ width: `${length ? Math.min(100, (position / length) * 100) : 0}%` }} />
+      </span>
+      <span className="shrink-0 text-xs tabular-nums opacity-80">
+        {missing ? tr("запись удалена", "recording removed") : clock(playing || position ? position : length)}
+      </span>
+    </div>
+  );
+}
+
 function FileChip({ file, onRemove }: { file: ChatFile; onRemove?: () => void }) {
   return (
     <span className="relative inline-flex items-center gap-2 max-w-full rounded-xl bg-white/15 dark:bg-white/10 px-2.5 py-1.5 text-xs">
@@ -1774,6 +1858,7 @@ function Composer({
   file,
   onFile,
   onSend,
+  onVoice,
   busy,
   inputRef,
 }: {
@@ -1782,13 +1867,14 @@ function Composer({
   file: File | null;
   onFile: (file: File | null) => void;
   onSend: () => void;
+  /** A finished recording: sent at once as a voice message */
+  onVoice: (audio: Blob, duration: number) => void;
   busy: boolean;
   inputRef?: RefObject<HTMLTextAreaElement | null>;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const [recording, setRecording] = useState(false);
-  const [working, setWorking] = useState<"voice" | null>(null);
   const reportError = useErrorToast();
   const ownRef = useRef<HTMLTextAreaElement>(null);
   const textarea = inputRef ?? ownRef;
@@ -1810,8 +1896,7 @@ function Composer({
     element.style.height = `${Math.min(element.scrollHeight, 128)}px`;
   }, [value, narrow, textarea]);
 
-  const append = (extra: string) => onChange(value ? `${value}\n${extra}` : extra);
-
+  // Recording works as a voice message in a messenger: stopping it sends the recording itself
   const toggleRecording = async () => {
     if (recording) {
       recorder.current?.stop();
@@ -1821,22 +1906,17 @@ function Composer({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const chunks: Blob[] = [];
       const media = new MediaRecorder(stream);
+      let started = 0;
       media.ondataavailable = (event) => chunks.push(event.data);
-      media.onstop = async () => {
+      media.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
         setRecording(false);
-        setWorking("voice");
-        try {
-          const result = await api.assistant.transcribe(new Blob(chunks, { type: media.mimeType }));
-          append(result.text);
-        } catch (error) {
-          reportError(errorText(error));
-        } finally {
-          setWorking(null);
-        }
+        const audio = new Blob(chunks, { type: media.mimeType });
+        if (audio.size) onVoice(audio, (Date.now() - started) / 1000);
       };
       recorder.current = media;
       media.start();
+      started = Date.now();
       setRecording(true);
     } catch {
       reportError(tr("Нет доступа к микрофону", "No access to the microphone"));
@@ -1940,8 +2020,8 @@ function Composer({
         <Button
           variant={recording ? "danger" : "ghost"}
           icon={recording ? "stop" : "mic"}
-          aria-label={recording ? tr("Остановить запись", "Stop recording") : tr("Записать голосом", "Record a voice message")}
-          busy={working === "voice"}
+          aria-label={recording ? tr("Остановить и отправить", "Stop and send") : tr("Записать голосовое сообщение", "Record a voice message")}
+          disabled={busy && !recording}
           onClick={toggleRecording}
         />
       )}

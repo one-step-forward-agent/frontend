@@ -47,13 +47,15 @@ type Integration = {
   src: string;
   w: number;
   kind: "oauth" | "manual";
+  // Not open for connecting yet: shown with "Coming soon" and can't be picked
+  soon?: boolean;
 };
 
 const INTEGRATIONS: Integration[] = [
   { id: "google", name: "Google Calendar",  src: "/images/google-calendar.png",     w: 40, kind: "oauth" },
   { id: "yandex", name: tr("Яндекс Календарь", "Yandex Calendar"), src: "/images/yandexcalendar.png",      w: 40, kind: "oauth" },
   { id: "jira",   name: "Jira",             src: "/images/Jira_Software_Logo.svg", w: 36, kind: "oauth" },
-  { id: "notion", name: "Notion",           src: "/images/Notion.webp",             w: 40, kind: "oauth" },
+  { id: "notion", name: "Notion",           src: "/images/Notion.webp",             w: 40, kind: "oauth", soon: true },
 ];
 
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
@@ -90,7 +92,7 @@ export const Integrations: React.FC = () => {
   const initialSelected: Provider[] = React.useMemo(
     () =>
       ((data.integrations ?? []) as string[]).filter((id): id is Provider =>
-        INTEGRATIONS.some((i) => i.id === id)
+        INTEGRATIONS.some((i) => i.id === id && !i.soon)
       ),
     [data.integrations]
   );
@@ -305,13 +307,14 @@ export const Integrations: React.FC = () => {
                   key={i.id}
                   type="button"
                   onClick={() => toggle(i.id)}
+                  disabled={i.soon}
                   aria-pressed={active}
                   className={cn(
                     "group relative overflow-hidden text-left",
                     "rounded-2xl p-3.5 sm:p-4",
                     GLASS_BODY,
                     "transition-transform duration-300",
-                    "hover:-translate-y-0.5"
+                    i.soon ? "cursor-default opacity-60" : "hover:-translate-y-0.5"
                   )}
                   style={active ? { boxShadow: ACTIVE_RING_SKY } : undefined}
                 >
@@ -350,6 +353,11 @@ export const Integrations: React.FC = () => {
                       <p className="font-medium text-gray-900 dark:text-white leading-snug">
                         {i.name}
                       </p>
+                      {i.soon && !connected.includes(i.id) && (
+                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                          {tr("Скоро", "Coming soon")}
+                        </p>
+                      )}
                       {connected.includes(i.id) && (
                         <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-300">
                           <Check size={12} aria-hidden="true" />

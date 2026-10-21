@@ -13,8 +13,10 @@ import {
   formatDeadline,
   formatLead,
   formatTime,
+  isHighPriority,
   lastDay,
   openPicker,
+  plainPriority,
   parseDayKey,
   sameDay,
   startOfDay,
@@ -56,7 +58,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
   const end = new Date(event.end_at);
 
   return (
-    <li className={`event-item ${done ? "is-done" : missed ? "is-missed" : ""}`}>
+    <li className={`event-item ${done ? "is-done" : missed ? "is-missed" : ""} ${isHighPriority(event.priority) ? "is-high" : ""}`}>
       <button
         type="button"
         role="checkbox"
@@ -98,9 +100,9 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
             </span>
           )}
         </span>
-        {(event.priority === "high" || event.priority === "urgent") && (
+        {isHighPriority(event.priority) && (
           <span className="event-badge">
-            <Badge tone={event.priority === "urgent" ? "bad" : "warn"}>{event.priority === "urgent" ? tr("срочно", "urgent") : tr("важно", "important")}</Badge>
+            <Badge tone="warn">{tr("важно", "important")}</Badge>
           </span>
         )}
       </Link>
@@ -195,7 +197,7 @@ function initialState(event?: CalendarEvent, day?: string | null): FormState {
       fixed: event.is_fixed,
       tagIds: event.tag_ids ?? [],
       calendarId: String(event.calendar_id),
-      priority: event.priority,
+      priority: plainPriority(event.priority),
       location: event.location ?? "",
       description: event.description ?? "",
       reminder: event.reminder_minutes == null ? "" : String(event.reminder_minutes),
@@ -288,7 +290,7 @@ export function EventForm({
     { label: tr("Сегодня", "Today"), value: dayKey(today) },
     { label: tr("Завтра", "Tomorrow"), value: dayKey(addDays(today, 1)) },
   ];
-  const hasDetails = !!(event && (event.deadline_at || event.is_fixed || event.location || event.description || event.reminder_minutes != null || event.priority !== "medium"));
+  const hasDetails = !!(event && (event.deadline_at || event.is_fixed || event.location || event.description || event.reminder_minutes != null || isHighPriority(event.priority)));
 
   const changeTime = (value: string) =>
     setState((current) => {

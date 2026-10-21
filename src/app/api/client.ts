@@ -136,6 +136,10 @@ const upload = (field: string, file: Blob, filename?: string): RequestInit => {
   return { method: "POST", body: form };
 };
 
+// The browser records webm (Chrome, Firefox) or mp4 (Safari); the server reads the format by the name
+const voiceSuffix = (type: string): string =>
+  type.includes("mp4") ? ".m4a" : type.includes("ogg") ? ".ogg" : type.includes("mpeg") ? ".mp3" : ".webm";
+
 export const api = {
   auth: {
     register: (body: { email: string; password: string; name?: string | null; timezone?: string; website?: string; form_ms?: number }) =>
@@ -252,6 +256,14 @@ export const api = {
       request<AssistantReply>(`/api/assistant/drafts/${draftId}`, { method: "DELETE" }, "assistant_cancel"),
     transcribe: (audio: Blob) =>
       request<{ text: string }>("/api/assistant/transcribe", upload("audio", audio, "voice.webm"), "assistant_transcribe"),
+    /** A voice message, as in a messenger: the chat keeps the recording, the assistant answers what was said. */
+    chatVoice: (audio: Blob, duration: number) => {
+      const init = upload("audio", audio, `voice${voiceSuffix(audio.type)}`);
+      (init.body as FormData).append("duration", String(Math.round(duration * 10) / 10));
+      return request<AssistantReply & { message_id?: number }>("/api/assistant/chat/voice", init, "assistant_voice");
+    },
+    /** Where the chat plays a voice message from */
+    voiceUrl: (id: string) => `/api/assistant/voice/${encodeURIComponent(id)}`,
     /** A message with a file (PDF, Word, Excel, CSV, text, photo): the server reads it and answers like any message. */
     chatFile: (file: File, text: string) => {
       const init = upload("file", file);
