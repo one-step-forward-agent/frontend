@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { createPortal } from "react-dom";
 import { Clock } from "lucide-react";
 import { cn } from "@/utils/cn";
@@ -123,28 +123,44 @@ export function TimeField({ value, onChange, allowEmpty = false, disabled = fals
     };
     window.addEventListener("mousedown", close);
     window.addEventListener("resize", measure);
-    window.addEventListener("scroll", measure, true);
+    // Scrolling the list itself does not move the field
+    const follow = (event: Event) => {
+      if (!listRef.current?.contains(event.target as Node)) measure();
+    };
+    window.addEventListener("scroll", follow, true);
     return () => {
       window.removeEventListener("mousedown", close);
       window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure, true);
+      window.removeEventListener("scroll", follow, true);
     };
   });
 
-  // The chosen or typed time is in view when the list opens or the text changes
+  // The chosen or typed time is in the middle of the list when it opens or the text changes
   React.useEffect(() => {
     if (!open) return;
+    const list = listRef.current;
     const index = active >= 0 ? active : typedIndex;
-    const item = listRef.current?.children[index] as HTMLElement | undefined;
-    if (item) listRef.current!.scrollTop = item.offsetTop - listRef.current!.clientHeight / 2 + item.clientHeight / 2;
-  }, [open, active, typedIndex]);
+    const item = list?.children[index] as HTMLElement | undefined;
+    if (list && item) list.scrollTop = item.offsetTop - list.clientHeight / 2 + item.clientHeight / 2;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a hovered or arrowed time must not recentre the list
+  }, [open, typedIndex]);
+
+  // A time reached with the arrows is scrolled just into view, never centred: centring under the mouse made the list jump
+  const moveTo = (index: number) => {
+    setActive(index);
+    const list = listRef.current;
+    const item = list?.children[index] as HTMLElement | undefined;
+    if (!list || !item) return;
+    if (item.offsetTop < list.scrollTop) list.scrollTop = item.offsetTop;
+    else if (item.offsetTop + item.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = item.offsetTop + item.offsetHeight - list.clientHeight;
+  };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       if (!open) return show();
       const from = active >= 0 ? active : typedIndex;
-      setActive(Math.max(0, Math.min(options.length - 1, from + (event.key === "ArrowDown" ? 1 : -1))));
+      moveTo(Math.max(0, Math.min(options.length - 1, from + (event.key === "ArrowDown" ? 1 : -1))));
     } else if (event.key === "Enter") {
       if (!open) return;
       event.preventDefault();
