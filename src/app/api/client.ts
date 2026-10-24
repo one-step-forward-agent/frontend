@@ -10,6 +10,7 @@ import type {
   EventFile,
   EventLink,
   DraftItem,
+  IcsImportResult,
   HistoryMessage,
   Integration,
   IntegrationConnection,
@@ -182,6 +183,13 @@ export const api = {
     /** The private feed link (path) for Samsung Calendar and other apps; reset makes a new one */
     feed: (reset = false) =>
       request<{ path: string }>(`/api/calendar/feed${reset ? "?reset=true" : ""}`, { method: "POST" }, reset ? "calendar_feed_reset" : "calendar_feed"),
+    /** Events of an .ics file: all of them, or only those of the days dateFrom..dateTo (YYYY-MM-DD) */
+    importIcs: (file: File, period: { dateFrom?: string; dateTo?: string } = {}) => {
+      const init = upload("file", file);
+      if (period.dateFrom) (init.body as FormData).append("date_from", period.dateFrom);
+      if (period.dateTo) (init.body as FormData).append("date_to", period.dateTo);
+      return request<IcsImportResult>("/api/calendar/import", init, "calendar_import");
+    },
     exportIcs: async () => {
       const response = await send("/api/calendar/export.ics");
       if (!response.ok) throw await errorFrom(response);

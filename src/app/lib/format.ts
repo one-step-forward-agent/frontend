@@ -146,6 +146,7 @@ export const plainPriority = (priority: Priority | undefined): Priority => (isHi
 export const SOURCE_LABELS: Record<string, string> = {
   local: "Dayla",
   ai: tr("Ассистент", "Assistant"),
+  ics: tr("Файл .ics", ".ics file"),
   google: "Google",
   apple: "Apple",
   jira: "Jira",

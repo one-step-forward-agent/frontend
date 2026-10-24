@@ -8,6 +8,7 @@ import { Icon } from "../components/icons";
 import { Avatar } from "../components/Layout";
 import { TimeField } from "@/components/ui/time-field";
 import { restartTour } from "../components/Tour";
+import { IcsImportButton } from "../components/IcsImport";
 import { TAG_COLORS, TagChip } from "../components/tags";
 import {
   Badge,
@@ -44,6 +45,7 @@ const SECTIONS = [
   { id: "telegram", label: "Telegram" },
   { id: "appearance", label: tr("Оформление и язык", "Appearance & language") },
   { id: "integrations", label: tr("Интеграции", "Integrations") },
+  { id: "import", label: tr("Импорт .ics", ".ics import") },
   { id: "security", label: tr("Безопасность", "Security") },
 ];
 
@@ -173,6 +175,7 @@ export function AccountPage() {
           <TelegramSection />
           <AppearanceSection />
           <IntegrationsSection />
+          <ImportSection />
           <SecuritySection />
         </div>
       </div>
@@ -420,7 +423,7 @@ const LEAD_UNITS = [
   { value: 60, label: tr("ч", "h") },
   { value: 1440, label: tr("дн", "days") },
 ];
-const OWN_SOURCES: Source[] = ["local", "ai"];
+const OWN_SOURCES: Source[] = ["local", "ai", "ics"];
 // Services whose events can be filtered by: offered only once connected
 const EXTERNAL_SOURCES: Source[] = ["google", "apple", "jira", "notion"];
 
@@ -668,6 +671,24 @@ function IntegrationsSection() {
               <Link to="/integrations">{tr("Подключить календарь", "Connect a calendar")}</Link>
             </p>
           ))}
+      </GlassCard>
+    </div>
+  );
+}
+
+function ImportSection() {
+  return (
+    <div id="import" className="anchor">
+      <GlassCard title={tr("Импорт из файла .ics", "Import from an .ics file")}>
+        <p className="muted small">
+          {tr(
+            "Файл .ics выгружают Google, Яндекс, Apple и Outlook календари, расписания вузов и сайты мероприятий. Все его события добавятся в Dayla; при повторном импорте того же файла — только новые. Импортировать только месяц или день можно на странице «Календарь», а ещё — просто прислать файл в чат.",
+            "Google, Yandex, Apple and Outlook calendars, university timetables and event sites export .ics files. All of the file's events are added to Dayla; importing the same file again adds only the new ones. To import just a month or a day, use the Calendar page — or simply send the file to the chat."
+          )}
+        </p>
+        <div style={{ marginTop: 12 }}>
+          <IcsImportButton showResult label={tr("Выбрать файл .ics", "Choose an .ics file")} />
+        </div>
       </GlassCard>
     </div>
   );

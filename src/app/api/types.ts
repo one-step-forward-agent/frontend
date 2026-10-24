@@ -30,7 +30,16 @@ export interface TokenResponse {
 }
 
 export type Priority = "low" | "medium" | "high" | "urgent";
-export type Source = "local" | "ai" | "google" | "apple" | "jira" | "notion";
+export type Source = "local" | "ai" | "ics" | "google" | "apple" | "jira" | "notion";
+
+/** What an .ics import added: `skipped` were already in the calendar (imported before) */
+export interface IcsImportResult {
+  created: number;
+  skipped: number;
+  found: number;
+  event_ids: number[];
+  text: string;
+}
 
 export interface Calendar {
   id: number;

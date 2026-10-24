@@ -6,6 +6,7 @@ import { EventList } from "../components/events";
 import { TimeGrid } from "../components/TimeGrid";
 import { RecommendationList } from "../components/recommendations";
 import { Icon } from "../components/icons";
+import { IcsImportButton } from "../components/IcsImport";
 import { Empty, ErrorNote } from "../components/ui";
 import {
   addDays,
@@ -35,6 +36,12 @@ const VIEWS = [
 ] as const;
 type View = (typeof VIEWS)[number]["value"];
 const VIEW_KEY = "dayla-calendar-view";
+// The header's .ics import takes only the period on the screen
+const IMPORT_LABELS: Record<View, string> = {
+  day: tr("Импорт .ics на день", "Import .ics for the day"),
+  week: tr("Импорт .ics на неделю", "Import .ics for the week"),
+  month: tr("Импорт .ics на месяц", "Import .ics for the month"),
+};
 const STEP_LABELS: Record<View, [string, string]> = {
   day: [tr("Предыдущий день", "Previous day"), tr("Следующий день", "Next day")],
   week: [tr("Предыдущая неделя", "Previous week"), tr("Следующая неделя", "Next week")],
@@ -210,6 +217,10 @@ export function CalendarPage() {
       : view === "week"
       ? weekTitle(gridStart)
       : formatMonth(month);
+  const [importFrom, importTo] =
+    view === "month"
+      ? [month, new Date(month.getFullYear(), month.getMonth() + 1, 0)]
+      : [gridStart, addDays(gridStart, length - 1)];
   // "Сегодня" only when today is off the screen: one way back, not a second "today"
   const showsToday =
     view === "month" ? sameDay(month, startOfMonth(today)) : days.some((day) => sameDay(day, today));
@@ -270,6 +281,16 @@ export function CalendarPage() {
               {tr("Сегодня", "Today")}
             </button>
           )}
+          <IcsImportButton
+            dateFrom={dayKey(importFrom)}
+            dateTo={dayKey(importTo)}
+            label={IMPORT_LABELS[view]}
+            title={tr(
+              "Добавить из файла .ics только события этого периода. Весь файл — в настройках или в чате",
+              "Add only this period's events from an .ics file. The whole file — in the settings or the chat"
+            )}
+            className="rounded-full"
+          />
         </div>
       </header>
 
@@ -436,9 +457,21 @@ export function CalendarPage() {
 
           {/* ─── Панель выбранного дня: без своих стрелок, листает шапка ─── */}
           <GlassCard className="h-fit lg:sticky lg:top-6">
-            <h2 className="mb-4 text-sm font-medium text-gray-900 dark:text-white truncate capitalize-first">
-              {formatDate(selected, { weekday: "long", day: "numeric", month: "long" })}
-            </h2>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate capitalize-first">
+                {formatDate(selected, { weekday: "long", day: "numeric", month: "long" })}
+              </h2>
+              {/* Нажали на день — можно добавить события этого дня из файла */}
+              <IcsImportButton
+                dateFrom={dayKey(selected)}
+                dateTo={dayKey(selected)}
+                label=".ics"
+                title={tr("Добавить из файла .ics события этого дня", "Add this day's events from an .ics file")}
+                size="sm"
+                variant="ghost"
+                className="shrink-0"
+              />
+            </div>
             <DayEvents events={selectedEvents} loading={events.loading} />
           </GlassCard>
         </div>
