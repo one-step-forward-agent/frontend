@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { api, type SignInProvider } from '@/app/api/client';
-import { useGoogleNotice } from '@/app/components/GoogleNotice';
 import { errorText } from '@/app/lib/format';
 import { cn } from '@/utils/cn';
 
@@ -66,13 +65,11 @@ interface SignInButtonsProps {
 export const SignInButtons: React.FC<SignInButtonsProps> = ({ returnTo, register = false, blocked }) => {
   const [busy, setBusy] = useState<SignInProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const google = useGoogleNotice();
 
   const signIn = async (provider: SignInProvider) => {
     const reason = blocked?.() ?? null;
     if (reason) return setError(reason);
     setError(null);
-    if (provider === 'google' && !(await google.confirm())) return;
     setBusy(provider);
     try {
       const { authorization_url } = await api.auth.oauthStart(provider, {
@@ -90,7 +87,6 @@ export const SignInButtons: React.FC<SignInButtonsProps> = ({ returnTo, register
 
   return (
     <div className="space-y-2.5">
-      {google.notice}
       <p className="text-center text-xs text-gray-500 dark:text-gray-400">
         {register ? tr('Зарегистрироваться через', 'Sign up with') : tr('Войти через', 'Sign in with')}
       </p>
