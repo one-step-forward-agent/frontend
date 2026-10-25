@@ -17,6 +17,7 @@ import type {
   Recommendation,
   ReminderHistoryItem,
   ReminderSettings,
+  Rewards,
   Stats,
   DeleteScope,
   SyncResult,
@@ -170,7 +171,7 @@ export const api = {
   },
   me: {
     get: () => request<User>("/api/me"),
-    update: (body: { name?: string | null; timezone?: string }) =>
+    update: (body: { name?: string | null; timezone?: string; rewards_enabled?: boolean }) =>
       request<User>("/api/me", json("PATCH", body), "me_update"),
     saveOnboarding: (profile: Record<string, unknown>) =>
       request<User>("/api/me/onboarding", json("PUT", profile), "onboarding_save"),
@@ -230,6 +231,7 @@ export const api = {
       request<{ file_id: number; text: string }>(`/api/files/${id}/text`, { method: "POST" }, "file_text_extract"),
   },
   stats: (days = 7) => request<Stats>(`/api/stats?days=${days}`),
+  rewards: () => request<Rewards>("/api/rewards"),
   recommendations: (scope: "today" | "week" | "month" = "today", day?: string) =>
     request<{ items: Recommendation[] }>(`/api/recommendations?scope=${scope}${day ? `&day=${day}` : ""}`).then((result) => result.items),
   tags: {

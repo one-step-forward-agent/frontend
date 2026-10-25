@@ -7,9 +7,10 @@ import { useAuth, useSignOut, useUser } from "../auth";
 import { Icon } from "../components/icons";
 import { Avatar } from "../components/Layout";
 import { TimeField } from "@/components/ui/time-field";
-import { restartTour } from "../components/Tour";
+import { restartTour, startTour } from "../components/Tour";
 import { IcsImportButton } from "../components/IcsImport";
 import { TAG_COLORS, TagChip } from "../components/tags";
+import { BadgeList, LevelBar } from "../components/Rewards";
 import {
   Badge,
   Button,
@@ -40,6 +41,7 @@ import { LOCALE, isEn, tr } from "@/i18n";
 
 const SECTIONS = [
   { id: "profile", label: tr("Профиль", "Profile") },
+  { id: "rewards", label: tr("Награды", "Awards") },
   { id: "tags", label: tr("Теги", "Tags") },
   { id: "reminders", label: tr("Уведомления", "Notifications") },
   { id: "telegram", label: "Telegram" },
@@ -170,6 +172,7 @@ export function AccountPage() {
 
         <div className="space-y-6 min-w-0">
           <ProfileSection />
+          <RewardsSection />
           <TagsSection />
           <RemindersSection />
           <TelegramSection />
@@ -255,6 +258,61 @@ function ProfileSection() {
             </Button>
           </div>
         </form>
+      </GlassCard>
+    </div>
+  );
+}
+
+function RewardsSection() {
+  const user = useUser();
+  const { setUser } = useAuth();
+  const reportError = useErrorToast();
+  const enabled = user.rewards_enabled !== false;
+  const rewards = useAsync(() => (enabled ? api.rewards() : Promise.resolve(null)), [enabled]);
+
+  const toggle = async (value: boolean) => {
+    try {
+      setUser(await api.me.update({ rewards_enabled: value }));
+    } catch (error) {
+      reportError(errorText(error));
+    }
+  };
+
+  return (
+    <div id="rewards" className="anchor">
+      <GlassCard
+        title={tr("Награды", "Awards")}
+        actions={
+          enabled && (
+            <button type="button" className="btn btn-ghost btn-sm h-8 px-3 text-xs" onClick={() => startTour("rewards")}>
+              {tr("Как это работает", "How it works")}
+            </button>
+          )
+        }
+      >
+        <Switch
+          checked={enabled}
+          onChange={toggle}
+          label={tr("Очки, уровни и значки", "Points, levels and badges")}
+          hint={tr("Если выключить, они пропадут с сайта и из вечерних итогов в Telegram", "Turn off to hide them on the site and in the evening summary in Telegram")}
+        />
+        {enabled && (
+        <p className="muted small">
+          {tr(
+            "Очки даются за каждую выполненную задачу и за дни, когда сделано всё, а за серии дней — бонус. Значки — за задачи в ваших сферах жизни: ставьте тег сферы, например «#Спорт».",
+            "You get points for every task done and for days with everything done, plus a bonus for streaks. Badges come from tasks in your life areas: add the area's tag, like “#Sport”."
+          )}
+        </p>
+        )}
+        {enabled &&
+          (rewards.data ? (
+            <div className="space-y-5">
+              <LevelBar rewards={rewards.data} />
+              <BadgeList rewards={rewards.data} />
+            </div>
+          ) : (
+            <Loading />
+          ))}
       </GlassCard>
     </div>
   );

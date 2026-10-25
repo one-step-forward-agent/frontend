@@ -6,10 +6,12 @@ import { tr } from "@/i18n";
 /**
  * Hints on the first visit to the app: what each section is for and how to talk to the assistant.
  * Each step points at an element marked data-tour="<id>" — the sidebar on a desktop, the tab bar on a phone;
- * a step whose element is not on this screen is skipped. Seen once per user in this browser.
+ * a step whose element is not on this screen is skipped (or shown in the middle, if it is `always`).
+ * Seen once per user in this browser. The awards have their own hints, shown the first time the level bar is.
  */
 
-type Step = { target?: string; title: string; text: string };
+type Step = { target?: string; title: string; text: string; always?: boolean };
+export type TourName = "main" | "rewards";
 
 const STEPS: Step[] = [
   {
@@ -65,33 +67,75 @@ const STEPS: Step[] = [
   // },
 ];
 
-const KEY = "dayla.tour.v1";
+const REWARD_STEPS: Step[] = [
+  {
+    title: tr("Награды за дела", "Rewards for getting things done"),
+    text: tr("Выполняйте задачи — получайте очки, уровни и значки. Покажу за полминуты.", "Get things done to earn points, levels and badges. Here is how in half a minute."),
+  },
+  {
+    target: "level",
+    always: true,
+    title: tr("Очки и уровни", "Points and levels"),
+    text: tr(
+      "10 очков за каждую выполненную задачу и 20 — за день, когда сделано всё. Серии в 3, 7, 14, 30 и 100 дней дают бонус. Сняли отметку — очки уходят.",
+      "10 points for every task done and 20 for a day with everything done. Streaks of 3, 7, 14, 30 and 100 days give a bonus. Untick a task and its points go."
+    ),
+  },
+  {
+    target: "badges",
+    always: true,
+    title: tr("Значки по сферам жизни", "Badges for your life areas"),
+    text: tr(
+      "У каждой сферы из онбординга три значка: за 5, 25 и 100 задач. Ставьте тег сферы: «тренировка завтра #Спорт».",
+      "Each life area from onboarding has three badges: for 5, 25 and 100 tasks. Add the area's tag: “workout tomorrow #Sport”."
+    ),
+  },
+  {
+    title: tr("Итоги в Telegram", "Results in Telegram"),
+    text: tr("Вечером бот напишет, сколько очков вы получили за день и сколько осталось до уровня и значка.", "In the evening the bot tells you the day's points and how much is left to the next level and badge."),
+  },
+  {
+    target: "account",
+    title: tr("Всё в профиле", "All in your profile"),
+    text: tr("Значки — в «Аккаунт → Награды». Там же награды можно выключить.", "Badges are in Account → Awards. You can turn the rewards off there too."),
+  },
+];
+
+const TOURS: Record<TourName, Step[]> = { main: STEPS, rewards: REWARD_STEPS };
+const KEYS: Record<TourName, string> = { main: "dayla.tour.v1", rewards: "dayla.tour.rewards.v1" };
 const RESTART = "dayla:tour";
 const GUTTER = 16;
 const CARD_WIDTH = 340;
 const PAD = 6;
 
-const storageKey = (userId: number) => `${KEY}.${userId}`;
+const storageKey = (name: TourName, userId: number) => `${KEYS[name]}.${userId}`;
 
-function seen(userId: number): boolean {
+function seen(name: TourName, userId: number): boolean {
   try {
-    return window.localStorage.getItem(storageKey(userId)) === "1";
+    return window.localStorage.getItem(storageKey(name, userId)) === "1";
   } catch {
     return false;
   }
 }
 
-function remember(userId: number) {
+function remember(name: TourName, userId: number) {
   try {
-    window.localStorage.setItem(storageKey(userId), "1");
+    window.localStorage.setItem(storageKey(name, userId), "1");
   } catch {
     // Without storage the hints may show again next time: harmless
   }
 }
 
+type Start = { name: TourName; once: boolean };
+
+/** Show hints: again from a button (once = false), or the first time something appears (once = true). */
+export function startTour(name: TourName, once = false) {
+  window.dispatchEvent(new CustomEvent<Start>(RESTART, { detail: { name, once } }));
+}
+
 /** Show the hints again (the button in the profile). */
 export function restartTour() {
-  window.dispatchEvent(new Event(RESTART));
+  startTour("main");
 }
 
 function visibleTarget(id: string | undefined): HTMLElement | null {
@@ -104,8 +148,8 @@ function visibleTarget(id: string | undefined): HTMLElement | null {
 }
 
 /** The steps that make sense on this screen: those without a target, and those whose target is visible. */
-function available(): Step[] {
-  return STEPS.filter((step) => !step.target || visibleTarget(step.target));
+function available(name: TourName): Step[] {
+  return TOURS[name].filter((step) => !step.target || step.always || visibleTarget(step.target));
 }
 
 type Place = { spot: DOMRect | null; top: number; left: number; width: number };
@@ -130,34 +174,49 @@ function place(step: Step, cardHeight: number): Place {
 }
 
 export function Tour({ userId }: { userId: number }) {
+  const [tour, setTour] = useState<TourName>("main");
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [index, setIndex] = useState(0);
   const [layout, setLayout] = useState<Place | null>(null);
   const card = useRef<HTMLDivElement>(null);
   const next = useRef<HTMLButtonElement>(null);
+  const showing = useRef(false);
 
-  const start = useCallback(() => {
-    setIndex(0);
-    setSteps(available());
-  }, []);
+  const start = useCallback(
+    (name: TourName, once = false) => {
+      // First-time hints wait until the welcome ones are seen and never cut into hints on screen
+      if (once && (seen(name, userId) || (name !== "main" && !seen("main", userId)) || showing.current)) return;
+      showing.current = true;
+      setTour(name);
+      setIndex(0);
+      setSteps(available(name));
+    },
+    [userId]
+  );
 
   useEffect(() => {
     // After the first paint, so the navigation is there to point at
-    const timer = !seen(userId) ? window.setTimeout(start, 600) : undefined;
-    window.addEventListener(RESTART, start);
+    const timer = window.setTimeout(() => start("main", true), 600);
+    const onStart = (event: Event) => {
+      const detail = (event as CustomEvent<Start>).detail;
+      // First-time hints wait for the page to settle, so the element a step is about can be found
+      window.setTimeout(() => start(detail?.name ?? "main", detail?.once ?? false), detail?.once ? 600 : 0);
+    };
+    window.addEventListener(RESTART, onStart);
     return () => {
       window.clearTimeout(timer);
-      window.removeEventListener(RESTART, start);
+      window.removeEventListener(RESTART, onStart);
     };
-  }, [userId, start]);
+  }, [start]);
 
   const step = steps?.[index];
 
   const finish = useCallback(() => {
-    remember(userId);
+    remember(tour, userId);
+    showing.current = false;
     setSteps(null);
     setLayout(null);
-  }, [userId]);
+  }, [tour, userId]);
 
   useLayoutEffect(() => {
     if (!step) return;
@@ -225,7 +284,7 @@ export function Tour({ userId }: { userId: number }) {
             aria-hidden="true"
             className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-sky-400 to-violet-500"
           >
-            <Icon name="assistant" size={16} />
+            <Icon name={tour === "rewards" ? "star" : "assistant"} size={16} />
           </span>
           <div className="min-w-0">
             <p id="tour-title" className="font-semibold leading-snug">
@@ -265,7 +324,7 @@ export function Tour({ userId }: { userId: number }) {
               onClick={() => (last ? finish() : setIndex(index + 1))}
               className="h-9 px-4 rounded-xl text-sm font-medium text-white bg-gradient-to-br from-sky-500 to-violet-500 hover:brightness-105"
             >
-              {last ? tr("Начать", "Start") : tr("Далее", "Next")}
+              {last ? (tour === "main" ? tr("Начать", "Start") : tr("Понятно", "Got it")) : tr("Далее", "Next")}
             </button>
           </span>
         </div>

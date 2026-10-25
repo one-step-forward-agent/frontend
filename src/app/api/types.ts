@@ -8,6 +8,8 @@ export interface User {
   profile?: Record<string, unknown>;
   /** Opens the admin dashboard at /dashboard */
   is_admin?: boolean;
+  /** Points, levels and badges; off hides them here and in the evening summary */
+  rewards_enabled?: boolean;
 }
 
 /** The note all admins share on the dashboard; one admin at a time edits it after locking it */
@@ -259,6 +261,27 @@ export interface Stats {
   percent: number;
   streak: number;
   best_streak: number;
+}
+
+/** A challenge in an onboarding sphere: `goal` ticked tasks with the sphere's tag. */
+export interface RewardBadge {
+  sphere: string;
+  goal: number;
+  name: string;
+  name_en: string;
+  done: number;
+  earned: boolean;
+}
+
+/** Points, level and badges, counted by the server from the ticked tasks and completed days. */
+export interface Rewards {
+  points: number;
+  today_points: number;
+  level: number;
+  level_start: number;
+  next_level_at: number;
+  badges: RewardBadge[];
+  next_badge: (RewardBadge & { left: number }) | null;
 }
 
 /** What the last weeks say about the user, as plain sentences from the server. */

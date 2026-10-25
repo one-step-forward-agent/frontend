@@ -7,6 +7,7 @@ import { useUser } from "../auth";
 import { EventList, EventRow } from "../components/events";
 import { Icon } from "../components/icons";
 import { RecommendationList } from "../components/recommendations";
+import { LevelBar } from "../components/Rewards";
 import {
   Button,
   Empty,
@@ -71,14 +72,17 @@ export function TodayPage() {
     [today.getTime()]
   );
   const stats = useAsync(() => api.stats(7), []);
+  const rewardsOn = user.rewards_enabled !== false;
+  const rewards = useAsync(() => (rewardsOn ? api.rewards() : Promise.resolve(null)), [rewardsOn]);
   const recommendations = useAsync(() => loadRecommendations(user.id), [user.id]);
 
   // Tips change with the tasks too: "Незакрытые задачи" goes away once they are done
   const reloadAll = useCallback(() => {
     events.reload();
     stats.reload();
+    rewards.reload();
     recommendations.reload();
-  }, [events.reload, stats.reload, recommendations.reload]);
+  }, [events.reload, stats.reload, rewards.reload, recommendations.reload]);
   useTasksChanged(reloadAll);
 
   useCalendarSync();
@@ -162,6 +166,11 @@ export function TodayPage() {
         <div className="space-y-6">
           <GlassCard title={tr("Прогресс", "Progress")}>
             {stats.data ? <Progress stats={stats.data} /> : <Loading />}
+            {rewards.data && (
+              <div className="mt-4">
+                <LevelBar rewards={rewards.data} />
+              </div>
+            )}
           </GlassCard>
 
         </div>
