@@ -1686,7 +1686,7 @@ const SlideFinance: React.FC<SlideProps> = ({ mobile }) => (
       <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Из рабочего чата — в план", "From a work chat to your plan")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
-          {tr("Dots работают там же, где и вы", "Dots work where you do")}
+          {tr("Dayla работает там же, где и вы", "Dayla work where you do")}
         </h2>
         <p className="mt-3 text-gray-600 dark:text-gray-400">
           {tr("Начните проект в Dayla, поделитесь контекстом с рабочей командой в Telegram — и позвольте Dayla довести дело до конца.", "Start a project in ChatGPT, share context with your team in Slack — and let Dayla finish the job. The assistant keeps context across all channels.")}
