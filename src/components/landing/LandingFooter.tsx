@@ -44,9 +44,6 @@ const LandingFooter: React.FC = () => {
               <span className="text-white text-2xl font-bold tracking-tight">Dayla</span>
             </Link>
 
-            <p className="text-sm leading-relaxed text-gray-400 max-w-[220px]">
-              {tr("Порядок в планировании, задачах и целях — за минуту в день.", "Order in your plans, tasks and goals — in a minute a day.")}
-            </p>
 
             {config?.online && (
               <div className="flex items-center gap-2 text-xs text-gray-500">

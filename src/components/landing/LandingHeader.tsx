@@ -13,8 +13,6 @@ type NavItem =
   | { kind: "route"; to: string; label: string };
 
 const NAV_ITEMS: NavItem[] = [
-  { kind: "anchor", href: "#usecases", label: tr("Как это работает", "How it works") },
-  { kind: "anchor", href: "#integrations", label: tr("Интеграции", "Integrations") },
 ];
 
 const Logo: React.FC = () => (
@@ -48,13 +46,21 @@ export const LandingHeader: React.FC = () => {
     >
       <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 flex items-center gap-3">
         <Link
-          to="/"
-          className="flex items-center gap-2 shrink-0"
-          aria-label={tr("Dayla — на главную", "Dayla — home")}
-        >
-          <Logo />
-          <span className="font-semibold text-gray-900 dark:text-white">Dayla</span>
-        </Link>
+  to="/"
+  className="flex items-center gap-2 shrink-0"
+  aria-label={tr("Dayla — на главную", "Dayla — home")}
+  onClick={(e) => {
+    // Уже на главной — прокрутка к Hero (верху страницы), без перезагрузки
+    if (typeof window !== "undefined" && window.location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    closeMobile();
+  }}
+>
+  <Logo />
+  <span className="font-semibold text-gray-900 dark:text-white">Dayla</span>
+</Link>
 
         <nav
           className="hidden md:flex items-center gap-1 ml-6"

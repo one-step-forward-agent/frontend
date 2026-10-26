@@ -16,6 +16,7 @@ import {
   ListChecks,
   ChevronLeft,
   ChevronRight,
+  Lock,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,10 +48,19 @@ export const Start: React.FC = () => {
     <div className="relative min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white overflow-x-clip">
       <PageBackdrop />
       <LandingHeader />
+
       <div className="relative z-10">
         <Hero onStart={start} />
-        <UserCaseCarousel paused={finalCtaActive} />
+
         <FinalCTA onStart={start} onActiveChange={handleFinalCtaActive} />
+
+        <UserCaseCarousel paused={finalCtaActive} />
+
+        {/* НОВОЕ: видео-блок */}
+        <DesktopAgentVideoSection />
+
+        <FeatureScreenshotsCarousel />
+
         <LandingFooter />
       </div>
     </div>
@@ -412,13 +422,13 @@ const GTD_RESPONSE = (
         <div>
           <p className="font-semibold text-gray-900 dark:text-white">{tr("Чт, 03.10", "Thu, 03.10")}</p>
           <p className="text-gray-600 dark:text-gray-300">
-            {tr("09:00–10:30 — Ревью PR #482 · 11:00–12:00 — Планирование Q4 · 15:00–16:00 — Созвон с продажами", "09:00–10:30 — Review PR #482 · 11:00–12:00 — Q4 planning · 15:00–16:00 — Sales call")}
+            {tr("09:00–10:30 — Ревью PR #482 · 11:00–12:00", "09:00–10:30 — Review PR #482")}
           </p>
         </div>
         <div>
           <p className="font-semibold text-gray-900 dark:text-white">{tr("Пт, 04.10", "Fri, 04.10")}</p>
           <p className="text-gray-600 dark:text-gray-300">
-            {tr("09:00–10:00 — Ответить клиенту · 10:00–12:00 — Задачи Sprint 24 · 14:00–15:30 — Бюджет на ноябрь", "09:00–10:00 — Reply to the client · 10:00–12:00 — Sprint 24 tasks · 14:00–15:30 — November budget")}
+            {tr("09:00–10:00 — Ответить клиенту · 10:00–12:00", "09:00–10:00 — Reply to the client")}
           </p>
         </div>
         <div>
@@ -1052,63 +1062,7 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
         </p>
 
         <div className="mt-2 flex flex-col sm:flex-row gap-3">
-          <button
-  type="button"
-  onClick={onStart}
-  className={cn(
-    "group relative inline-flex items-center justify-center",
-    "px-7 md:px-8 h-11 md:h-12",
-    "text-sm md:text-base font-semibold text-blue-700",
-    "rounded-full",
-    "transition-all duration-300 ease-out",
-    "hover:-translate-y-0.5 active:translate-y-0",
-    // ─── Белое тело ───
-    "bg-white",
-    "ring-1 ring-white/80",
-    "shadow-[0_8px_28px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.5)]",
-    "hover:shadow-[0_12px_36px_rgba(15,23,42,0.24),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.6)]"
-  )}
->
-  {/* Спекулярный блик — верхняя половина */}
-  <span
-    aria-hidden="true"
-    className="pointer-events-none absolute inset-x-3 top-0.5 h-1/2 rounded-full bg-gradient-to-b from-white to-transparent opacity-90 blur-[1px]"
-  />
-
-  {/* Тонкая радужная кромка */}
-  <span
-    aria-hidden="true"
-    className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/60 mix-blend-overlay"
-  />
-
-  <span className="relative inline-flex items-center gap-1.5">
-    {tr("Начать бесплатно", "Start for free")}
-    <ArrowRight
-      size={16}
-      className="transition-transform duration-300 group-hover:translate-x-0.5"
-      aria-hidden="true"
-    />
-  </span>
-</button>
-
-          <button
-            type="button"
-            onClick={() =>
-              document.getElementById("usecases")?.scrollIntoView({ behavior: "smooth" })
-            }
-            className={cn(
-              "group relative overflow-hidden inline-flex items-center justify-center",
-              "px-2 py-2 rounded-full",
-              "text-base font-medium",
-              "text-gray-700 dark:text-gray-300",
-              GLASS_BODY,
-              "transition-transform duration-300",
-              "hover:-translate-y-0.5"
-            )}
-          >
-            <span aria-hidden="true" className={GLASS_SHEEN_PILL} />
-            <span className="relative">{tr("Как это работает", "How it works")}</span>
-          </button>
+          
         </div>
 
       </div>
@@ -1159,8 +1113,8 @@ const MOCK_TASKS: Array<{
 ];
 
 const AI_RECOMMENDATION_STUDENT = tr(
-  "Не успели задачу? Могу перенести на завтра в свободное окно",
-  "Didn't finish a task? I can move it to a free slot tomorrow"
+  "Не успели задачу? Перенесём на завтра",
+  "Didn't finish a task? Move it tomorrow"
 );
 const AI_RECOMMENDATION_PRO = tr("Уделим больше времени изучению английского?", "Shall we spend more time on English?");
 
@@ -1317,8 +1271,48 @@ const INTEGRATIONS = [
   { src: "/images/TelegramWB.webp",           alt: "Telegram",         w: 44 },
 ];
 
-const FINAL_CTA_OVERLAP_TOP_VH = 10;
-const FINAL_CTA_EXTRA_BOTTOM_VH = 55;
+// Насколько секция наезжает на предыдущий блок сверху (задает длину верхнего градиента)
+const FINAL_CTA_OVERLAP_TOP_VH = 30; 
+// Дополнительное пространство снизу (задает длину нижнего градиента)
+const FINAL_CTA_EXTRA_BOTTOM_VH = 15; 
+
+// АЛЬФА СРЕДНЕЙ ЧАСТИ: 1 - полностью непрозрачный центр, 0.5 - полупрозрачный
+const FINAL_CTA_GRADIENT_ALPHA = 0.5; 
+
+// Насколько опустить верхнюю границу неактивного контейнера (в процентах)
+const FINAL_CTA_INACTIVE_TOP_INSET = 35; 
+
+// НОВОЕ: Насколько опустить сам градиент сверху (в vh). Увеличивай, чтобы градиент начинался ниже.
+const FINAL_CTA_MASK_TOP_OFFSET_VH = 25; 
+
+// Ширина градиента слева и справа (в vw)
+const FINAL_CTA_HORIZONTAL_GRADIENT_VW = 15; 
+
+// Вертикальная маска (управляет верхом и низом)
+const FINAL_CTA_MASK_VERTICAL = `
+  linear-gradient(
+    to bottom,
+    rgba(0,0,0,0) 0vh,
+    rgba(0,0,0,0) ${FINAL_CTA_MASK_TOP_OFFSET_VH}vh,
+    rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) calc(${FINAL_CTA_MASK_TOP_OFFSET_VH}vh + ${FINAL_CTA_OVERLAP_TOP_VH}vh),
+    rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) calc(100vh + ${FINAL_CTA_OVERLAP_TOP_VH}vh),
+    rgba(0,0,0,0) calc(100vh + ${FINAL_CTA_OVERLAP_TOP_VH + FINAL_CTA_EXTRA_BOTTOM_VH}vh)
+  )
+`;
+
+// Горизонтальная маска (управляет левом и правом)
+const FINAL_CTA_MASK_HORIZONTAL = `
+  linear-gradient(
+    to right,
+    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) ${FINAL_CTA_HORIZONTAL_GRADIENT_VW}vw,
+    rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) calc(100% - ${FINAL_CTA_HORIZONTAL_GRADIENT_VW}vw),
+    rgba(0,0,0,0) 100%
+  )
+`;
+
+// Объединяем маски
+const FINAL_CTA_MASK = `${FINAL_CTA_MASK_VERTICAL}, ${FINAL_CTA_MASK_HORIZONTAL}`;
 
 const ORBIT_PERIOD_MS = 24000;
 const ORBIT_TRANSITION_MS = 700;
@@ -1334,20 +1328,16 @@ const orbitRadiusScale = () => (isPhoneWidth() ? 0.75 : 1 / 1.2);
 const ORBIT_ICON_BASE = 96;
 const ORBIT_ICON_IMG_BASE = 58;
 
-const FINAL_CTA_MASK =
-  "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 26%, black 38%)";
-
 const FinalCTA: React.FC<{
   onStart: () => void;
   onActiveChange?: (active: boolean) => void;
 }> = ({ onStart, onActiveChange }) => {
+  // ... (код useRef и useEffect остается без изменений до return) ...
   const sectionRef = React.useRef<HTMLElement>(null);
   const [active, setActive] = React.useState(false);
   const lastActive = React.useRef(false);
   const lastY = React.useRef(0);
-
   const iconRefs = React.useRef<(HTMLDivElement | null)[]>([]);
-
   const [isNarrow, setIsNarrow] = React.useState(false);
 
   React.useEffect(() => {
@@ -1358,24 +1348,23 @@ const FinalCTA: React.FC<{
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  React.useEffect(() => {
+    React.useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
-
     lastY.current = window.scrollY;
-
+    
     const update = () => {
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
-
       const visibleTop = Math.max(0, rect.top);
       const visibleBottom = Math.min(vh, rect.bottom);
       const visible = Math.max(0, visibleBottom - visibleTop);
       const ratio = visible / Math.min(vh, rect.height || vh);
-
-      const goingUp = window.scrollY < lastY.current;
-      const next = goingUp ? false : ratio > 0.5;
-
+      
+      // Убрали проверку goingUp. Теперь блок активируется при видимости > 50% 
+      // независимо от того, скроллим мы вверх или вниз.
+      const next = ratio > 0.5;
+      
       if (next !== lastActive.current) {
         lastActive.current = next;
         setActive(next);
@@ -1383,7 +1372,6 @@ const FinalCTA: React.FC<{
       }
       lastY.current = window.scrollY;
     };
-
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
@@ -1394,29 +1382,21 @@ const FinalCTA: React.FC<{
   }, [onActiveChange]);
 
   React.useEffect(() => {
+    // ... (код анимации иконок остается без изменений) ...
     const N = INTEGRATIONS.length;
     const icons = iconRefs.current;
     if (!icons.length) return;
-
-    const computeRadius = () =>
-      Math.min(window.innerWidth * 0.32, 240) * orbitRadiusScale();
-
+    const computeRadius = () => Math.min(window.innerWidth * 0.32, 240) * orbitRadiusScale();
     const orbitValues = (i: number, angle: number) => {
       const R = computeRadius();
       const baseAngle = (i / N) * 360;
       const rad = ((baseAngle + angle) * Math.PI) / 180;
-      const x = R * Math.cos(rad)*1.2;
+      const x = R * Math.cos(rad) * 1.2;
       const y = R * Math.sin(rad);
       const t = (Math.sin(rad) + 1) / 2;
       const sf = 0.45 + 0.55 * t;
-      return {
-        x,
-        y,
-        opacity: 0.1 + 0.9 * t,
-        outerSize: isPhoneWidth() ? 48 + 12 * sf : 80 + 16 * sf,
-      };
+      return { x, y, opacity: 0.1 + 0.9 * t, outerSize: isPhoneWidth() ? 48 + 12 * sf : 80 + 16 * sf };
     };
-
     const staticValues = (i: number, maxWidth: number) => {
       const size = rowIconSize();
       const gap = rowGap();
@@ -1426,71 +1406,43 @@ const FinalCTA: React.FC<{
       const itemsInRow = Math.min(perRow, N - rowIdx * perRow);
       const rowWidth = itemsInRow * size + (itemsInRow - 1) * gap;
       const startX = -rowWidth / 2 + size / 2;
-
-      return {
-        x: startX + colIdx * (size + gap),
-        y: rowYOffset() + rowIdx * (size + gap),
-        opacity: 1,
-        outerSize: size,
-      };
+      return { x: startX + colIdx * (size + gap), y: rowYOffset() + rowIdx * (size + gap), opacity: 1, outerSize: size };
     };
-
-    const writeIcon = (
-      el: HTMLDivElement,
-      v: { x: number; y: number; opacity: number; outerSize: number }
-    ) => {
+    const writeIcon = (el: HTMLDivElement, v: { x: number; y: number; opacity: number; outerSize: number }) => {
       const scale = v.outerSize / ORBIT_ICON_BASE;
       el.style.transform = `translate(-50%, -50%) translate(${v.x.toFixed(1)}px, ${v.y.toFixed(1)}px) scale(${scale.toFixed(3)})`;
       el.style.opacity = v.opacity.toFixed(3);
     };
-
     const setTransition = (on: boolean) => {
-      const tr = on
-        ? `transform ${ORBIT_TRANSITION_MS}ms cubic-bezier(0.4,0,0.2,1), opacity ${ORBIT_TRANSITION_MS}ms ease-out`
-        : "none";
-
-      icons.forEach((el) => {
-        if (el) el.style.transition = tr;
-      });
-
+      const tr = on ? `transform ${ORBIT_TRANSITION_MS}ms cubic-bezier(0.4,0,0.2,1), opacity ${ORBIT_TRANSITION_MS}ms ease-out` : "none";
+      icons.forEach((el) => { if (el) el.style.transition = tr; });
       void (icons[0]?.offsetWidth ?? 0);
     };
 
     if (active && isPhoneWidth()) {
-      // On a phone the icons stand still in a row under the button: no rotation,
-      // no ring around the button — exactly the same static row layout as in
-      // the "not active" state, but visible while the section is expanded.
       const applyStatic = () => {
         if (!isPhoneWidth()) return;
         const maxWidth = Math.min(window.innerWidth - 32, 600);
         setTransition(true);
-        icons.forEach((el, i) => {
-          if (el) writeIcon(el, staticValues(i, maxWidth));
-        });
+        icons.forEach((el, i) => { if (el) writeIcon(el, staticValues(i, maxWidth)); });
       };
       applyStatic();
       window.addEventListener("resize", applyStatic);
       return () => window.removeEventListener("resize", applyStatic);
     } else if (active) {
       setTransition(true);
-      icons.forEach((el, i) => {
-        if (el) writeIcon(el, orbitValues(i, 0));
-      });
-
+      icons.forEach((el, i) => { if (el) writeIcon(el, orbitValues(i, 0)); });
       let rafId = 0;
       const timeoutId = window.setTimeout(() => {
         setTransition(false);
         const started = performance.now();
         const tick = (now: number) => {
           const angle = (((now - started) / ORBIT_PERIOD_MS) * 360) % 360;
-          icons.forEach((el, i) => {
-            if (el) writeIcon(el, orbitValues(i, angle));
-          });
+          icons.forEach((el, i) => { if (el) writeIcon(el, orbitValues(i, angle)); });
           rafId = requestAnimationFrame(tick);
         };
         rafId = requestAnimationFrame(tick);
       }, ORBIT_TRANSITION_MS);
-
       return () => {
         window.clearTimeout(timeoutId);
         if (rafId) cancelAnimationFrame(rafId);
@@ -1499,42 +1451,40 @@ const FinalCTA: React.FC<{
       const applyStatic = () => {
         const maxWidth = Math.min(window.innerWidth - (isPhoneWidth() ? 32 : 120), 600);
         setTransition(true);
-        icons.forEach((el, i) => {
-          if (el) writeIcon(el, staticValues(i, maxWidth));
-        });
+        icons.forEach((el, i) => { if (el) writeIcon(el, staticValues(i, maxWidth)); });
       };
-
       applyStatic();
       window.addEventListener("resize", applyStatic);
       return () => window.removeEventListener("resize", applyStatic);
     }
   }, [active, isNarrow]);
 
-  return (
+   return (
     <section
       ref={sectionRef}
       id="integrations"
-      className="relative isolate w-full min-h-screen overflow-hidden"
+      className="relative isolate w-full overflow-hidden"
       style={{
-        minHeight: `calc(100vh + ${FINAL_CTA_EXTRA_BOTTOM_VH}vh)`,
         marginTop: `-${FINAL_CTA_OVERLAP_TOP_VH}vh`,
         paddingTop: `${FINAL_CTA_OVERLAP_TOP_VH}vh`,
+        paddingBottom: `${FINAL_CTA_EXTRA_BOTTOM_VH}vh`,
       }}
     >
-        <div
+      <div
         aria-hidden="true"
         className="absolute inset-0 transition-[clip-path] duration-700 ease-out will-change-[clip-path]"
         style={{
-            background:
-            "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
-            clipPath: isNarrow || active
-              ? "inset(0% 0% 0% 0% round 0px)"
-              : "inset(18% 12% 18% 12% round 32px)",
-
-            WebkitMaskImage: FINAL_CTA_MASK,
-            maskImage: FINAL_CTA_MASK,
+          background: "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
+          clipPath: isNarrow || active 
+            ? "inset(0% 0% 0% 0% round 0px)" 
+            : `inset(${FINAL_CTA_INACTIVE_TOP_INSET}% 12% 18% 12% round 32px)`,
+          WebkitMaskImage: FINAL_CTA_MASK,
+          maskImage: FINAL_CTA_MASK,
+          // Добавлено: Пересечение масок для создания градиента со всех сторон
+          WebkitMaskComposite: "source-in",
+          maskComposite: "intersect",
         }}
-        />
+      />
 
       <div
         aria-hidden="true"
@@ -1543,9 +1493,14 @@ const FinalCTA: React.FC<{
           active ? "opacity-25" : "opacity-0"
         )}
         style={{
-          clipPath: isNarrow || active
-            ? "inset(0% 0% 0% 0% round 0px)"
-            : "inset(18% 12% 18% 12% round 32px)",
+          clipPath: isNarrow || active 
+            ? "inset(0% 0% 0% 0% round 0px)" 
+            : `inset(${FINAL_CTA_INACTIVE_TOP_INSET}% 12% 18% 12% round 32px)`,
+          WebkitMaskImage: FINAL_CTA_MASK,
+          maskImage: FINAL_CTA_MASK,
+          // Добавлено: Пересечение масок для создания градиента со всех сторон
+          WebkitMaskComposite: "source-in",
+          maskComposite: "intersect",
         }}
       >
         <div className="absolute -top-10 left-1/4 w-72 h-72 rounded-full bg-white/40 dark:bg-white/10 blur-3xl" />
@@ -1557,10 +1512,11 @@ const FinalCTA: React.FC<{
           "relative z-10 mx-auto w-full max-w-6xl px-6 md:px-16 text-white",
           "flex flex-col items-center justify-center"
         )}
-        style={{
-          minHeight: `calc(100vh + ${FINAL_CTA_EXTRA_BOTTOM_VH}vh)`,
+        style={{ 
+          minHeight: "100vh" // Контент всегда ровно 100vh
         }}
       >
+        {/* ... (Остальной контент FinalCTA без изменений) ... */}
         <div className="text-center max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
             {tr("Ваш день живёт в\u00a0Google, Jira, Notion и\u00a0блокноте.", "Your day lives in\u00a0Google, Jira, Notion and\u00a0a notebook.")}{" "}
@@ -1576,34 +1532,11 @@ const FinalCTA: React.FC<{
           </p>
 
           <div className="relative mt-10 flex justify-center">
-            <div
-              aria-hidden="true"
-              className="absolute left-1/2 top-1/2 pointer-events-none"
-              style={{ width: 0, height: 0 }}
-            >
+            <div aria-hidden="true" className="absolute left-1/2 top-1/2 pointer-events-none" style={{ width: 0, height: 0 }}>
               {INTEGRATIONS.map((i, idx) => (
-                <div
-                  key={i.alt}
-                  ref={(el) => {
-                    iconRefs.current[idx] = el;
-                  }}
-                  className="absolute top-0 left-0 will-change-transform"
-                  style={{
-                    transform: "translate(-50%, -50%)",
-                    opacity: 0,
-                  }}
-                >
-                  <div
-                    className="rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/30 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_6px_20px_rgba(0,0,0,0.2)]"
-                    style={{ width: ORBIT_ICON_BASE, height: ORBIT_ICON_BASE }}
-                  >
-                    <img
-                      src={i.src}
-                      alt=""
-                      className="object-contain"
-                      style={{ width: ORBIT_ICON_IMG_BASE, height: ORBIT_ICON_IMG_BASE }}
-                      loading="lazy"
-                    />
+                <div key={i.alt} ref={(el) => { iconRefs.current[idx] = el; }} className="absolute top-0 left-0 will-change-transform" style={{ transform: "translate(-50%, -50%)", opacity: 0 }}>
+                  <div className="rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/30 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_6px_20px_rgba(0,0,0,0.2)]" style={{ width: ORBIT_ICON_BASE, height: ORBIT_ICON_BASE }}>
+                    <img src={i.src} alt="" className="object-contain" style={{ width: ORBIT_ICON_IMG_BASE, height: ORBIT_ICON_IMG_BASE }} loading="lazy" />
                   </div>
                 </div>
               ))}
@@ -1613,34 +1546,26 @@ const FinalCTA: React.FC<{
               type="button"
               onClick={onStart}
               className={cn(
-                "group relative z-10 inline-flex items-center justify-center",
+                "group relative z-10 inline-flex items-center justify-center overflow-hidden",
                 "px-8 md:px-6 h-14 md:h-16",
-                "text-lg md:text-xl font-semibold text-blue-700",
+                "text-lg md:text-xl font-semibold text-white",
                 "rounded-full",
                 "transition-all duration-300 ease-out",
                 "hover:-translate-y-0.5 active:translate-y-0",
-                // ─── Белое тело ───
-                "bg-white",
-                "ring-1 ring-white/80",
-                "shadow-[0_12px_40px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.5)]",
-                "hover:shadow-[0_16px_48px_rgba(15,23,42,0.28),inset_0_1px_0_rgba(255,255,255,1),inset_0_-1px_0_rgba(255,255,255,0.6)]"
+                // Стеклянные стили кнопки
+                "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
+                "ring-1 ring-white/30 dark:ring-white/10",
+                "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+                "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]",
+                "hover:bg-white/20 dark:hover:bg-white/[0.1]"
               )}
             >
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-3 top-1 h-1/2 rounded-full bg-gradient-to-b from-white to-transparent opacity-90 blur-[1px]"
-              />
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/60 mix-blend-overlay"
-              />
+              {/* Блик для кнопки */}
+              <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]" />
+              
               <span className="relative inline-flex items-center">
                 {tr("Начать бесплатно", "Start for free")}
-                <ArrowRight
-                  size={22}
-                  className="ml-2 transition-transform duration-300 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
+                <ArrowRight size={22} className="ml-2 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
               </span>
             </button>
           </div>
@@ -1746,7 +1671,6 @@ const SlideFlight: React.FC<SlideProps> = ({ mobile }) => (
                 {tr("Распознала авиабилет:", "I read the plane ticket:")}{' '}
                 <strong className="font-semibold">{tr("дата — 05 апреля, 21:55", "date — 5 April, 21:55")}</strong>,{' '}
                 <strong className="font-semibold">{tr("место посадки — Внуково, терминал A", "boarding — Vnukovo, terminal A")}</strong>.
-                {tr("Добавила событие в календарь, заранее напомню о вылете", " Added the event to your calendar and will remind you before the flight")}
               </>
             }
           />
@@ -1762,10 +1686,10 @@ const SlideFinance: React.FC<SlideProps> = ({ mobile }) => (
       <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Из рабочего чата — в план", "From a work chat to your plan")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
-          {tr("Прислали задачу? Dayla внесёт её в ваш план", "Got a task? Dayla puts it in your plan")}
+          {tr("Dots работают там же, где и вы", "Dots work where you do")}
         </h2>
         <p className="mt-3 text-gray-600 dark:text-gray-400">
-          {tr("Добавьте Dayla в рабочий чат и упомяните её — задача и напоминание появятся в вашем календаре", "Add Dayla to a work chat and mention it — the task and a reminder appear in your calendar")}
+          {tr("Начните проект в Dayla, поделитесь контекстом с рабочей командой в Telegram — и позвольте Dayla довести дело до конца.", "Start a project in ChatGPT, share context with your team in Slack — and let Dayla finish the job. The assistant keeps context across all channels.")}
         </p>
       </div>
 
@@ -1782,7 +1706,7 @@ const SlideFinance: React.FC<SlideProps> = ({ mobile }) => (
                 {tr("Записала «Отчётность за квартал» на", "Saved “Quarterly reports” for")}{" "}
                 <strong className="font-semibold">{tr("27 декабря", "27 December")}</strong>{" "}
                 {tr(
-                  "и напомню за день. Подтвердите в личных сообщениях — всё уже в календаре",
+                  "и напомню за день.",
                   "and will remind you a day before. Confirm in a private message — it's all in the calendar"
                 )}
               </>
@@ -1800,7 +1724,7 @@ const SlideGTD: React.FC<SlideProps> = ({ mobile }) => (
       <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Систематизация и дисциплина", "Structure and discipline")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
-          {tr("Одна фраза — и всё разложено по полочкам", "One sentence — and everything is in order")}
+          {tr("Всё разложено по полочкам", "One sentence — and everything is in order")}
         </h2>
       </div>
 
@@ -1827,63 +1751,39 @@ const USE_CASE_SLIDES: { id: string; render: (mobile: boolean) => React.ReactNod
 
 const SWIPE_MIN_PX = 40;
 
-/* Обычная секция высотой в экран: страница прокручивается как обычно,
-   слайды листаются сами, стрелками, точками, свайпом и клавишами ← →. */
 const UserCaseCarousel: React.FC<{
-  /** Пауза авто-листания, пока виден финальный CTA. */
+  /** Оставлен для обратной совместимости. Больше не используется. */
   paused?: boolean;
-}> = ({ paused = false }) => {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = React.useState({ w: 0, h: 0 });
-  const [index, setIndex] = React.useState(0);
-  const [hovered, setHovered] = React.useState(false);
-  const [visible, setVisible] = React.useState(false);
-  const manualUntil = React.useRef(0);
-  const touchX = React.useRef<number | null>(null);
+}> = () => {
+  const containerRef = React.useRef<HTMLElement>(null);
+  const trackRef = React.useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = React.useState({ w: 0, h: 0 });
+  const [translateX, setTranslateX] = React.useState(0);
+  const [progress, setProgress] = React.useState(0);
   const total = USE_CASE_SLIDES.length;
 
-  /* ─── Меряем контейнер (нужен для scale) ─── */
+  /* ─── Меряем вьюпорт ─── */
   React.useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const update = () =>
-      setContainerSize({ w: el.clientWidth, h: el.clientHeight });
+    const update = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
     update();
-    if (typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  /* ─── Листаем сами, только пока секция на экране ─── */
-  React.useEffect(() => {
-    const el = containerRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), { threshold: 0.5 });
-    io.observe(el);
-    return () => io.disconnect();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
 
   /* ─── Меряем натуральные высоты слайдов ─── */
   const measurementsRef = React.useRef<Record<number, number>>({});
   const [measureVersion, setMeasureVersion] = React.useState(0);
-
-  const handleMeasured = React.useCallback(
-    (idx: number, designHeight: number) => {
-      if (measurementsRef.current[idx] === designHeight) return;
-      measurementsRef.current[idx] = designHeight;
-      setMeasureVersion((v) => v + 1);
-    },
-    []
-  );
-
+  const handleMeasured = React.useCallback((idx: number, designHeight: number) => {
+    if (measurementsRef.current[idx] === designHeight) return;
+    measurementsRef.current[idx] = designHeight;
+    setMeasureVersion((v) => v + 1);
+  }, []);
   const measuredCallbacks = React.useMemo(
     () => USE_CASE_SLIDES.map((_, i) => (h: number) => handleMeasured(i, h)),
     [handleMeasured]
   );
 
-  const mobile = containerSize.w > 0 && containerSize.w < SLIDE_MOBILE_BREAKPOINT;
-  // Switching layouts changes every slide's height; ScaledSlide's ResizeObserver reports the new ones
+  const mobile = viewport.w > 0 && viewport.w < SLIDE_MOBILE_BREAKPOINT;
   const designWidth = mobile ? SLIDE_MOBILE_DESIGN_WIDTH : SLIDE_DESIGN_WIDTH;
 
   const maxDesignHeight = React.useMemo(() => {
@@ -1893,73 +1793,60 @@ const UserCaseCarousel: React.FC<{
   }, [measureVersion]);
 
   const scale = React.useMemo(() => {
-    if (!containerSize.w || !containerSize.h || !maxDesignHeight) return 1;
-    return Math.min(
-      containerSize.w / designWidth,
-      containerSize.h / maxDesignHeight
-    );
-  }, [containerSize, designWidth, maxDesignHeight]);
+    if (!viewport.w || !viewport.h || !maxDesignHeight) return 1;
+    return Math.min(viewport.w / designWidth, viewport.h / maxDesignHeight);
+  }, [viewport, designWidth, maxDesignHeight]);
 
-  const go = React.useCallback(
-    (next: number) => {
-      manualUntil.current = performance.now() + MANUAL_PAUSE_MS;
-      setIndex(((next % total) + total) % total);
-    },
-    [total]
-  );
-
+  /* ─── Скролл: вертикаль двигает трек влево ─── */
   React.useEffect(() => {
-    if (paused || hovered || !visible) return;
-    const timer = window.setInterval(() => {
-      if (performance.now() < manualUntil.current) return;
-      setIndex((i) => (i + 1) % total);
-    }, AUTO_ADVANCE_MS);
-    return () => window.clearInterval(timer);
-  }, [paused, hovered, visible, total]);
-
-  const arrowClass = cn(
-    "flex h-9 w-9 items-center justify-center rounded-full",
-    "bg-white/70 dark:bg-white/10 ring-1 ring-black/10 dark:ring-white/15 backdrop-blur",
-    "text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-white/20 transition-colors"
-  );
+    const handleScroll = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const scrollableHeight = rect.height - window.innerHeight;
+      if (scrollableHeight <= 0) return;
+      const scrollProgress = Math.max(0, Math.min(1, -rect.top / scrollableHeight));
+      setProgress(scrollProgress);
+      // Каждый слайд шириной viewport. Сдвигаем на (total-1) * viewport.
+      const maxTranslate = (total - 1) * rect.width;
+      // progress 0 → -maxTranslate (трек сдвинут влево, виден первый слайд)
+      // progress 1 → 0 (трек на месте, виден последний слайд)
+      // Трек ползёт вправо, слайды выезжают влево.
+      setTranslateX((scrollProgress - 1) * maxTranslate);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+    handleScroll();
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [total]);
 
   return (
     <section
+      ref={containerRef}
       id="usecases"
       className="relative"
+      style={{ height: `calc(100svh * ${total})` }}
       aria-roledescription="carousel"
       aria-label={tr("Сценарии использования", "Use cases")}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onKeyDown={(e) => {
-        if (e.key === "ArrowLeft") go(index - 1);
-        if (e.key === "ArrowRight") go(index + 1);
-      }}
-      onTouchStart={(e) => {
-        touchX.current = e.touches[0].clientX;
-      }}
-      onTouchEnd={(e) => {
-        if (touchX.current === null) return;
-        const dx = e.changedTouches[0].clientX - touchX.current;
-        touchX.current = null;
-        if (Math.abs(dx) >= SWIPE_MIN_PX) go(index + (dx < 0 ? 1 : -1));
-      }}
     >
-      {/* On a phone the fixed header covers the top: the slides start below it */}
-      <div className="h-[100svh] min-h-[480px] w-full overflow-hidden pt-14 md:pt-0">
-        <div ref={containerRef} className="relative w-full h-full">
-          {USE_CASE_SLIDES.map((slide, i) => {
-            const isActive = i === index;
-            return (
+      <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col pt-14 md:pt-0">
+        <div className="relative flex-1 w-full overflow-hidden">
+          <div
+            ref={trackRef}
+            className="flex h-full will-change-transform"
+            style={{
+              transform: `translateX(${translateX}px)`,
+              width: `${total * 100}%`,
+            }}
+          >
+            {USE_CASE_SLIDES.map((slide, i) => (
               <div
                 key={slide.id}
-                aria-hidden={!isActive}
-                className={cn(
-                  "absolute inset-0 transition-opacity duration-700",
-                  isActive
-                    ? "opacity-100 z-10"
-                    : "opacity-0 z-0 pointer-events-none"
-                )}
+                className="h-full shrink-0"
+                style={{ width: `${100 / total}%` }}
               >
                 <ScaledSlide
                   scale={scale}
@@ -1969,42 +1856,497 @@ const UserCaseCarousel: React.FC<{
                   {slide.render(mobile)}
                 </ScaledSlide>
               </div>
-            );
-          })}
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
 
-          {/* Нижний ряд: стрелки + точки */}
-          <div
+const DesktopAgentVideoSection: React.FC = () => {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const timeoutRef = React.useRef<number | null>(null);
+  const [showComingSoon, setShowComingSoon] = React.useState(false);
+
+  // Процент затухания на каждой стороне
+  const FADE = 12;
+  const vMask = `linear-gradient(to bottom, transparent 0%, black ${FADE}%, black ${100 - FADE}%, transparent 100%)`;
+  const hMask = `linear-gradient(to right, transparent 0%, black ${FADE}%, black ${100 - FADE}%, transparent 100%)`;
+  const combinedMask = `${vMask}, ${hMask}`;
+
+  const handleEnded = () => {
+    setShowComingSoon(true);
+    // Через 3 секунды — убрать оверлей, отмотать в начало и запустить заново
+    timeoutRef.current = window.setTimeout(() => {
+      setShowComingSoon(false);
+      const v = videoRef.current;
+      if (v) {
+        v.currentTime = 0;
+        v.play().catch(() => {});
+      }
+    }, 3000);
+  };
+
+  // Чистим таймаут, если компонент размонтируется
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  return (
+    <section className="relative py-16 md:py-24 px-4 md:px-6 bg-gray-50 dark:bg-gray-900/50">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-8 md:mb-12 text-center">
+          <Badge className="text-eyebrow mb-3">
+            {tr("Парсинг документов", "Document parsing")}
+          </Badge>
+          <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
+            {tr(
+              "Dayla может взять тяжёлую задачу и самостоятельно вести её дальше",
+              "Dayla can take a project and run with it"
+            )}
+          </h2>
+        </div>
+
+        <div
+          className="relative overflow-hidden bg-black"
+          style={{
+            WebkitMaskImage: combinedMask,
+            WebkitMaskComposite: "source-in",
+            maskImage: combinedMask,
+            maskComposite: "intersect",
+          }}
+        >
+          {/* Видео: loop убран, чтобы срабатывал onEnded */}
+          <video
+            ref={videoRef}
             className={cn(
-              "absolute bottom-4 left-1/2 -translate-x-1/2 z-20",
-              "flex items-center gap-3"
+              "block w-full h-auto scale-[1.2] origin-center transition-[filter,opacity] duration-700 ease-out",
+              showComingSoon && "blur-xl opacity-60"
+            )}
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            poster="/videos/DesktopAgent-poster.jpg"
+            onEnded={handleEnded}
+          >
+            <source src="/videos/DesktopAgent.mp4" type="video/mp4" />
+            <source src="/videos/DesktopAgent.mov" type="video/quicktime" />
+            <img
+              src="/videos/DesktopAgent-poster.jpg"
+              alt={tr("Демонстрация Dayla", "Dayla demo")}
+              className="block w-full h-auto"
+            />
+          </video>
+
+          {/* Оверлей «Coming soon»: плавно проявляется и исчезает */}
+          <div
+            aria-hidden={!showComingSoon}
+            className={cn(
+              "absolute inset-0 z-10 flex items-center justify-center pointer-events-none",
+              "transition-opacity duration-700 ease-out",
+              showComingSoon ? "opacity-100" : "opacity-0"
             )}
           >
-            <button type="button" onClick={() => go(index - 1)} aria-label={tr("Предыдущий сценарий", "Previous use case")} className={arrowClass}>
-              <ChevronLeft size={18} aria-hidden="true" />
-            </button>
+            {/* Мягкая подложка под текстом, чтобы читалось поверх любого кадра */}
+            <div className="absolute inset-0 bg-black/30" />
 
-            <div className="flex items-center gap-2">
-              {USE_CASE_SLIDES.map((slide, i) => (
-                <button
-                  key={slide.id}
-                  type="button"
-                  onClick={() => go(i)}
-                  aria-label={tr(`Перейти к сценарию ${i + 1}`, `Go to use case ${i + 1}`)}
-                  aria-current={i === index}
-                  className={cn(
-                    "h-2 rounded-full transition-all duration-300",
-                    i === index
-                      ? "w-8 bg-gray-800/70 dark:bg-white/70"
-                      : "w-2 bg-gray-400/50 dark:bg-white/30 hover:bg-gray-500/70"
-                  )}
-                />
-              ))}
+            <div
+              className={cn(
+                "relative px-6 py-3 md:px-8 md:py-4 rounded-full",
+                "backdrop-blur-md",
+                "bg-white/10 dark:bg-white/[0.06]",
+                "ring-1 ring-white/30",
+                "shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.35)]",
+                "text-white font-semibold tracking-widest uppercase",
+                "text-sm md:text-base",
+                // Небольшой подъём, чтобы появление было «аккуратным»
+                "transition-transform duration-700 ease-out",
+                showComingSoon ? "translate-y-0 scale-100" : "translate-y-1 scale-95"
+              )}
+            >
+              Coming soon
             </div>
-
-            <button type="button" onClick={() => go(index + 1)} aria-label={tr("Следующий сценарий", "Next use case")} className={arrowClass}>
-              <ChevronRight size={18} aria-hidden="true" />
-            </button>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const SCREENSHOTS = [
+  {
+    id: "today",
+    image: "/images/functional/today.png",
+    scale: 1.0,
+    title: "Передовой ИИ, на который можно положиться",
+    description: "Все задачи, встречи и дедлайны собраны в одном месте. Dayla работает 24/7, чтобы вы не работали по вечерам.",
+  },
+  {
+    id: "assistant",
+    image: "/images/functional/assistant.png",
+    scale: 0.8,
+    title: "Всегда на связи — в чате или голосом",
+    description: "Задавайте вопросы, развивайте идеи и делитесь обратной связью прямо в диалоге. Чем больше вы работаете вместе, тем лучше Dayla понимает ваши предпочтения и ход мыслей.",
+  },
+  {
+    id: "thisweek",
+    image: "/images/functional/thisweek.png",
+    scale: 1.35,
+    title: "Расширение ваших возможностей",
+    description: "Когда Dayla знает ваши цели и требования, вы можете браться за большее, не руководя каждым шагом.",
+  },
+  {
+    id: "anonymizeddata",
+    image: "/images/functional/anonymizeddata.png",
+    scale: 0.9,
+    title: "Контроль всегда остаётся у вас",
+    description: "Dayla использует механизмы защиты шифрования информации и меры конфиденциальности. Все данные обезличены.",
+  },
+];
+
+/* ─── Настройки ─── */
+// Halos
+const HALO_SCALE_1 = 1.08;
+const HALO_BLUR_1  = 8;
+const HALO_SCALE_2 = 1.20;
+const HALO_BLUR_2  = 24;
+const HALO_SCALE_3 = 1.35;
+const HALO_BLUR_3  = 48;
+
+// ─── Liquid Glass подписи ───
+// Карточка
+// ─── Тень / градиент подписи ───
+const TEXT_HALO_INSET          = "-inset-5";       // размер halo
+const TEXT_HALO_BG_LIGHT       = "bg-gray-900/50"; // плотность тени
+const TEXT_HALO_BG_DARK        = "dark:bg-black/70";
+const TEXT_GLASS_LIGHT          = "bg-white/80";
+const TEXT_GLASS_DARK           = "dark:bg-gray-900/70";
+
+// Halo (мягкая тень-градиент вокруг карточки)
+const TEXT_HALO_BLUR            = "blur-md";             // ← БЛЮР САМОЙ ТЕНИ
+
+// Внешняя тень карточки — сделал менее резкой (было rgba(15,23,42,1) — полностью чёрная)
+const TEXT_CARD_SHADOW          = "inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px rgba(15,23,42,0.25)";
+
+// Размер скриншотов (база для scale = 1.0)
+const SCREENSHOT_BASE_MAX_VW = 53;   // было 80 / 1.5
+const SCREENSHOT_BASE_MAX_VH = 53;   // было 80 / 1.5
+const SCREENSHOT_BASE_MAX_VW_MOBILE = 36;   // ← новая
+const SCREENSHOT_BASE_MAX_VH_MOBILE = 36;
+
+// Motion
+const OPACITY_FALLOFF_ENTER = 2.0;
+const OPACITY_FALLOFF_EXIT  = 0.5;
+const SLIDE_MAX_SCALE       = 2.0;
+const SLIDE_TRANSITION_MS   = 300;
+const SLIDE_PAUSE_RATIO     = 0.4;
+
+// Text
+const TEXT_TRANSITION_MS   = 300;
+const TEXT_DELAY_MS        = 400;
+const TEXT_VISIBLE_OFFSET  = 0.5;
+// ─── Расширение текста при уходе ───
+const TEXT_EXPAND_MAX    = 20;   // максимальный scale (условная «бесконечность»)
+const TEXT_EXPAND_POWER  = 2;    // нелинейность: 1 = линейно, 2–3 = резкий «вылет»
+const TEXT_FADE_START    = 0.05; // absOff, откуда начинается угасание
+const TEXT_FADE_END      = 0.55; // absOff, где текст полностью прозрачен
+
+// Lock
+const LOCK_APPEAR_AT    = 0.9;   // secProgress, при котором замок монтируется (drop-анимация стартует)
+const LOCK_BLUR_START   = 0.9;   // secProgress, при котором начинается blur скриншота
+const LOCK_BLUR_MAX_PX  = 3;     // максимальная сила blur
+const LOCK_SCALE_MIN    = 0.8;
+const LOCK_SCALE_MAX    = 1.8;
+const LOCK_BG_MIN       = 0.15;
+const LOCK_BG_MAX       = 0.85;
+
+function applyDwell(raw: number, total: number, dwellRatio: number): number {
+  const segments = total - 1;
+  if (segments <= 0) return 0;
+  const perSeg = 1 / segments;
+  const dwell  = perSeg * dwellRatio;
+  const move   = perSeg - dwell;
+  const c = Math.max(0, Math.min(1, raw));
+  for (let i = 0; i < segments; i++) {
+    const segStart = i * perSeg;
+    if (c < segStart + dwell) return i;
+    if (c < segStart + perSeg) return i + (c - segStart - dwell) / move;
+  }
+  return segments;
+}
+
+/* ─── Замок — отдельный компонент, чтобы управлять моментом монтирования ─── */
+const SecurityLockOverlay: React.FC<{ secProgress: number }> = ({ secProgress }) => {
+  // Монтируется только при достаточно видимом слайде.
+  // Unmount при уходе → анимация replay при следующем подходе.
+  if (secProgress < LOCK_APPEAR_AT) return null;
+
+  const lockScale = LOCK_SCALE_MIN + secProgress * (LOCK_SCALE_MAX - LOCK_SCALE_MIN);
+  const lockBg    = LOCK_BG_MIN    + secProgress * (LOCK_BG_MAX    - LOCK_BG_MIN);
+
+  return (
+    <div
+      className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+      role="img"
+      aria-label="Данные защищены"
+    >
+      {/* drop-анимация на внешнем слое */}
+      <div className="lock-enter">
+        {/* непрерывный рост scale на внутреннем слое */}
+        <div
+          style={{
+            transform: `scale(${lockScale})`,
+            transition: `transform ${SLIDE_TRANSITION_MS}ms ease-out`,
+            willChange: "transform",
+          }}
+        >
+          <div
+            className="lock-glow rounded-2xl md:rounded-3xl backdrop-blur-2xl ring-1 ring-white/50 dark:ring-white/20 p-4 md:p-5"
+            style={{ backgroundColor: `rgba(255,255,255,${lockBg})` }}
+          >
+            <Lock
+              className="w-8 h-8 md:w-10 md:h-10 text-blue-600 dark:text-blue-300"
+              strokeWidth={2.5}
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const FeatureScreenshotsCarousel: React.FC = () => {
+  const containerRef = React.useRef<HTMLElement>(null);
+  const [rawProgress, setRawProgress] = React.useState(0);
+  const total = SCREENSHOTS.length;
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const sh = rect.height - window.innerHeight;
+      if (sh <= 0) return;
+      setRawProgress(Math.max(0, Math.min(1, -rect.top / sh)));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    onScroll();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  const currentFloat = applyDwell(rawProgress, total, SLIDE_PAUSE_RATIO);
+
+  return (
+    <section
+      ref={containerRef}
+      className="relative bg-gray-50 dark:bg-gray-900/50"
+      style={{ height: `calc(100svh * ${total})` }}
+    >
+      <style>{`
+        @keyframes lock-drop {
+          0%   { opacity: 0; transform: translateY(-48px) scale(0.4) rotate(-20deg); }
+          60%  { opacity: 1; transform: translateY(4px) scale(1.12) rotate(6deg); }
+          80%  { transform: translateY(-2px) scale(0.97) rotate(-2deg); }
+          100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+        }
+        @keyframes lock-glow {
+          0%, 100% { box-shadow: 0 8px 32px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.5); }
+          50%      { box-shadow: 0 8px 52px rgba(59,130,246,0.75), inset 0 1px 0 rgba(255,255,255,0.5); }
+        }
+        .lock-enter { animation: lock-drop 0.9s cubic-bezier(0.34,1.56,0.64,1) both; }
+        .lock-glow  { animation: lock-glow 2.5s ease-in-out 1s infinite; }
+      `}</style>
+
+      <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col pt-14 md:pt-0">
+        <div className="shrink-0 relative z-30">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-b from-gray-50 via-gray-50/95 to-transparent dark:from-gray-950 dark:via-gray-950/95 dark:to-transparent pointer-events-none"
+          />
+          <div className="relative max-w-6xl w-full mx-auto px-4 md:px-6 pt-6 md:pt-10 pb-8">
+            <Badge className="text-eyebrow mb-3">Интерфейс</Badge>
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white">
+              Как это работает
+            </h2>
+          </div>
+        </div>
+
+        <div className="relative flex-1">
+          {SCREENSHOTS.map((item, i) => {
+            const offset = i - currentFloat;
+            const absOff = Math.abs(offset);
+            const eased  = Math.pow(absOff, 1.2);
+
+            const isLeaving = offset < 0;
+            const falloff   = isLeaving ? OPACITY_FALLOFF_EXIT : OPACITY_FALLOFF_ENTER;
+            const slideOpacity = Math.pow(Math.max(0, 1 - eased), falloff);
+            const slideScale   = 1 + eased * (SLIDE_MAX_SCALE - 1);
+
+            const isSecurity = item.id === "anonymizeddata";
+            const secProgress = isSecurity ? Math.max(0, Math.min(1, 1 - absOff)) : 0;
+
+            // Blur — только на самом скриншоте; замок всегда острый
+            const lockBlurRaw = Math.max(
+              0,
+              (secProgress - LOCK_BLUR_START) / (1 - LOCK_BLUR_START)
+            );
+            const lockBlur = lockBlurRaw * LOCK_BLUR_MAX_PX;
+
+            const isCurrent = absOff < TEXT_VISIBLE_OFFSET;
+
+            // Размер скриншота: база × per-image scale (1.5× меньше исходного)
+            const perScale = item.scale || 1;
+            const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+            const baseVW = isMobile ? SCREENSHOT_BASE_MAX_VW_MOBILE : SCREENSHOT_BASE_MAX_VW;
+            const baseVH = isMobile ? SCREENSHOT_BASE_MAX_VH_MOBILE : SCREENSHOT_BASE_MAX_VH;
+            const imgMaxW = baseVW * perScale;
+            const imgMaxH = baseVH * perScale;
+
+            // Экспоненциальный рост scale при уходе от центра
+            const textT = Math.max(0, Math.min(1, absOff / TEXT_FADE_END));
+            const textScale = 1 + Math.pow(textT, TEXT_EXPAND_POWER) * (TEXT_EXPAND_MAX - 1);
+
+            // Плавное утопание в alpha 0
+            const textOpacity =
+              absOff <= TEXT_FADE_START ? 1 :
+              absOff >= TEXT_FADE_END   ? 0 :
+              1 - (absOff - TEXT_FADE_START) / (TEXT_FADE_END - TEXT_FADE_START);
+
+            return (
+              <div
+                key={item.id}
+                className="absolute inset-0 flex items-center justify-center"
+                style={{
+                  opacity: slideOpacity,
+                  zIndex: Math.round(20 - eased * 20),
+                  transform: `scale(${slideScale})`,
+                  pointerEvents: isCurrent ? "auto" : "none",
+                  willChange: "transform, opacity",
+                  transition: `opacity ${SLIDE_TRANSITION_MS}ms ease-out`,
+                }}
+              >
+                <div className="relative inline-block isolate">
+                  {/* Halo 1 — плотное ядро, alpha ≈ 100% на краю */}
+                  <img
+                    src={item.image}
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+                    style={{
+                      transform: `scale(${HALO_SCALE_1})`,
+                      filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
+                    }}
+                  />
+                  <img
+                    src={item.image}
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+                    style={{
+                      transform: `scale(${HALO_SCALE_2})`,
+                      filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
+                    }}
+                  />
+                  <img
+                    src={item.image}
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+                    style={{
+                      transform: `scale(${HALO_SCALE_3})`,
+                      filter: `blur(${HALO_BLUR_3}px) saturate(1.2)`,
+                    }}
+                  />
+
+                  {/* Резкая картинка — задаёт размер обёртки.
+                      Blur, если это скриншот безопасности и secProgress > LOCK_BLUR_START. */}
+                  <div className="relative z-10 inline-block overflow-hidden rounded-[24px] md:rounded-[32px]">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="block select-none pointer-events-none"
+                      style={{
+                        maxWidth: `${imgMaxW}vw`,
+                        maxHeight: `${imgMaxH}vh`,
+                        width: "auto",
+                        height: "auto",
+                        filter: lockBlur > 0.5 ? `blur(${lockBlur}px)` : undefined,
+                        transition: `filter ${SLIDE_TRANSITION_MS}ms ease-out`,
+                      }}
+                      loading="lazy"
+                    />
+                  </div>
+
+                  {/* Замок — острый, z-20, монтируется при secProgress ≥ LOCK_APPEAR_AT */}
+                  {isSecurity && <SecurityLockOverlay secProgress={secProgress} />}
+
+                  {/* ─── Liquid Glass подпись: карточка не скейлится, текст скейлится ─── */}
+<div
+  className="absolute bottom-3 md:bottom-5 left-1/2 z-30 pointer-events-none"
+  style={{
+    width: "calc(100% - 1.5rem)",
+    maxWidth: "calc(100% - 1.5rem)",
+    transform: "translateX(-50%)",   // только центрирование, без scale
+    opacity: textOpacity,
+    willChange: "opacity",
+  }}
+>
+  {/* Тень-градиент */}
+  <div
+    aria-hidden="true"
+    className={`pointer-events-none absolute ${TEXT_HALO_INSET} rounded-2xl ${TEXT_HALO_BG_LIGHT} ${TEXT_HALO_BG_DARK} ${TEXT_HALO_BLUR}`}
+  />
+
+  {/* ─── Слой 1: стеклянная карточка (фон) — НЕ скейлится ─── */}
+  <div
+    className={`relative overflow-hidden rounded-xl ${TEXT_GLASS_LIGHT} ${TEXT_GLASS_DARK} backdrop-blur-2xl ring-1 ring-white/50 dark:ring-white/20`}
+    style={{ boxShadow: TEXT_CARD_SHADOW }}
+  >
+    {/* Sheen */}
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 rounded-xl bg-[linear-gradient(135deg,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0.03)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.08)_100%)]"
+    />
+
+    {/* Невидимый spacer — держит размер карточки по тексту, но сам текст не рендерит */}
+    <div className="px-4 py-3 opacity-0 select-none" aria-hidden="true">
+      <h3 className="text-sm md:text-base font-semibold mb-1 line-clamp-2">
+        {item.title}
+      </h3>
+      <p className="text-xs md:text-sm leading-snug line-clamp-2">
+        {item.description}
+      </p>
+    </div>
+  </div>
+
+  {/* ─── Слой 2: текст — СКЕЙЛИТСЯ независимо, вылетает из карточки ─── */}
+  <div
+    className="absolute inset-0 pointer-events-none"
+    style={{
+      transform: `scale(${textScale})`,
+      transformOrigin: "center bottom",
+      willChange: "transform",
+    }}
+  >
+    <div className="px-4 py-3">
+      <h3 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
+        {item.title}
+      </h3>
+      <p className="text-xs md:text-sm text-gray-800 dark:text-gray-200 leading-snug line-clamp-2">
+        {item.description}
+      </p>
+    </div>
+  </div>
+</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
