@@ -274,18 +274,39 @@ export function Tour({ userId }: { userId: number }) {
         ref={card}
         className={cn(
           "fixed rounded-2xl p-4 transition-[top,left] duration-300",
-          "bg-white dark:bg-gray-900 text-gray-900 dark:text-white",
+          "bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl",
           "ring-1 ring-black/5 dark:ring-white/10 shadow-[0_20px_60px_rgba(15,23,42,0.35)]"
         )}
         style={{ top: layout?.top ?? -9999, left: layout?.left ?? 0, width: layout?.width ?? CARD_WIDTH }}
       >
         <div className="flex items-start gap-3">
           <span
-            aria-hidden="true"
-            className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-sky-400 to-violet-500"
-          >
-            <Icon name={tour === "rewards" ? "star" : "assistant"} size={16} />
-          </span>
+  aria-hidden="true"
+  className={cn(
+    "relative shrink-0 w-8 h-8 rounded-lg inline-flex items-center justify-center overflow-hidden",
+    // ─── Liquid Glass body — как у Brand в Header ───
+    "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
+    "ring-1 ring-white/30 dark:ring-white/10",
+    "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+    "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]"
+  )}
+>
+  {/* Brand tint — тот же blue→violet, но полупрозрачный поверх стекла */}
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/35 via-violet-500/30 to-purple-500/35"
+  />
+  {/* Sheen — тот же блик, что у Header Brand */}
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.35)_0%,rgba(255,255,255,0.08)_25%,transparent_45%,transparent_75%,rgba(255,255,255,0.12)_100%)]"
+  />
+  <Icon
+    name={tour === "rewards" ? "star" : "assistant"}
+    size={16}
+    className="relative text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.4)]"
+  />
+</span>
           <div className="min-w-0">
             <p id="tour-title" className="font-semibold leading-snug">
               {step.title}
@@ -319,13 +340,33 @@ export function Tour({ userId }: { userId: number }) {
               </button>
             )}
             <button
-              ref={next}
-              type="button"
-              onClick={() => (last ? finish() : setIndex(index + 1))}
-              className="h-9 px-4 rounded-xl text-sm font-medium text-white bg-gradient-to-br from-sky-500 to-violet-500 hover:brightness-105"
-            >
-              {last ? (tour === "main" ? tr("Начать", "Start") : tr("Понятно", "Got it")) : tr("Далее", "Next")}
-            </button>
+  ref={next}
+  type="button"
+  onClick={() => (last ? finish() : setIndex(index + 1))}
+  className={cn(
+    "relative h-9 px-4 rounded-xl overflow-hidden",
+    "group inline-flex items-center justify-center",
+    "text-sm font-medium text-gray-900 dark:text-white",
+    "transition-all duration-200 ease-out",
+    "hover:-translate-y-0.5 active:translate-y-0",
+    // ─── Бесцветное Liquid Glass — как у «Спросить Deyla» ───
+    "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-2xl",
+    "ring-1 ring-black/10 dark:ring-white/15",
+    "shadow-[0_4px_20px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-1px_0_rgba(15,23,42,0.04)]",
+    "dark:shadow-[0_4px_20px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(0,0,0,0.3)]",
+    "hover:bg-white/[0.08] dark:hover:bg-white/[0.04]",
+    "outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60"
+  )}
+>
+  {/* Sheen — тот же блик, что у ChatDock */}
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 rounded-xl bg-[linear-gradient(135deg,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0.03)_25%,transparent_45%,transparent_75%,rgba(255,255,255,0.05)_100%)]"
+  />
+  <span className="relative">
+    {last ? (tour === "main" ? tr("Начать", "Start") : tr("Понятно", "Got it")) : tr("Далее", "Next")}
+  </span>
+</button>
           </span>
         </div>
       </div>
