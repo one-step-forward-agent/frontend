@@ -1509,7 +1509,7 @@ const FinalCTA: React.FC<{
 
       <div
         className={cn(
-          "relative z-10 mx-auto w-full max-w-6xl px-6 md:px-16 text-white",
+          "relative z-10 mx-auto w-full max-w-6xl px-6 md:px-16 text-gray-900 dark:text-white",
           "flex flex-col items-center justify-center"
         )}
         style={{ 
@@ -1520,7 +1520,7 @@ const FinalCTA: React.FC<{
         <div className="text-center max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
             {tr("Ваш день живёт в\u00a0Google, Jira, Notion и\u00a0блокноте.", "Your day lives in\u00a0Google, Jira, Notion and\u00a0a notebook.")}{" "}
-            <span className="text-white/85">
+            <span className="text-gray-900/85 dark:text-white/85">
               {tr("Dayla задаёт единый ритм.", "Dayla sets one rhythm.")}
             </span>
           </h2>
@@ -1548,7 +1548,7 @@ const FinalCTA: React.FC<{
               className={cn(
                 "group relative z-10 inline-flex items-center justify-center overflow-hidden",
                 "px-8 md:px-6 h-14 md:h-16",
-                "text-lg md:text-xl font-semibold text-white",
+                "text-lg md:text-xl font-semibold text-gray-900 dark:text-white",
                 "rounded-full",
                 "transition-all duration-300 ease-out",
                 "hover:-translate-y-0.5 active:translate-y-0",
@@ -1896,7 +1896,7 @@ const DesktopAgentVideoSection: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative py-16 md:py-24 px-4 md:px-6 bg-gray-50 dark:bg-gray-900/50">
+    <section className="relative py-16 md:py-24 px-4 md:px-6">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8 md:mb-12 text-center">
           <Badge className="text-eyebrow mb-3">
@@ -2046,15 +2046,21 @@ const SLIDE_TRANSITION_MS   = 300;
 const SLIDE_PAUSE_RATIO     = 0.4;
 
 // Text
+// Text (существующие)
 const TEXT_TRANSITION_MS   = 300;
 const TEXT_DELAY_MS        = 400;
 const TEXT_VISIBLE_OFFSET  = 0.5;
-// ─── Расширение текста при уходе ───
-const TEXT_EXPAND_MAX    = 20;   // максимальный scale (условная «бесконечность»)
-const TEXT_EXPAND_POWER  = 2;    // нелинейность: 1 = линейно, 2–3 = резкий «вылет»
-const TEXT_FADE_START    = 0.05; // absOff, откуда начинается угасание
-const TEXT_FADE_END      = 0.55; // absOff, где текст полностью прозрачен
+const TEXT_EXPAND_MAX      = 20;
+const TEXT_EXPAND_POWER    = 2;
+const TEXT_FADE_START      = 0.05;
+const TEXT_FADE_END        = 0.55;
 
+// ─── Появление фона подписи (halo + стеклянная карточка) ───
+const TEXT_BG_VISIBLE_OFFSET = 0.10;   // при каком absOff фон полностью видим (α = 1)
+const TEXT_BG_FADE_END       = 0.30;   // при каком absOff фон полностью прозрачен (α = 0)
+const TEXT_BG_FADE_POWER     = 1.5;    // нелинейность затухания (1 = линейно, >1 = медленнее у центра)
+const TEXT_BG_TRANSITION_MS  = 0;      // CSS-переход opacity (0 = мгновенно, скролл-драйвен)
+// ─── Расширение текста при уходе ───
 // Lock
 const LOCK_APPEAR_AT    = 0.9;   // secProgress, при котором замок монтируется (drop-анимация стартует)
 const LOCK_BLUR_START   = 0.9;   // secProgress, при котором начинается blur скриншота
@@ -2147,7 +2153,7 @@ const FeatureScreenshotsCarousel: React.FC = () => {
   return (
     <section
       ref={containerRef}
-      className="relative bg-gray-50 dark:bg-gray-900/50"
+      className="relative"
       style={{ height: `calc(100svh * ${total})` }}
     >
       <style>{`
@@ -2169,7 +2175,7 @@ const FeatureScreenshotsCarousel: React.FC = () => {
         <div className="shrink-0 relative z-30">
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-gradient-to-b from-gray-50 via-gray-50/95 to-transparent dark:from-gray-950 dark:via-gray-950/95 dark:to-transparent pointer-events-none"
+            className="absolute inset-0 bg-gradient-to-b from-white via-white/95 to-transparent dark:from-gray-950 dark:via-gray-950/95 dark:to-transparent pointer-events-none"
           />
           <div className="relative max-w-6xl w-full mx-auto px-4 md:px-6 pt-6 md:pt-10 pb-8">
             <Badge className="text-eyebrow mb-3">Интерфейс</Badge>
@@ -2184,7 +2190,22 @@ const FeatureScreenshotsCarousel: React.FC = () => {
             const offset = i - currentFloat;
             const absOff = Math.abs(offset);
             const eased  = Math.pow(absOff, 1.2);
+            // Плавное утопание в alpha 0
+            const textOpacity =
+              absOff <= TEXT_FADE_START ? 1 :
+              absOff >= TEXT_FADE_END   ? 0 :
+              1 - (absOff - TEXT_FADE_START) / (TEXT_FADE_END - TEXT_FADE_START);
 
+            // ─── Появление/исчезновение фона подписи ───
+            const bgOpacity =
+              absOff <= TEXT_BG_VISIBLE_OFFSET
+                ? 1
+                : absOff >= TEXT_BG_FADE_END
+                ? 0
+                : Math.pow(
+                    1 - (absOff - TEXT_BG_VISIBLE_OFFSET) / (TEXT_BG_FADE_END - TEXT_BG_VISIBLE_OFFSET),
+                    TEXT_BG_FADE_POWER
+                  );
             const isLeaving = offset < 0;
             const falloff   = isLeaving ? OPACITY_FALLOFF_EXIT : OPACITY_FALLOFF_ENTER;
             const slideOpacity = Math.pow(Math.max(0, 1 - eased), falloff);
@@ -2213,12 +2234,6 @@ const FeatureScreenshotsCarousel: React.FC = () => {
             // Экспоненциальный рост scale при уходе от центра
             const textT = Math.max(0, Math.min(1, absOff / TEXT_FADE_END));
             const textScale = 1 + Math.pow(textT, TEXT_EXPAND_POWER) * (TEXT_EXPAND_MAX - 1);
-
-            // Плавное утопание в alpha 0
-            const textOpacity =
-              absOff <= TEXT_FADE_START ? 1 :
-              absOff >= TEXT_FADE_END   ? 0 :
-              1 - (absOff - TEXT_FADE_START) / (TEXT_FADE_END - TEXT_FADE_START);
 
             return (
               <div
@@ -2285,27 +2300,40 @@ const FeatureScreenshotsCarousel: React.FC = () => {
                   {/* Замок — острый, z-20, монтируется при secProgress ≥ LOCK_APPEAR_AT */}
                   {isSecurity && <SecurityLockOverlay secProgress={secProgress} />}
 
-                  {/* ─── Liquid Glass подпись: карточка не скейлится, текст скейлится ─── */}
+                  {/* ─── Liquid Glass подпись: фон появляется только когда подпись встала на место ─── */}
 <div
   className="absolute bottom-3 md:bottom-5 left-1/2 z-30 pointer-events-none"
   style={{
     width: "calc(100% - 1.5rem)",
     maxWidth: "calc(100% - 1.5rem)",
-    transform: "translateX(-50%)",   // только центрирование, без scale
-    opacity: textOpacity,
-    willChange: "opacity",
+    transform: "translateX(-50%)",   // только центрирование
+    // без opacity — управляется отдельно для фона и текста
   }}
 >
-  {/* Тень-градиент */}
+  {/* Halo (тень-градиент) — управляется bgOpacity */}
   <div
     aria-hidden="true"
     className={`pointer-events-none absolute ${TEXT_HALO_INSET} rounded-2xl ${TEXT_HALO_BG_LIGHT} ${TEXT_HALO_BG_DARK} ${TEXT_HALO_BLUR}`}
+    style={{
+      opacity: bgOpacity,
+      willChange: "opacity",
+      ...(TEXT_BG_TRANSITION_MS > 0 && {
+        transition: `opacity ${TEXT_BG_TRANSITION_MS}ms ease-out`,
+      }),
+    }}
   />
 
-  {/* ─── Слой 1: стеклянная карточка (фон) — НЕ скейлится ─── */}
+  {/* Стеклянная карточка — управляется bgOpacity */}
   <div
     className={`relative overflow-hidden rounded-xl ${TEXT_GLASS_LIGHT} ${TEXT_GLASS_DARK} backdrop-blur-2xl ring-1 ring-white/50 dark:ring-white/20`}
-    style={{ boxShadow: TEXT_CARD_SHADOW }}
+    style={{
+      boxShadow: TEXT_CARD_SHADOW,
+      opacity: bgOpacity,
+      willChange: "opacity",
+      ...(TEXT_BG_TRANSITION_MS > 0 && {
+        transition: `opacity ${TEXT_BG_TRANSITION_MS}ms ease-out`,
+      }),
+    }}
   >
     {/* Sheen */}
     <span
@@ -2313,7 +2341,7 @@ const FeatureScreenshotsCarousel: React.FC = () => {
       className="pointer-events-none absolute inset-0 rounded-xl bg-[linear-gradient(135deg,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0.03)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.08)_100%)]"
     />
 
-    {/* Невидимый spacer — держит размер карточки по тексту, но сам текст не рендерит */}
+    {/* Spacer — держит размер карточки по тексту */}
     <div className="px-4 py-3 opacity-0 select-none" aria-hidden="true">
       <h3 className="text-sm md:text-base font-semibold mb-1 line-clamp-2">
         {item.title}
@@ -2324,13 +2352,14 @@ const FeatureScreenshotsCarousel: React.FC = () => {
     </div>
   </div>
 
-  {/* ─── Слой 2: текст — СКЕЙЛИТСЯ независимо, вылетает из карточки ─── */}
+  {/* Текст — управляется textOpacity + textScale, вылетает из карточки */}
   <div
     className="absolute inset-0 pointer-events-none"
     style={{
+      opacity: textOpacity,
       transform: `scale(${textScale})`,
       transformOrigin: "center bottom",
-      willChange: "transform",
+      willChange: "transform, opacity",
     }}
   >
     <div className="px-4 py-3">
