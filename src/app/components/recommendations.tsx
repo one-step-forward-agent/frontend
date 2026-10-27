@@ -17,7 +17,7 @@ const HOW_TO = tr("Как это сделать?", "How do I do it?");
  */
 export function RecommendationList({
   items,
-  label = tr("Dayla анализирует ваш день…", "Dayla is analysing your day…"),
+  label = tr("Deyla анализирует ваш день…", "Deyla is analysing your day…"),
   full = false,
   onDiscuss,
 }: {

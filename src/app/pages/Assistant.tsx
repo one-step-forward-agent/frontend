@@ -294,7 +294,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     >
       {panel ? (
         <div className="shrink-0 flex items-center gap-2 px-4 pt-3 pb-2">
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">Dayla</span>
+          <span className="text-sm font-semibold text-gray-900 dark:text-white">Deyla</span>
           <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{tr("ассистент", "assistant")}</span>
           <span className="ml-auto flex items-center gap-1">
             <Link
@@ -332,7 +332,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       )}
 
       {/* ─── Чат: прокручивается только он ─────────── */}
-      <div ref={listRef} role="log" aria-label={tr("Переписка с Dayla", "Conversation with Dayla")} className={cn("relative flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4", panel ? "px-3 py-2" : "p-1 sm:p-2")}>
+      <div ref={listRef} role="log" aria-label={tr("Переписка с Deyla", "Conversation with Deyla")} className={cn("relative flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4", panel ? "px-3 py-2" : "p-1 sm:p-2")}>
         {loaded && messages.length === 0 && (
           <div className="flex flex-col items-center text-center py-8">
             <span
@@ -381,7 +381,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
               GLASS_BODY,
               "text-gray-500 dark:text-gray-400"
             )}
-            aria-label={tr("Dayla думает", "Dayla is thinking")}
+            aria-label={tr("Deyla думает", "Deyla is thinking")}
           >
             <i className="relative w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
             <i
@@ -1696,7 +1696,7 @@ function Proposal({
             })}
           </div>
           <p className="text-[11px] text-gray-500 dark:text-gray-400">
-            {calendars.length ? tr("И, как всегда, в Dayla.", "And, as always, to Dayla.") : tr("Только в Dayla.", "Dayla only.")}
+            {calendars.length ? tr("И, как всегда, в Deyla.", "And, as always, to Deyla.") : tr("Только в Deyla.", "Deyla only.")}
           </p>
         </fieldset>
       )}
@@ -2020,8 +2020,8 @@ function Composer({
         icon="clip"
         aria-label={tr("Прикрепить файл или фото", "Attach a file or photo")}
         title={tr(
-          "Любой файл до 20 МБ: документы, таблицы и фото Dayla прочитает, а любой файл пришлёт в Telegram к сроку",
-          "Any file up to 20 MB: Dayla reads documents, tables and photos, and sends any file to Telegram when asked"
+          "Любой файл до 20 МБ: документы, таблицы и фото Deyla прочитает, а любой файл пришлёт в Telegram к сроку",
+          "Any file up to 20 MB: Deyla reads documents, tables and photos, and sends any file to Telegram when asked"
         )}
         disabled={busy}
         onClick={() => fileInput.current?.click()}
@@ -2032,7 +2032,7 @@ function Composer({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
         rows={1}
-        placeholder={recording ? tr("Говорите…", "Speak…") : narrow ? tr("Напишите Dayla…", "Message Dayla…") : tr("Запланировать, найти, перенести…", "Plan, find, move…")}
+        placeholder={recording ? tr("Говорите…", "Speak…") : narrow ? tr("Напишите Deyla…", "Message Deyla…") : tr("Запланировать, найти, перенести…", "Plan, find, move…")}
         aria-label={tr("Сообщение", "Message")}
         maxLength={50000}
         className={cn(

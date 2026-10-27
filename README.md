@@ -1,4 +1,4 @@
-# Dayla frontend
+# Deyla frontend
 
 One React app for the whole site: the public landing, onboarding, sign-in and the product itself.
 It is served by nginx in Docker (and on Amvera), with the backend proxied on the same origin.
@@ -16,7 +16,7 @@ It is served by nginx in Docker (and on Amvera), with the backend proxied on the
 - The landing, onboarding and auth pages use Tailwind (`tailwind.config.js`, `src/index.css`).
 - The app under `/app` uses `src/app/app.css`, which is scoped to `.fd-app` and follows the same visual language: Inter, a blue→violet gradient, and glass cards on a soft grid.
 - **Themes:** light, dark, or follow the system.
-  - `src/theme.tsx` stores the choice in `localStorage` (`dayla-theme`) and sets the `dark` class on `<html>`. Tailwind (`darkMode: "class"`) and `app.css` both key off that class.
+  - `src/theme.tsx` stores the choice in `localStorage` (`deyla-theme`) and sets the `dark` class on `<html>`. Tailwind (`darkMode: "class"`) and `app.css` both key off that class.
   - A small script in `index.html` applies the theme before first paint.
   - The toggle is in every header. Settings → Appearance also offers "Как в системе" (follow the system).
 - **Font:** Inter is self-hosted (`@fontsource-variable/inter`), so no request goes to Google Fonts.
@@ -47,7 +47,7 @@ for a year, and pages are revalidated on every load.
 ## Content to review before launch
 
 - `src/pages/Documents/md_texts/*.md`: the terms and the personal-data consent come from the
-  organisation's previous product ("Prosklad") and must be replaced with Dayla's legal texts.
+  organisation's previous product ("Prosklad") and must be replaced with Deyla's legal texts.
 - The support email in the footer (`LandingFooter.tsx`) is the organisation's address.
 
 Landing code is © MentrixLabs, MIT License; see `THIRD_PARTY_NOTICES.md`.

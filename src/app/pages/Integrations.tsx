@@ -45,25 +45,25 @@ const OAUTH_INTEGRATIONS: Record<
   google: {
     title: "Google Calendar",
     description:
-      tr("Двусторонняя синхронизация событий Google Calendar с Dayla.", "Two-way sync of Google Calendar events with Dayla."),
+      tr("Двусторонняя синхронизация событий Google Calendar с Deyla.", "Two-way sync of Google Calendar events with Deyla."),
     src: "/images/google-calendar.png",
   },
   yandex: {
     title: tr("Яндекс Календарь", "Yandex Calendar"),
     description:
-      tr("Импорт событий Яндекс Календаря в Dayla и экспорт обратно.", "Import Yandex Calendar events into Dayla and export them back."),
+      tr("Импорт событий Яндекс Календаря в Deyla и экспорт обратно.", "Import Yandex Calendar events into Deyla and export them back."),
     src: "/images/yandexcalendar.png",
   },
   notion: {
     title: "Notion",
     description:
-      tr("Записи появляются в календаре Dayla, а задачи Dayla можно отправить в Notion.", "Entries with dates appear in the Dayla calendar, and Dayla tasks can be sent to Notion."),
+      tr("Записи появляются в календаре Deyla, а задачи Deyla можно отправить в Notion.", "Entries with dates appear in the Deyla calendar, and Deyla tasks can be sent to Notion."),
     src: "/images/Notion.webp",
   },
   jira: {
     title: "Jira",
     description:
-      tr("Ваши задачи появляются в календаре Dayla и обновляются при синхронизации.", "Your Jira issues with a due date appear in the Dayla calendar and update on every sync."),
+      tr("Ваши задачи появляются в календаре Deyla и обновляются при синхронизации.", "Your Jira issues with a due date appear in the Deyla calendar and update on every sync."),
     src: "/images/Jira_Software_Logo.svg",
   },
 };
@@ -237,7 +237,7 @@ export function IntegrationsPage() {
 /* ─── Samsung Calendar ──────────────────────────────────── */
 
 // Samsung Calendar has no API of its own: it shows the calendars of the phone's accounts (Google) and subscriptions.
-// So Dayla reaches it through the phone's Google account; the feed link is for apps that subscribe (Outlook, Apple).
+// So Deyla reaches it through the phone's Google account; the feed link is for apps that subscribe (Outlook, Apple).
 function SamsungCard() {
   const toast = useToast();
   const { pending, run } = useAction(useErrorToast());
@@ -288,7 +288,7 @@ function SamsungCard() {
         <input
           readOnly
           value={url}
-          aria-label={tr("Ссылка на календарь Dayla", "Dayla calendar link")}
+          aria-label={tr("Ссылка на календарь Deyla", "Deyla calendar link")}
           onFocus={(e) => e.currentTarget.select()}
           className="mb-3 w-full rounded-lg px-2.5 py-2 text-xs bg-white/50 dark:bg-white/5 ring-1 ring-white/30 dark:ring-white/10 text-gray-900 dark:text-white"
         />
@@ -306,7 +306,7 @@ function AppleViaGoogle() {
         {tr("Через Google-аккаунт:", "Through the Google account:")}
       </p>
       <ol className="mb-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed list-decimal pl-4">
-        <li>{tr("Подключите выше Google Calendar — задачи Dayla попадут в ваш Google-календарь.", "Connect Google Calendar above — Dayla tasks will go to your Google calendar.")}</li>
+        <li>{tr("Подключите выше Google Calendar — задачи Deyla попадут в ваш Google-календарь.", "Connect Google Calendar above — Deyla tasks will go to your Google calendar.")}</li>
         <li>
           {tr(
             "Настройки → Календарь → Учётные записи → Добавить учётную запись → Google. Войдите тем же Google-аккаунтом и включите «Календари».",
@@ -321,8 +321,8 @@ function AppleViaGoogle() {
         </li>
         <li>
           {tr(
-            "Чтобы события, созданные на iPhone, тоже попадали в Dayla: Настройки → Календарь → Календарь по умолчанию → выберите Google-календарь.",
-            "So that events you create on the iPhone reach Dayla too: Settings → Calendar → Default Calendar → pick the Google calendar."
+            "Чтобы события, созданные на iPhone, тоже попадали в Deyla: Настройки → Календарь → Календарь по умолчанию → выберите Google-календарь.",
+            "So that events you create on the iPhone reach Deyla too: Settings → Calendar → Default Calendar → pick the Google calendar."
           )}
         </li>
       </ol>

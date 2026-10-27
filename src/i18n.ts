@@ -6,7 +6,7 @@
 
 export type Lang = "ru" | "en";
 
-const STORAGE_KEY = "dayla-lang";
+const STORAGE_KEY = "deyla-lang";
 
 function readLang(): Lang {
   try {

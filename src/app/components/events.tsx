@@ -390,7 +390,7 @@ export function EventForm({
             </Field>
           </div>
 
-          <Switch checked={state.fixed} onChange={(value) => set("fixed", value)} label={tr("Нельзя переносить", "Can't be moved")} hint={tr("Dayla будет планировать вокруг этой задачи", "Dayla will plan around this task")} />
+          <Switch checked={state.fixed} onChange={(value) => set("fixed", value)} label={tr("Нельзя переносить", "Can't be moved")} hint={tr("Deyla будет планировать вокруг этой задачи", "Deyla will plan around this task")} />
 
           <div className="form-row">
             <Field label={tr("Приоритет", "Priority")}>

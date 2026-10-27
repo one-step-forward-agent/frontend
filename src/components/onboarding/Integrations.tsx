@@ -61,7 +61,7 @@ const INTEGRATIONS: Integration[] = [
 const isOAuthProvider = (id: Provider): id is OAuthProvider =>
   INTEGRATIONS.find((i) => i.id === id)?.kind === "oauth";
 
-// Without an account the first of these creates it: its email becomes the Dayla account, no password needed
+// Without an account the first of these creates it: its email becomes the Deyla account, no password needed
 const SIGN_UP_WITH: { id: SignInProvider; name: string }[] = [
   { id: "google", name: "Google" },
   { id: "yandex", name: tr("Яндекс ID", "Yandex ID") },
@@ -376,8 +376,8 @@ export const Integrations: React.FC = () => {
             <div className="space-y-2.5">
               <p className="text-sm text-gray-600 dark:text-gray-300 leading-snug">
                 {tr(
-                  `Аккаунт Dayla создадим по email вашего аккаунта ${signUpWith.name} — пароль не нужен. Остальные выбранные сервисы подключим следом.`,
-                  `We'll create your Dayla account with your ${signUpWith.name} email — no password needed. The other chosen services will be connected next.`
+                  `Аккаунт Deyla создадим по email вашего аккаунта ${signUpWith.name} — пароль не нужен. Остальные выбранные сервисы подключим следом.`,
+                  `We'll create your Deyla account with your ${signUpWith.name} email — no password needed. The other chosen services will be connected next.`
                 )}
               </p>
               <ConsentCheckbox id="onboarding-consent" checked={consentGiven} onChange={setConsentGiven}>

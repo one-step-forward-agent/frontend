@@ -84,7 +84,7 @@ type MenuItem = {
   tone?: "default" | "danger";
 };
 
-const FORWARD_LABEL = tr("Переслать Dayla", "Forward to Dayla");
+const FORWARD_LABEL = tr("Переслать Deyla", "Forward to Deyla");
 
 const CONTEXT_MENU_ITEMS: MenuItem[] = [
   { label: tr("Ответить", "Reply"), icon: Reply },
@@ -265,7 +265,7 @@ const GTDAggregation: React.FC = () => (
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Dayla
+            Deyla
           </p>
         </div>
       </div>
@@ -640,7 +640,7 @@ const IPhoneSceneFinance: React.FC = () => (
             "
           >
             <Sparkles size={13} aria-hidden="true" />
-            {tr("В этом диалоге сидит Dayla", "Dayla is in this chat")}
+            {tr("В этом диалоге сидит Deyla", "Deyla is in this chat")}
           </div>
         </div>
 
@@ -657,16 +657,16 @@ const IPhoneSceneFinance: React.FC = () => (
   </IPhoneFrame>
 );
 
-interface DaylaChatCardProps {
+interface DeylaChatCardProps {
   forwardedFrom?: string;
   userMessage?: string;
-  daylaMessage: React.ReactNode;
+  deylaMessage: React.ReactNode;
 }
 
-const DaylaChatCard: React.FC<DaylaChatCardProps> = ({
+const DeylaChatCard: React.FC<DeylaChatCardProps> = ({
   forwardedFrom,
   userMessage,
-  daylaMessage,
+  deylaMessage,
 }) => (
   <div
     className={cn(
@@ -721,7 +721,7 @@ const DaylaChatCard: React.FC<DaylaChatCardProps> = ({
             )}
           >
             <div className="text-sm text-gray-900 dark:text-white leading-snug">
-              {daylaMessage}
+              {deylaMessage}
             </div>
           </div>
         </div>
@@ -731,7 +731,7 @@ const DaylaChatCard: React.FC<DaylaChatCardProps> = ({
     <div className="relative px-4 py-3 border-t border-white/40 dark:border-white/5 bg-white/25 dark:bg-white/[0.02] backdrop-blur-md">
       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
         <Send size={14} aria-hidden="true" />
-        <span>{tr("Сообщение Dayla…", "Message Dayla…")}</span>
+        <span>{tr("Сообщение Deyla…", "Message Deyla…")}</span>
       </div>
     </div>
   </div>
@@ -945,7 +945,7 @@ const MonitorScene: React.FC = () => {
                   "
                 >
                   <Sparkles size={13} aria-hidden="true" />
-                  {tr("В этом диалоге сидит Dayla", "Dayla is in this chat")}
+                  {tr("В этом диалоге сидит Deyla", "Deyla is in this chat")}
                 </div>
               </div>
 
@@ -979,7 +979,7 @@ const HeroScene: React.FC = () => (
       containerType: "inline-size",
       aspectRatio: `${HERO_SCENE_W / HERO_SCENE_H}`,
     }}
-    aria-label={tr("Календарь и голосовой ассистент Dayla", "The calendar and Dayla's voice assistant")}
+    aria-label={tr("Календарь и голосовой ассистент Deyla", "The calendar and Deyla's voice assistant")}
     role="img"
   >
     <div
@@ -1013,7 +1013,7 @@ const HeroScene: React.FC = () => (
       >
         <MascotFade
           src="/images/MaskotWB.webp"
-          alt={tr("Ассистент Dayla говорит по телефону", "The Dayla assistant on the phone")}
+          alt={tr("Ассистент Deyla говорит по телефону", "The Deyla assistant on the phone")}
           fadeStart={40}
           fadeLength={60}
           blend
@@ -1056,8 +1056,8 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
 
         <p className="mt-5 text-lg text-gray-600 dark:text-gray-400 max-w-xl">
           {tr(
-            "Скажите о своих планах — Dayla найдёт время в календаре, расставит приоритеты и напомнит",
-            "Tell Dayla your plans — it finds time in your calendar, sets priorities and reminds you"
+            "Скажите о своих планах — Deyla найдёт время в календаре, расставит приоритеты и напомнит",
+            "Tell Deyla your plans — it finds time in your calendar, sets priorities and reminds you"
           )}
         </p>
 
@@ -1521,7 +1521,7 @@ const FinalCTA: React.FC<{
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
             {tr("Ваш день живёт в\u00a0Google, Jira, Notion и\u00a0блокноте.", "Your day lives in\u00a0Google, Jira, Notion and\u00a0a notebook.")}{" "}
             <span className="text-gray-900/85 dark:text-white/85">
-              {tr("Dayla задаёт единый ритм.", "Dayla sets one rhythm.")}
+              {tr("Deyla задаёт единый ритм.", "Deyla sets one rhythm.")}
             </span>
           </h2>
         </div>
@@ -1652,7 +1652,7 @@ const SlideFlight: React.FC<SlideProps> = ({ mobile }) => (
       <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Парсинг документов", "Document parsing")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
-          {tr("Пересылайте события — Dayla всё спланирует", "Forward events — Dayla plans the rest")}
+          {tr("Пересылайте события — Deyla всё спланирует", "Forward events — Deyla plans the rest")}
         </h2>
       </div>
 
@@ -1663,10 +1663,10 @@ const SlideFlight: React.FC<SlideProps> = ({ mobile }) => (
           </div>
         </div>
         <div className="relative">
-          <DaylaChatCard
+          <DeylaChatCard
             forwardedFrom={tr("Переслано от Папы", "Forwarded from Dad")}
             userMessage={tr("Авиабилет PD-205 · VKO → LED", "Plane ticket PD-205 · VKO → LED")}
-            daylaMessage={
+            deylaMessage={
               <>
                 {tr("Распознала авиабилет:", "I read the plane ticket:")}{' '}
                 <strong className="font-semibold">{tr("дата — 05 апреля, 21:55", "date — 5 April, 21:55")}</strong>,{' '}
@@ -1686,10 +1686,10 @@ const SlideFinance: React.FC<SlideProps> = ({ mobile }) => (
       <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Из рабочего чата — в план", "From a work chat to your plan")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
-          {tr("Dayla работает там же, где и вы", "Dayla work where you do")}
+          {tr("Deyla работает там же, где и вы", "Deyla work where you do")}
         </h2>
         <p className="mt-3 text-gray-600 dark:text-gray-400">
-          {tr("Начните проект в Dayla, поделитесь контекстом с рабочей командой в Telegram — и позвольте Dayla довести дело до конца.", "Start a project in ChatGPT, share context with your team in Slack — and let Dayla finish the job. The assistant keeps context across all channels.")}
+          {tr("Начните проект в Deyla, поделитесь контекстом с рабочей командой в Telegram — и позвольте Deyla довести дело до конца.", "Start a project in ChatGPT, share context with your team in Slack — and let Deyla finish the job. The assistant keeps context across all channels.")}
         </p>
       </div>
 
@@ -1700,8 +1700,8 @@ const SlideFinance: React.FC<SlideProps> = ({ mobile }) => (
           </div>
         </div>
         <div className={cn("relative", mobile ? "w-full" : "max-w-sm mx-auto")}>
-          <DaylaChatCard
-            daylaMessage={
+          <DeylaChatCard
+            deylaMessage={
               <>
                 {tr("Записала «Отчётность за квартал» на", "Saved “Quarterly reports” for")}{" "}
                 <strong className="font-semibold">{tr("27 декабря", "27 December")}</strong>{" "}
@@ -1733,9 +1733,9 @@ const SlideGTD: React.FC<SlideProps> = ({ mobile }) => (
           <GTDAggregation />
         </div>
         <div className="relative">
-          <DaylaChatCard
+          <DeylaChatCard
             userMessage={tr("Систематизируй задачи по GTD из рабочих чатов и Telegram", "Organise my tasks from work chats and Telegram using GTD")}
-            daylaMessage={GTD_RESPONSE}
+            deylaMessage={GTD_RESPONSE}
           />
         </div>
       </div>
@@ -1904,8 +1904,8 @@ const DesktopAgentVideoSection: React.FC = () => {
           </Badge>
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
             {tr(
-              "Dayla может взять тяжёлую задачу и самостоятельно вести её дальше",
-              "Dayla can take a project and run with it"
+              "Deyla может взять тяжёлую задачу и самостоятельно вести её дальше",
+              "Deyla can take a project and run with it"
             )}
           </h2>
         </div>
@@ -1937,7 +1937,7 @@ const DesktopAgentVideoSection: React.FC = () => {
             <source src="/videos/DesktopAgent.mov" type="video/quicktime" />
             <img
               src="/videos/DesktopAgent-poster.jpg"
-              alt={tr("Демонстрация Dayla", "Dayla demo")}
+              alt={tr("Демонстрация Deyla", "Deyla demo")}
               className="block w-full h-auto"
             />
           </video>
@@ -1983,28 +1983,28 @@ const SCREENSHOTS = [
     image: "/images/functional/today.png",
     scale: 1.0,
     title: "Передовой ИИ, на который можно положиться",
-    description: "Все задачи, встречи и дедлайны собраны в одном месте. Dayla работает 24/7, чтобы вы не работали по вечерам.",
+    description: "Все задачи, встречи и дедлайны собраны в одном месте. Deyla работает 24/7, чтобы вы не работали по вечерам.",
   },
   {
     id: "assistant",
     image: "/images/functional/assistant.png",
     scale: 0.8,
     title: "Всегда на связи — в чате или голосом",
-    description: "Задавайте вопросы, развивайте идеи и делитесь обратной связью прямо в диалоге. Чем больше вы работаете вместе, тем лучше Dayla понимает ваши предпочтения и ход мыслей.",
+    description: "Задавайте вопросы, развивайте идеи и делитесь обратной связью прямо в диалоге. Чем больше вы работаете вместе, тем лучше Deyla понимает ваши предпочтения и ход мыслей.",
   },
   {
     id: "thisweek",
     image: "/images/functional/thisweek.png",
     scale: 1.35,
     title: "Расширение ваших возможностей",
-    description: "Когда Dayla знает ваши цели и требования, вы можете браться за большее, не руководя каждым шагом.",
+    description: "Когда Deyla знает ваши цели и требования, вы можете браться за большее, не руководя каждым шагом.",
   },
   {
     id: "anonymizeddata",
     image: "/images/functional/anonymizeddata.png",
     scale: 0.9,
     title: "Контроль всегда остаётся у вас",
-    description: "Dayla использует механизмы защиты шифрования информации и меры конфиденциальности. Все данные обезличены.",
+    description: "Deyla использует механизмы защиты шифрования информации и меры конфиденциальности. Все данные обезличены.",
   },
 ];
 

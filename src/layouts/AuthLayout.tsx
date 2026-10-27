@@ -73,7 +73,7 @@ const AuthLayout: React.FC = () => {
             />
             <MascotFade
               src="/images/MaskotGirl.webp"
-              alt={tr("Ассистент Dayla говорит по телефону", "The Dayla assistant on the phone")}
+              alt={tr("Ассистент Deyla говорит по телефону", "The Deyla assistant on the phone")}
               fadeStart={48}
               fadeLength={38}
               blend
@@ -82,7 +82,7 @@ const AuthLayout: React.FC = () => {
           </div>
 
           <h1 className="mt-2 text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-            Dayla
+            Deyla
           </h1>
 
           <p className="mt-3 text-gray-600 dark:text-gray-300 text-lg leading-relaxed">

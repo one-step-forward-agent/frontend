@@ -15,7 +15,7 @@ export type TourName = "main" | "rewards";
 
 const STEPS: Step[] = [
   {
-    title: tr("Добро пожаловать в Dayla", "Welcome to Dayla"),
+    title: tr("Добро пожаловать в Deyla", "Welcome to Deyla"),
     text: tr("За минуту покажу, что где. Подсказки можно пропустить и открыть снова в профиле.", "In a minute I'll show you what's where. You can skip the tips and open them again from your profile."),
   },
   {
@@ -49,7 +49,7 @@ const STEPS: Step[] = [
   {
     target: "dock",
     title: tr("Чат в любом разделе", "Chat from anywhere"),
-    text: tr("«Спросить Dayla» открывает ассистента поверх любой страницы.", "“Ask Dayla” opens the assistant over any page."),
+    text: tr("«Спросить Deyla» открывает ассистента поверх любой страницы.", "“Ask Deyla” opens the assistant over any page."),
   },
   {
     target: "account",
@@ -61,8 +61,8 @@ const STEPS: Step[] = [
   //   target: "account",
   //   title: tr("Перенесите чаты с нейросетями", "Bring over your AI chats"),
   //   text: tr(
-  //     "Уже обсуждали цели и планы с ChatGPT, Claude или Gemini? В «Интеграциях» → «Перенос из чатов с нейросетями» пришлите ссылку на чат и напишите, что из него важно, — Dayla учтёт это при планировании.",
-  //     "Already discussed your goals and plans with ChatGPT, Claude or Gemini? In Integrations → “Bring over chats with other AIs”, share the chat link and say what matters in it — Dayla will use it when planning."
+  //     "Уже обсуждали цели и планы с ChatGPT, Claude или Gemini? В «Интеграциях» → «Перенос из чатов с нейросетями» пришлите ссылку на чат и напишите, что из него важно, — Deyla учтёт это при планировании.",
+  //     "Already discussed your goals and plans with ChatGPT, Claude or Gemini? In Integrations → “Bring over chats with other AIs”, share the chat link and say what matters in it — Deyla will use it when planning."
   //   ),
   // },
 ];
@@ -102,8 +102,8 @@ const REWARD_STEPS: Step[] = [
 ];
 
 const TOURS: Record<TourName, Step[]> = { main: STEPS, rewards: REWARD_STEPS };
-const KEYS: Record<TourName, string> = { main: "dayla.tour.v1", rewards: "dayla.tour.rewards.v1" };
-const RESTART = "dayla:tour";
+const KEYS: Record<TourName, string> = { main: "deyla.tour.v1", rewards: "deyla.tour.rewards.v1" };
+const RESTART = "deyla:tour";
 const GUTTER = 16;
 const CARD_WIDTH = 340;
 const PAD = 6;

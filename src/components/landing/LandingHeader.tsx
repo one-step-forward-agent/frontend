@@ -48,7 +48,7 @@ export const LandingHeader: React.FC = () => {
         <Link
   to="/"
   className="flex items-center gap-2 shrink-0"
-  aria-label={tr("Dayla — на главную", "Dayla — home")}
+  aria-label={tr("Deyla — на главную", "Deyla — home")}
   onClick={(e) => {
     // Уже на главной — прокрутка к Hero (верху страницы), без перезагрузки
     if (typeof window !== "undefined" && window.location.pathname === "/") {
@@ -59,7 +59,7 @@ export const LandingHeader: React.FC = () => {
   }}
 >
   <Logo />
-  <span className="font-semibold text-gray-900 dark:text-white">Dayla</span>
+  <span className="font-semibold text-gray-900 dark:text-white">Deyla</span>
 </Link>
 
         <nav

@@ -144,7 +144,7 @@ export const isHighPriority = (priority: Priority | undefined): boolean => prior
 export const plainPriority = (priority: Priority | undefined): Priority => (isHighPriority(priority) ? "high" : "medium");
 
 export const SOURCE_LABELS: Record<string, string> = {
-  local: "Dayla",
+  local: "Deyla",
   ai: tr("Ассистент", "Assistant"),
   ics: tr("Файл .ics", ".ics file"),
   google: "Google",

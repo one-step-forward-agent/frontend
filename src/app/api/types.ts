@@ -182,7 +182,7 @@ export type AssistantReply =
       events: DraftItem[];
       answer: string | null;
       note: string | null;
-      /** Connected calendars the new tasks can also go to, and the ticked ones (empty: Dayla only) */
+      /** Connected calendars the new tasks can also go to, and the ticked ones (empty: Deyla only) */
       targets?: CalendarTarget[];
       calendars?: string[];
     }

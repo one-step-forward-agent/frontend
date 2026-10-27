@@ -5,7 +5,7 @@ import { lang, setLang, tr, type Lang } from "@/i18n";
 
 export type ThemeMode = "light" | "dark" | "system";
 
-const STORAGE_KEY = "dayla-theme";
+const STORAGE_KEY = "deyla-theme";
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 function readMode(): ThemeMode {

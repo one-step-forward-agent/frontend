@@ -35,7 +35,7 @@ const VIEWS = [
   { value: "month", label: tr("Месяц", "Month") },
 ] as const;
 type View = (typeof VIEWS)[number]["value"];
-const VIEW_KEY = "dayla-calendar-view";
+const VIEW_KEY = "deyla-calendar-view";
 // The header's .ics import takes only the period on the screen
 const IMPORT_LABELS: Record<View, string> = {
   day: tr("Импорт .ics на день", "Import .ics for the day"),
@@ -315,8 +315,8 @@ export function CalendarPage() {
                 items={recommendations.data}
                 label={
                   view === "month"
-                    ? tr("Dayla анализирует месяц…", "Dayla is analysing the month…")
-                    : tr("Dayla анализирует неделю…", "Dayla is analysing the week…")
+                    ? tr("Deyla анализирует месяц…", "Deyla is analysing the month…")
+                    : tr("Deyla анализирует неделю…", "Deyla is analysing the week…")
                 }
               />
             </div>

@@ -41,7 +41,7 @@ export function useAsync<T>(load: () => Promise<T>, deps: DependencyList): Async
   return { data, error, loading, reload, setData };
 }
 
-const TASKS_CHANGED = "dayla:tasks-changed";
+const TASKS_CHANGED = "deyla:tasks-changed";
 
 /** Tells every screen that tasks changed (created, completed, moved), so lists and stats reload. */
 export function notifyTasksChanged() {
@@ -140,7 +140,7 @@ export function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-const TAGS_CHANGED = "dayla:tags-changed";
+const TAGS_CHANGED = "deyla:tags-changed";
 let tagsCache: Tag[] | undefined;
 
 export function notifyTagsChanged(tags?: Tag[]) {

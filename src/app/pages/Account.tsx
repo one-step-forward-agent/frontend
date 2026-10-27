@@ -218,7 +218,7 @@ function ProfileSection() {
         title={tr("Профиль", "Profile")}
         actions={
           <button type="button" className="btn btn-ghost btn-sm h-8 px-3 text-xs" onClick={restartTour}>
-            {tr("Как пользоваться Dayla", "How to use Dayla")}
+            {tr("Как пользоваться Deyla", "How to use Deyla")}
           </button>
         }
       >
@@ -673,7 +673,7 @@ function RemindersSection() {
 type ProfileRow = { slug: string; title: string; connection: Integration["connection"]; viaGoogle?: boolean };
 
 // The profile lists only what works: the connected services, and Apple and Samsung Calendar once Google is
-// connected (they show Dayla's tasks through the Google account). Connecting the rest is on the Integrations page
+// connected (they show Deyla's tasks through the Google account). Connecting the rest is on the Integrations page
 function connectedRows(items: Integration[]): ProfileRow[] {
   const rows: ProfileRow[] = items.filter((item) => item.connection);
   const google = items.some((item) => item.slug === "google" && item.connection?.status === "connected");
@@ -740,8 +740,8 @@ function ImportSection() {
       <GlassCard title={tr("Импорт из файла .ics", "Import from an .ics file")}>
         <p className="muted small">
           {tr(
-            "Файл .ics выгружают Google, Яндекс, Apple и Outlook календари, расписания вузов и сайты мероприятий. Все его события добавятся в Dayla; при повторном импорте того же файла — только новые. Импортировать только месяц или день можно на странице «Календарь», а ещё — просто прислать файл в чат.",
-            "Google, Yandex, Apple and Outlook calendars, university timetables and event sites export .ics files. All of the file's events are added to Dayla; importing the same file again adds only the new ones. To import just a month or a day, use the Calendar page — or simply send the file to the chat."
+            "Файл .ics выгружают Google, Яндекс, Apple и Outlook календари, расписания вузов и сайты мероприятий. Все его события добавятся в Deyla; при повторном импорте того же файла — только новые. Импортировать только месяц или день можно на странице «Календарь», а ещё — просто прислать файл в чат.",
+            "Google, Yandex, Apple and Outlook calendars, university timetables and event sites export .ics files. All of the file's events are added to Deyla; importing the same file again adds only the new ones. To import just a month or a day, use the Calendar page — or simply send the file to the chat."
           )}
         </p>
         <div style={{ marginTop: 12 }}>
@@ -824,8 +824,8 @@ function TelegramSection() {
           <div className="form">
             <p className="muted">
               {tr(
-                "Привяжите Telegram, чтобы планировать в чате с Dayla: пишите или надиктовывайте планы, спрашивайте о расписании и получайте напоминания и план на утро.",
-                "Link Telegram to plan in a chat with Dayla: type or dictate plans, ask about your schedule and get reminders and a morning plan."
+                "Привяжите Telegram, чтобы планировать в чате с Deyla: пишите или надиктовывайте планы, спрашивайте о расписании и получайте напоминания и план на утро.",
+                "Link Telegram to plan in a chat with Deyla: type or dictate plans, ask about your schedule and get reminders and a morning plan."
               )}
             </p>
             {link ? (
@@ -927,8 +927,8 @@ function SecuritySection() {
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
             {tr(
-              "Удаление аккаунта стирает все ваши задачи, файлы, переписку с ассистентом и подключения и отзывает доступ Dayla к Google Calendar. Отменить его нельзя. Подробнее — в",
-              "Deleting the account erases all your tasks, files, chats with the assistant and connections, and revokes Dayla's access to Google Calendar. It cannot be undone. More in the"
+              "Удаление аккаунта стирает все ваши задачи, файлы, переписку с ассистентом и подключения и отзывает доступ Deyla к Google Calendar. Отменить его нельзя. Подробнее — в",
+              "Deleting the account erases all your tasks, files, chats with the assistant and connections, and revokes Deyla's access to Google Calendar. It cannot be undone. More in the"
             )}{" "}
             <a href="/privacy-policy" className="text-sky-600 dark:text-sky-400 hover:underline">
               {tr("политике конфиденциальности", "privacy policy")}

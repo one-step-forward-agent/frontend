@@ -1,4 +1,4 @@
-// Before Google's sign-in: Dayla is still being verified by Google, so Google shows an "unverified app" warning.
+// Before Google's sign-in: Deyla is still being verified by Google, so Google shows an "unverified app" warning.
 // The dialog shows a short copy of that screen with the button to press ringed, so the real one is passed without reading.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -95,7 +95,7 @@ export function useGoogleNotice(opts?: { appName?: string }): {
       setOpen(true);
     });
 
-  const appName = opts?.appName ?? "Dayla";
+  const appName = opts?.appName ?? "Deyla";
 
   const notice = (
     <dialog
@@ -111,7 +111,7 @@ export function useGoogleNotice(opts?: { appName?: string }): {
             {tr("Google покажет предупреждение — это нормально", "Google will show a warning — that's expected")}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-            {tr("Dayla ещё на проверке у Google. Нажмите выделенную кнопку:", "Dayla is still being verified by Google. Click the highlighted button:")}
+            {tr("Deyla ещё на проверке у Google. Нажмите выделенную кнопку:", "Deyla is still being verified by Google. Click the highlighted button:")}
           </p>
         </div>
 

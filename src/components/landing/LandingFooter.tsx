@@ -41,7 +41,7 @@ const LandingFooter: React.FC = () => {
               >
                 <Sparkles size={16} />
               </div>
-              <span className="text-white text-2xl font-bold tracking-tight">Dayla</span>
+              <span className="text-white text-2xl font-bold tracking-tight">Deyla</span>
             </Link>
 
 
@@ -125,7 +125,7 @@ const LandingFooter: React.FC = () => {
         </div>
 
         <div className="mt-10 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} Dayla. {tr("Все права защищены.", "All rights reserved.")}</p>
+          <p>&copy; {new Date().getFullYear()} Deyla. {tr("Все права защищены.", "All rights reserved.")}</p>
           <p className="flex items-center gap-1.5 text-xs">
             {tr("Сделано с", "Made with")}
             <span className="text-red-400" aria-label={tr("любовью", "love")}>

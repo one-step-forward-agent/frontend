@@ -65,6 +65,6 @@ export function Redirect({ to }: { to: string }) {
 
 export function useTitle(title: string) {
   useEffect(() => {
-    document.title = title ? `${title} · Dayla` : "Dayla";
+    document.title = title ? `${title} · Deyla` : "Deyla";
   }, [title]);
 }

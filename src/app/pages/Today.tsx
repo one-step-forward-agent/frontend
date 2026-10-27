@@ -230,7 +230,7 @@ function DaySchedule({ events }: { events: CalendarEvent[] }) {
 
 /* ─── MoveSuggestion ────────────────────────────────────── */
 
-const dismissedKey = (userId: number) => `dayla-dismissed-leftovers:${userId}`;
+const dismissedKey = (userId: number) => `deyla-dismissed-leftovers:${userId}`;
 
 function loadDismissed(userId: number): number[] {
   try {
@@ -431,7 +431,7 @@ function MoveSuggestion({
 
 /* ─── Recommendations ───────────────────────────────────── */
 
-const recommendationsKey = (userId: number) => `dayla-recommendations:${userId}`;
+const recommendationsKey = (userId: number) => `deyla-recommendations:${userId}`;
 
 function loadRecommendations(userId: number): Promise<Recommendation[]> {
   return api.recommendations().then((items) => {

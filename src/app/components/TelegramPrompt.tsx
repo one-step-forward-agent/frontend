@@ -8,7 +8,7 @@ import { errorText } from "../lib/format";
 import { cn } from "@/utils/cn";
 import { tr } from "@/i18n";
 
-const HIDDEN_KEY = "dayla.telegram-prompt.hidden";
+const HIDDEN_KEY = "deyla.telegram-prompt.hidden";
 // After the bot is opened the card checks the account until the link arrives
 const CHECK_EVERY_MS = 3000;
 const CHECK_FOR_MS = 3 * 60 * 1000;

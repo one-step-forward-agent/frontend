@@ -24,7 +24,7 @@ interface MascotFadeProps {
 
 export const MascotFade: React.FC<MascotFadeProps> = ({
   src = "/images/MaskotWB.webp",
-  alt = tr("Ассистент Dayla", "Dayla assistant"),
+  alt = tr("Ассистент Deyla", "Deyla assistant"),
   className,
   wrapperClassName,
   fadeStart = 42,

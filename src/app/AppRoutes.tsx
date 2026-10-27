@@ -35,7 +35,7 @@ export default function AppRoutes() {
   if (user === undefined) {
     return (
       <div className="fd-app">
-        <Loading label="Dayla" />
+        <Loading label="Deyla" />
       </div>
     );
   }

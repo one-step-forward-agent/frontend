@@ -10,7 +10,7 @@ import { tr } from "@/i18n";
 
 /**
  * «Перенос из чатов с нейросетями» (it used to be an onboarding step): links to chats with ChatGPT, Claude,
- * Gemini and others, with the areas and kinds of notes Dayla may take and a comment. They are kept in the
+ * Gemini and others, with the areas and kinds of notes Deyla may take and a comment. They are kept in the
  * profile (`aiChatSources`), and the assistant sees the topics and the comment when it plans.
  */
 
@@ -116,7 +116,7 @@ export function AiChatTransfer() {
   const upsert = (source: AiChatSource) => {
     const exists = sources.some((item) => item.id === source.id);
     const next = exists ? sources.map((item) => (item.id === source.id ? source : item)) : [...sources, source];
-    return save(next, exists ? tr("Источник сохранён", "Source saved") : tr("Чат добавлен — Dayla учтёт его", "Chat added — Dayla will take it into account"));
+    return save(next, exists ? tr("Источник сохранён", "Source saved") : tr("Чат добавлен — Deyla учтёт его", "Chat added — Deyla will take it into account"));
   };
 
   const remove = (id: string) =>
@@ -141,14 +141,14 @@ export function AiChatTransfer() {
 
       <p className="mb-2 text-xs text-gray-700 dark:text-gray-200 leading-relaxed">
         {tr(
-          "Вы уже рассказывали другому ассистенту о своих целях и планах? Пришлите ссылку на чат и коротко напишите, что из него важно, — Dayla учтёт это, когда будет планировать.",
-          "Already told another assistant about your goals and plans? Share the chat link and say briefly what matters in it — Dayla will take it into account when planning."
+          "Вы уже рассказывали другому ассистенту о своих целях и планах? Пришлите ссылку на чат и коротко напишите, что из него важно, — Deyla учтёт это, когда будет планировать.",
+          "Already told another assistant about your goals and plans? Share the chat link and say briefly what matters in it — Deyla will take it into account when planning."
         )}
       </p>
       <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
         {tr(
-          "Ссылка: в чате нажмите «Поделиться» → «Скопировать ссылку». Dayla не станет использовать то, что вы не отметили.",
-          "The link: in the chat press “Share” → “Copy link”. Dayla won't use anything you haven't ticked."
+          "Ссылка: в чате нажмите «Поделиться» → «Скопировать ссылку». Deyla не станет использовать то, что вы не отметили.",
+          "The link: in the chat press “Share” → “Copy link”. Deyla won't use anything you haven't ticked."
         )}
       </p>
 
@@ -315,7 +315,7 @@ function SourceForm({
           onClick={() => setShowDetails(true)}
           className="text-xs font-medium text-violet-700 dark:text-violet-300 hover:underline"
         >
-          {tr("Уточнить, что Dayla может взять", "Specify what Dayla may take")}
+          {tr("Уточнить, что Deyla может взять", "Specify what Deyla may take")}
         </button>
       ) : (
         <div className="space-y-3 pt-1 border-t border-violet-400/20">

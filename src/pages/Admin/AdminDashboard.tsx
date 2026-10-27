@@ -40,7 +40,7 @@ function FullScreen({ children }: { children: ReactNode }) {
   return <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-gray-50 px-4 text-center dark:bg-gray-950">{children}</div>;
 }
 
-/** dayla.tech/dashboard: the database as a workbook for admins. Each table is a sheet; sheets combine by their
+/** deyla.tech/dashboard: the database as a workbook for admins. Each table is a sheet; sheets combine by their
  * links; each column sorts, filters and counts; what is shown exports to CSV. Beside it, the admins' shared note. */
 export default function AdminDashboard() {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
   const [separator, setSeparator] = useState<"," | ";">(";");
 
   useEffect(() => {
-    document.title = "Аналитика — Dayla";
+    document.title = "Аналитика — Deyla";
   }, []);
 
   const loadTables = useCallback(async () => {
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
       <FullScreen>
         <ShieldAlert size={40} className="text-amber-500" />
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Раздел только для администраторов</h1>
-        <p className="max-w-sm text-sm text-gray-600 dark:text-gray-400">У вашего аккаунта нет прав администратора. Если они нужны, обратитесь к администратору Dayla.</p>
+        <p className="max-w-sm text-sm text-gray-600 dark:text-gray-400">У вашего аккаунта нет прав администратора. Если они нужны, обратитесь к администратору Deyla.</p>
         <Link to="/app" className="rounded-full bg-sky-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-sky-700">
           В приложение
         </Link>
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
           <ArrowLeft size={18} />
         </Link>
         <SheetIcon size={20} className="text-emerald-600" aria-hidden="true" />
-        <h1 className="mr-2 text-[15px] font-semibold">Dayla · Аналитика</h1>
+        <h1 className="mr-2 text-[15px] font-semibold">Deyla · Аналитика</h1>
 
         <div className="flex min-w-[180px] flex-1 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2 dark:border-white/15 dark:bg-gray-950 sm:max-w-xs">
           <Search size={14} className="text-gray-400" />

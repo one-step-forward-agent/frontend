@@ -63,7 +63,7 @@ interface OnboardingContextValue {
 
 const OnboardingContext = React.createContext<OnboardingContextValue | null>(null);
 
-const STORAGE_KEY = "dayla-onboarding";
+const STORAGE_KEY = "deyla-onboarding";
 
 function loadStored(): OnboardingData | null {
   try {

@@ -2,7 +2,7 @@
 (function () {
   var mode = "system";
   try {
-    mode = localStorage.getItem("dayla-theme") || "system";
+    mode = localStorage.getItem("deyla-theme") || "system";
   } catch (e) {}
   var dark = mode === "dark" || (mode !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   var root = document.documentElement;

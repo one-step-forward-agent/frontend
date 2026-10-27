@@ -22,7 +22,7 @@ const NAV: NavItem[] = [
   { to: "/tasks", label: tr("Задачи", "Tasks"), icon: "tasks" },
 ];
 
-// Ассистент — первый пункт списка и выделен цветом; «Dayla» над списком — просто логотип
+// Ассистент — первый пункт списка и выделен цветом; «Deyla» над списком — просто логотип
 const SIDEBAR: NavItem[] = [
   NAV[2],
   NAV[0],
@@ -104,7 +104,7 @@ export function Brand() {
       >
         <Sparkles size={14} strokeWidth={2} />
       </span>
-      Dayla
+      Deyla
     </span>
   );
 }
@@ -433,8 +433,8 @@ function ChatDock({ path }: { path: string }) {
         type="button"
         onClick={() => setOpen(true)}
         data-tour="dock"
-        aria-label={tr("Спросить Dayla", "Ask Dayla")}
-        title={tr("Спросить Dayla", "Ask Dayla")}
+        aria-label={tr("Спросить Deyla", "Ask Deyla")}
+        title={tr("Спросить Deyla", "Ask Deyla")}
         className={cn(
           // On a phone the chat is the middle button of the tab bar: a second gradient button would only repeat it
           "hidden lg:flex fixed z-30 right-6 bottom-6",
@@ -445,7 +445,7 @@ function ChatDock({ path }: { path: string }) {
         )}
       >
         <Icon name="assistant" size={24} />
-        <span className="text-sm font-semibold">{tr("Спросить Dayla", "Ask Dayla")}</span>
+        <span className="text-sm font-semibold">{tr("Спросить Deyla", "Ask Deyla")}</span>
       </button>
     );
   }
@@ -453,7 +453,7 @@ function ChatDock({ path }: { path: string }) {
   return (
     <div
       role="dialog"
-      aria-label={tr("Чат с Dayla", "Chat with Dayla")}
+      aria-label={tr("Чат с Deyla", "Chat with Deyla")}
       className={cn(
         "fixed z-40 inset-x-2 top-2 bottom-[5.25rem]",
         "lg:inset-auto lg:right-6 lg:bottom-6 lg:w-[420px] lg:h-[min(660px,calc(100dvh-3rem))]",
