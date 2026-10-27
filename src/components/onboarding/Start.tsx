@@ -96,7 +96,7 @@ const ChatContextMenu: React.FC = () => (
   <div
     className="
       relative rounded-2xl overflow-visible
-      bg-white/95 dark:bg-gray-900/95 backdrop-blur-md
+      bg-white/95 dark:bg-gray-900/95 backdrop-blur-md max-md:backdrop-blur-none
       ring-1 ring-gray-200/80 dark:ring-gray-700/60
       shadow-2xl
     "
@@ -671,22 +671,23 @@ const DeylaChatCard: React.FC<DeylaChatCardProps> = ({
   <div
     className={cn(
       "relative overflow-hidden rounded-2xl",
-      "bg-white/55 dark:bg-gray-900/40",
-      "backdrop-blur-2xl",
+      // ═══ правка №1 — внешняя обёртка ═══
+      "bg-white/55 dark:bg-gray-900/40 max-md:bg-white/92 dark:max-md:bg-gray-900/90",
+      "backdrop-blur-2xl max-md:backdrop-blur-none",
       "ring-1 ring-white/60 dark:ring-white/10",
       "shadow-[0_8px_32px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.75)]",
       "dark:shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]",
     )}
   >
-
     <div className="relative p-4 space-y-4">
       {(forwardedFrom || userMessage) && (
         <div className="flex justify-end">
           <div
             className={cn(
               "max-w-[82%] rounded-2xl rounded-br-sm",
+              // ═══ правка №2 — сообщение пользователя (синий пузырь) ═══
               "bg-gradient-to-br from-blue-500/90 to-blue-600/90",
-              "backdrop-blur-md text-white px-4 py-2.5",
+              "backdrop-blur-md max-md:backdrop-blur-none text-white px-4 py-2.5",
               "ring-1 ring-white/25",
               "shadow-[0_4px_16px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]",
             )}
@@ -713,8 +714,9 @@ const DeylaChatCard: React.FC<DeylaChatCardProps> = ({
           <div
             className={cn(
               "rounded-2xl rounded-bl-sm px-4 py-3",
-              "bg-white/55 dark:bg-white/[0.06]",
-              "backdrop-blur-md",
+              // ═══ правка №3 — сообщение Deyla ═══
+              "bg-white/55 dark:bg-white/[0.06] max-md:bg-white/95 dark:max-md:bg-gray-800/95",
+              "backdrop-blur-md max-md:backdrop-blur-none",
               "ring-1 ring-white/50 dark:ring-white/5",
               "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_8px_rgba(15,23,42,0.05)]",
               "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_2px_8px_rgba(0,0,0,0.25)]",
@@ -728,7 +730,14 @@ const DeylaChatCard: React.FC<DeylaChatCardProps> = ({
       </div>
     </div>
 
-    <div className="relative px-4 py-3 border-t border-white/40 dark:border-white/5 bg-white/25 dark:bg-white/[0.02] backdrop-blur-md">
+    <div
+      className={cn(
+        "relative px-4 py-3 border-t border-white/40 dark:border-white/5",
+        // ═══ правка №4 — нижняя строка «Сообщение Deyla…» ═══
+        "bg-white/25 dark:bg-white/[0.02] max-md:bg-white/60 dark:max-md:bg-gray-900/40",
+        "backdrop-blur-md max-md:backdrop-blur-none",
+      )}
+    >
       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
         <Send size={14} aria-hidden="true" />
         <span>{tr("Сообщение Deyla…", "Message Deyla…")}</span>
@@ -2259,10 +2268,14 @@ const FeatureScreenshotsMobile: React.FC = () => {
       const io = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            entry.target.classList.toggle("is-revealed", entry.isIntersecting);
+            // Explicit ratio check: card disappears as soon as < 15% is
+            // visible — both when scrolling down (leaves via top) and
+            // scrolling up (leaves via bottom). No more lingering.
+            const visible = entry.intersectionRatio >= 0.15;
+            entry.target.classList.toggle("is-revealed", visible);
           });
         },
-        { threshold: 0.35, rootMargin: "0px 0px -12% 0px" }
+        { threshold: [0, 0.15, 0.5, 1], rootMargin: "0px 0px -5% 0px" }
       );
       io.observe(el);
       observers.push(io);
@@ -2322,18 +2335,23 @@ const FeatureScreenshotsMobile: React.FC = () => {
       </div>
 
       <style>{`
-        @keyframes feature-card-reveal {
-          0%   { opacity: 0; transform: translateY(32px) scale(0.94); }
-          60%  { opacity: 1; }
-          100% { opacity: 1; transform: translateY(0)  scale(1); }
+        .feature-card {
+          opacity: 0;
+          transform: translateY(24px) scale(0.96);
+          /* Transition, not animation — responds symmetrically to class add/remove */
+          transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .feature-card { opacity: 0; will-change: opacity, transform; }
         .feature-card.is-revealed {
-          animation: feature-card-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+          opacity: 1;
+          transform: translateY(0) scale(1);
         }
         @media (prefers-reduced-motion: reduce) {
-          .feature-card { opacity: 1 !important; }
-          .feature-card.is-revealed { animation: none !important; }
+          .feature-card {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
         }
       `}</style>
     </section>
