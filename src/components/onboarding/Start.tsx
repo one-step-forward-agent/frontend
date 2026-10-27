@@ -1338,6 +1338,8 @@ const orbitRadiusScale = () => (isPhoneWidth() ? 0.75 : 1 / 1.2);
 const ORBIT_ICON_BASE = 96;
 const ORBIT_ICON_IMG_BASE = 58;
 
+
+
 const FinalCTA: React.FC<{
   onStart: () => void;
   onActiveChange?: (active: boolean) => void;
@@ -1468,6 +1470,20 @@ const FinalCTA: React.FC<{
       return () => window.removeEventListener("resize", applyStatic);
     }
   }, [active, isNarrow]);
+  // ─── Маска на смартфоне короче: 20vh фейд-ин, 85vh конец solid, 105vh конец fade
+// Это компенсирует укороченный блок (см. minHeight ниже).
+const ctaMaskVertical = isNarrow
+  ? `linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0vh,
+      rgba(0,0,0,0) 20vh,
+      rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) 45vh,
+      rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) 85vh,
+      rgba(0,0,0,0) 105vh
+    )`
+  : FINAL_CTA_MASK_VERTICAL;
+
+const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
 
    return (
     <section
@@ -1488,8 +1504,8 @@ const FinalCTA: React.FC<{
           clipPath: isNarrow || active 
             ? "inset(0% 0% 0% 0% round 0px)" 
             : `inset(${FINAL_CTA_INACTIVE_TOP_INSET}% 12% 18% 12% round 32px)`,
-          WebkitMaskImage: FINAL_CTA_MASK,
-          maskImage: FINAL_CTA_MASK,
+          WebkitMaskImage: ctaMask,
+          maskImage: ctaMask,
           // Добавлено: Пересечение масок для создания градиента со всех сторон
           WebkitMaskComposite: "source-in",
           maskComposite: "intersect",
@@ -1506,8 +1522,8 @@ const FinalCTA: React.FC<{
           clipPath: isNarrow || active 
             ? "inset(0% 0% 0% 0% round 0px)" 
             : `inset(${FINAL_CTA_INACTIVE_TOP_INSET}% 12% 18% 12% round 32px)`,
-          WebkitMaskImage: FINAL_CTA_MASK,
-          maskImage: FINAL_CTA_MASK,
+          WebkitMaskImage: ctaMask,
+          maskImage: ctaMask,
           // Добавлено: Пересечение масок для создания градиента со всех сторон
           WebkitMaskComposite: "source-in",
           maskComposite: "intersect",
@@ -1522,9 +1538,10 @@ const FinalCTA: React.FC<{
           "relative z-10 mx-auto w-full max-w-6xl px-6 md:px-16 text-gray-900 dark:text-white",
           "flex flex-col items-center justify-center"
         )}
-        style={{ 
-          minHeight: "100vh" // Контент всегда ровно 100vh
-        }}
+        style={{
+  // Mobile: 60svh = −15% сверху −25% снизу от исходных 100vh
+  minHeight: isNarrow ? "60svh" : "100vh",
+}}
       >
         {/* ... (Остальной контент FinalCTA без изменений) ... */}
         <div className="text-center max-w-3xl">
@@ -2255,105 +2272,209 @@ const FeatureScreenshotsCarousel: React.FC = () => {
    MOBILE — baked CSS-animations triggered by finger scroll
    ═══════════════════════════════════════════════════════════ */
 const FeatureScreenshotsMobile: React.FC = () => {
-  const refs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const containerRef = React.useRef<HTMLElement>(null);
+  const slideRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const imageRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const textRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const total = SCREENSHOTS.length;
 
-  React.useEffect(() => {
-    if (typeof IntersectionObserver === "undefined") {
-      refs.current.forEach((el) => el?.classList.add("is-revealed"));
-      return;
-    }
-    const observers: IntersectionObserver[] = [];
-    refs.current.forEach((el) => {
-      if (!el) return;
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            // Explicit ratio check: card disappears as soon as < 15% is
-            // visible — both when scrolling down (leaves via top) and
-            // scrolling up (leaves via bottom). No more lingering.
-            const visible = entry.intersectionRatio >= 0.15;
-            entry.target.classList.toggle("is-revealed", visible);
-          });
-        },
-        { threshold: [0, 0.15, 0.5, 1], rootMargin: "0px 0px -5% 0px" }
-      );
-      io.observe(el);
-      observers.push(io);
-    });
-    return () => observers.forEach((o) => o.disconnect());
-  }, []);
+  /* Базовая высота картинки на мобилке. */
+  const SCREENSHOT_BASE_MOBILE_SVH = 38;
+
+  React.useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    let rafId = 0;
+
+    const apply = () => {
+      rafId = 0;
+      const rect = container.getBoundingClientRect();
+      const scrollable = rect.height - window.innerHeight;
+      if (scrollable <= 0) return;
+
+      const p = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const currentFloat = applyDwell(p, total, SLIDE_PAUSE_RATIO);
+
+      slideRefs.current.forEach((el, i) => {
+        if (!el) return;
+        const offset = i - currentFloat;
+        const absOff = Math.abs(offset);
+        const eased = Math.pow(absOff, 1.2);
+
+        // slideOpacity — ровно как desktop
+        const falloff = offset < 0 ? OPACITY_FALLOFF_EXIT : OPACITY_FALLOFF_ENTER;
+        const slideOpacity = Math.pow(Math.max(0, 1 - eased), falloff);
+        const slideScale = 1 + eased * (SLIDE_MAX_SCALE - 1);
+
+        // textOpacity — ровно как desktop
+        const textOpacity =
+          absOff <= TEXT_FADE_START ? 1 :
+          absOff >= TEXT_FADE_END ? 0 :
+          Math.pow(
+            1 - (absOff - TEXT_FADE_START) / (TEXT_FADE_END - TEXT_FADE_START),
+            TEXT_FADE_POWER
+          );
+
+        const visible = absOff < 0.999;
+
+        el.style.opacity = slideOpacity.toFixed(3);
+        el.style.visibility = visible ? "visible" : "hidden";
+        el.style.willChange = visible ? "opacity" : "auto";
+        el.style.zIndex = String(Math.round((1 - absOff) * 10));
+
+        const imgEl = imageRefs.current[i];
+        if (imgEl) {
+          imgEl.style.transform = `translate3d(0,0,0) scale(${slideScale.toFixed(3)})`;
+        }
+
+        const textEl = textRefs.current[i];
+        if (textEl) {
+          textEl.style.opacity = textOpacity.toFixed(3);
+        }
+      });
+    };
+
+    const schedule = () => {
+      if (!rafId) rafId = requestAnimationFrame(apply);
+    };
+
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    apply();
+
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [total]);
 
   return (
-    <section className="relative">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 pt-16 pb-6">
-        <Badge className="text-eyebrow mb-3">Интерфейс</Badge>
-        <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
-          Почему это работает
-        </h2>
-      </div>
+    <section
+      ref={containerRef}
+      className="relative"
+      style={{ height: `calc(100svh * ${total})` }}
+    >
+      <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col">
+        <div className="shrink-0 relative z-10 pt-14">
+          <div className="max-w-6xl mx-auto px-4 pt-4 pb-6">
+            <Badge className="text-eyebrow mb-3">Интерфейс</Badge>
+            <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+              Почему это работает
+            </h2>
+          </div>
+        </div>
 
-      <div className="px-4 pb-16 space-y-14">
-        {SCREENSHOTS.map((item, i) => (
-          <div
-            key={item.id}
-            ref={(el) => { refs.current[i] = el; }}
-            className="feature-card flex flex-col items-center gap-4"
-          >
-            <div className="relative w-full max-w-[260px] mx-auto">
-              <img
-                src={item.image}
-                alt={item.title || item.description}
-                className="w-full h-auto rounded-2xl shadow-xl"
-                loading="lazy"
-                decoding="async"
-              />
-              {item.id === "anonymizeddata" && (
-                <div
-                  className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-                  role="img"
-                  aria-label="Данные защищены"
-                >
-                  <div className="rounded-2xl backdrop-blur-md ring-1 ring-white/50 bg-white/75 p-3 shadow-lg">
-                    <Lock className="w-8 h-8 text-blue-600" strokeWidth={2.5} aria-hidden="true" />
+        <div className="relative flex-1">
+          {SCREENSHOTS.map((item, i) => {
+            const perScale = item.scale || 1;
+            const imgMaxH = SCREENSHOT_BASE_MOBILE_SVH * perScale;
+
+            return (
+              <div
+                key={item.id}
+                ref={(el) => { slideRefs.current[i] = el; }}
+                className="absolute inset-0 flex items-center justify-center px-4 py-4 pointer-events-none"
+                style={{ opacity: 0, visibility: "hidden", transition: "none" }}
+              >
+                <div className="flex flex-col items-center gap-6 w-full max-w-[360px]">
+                  {/* ── Тот же блок, что на десктопе: 3 halo + sharp ── */}
+                  <div
+                    ref={(el) => { imageRefs.current[i] = el; }}
+                    className="relative inline-block isolate will-change-transform"
+                  >
+                    {/* Halo 1 — pixel feather 40px */}
+                    <img
+                      src={item.image}
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full rounded-[24px] pointer-events-none select-none z-0"
+                      style={{
+                        ...makeFeatherStyle(HALO_FEATHER_PCT),
+                        transform: `scale(${HALO_SCALE_1})`,
+                        filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
+                      }}
+                      loading="eager"
+                    />
+                    {/* Halo 2 — 60px */}
+                    <img
+                      src={item.image}
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full rounded-[24px] pointer-events-none select-none z-0"
+                      style={{
+                        ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP),
+                        transform: `scale(${HALO_SCALE_2})`,
+                        filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
+                      }}
+                      loading="eager"
+                    />
+                    {/* Halo 3 — 80px */}
+                    <img
+                      src={item.image}
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full rounded-[24px] pointer-events-none select-none z-0"
+                      style={{
+                        ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP * 2),
+                        transform: `scale(${HALO_SCALE_3})`,
+                        filter: `blur(${HALO_BLUR_3}px) saturate(1.2)`,
+                      }}
+                      loading="eager"
+                    />
+
+                    {/* Sharp image — 15px pixel feather + rounded clip */}
+                    <div
+                      className="relative z-10 inline-block overflow-hidden rounded-[24px]"
+                      style={{ maxHeight: `${imgMaxH}svh` }}
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.title || item.description}
+                        className="block select-none pointer-events-none"
+                        style={{
+                          ...makeFeatherStyle(SHARP_FEATHER_PCT),
+                          maxHeight: `${imgMaxH}svh`,
+                          maxWidth: "100%",
+                          width: "auto",
+                          height: "auto",
+                        }}
+                        loading="eager"
+                        decoding="async"
+                      />
+                    </div>
+
+                    {item.id === "anonymizeddata" && (
+                      <div
+                        className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+                        role="img"
+                        aria-label="Данные защищены"
+                      >
+                        <div className="rounded-2xl ring-1 ring-white/50 bg-white/85 p-3 shadow-lg">
+                          <Lock className="w-8 h-8 text-blue-600" strokeWidth={2.5} aria-hidden="true" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Текст под картинкой, своя кривая opacity ── */}
+                  <div
+                    ref={(el) => { textRefs.current[i] = el; }}
+                    className="text-center px-2 max-w-[320px]"
+                    style={{ opacity: 0, willChange: "opacity" }}
+                  >
+                    {item.title && (
+                      <h3 className={cn("text-base font-semibold mb-1", TEXT_TITLE_GRADIENT)}>
+                        {item.title}
+                      </h3>
+                    )}
+                    <p className={cn("text-sm leading-snug", TEXT_DESC_GRADIENT)}>
+                      {item.description}
+                    </p>
                   </div>
                 </div>
-              )}
-            </div>
-
-            <div className="max-w-[320px] text-center">
-              {item.title && (
-                <h3 className={cn("text-base font-semibold mb-1", TEXT_TITLE_GRADIENT)}>
-                  {item.title}
-                </h3>
-              )}
-              <p className={cn("text-sm leading-snug", TEXT_DESC_GRADIENT)}>
-                {item.description}
-              </p>
-            </div>
-          </div>
-        ))}
+              </div>
+            );
+          })}
+        </div>
       </div>
-
-      <style>{`
-        .feature-card {
-          opacity: 0;
-          transform: translateY(24px) scale(0.96);
-          /* Transition, not animation — responds symmetrically to class add/remove */
-          transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-                      transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .feature-card.is-revealed {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .feature-card {
-            opacity: 1 !important;
-            transform: none !important;
-            transition: none !important;
-          }
-        }
-      `}</style>
     </section>
   );
 };
