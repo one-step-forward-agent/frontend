@@ -151,12 +151,17 @@ export function TodayPage() {
           {events.loading && !events.data ? (
             <Loading />
           ) : todays.length ? (
-            <DaySchedule events={todays} />
-          ) : (
-            <Empty icon="today" title={tr("На сегодня ничего", "Nothing for today")}>
-              {tr("Свободный день — или самое время что-нибудь запланировать.", "A free day — or a good time to plan something.")}
-            </Empty>
-          )}
+  <DaySchedule events={todays} />
+) : (
+  <div className="py-8 text-center">
+    <p className="text-sm font-medium text-gray-900 dark:text-white">
+      {tr("На сегодня ничего", "Nothing for today")}
+    </p>
+    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+      {tr("Свободный день — или самое время что-нибудь запланировать.", "A free day — or a good time to plan something.")}
+    </p>
+  </div>
+)}
         </GlassCard>
 
         <Recommendations items={recommendations.data} userId={user.id} />

@@ -487,7 +487,16 @@ function DayEvents({ events, loading }: { events: CalendarEvent[]; loading: bool
   const timed = events.filter((event) => !event.all_day);
 
   if (!events.length)
-    return <Empty title={tr("Нет задач", "No tasks")}>{loading ? tr("Загружаем…", "Loading…") : tr("Свободный день.", "A free day.")}</Empty>;
+  return (
+    <div className="py-6 text-center">
+      <p className="text-sm font-medium text-gray-900 dark:text-white">
+        {tr("Нет задач", "No tasks")}
+      </p>
+      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        {loading ? tr("Загружаем…", "Loading…") : tr("Свободный день.", "A free day.")}
+      </p>
+    </div>
+  );
 
   // No "Без времени" headings: a task without a time simply shows none
   return (

@@ -12,6 +12,10 @@ import { useAuthStore } from "@/store/authStore";
 import { LanguageToggle, ThemeProvider, ThemeToggle } from "@/theme";
 import { tr } from "@/i18n";
 
+const BlogListPage = lazy(() => import("@/app/components/blog/BlogListPage"));
+const BlogPostPage = lazy(() => import("@/app/components/blog/BlogPostPage"));
+const BlogAdmin = lazy(() => import("@/pages/Admin/BlogAdmin"));
+
 const AppRoutes = lazy(() => import("@/app/AppRoutes"));
 const FieldOfActivity = lazy(() => import("@/components/onboarding/FieldOfActivity").then((module) => ({ default: module.FieldOfActivity })));
 const Integrations = lazy(() => import("@/components/onboarding/Integrations").then((module) => ({ default: module.Integrations })));
@@ -109,11 +113,16 @@ function Routing() {
         <Route path="/terms-of-use" element={<TermsOfUsePage />} />
         <Route path="/personal-data-consent" element={<PersonalDataConsentPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyRedirect />} />
+        <Route path="/blog" element={<BlogListPage />} />
+        <Route path="/blog/:slug" element={<BlogPostPage />} />
 
         <Route path="/app/*" element={<AppRoutes />} />
         {/* Admins only (users.is_admin): the backend refuses everyone else */}
         <Route path="/dashboard" element={<AdminDashboard />} />
         <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
+
+        <Route path="/dashboard/blog" element={<BlogAdmin />} />
+        <Route path="/dashboard/blog/:id" element={<BlogAdmin />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

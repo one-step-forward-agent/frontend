@@ -255,30 +255,31 @@ export function TasksPage() {
             ))}
           </div>
         ) : (
-          <GlassCard>
-            <Empty
-              icon="check"
-              title={
-                filter === "all" && tagId === null
-                  ? tr("Задач нет", "No tasks")
-                  : tr("Ничего не найдено", "Nothing found")
-              }
-            >
-              {tr(
-                "Добавьте задачу кнопкой в меню или напишите ассистенту: «купить продукты завтра».",
-                "Add a task with the menu button or tell the assistant: “buy groceries tomorrow”."
-              )}
-            </Empty>
-          </GlassCard>
-        )
+  <GlassCard>
+    <div className="py-8 text-center">
+      <p className="text-sm font-medium text-gray-900 dark:text-white">
+        {filter === "all" && tagId === null
+          ? tr("Задач нет", "No tasks")
+          : tr("Ничего не найдено", "Nothing found")}
+      </p>
+      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        {tr("Добавьте задачу кнопкой в меню или напишите ассистенту: «купить продукты завтра».", "Add a task with the menu button or tell the assistant: “buy groceries tomorrow”.")}
+      </p>
+    </div>
+  </GlassCard>
+)
       ) : (
-        <GlassCard>
-          {done.length ? (
-            <EventList events={done} showDate />
-          ) : (
-            <Empty icon="check" title={tr("Пока ничего не выполнено", "Nothing done yet")} />
-          )}
-        </GlassCard>
+<GlassCard>
+  {done.length ? (
+    <EventList events={done} showDate />
+  ) : (
+    <div className="py-8 text-center">
+      <p className="text-sm font-medium text-gray-900 dark:text-white">
+        {tr("Пока ничего не выполнено", "Nothing done yet")}
+      </p>
+    </div>
+  )}
+</GlassCard>
       )}
     </div>
   );

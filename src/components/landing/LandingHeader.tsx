@@ -18,9 +18,31 @@ const NAV_ITEMS: NavItem[] = [
 const Logo: React.FC = () => (
   <span
     aria-hidden="true"
-    className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 inline-flex items-center justify-center text-white shadow-sm shadow-blue-500/30"
+    className={cn(
+      "relative w-7 h-7 rounded-lg inline-flex items-center justify-center overflow-hidden",
+      // ─── Liquid Glass body — как у CTA ───
+      "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
+      "ring-1 ring-white/30 dark:ring-white/10",
+      "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+      "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]"
+    )}
   >
-    <Sparkles size={15} strokeWidth={2} />
+    {/* Бренд-тинт: тот же blue→violet, но как полупрозрачный слой поверх стекла */}
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/35 via-violet-500/30 to-purple-500/35"
+    />
+    {/* Sheen — тот же приём, что у кнопки */}
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.35)_0%,rgba(255,255,255,0.08)_25%,transparent_45%,transparent_75%,rgba(255,255,255,0.12)_100%)]"
+    />
+    {/* Иконка поверх всего стекла */}
+    <Sparkles
+      size={15}
+      strokeWidth={2}
+      className="relative text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.4)]"
+    />
   </span>
 );
 
@@ -101,14 +123,40 @@ export const LandingHeader: React.FC = () => {
           </Link>
         )}
 
-        <Button
-          type="button"
-          size="sm"
-          onClick={goStart}
-          className="hidden sm:inline-flex"
-        >
-          {isAuthenticated ? tr("Открыть приложение", "Open the app") : tr("Начать бесплатно", "Start for free")}
-        </Button>
+        <button
+  type="button"
+  onClick={goStart}
+  className={cn(
+    "group relative z-10 inline-flex items-center justify-center overflow-hidden shrink-0",
+    "px-4 sm:px-5 h-9 rounded-full",
+    "text-sm font-semibold text-gray-900 dark:text-white",
+    "transition-all duration-300 ease-out",
+    "hover:-translate-y-0.5 active:translate-y-0",
+    // ─── Стеклянные стили (точь-в-точь как в FinalCTA) ───
+    "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
+    "ring-1 ring-white/30 dark:ring-white/10",
+    "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+    "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]",
+    "hover:bg-white/20 dark:hover:bg-white/[0.1]"
+  )}
+>
+  {/* Блик для кнопки */}
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]"
+  />
+
+  <span className="relative inline-flex items-center">
+    <span className="hidden sm:inline">
+      {isAuthenticated
+        ? tr("Открыть приложение", "Open the app")
+        : tr("Начать бесплатно", "Start for free")}
+    </span>
+    <span className="sm:hidden">
+      {isAuthenticated ? tr("Открыть", "Open") : tr("Начать", "Start")}
+    </span>
+  </span>
+</button>
 
         <Button
           type="button"
@@ -162,9 +210,40 @@ export const LandingHeader: React.FC = () => {
                   {tr("Войти", "Sign in")}
                 </Link>
               )}
-              <Button type="button" onClick={goStart} className="w-full">
-                {isAuthenticated ? tr("Открыть приложение", "Open the app") : tr("Начать бесплатно", "Start for free")}
-              </Button>
+              <button
+  type="button"
+  onClick={goStart}
+  className={cn(
+    "group relative z-10 inline-flex items-center justify-center overflow-hidden shrink-0",
+    "px-4 sm:px-5 h-9 rounded-full",
+    "text-sm font-semibold text-gray-900 dark:text-white",
+    "transition-all duration-300 ease-out",
+    "hover:-translate-y-0.5 active:translate-y-0",
+    // ─── Стеклянные стили (точь-в-точь как в FinalCTA) ───
+    "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
+    "ring-1 ring-white/30 dark:ring-white/10",
+    "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+    "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]",
+    "hover:bg-white/20 dark:hover:bg-white/[0.1]"
+  )}
+>
+  {/* Блик для кнопки */}
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]"
+  />
+
+  <span className="relative inline-flex items-center">
+    <span className="hidden sm:inline">
+      {isAuthenticated
+        ? tr("Открыть приложение", "Open the app")
+        : tr("Начать бесплатно", "Start for free")}
+    </span>
+    <span className="sm:hidden">
+      {isAuthenticated ? tr("Открыть", "Open") : tr("Начать", "Start")}
+    </span>
+  </span>
+</button>
             </div>
           </nav>
         </div>

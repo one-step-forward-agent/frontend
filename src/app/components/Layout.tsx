@@ -100,9 +100,31 @@ export function Brand() {
     <span className="flex items-center gap-2.5 text-sm font-semibold tracking-tight text-gray-900 dark:text-white select-none">
       <span
         aria-hidden="true"
-        className="relative w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-400 to-violet-500 text-white shadow-[0_2px_8px_rgba(56,189,248,0.35)]"
+        className={cn(
+          "relative w-7 h-7 rounded-lg inline-flex items-center justify-center overflow-hidden",
+          // ─── Liquid Glass body — как в LandingHeader ───
+          "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
+          "ring-1 ring-white/30 dark:ring-white/10",
+          "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+          "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]"
+        )}
       >
-        <Sparkles size={14} strokeWidth={2} />
+        {/* Brand tint — тот же blue→violet, но как полупрозрачный слой поверх стекла */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/35 via-violet-500/30 to-purple-500/35"
+        />
+        {/* Sheen — тот же блик, что и в header */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.35)_0%,rgba(255,255,255,0.08)_25%,transparent_45%,transparent_75%,rgba(255,255,255,0.12)_100%)]"
+        />
+        {/* Иконка поверх всего стекла */}
+        <Sparkles
+          size={15}
+          strokeWidth={2}
+          className="relative text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.4)]"
+        />
       </span>
       Deyla
     </span>
@@ -120,11 +142,35 @@ export function Avatar({
 }) {
   return (
     <span
-      className="relative shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br from-sky-400 to-violet-500 text-white text-xs font-semibold ring-1 ring-white/30 dark:ring-white/10"
+      className={cn(
+        "relative shrink-0 rounded-full inline-flex items-center justify-center overflow-hidden",
+        // ─── Liquid Glass body — как у Brand ───
+        "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
+        "ring-1 ring-white/30 dark:ring-white/10",
+        "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+        "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]"
+      )}
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      {(user?.name || user?.email || "?").charAt(0).toUpperCase()}
+      {/* Sheen — тот же блик, что у Brand */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.35)_0%,rgba(255,255,255,0.08)_25%,transparent_45%,transparent_75%,rgba(255,255,255,0.12)_100%)]"
+      />
+
+      {/* Буква — БЕЗ брендового тинта, только стекло */}
+      <span
+        className={cn(
+          "relative inline-flex items-center justify-center font-semibold",
+          "text-[11px]",
+          // Тёмный на светлом, белый на тёмном — читается на любом стекле
+          "text-gray-900 dark:text-white",
+          "drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+        )}
+      >
+        {(user?.name || user?.email || "?").charAt(0).toUpperCase()}
+      </span>
     </span>
   );
 }
@@ -202,37 +248,64 @@ export function Layout({ children }: { children: ReactNode }) {
             aria-label={tr("Разделы", "Sections")}
           >
             {SIDEBAR.map((item) => {
-              const active = isActive(item.to, path);
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  data-tour={TOUR_IDS[item.to]}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative flex items-center gap-2.5 overflow-hidden",
-                    "px-3 h-9 rounded-xl text-sm font-medium",
-                    "transition-colors duration-200 outline-none focus:outline-none",
-                    item.main
-                      ? cn(
-                          "mb-1.5 text-white bg-gradient-to-br from-sky-400 to-violet-500",
-                          "shadow-[0_4px_14px_rgba(99,102,241,0.35)] hover:brightness-105",
-                          active && "ring-2 ring-white/60 dark:ring-white/30"
-                        )
-                      : active
-                      ? cn(GLASS_ACTIVE, "text-sky-800 dark:text-sky-100")
-                      : [
-                          "text-gray-600 dark:text-gray-400",
-                          "hover:bg-white/[0.03] dark:hover:bg-white/[0.015]",
-                          "hover:text-gray-900 dark:hover:text-white",
-                        ]
-                  )}
-                >
-                  <Icon name={item.icon} size={16} className="relative shrink-0" />
-                  <span className="relative truncate">{item.label}</span>
-                </Link>
-              );
-            })}
+  const active = isActive(item.to, path);
+  return (
+    <Link
+      key={item.to}
+      to={item.to}
+      data-tour={TOUR_IDS[item.to]}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "relative flex items-center gap-2.5 overflow-hidden",
+        "px-3 h-9 rounded-xl text-sm font-medium",
+        "transition-colors duration-200 outline-none focus:outline-none",
+        item.main
+          ? cn(
+              // ─── Liquid Glass — точь-в-точь как «Спросить Deyla» ───
+              "mb-1.5 text-gray-900 dark:text-white",
+              "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-2xl",
+              "ring-1 ring-black/10 dark:ring-white/15",
+              "shadow-[0_8px_32px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-1px_0_rgba(15,23,42,0.04)]",
+              "dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(0,0,0,0.3)]",
+              "hover:bg-white/[0.08] dark:hover:bg-white/[0.04]",
+              active && "ring-2 ring-white/60 dark:ring-white/30"
+            )
+          : active
+          ? cn(GLASS_ACTIVE, "text-sky-800 dark:text-sky-100")
+          : [
+              "text-gray-600 dark:text-gray-400",
+              "hover:bg-white/[0.03] dark:hover:bg-white/[0.015]",
+              "hover:text-gray-900 dark:hover:text-white",
+            ]
+      )}
+    >
+      {/* Sheen — только для main-кнопки, тот же блик, что в ChatDock */}
+      {item.main && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-xl bg-[linear-gradient(135deg,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0.03)_25%,transparent_45%,transparent_75%,rgba(255,255,255,0.05)_100%)]"
+        />
+      )}
+
+      <Icon
+        name={item.icon}
+        size={16}
+        className={cn(
+          "relative shrink-0",
+          item.main && "drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+        )}
+      />
+      <span
+        className={cn(
+          "relative truncate",
+          item.main && "drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+        )}
+      >
+        {item.label}
+      </span>
+    </Link>
+  );
+})}
           </nav>
 
           <div className="shrink-0 px-3 py-2.5 flex items-center gap-1.5">
@@ -428,27 +501,46 @@ function ChatDock({ path }: { path: string }) {
   useEffect(() => setOpen(false), [path]);
 
   if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        data-tour="dock"
-        aria-label={tr("Спросить Deyla", "Ask Deyla")}
-        title={tr("Спросить Deyla", "Ask Deyla")}
-        className={cn(
-          // On a phone the chat is the middle button of the tab bar: a second gradient button would only repeat it
-          "hidden lg:flex fixed z-30 right-6 bottom-6",
-          "items-center gap-2 h-14 pl-4 pr-5 justify-center rounded-full",
-          "text-white bg-gradient-to-br from-sky-400 to-violet-500",
-          "shadow-[0_8px_24px_rgba(99,102,241,0.45)]",
-          "transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0"
-        )}
-      >
-        <Icon name="assistant" size={24} />
-        <span className="text-sm font-semibold">{tr("Спросить Deyla", "Ask Deyla")}</span>
-      </button>
-    );
-  }
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      data-tour="dock"
+      aria-label={tr("Спросить Deyla", "Ask Deyla")}
+      title={tr("Спросить Deyla", "Ask Deyla")}
+      className={cn(
+        "hidden lg:flex fixed z-30 right-6 bottom-6",
+        "group overflow-hidden",
+        "items-center gap-2 h-14 pl-4 pr-5 justify-center rounded-full",
+        // Нейтральный цвет текста: тёмный на светлом, белый на тёмном
+        "text-gray-900 dark:text-white",
+        "transition-all duration-300 ease-out",
+        "hover:-translate-y-0.5 active:translate-y-0",
+        // ─── Почти невидимое бесцветное стекло ───
+        "bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-2xl",
+        "ring-1 ring-black/10 dark:ring-white/15",
+        "shadow-[0_8px_32px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-1px_0_rgba(15,23,42,0.04)]",
+        "dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(0,0,0,0.3)]",
+        "hover:bg-white/[0.08] dark:hover:bg-white/[0.04]"
+      )}
+    >
+      {/* Только sheen — без brand-тинта, почти невидимый */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0.03)_25%,transparent_45%,transparent_75%,rgba(255,255,255,0.05)_100%)]"
+      />
+
+      <Icon
+        name="assistant"
+        size={24}
+        className="relative drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+      />
+      <span className="relative text-sm font-semibold drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+        {tr("Спросить Deyla", "Ask Deyla")}
+      </span>
+    </button>
+  );
+}
 
   return (
     <div
