@@ -1989,8 +1989,8 @@ const SCREENSHOTS = [
     id: "assistant",
     image: "/images/functional/assistant.png",
     scale: 0.8,
-    title: "Всегда на связи — в чате или голосом",
-    description: "Задавайте вопросы, развивайте идеи и делитесь обратной связью прямо в диалоге. Чем больше вы работаете вместе, тем лучше Deyla понимает ваши предпочтения и ход мыслей.",
+    title: "",
+    description: "Развивайте идеи и делитесь обратной связью прямо в диалоге. Чем больше вы работаете вместе, тем лучше Deyla понимает ваши предпочтения и ход мыслей.",
   },
   {
     id: "thisweek",
@@ -2004,7 +2004,7 @@ const SCREENSHOTS = [
     image: "/images/functional/anonymizeddata.png",
     scale: 0.9,
     title: "Контроль всегда остаётся у вас",
-    description: "Deyla использует механизмы защиты шифрования информации и меры конфиденциальности. Все данные обезличены.",
+    description: "Deyla использует механизмы шифрования информации и меры конфиденциальности. Все данные обезличены.",
   },
 ];
 
@@ -2017,20 +2017,36 @@ const HALO_BLUR_2  = 24;
 const HALO_SCALE_3 = 1.35;
 const HALO_BLUR_3  = 48;
 
-// ─── Liquid Glass подписи ───
-// Карточка
-// ─── Тень / градиент подписи ───
-const TEXT_HALO_INSET          = "-inset-5";       // размер halo
-const TEXT_HALO_BG_LIGHT       = "bg-gray-900/50"; // плотность тени
-const TEXT_HALO_BG_DARK        = "dark:bg-black/70";
-const TEXT_GLASS_LIGHT          = "bg-white/80";
-const TEXT_GLASS_DARK           = "dark:bg-gray-900/70";
 
-// Halo (мягкая тень-градиент вокруг карточки)
-const TEXT_HALO_BLUR            = "blur-md";             // ← БЛЮР САМОЙ ТЕНИ
+// ─── Halo подписи ───
+// ─── Halo подписи ───
+// 1) Размер: насколько halo выходит за карточку
+const TEXT_HALO_INSET_X = 60;   // горизонтальный вынос (px)
+const TEXT_HALO_INSET_Y = 90;   // вертикальный вынос (px) — больше = выше ореол
 
-// Внешняя тень карточки — сделал менее резкой (было rgba(15,23,42,1) — полностью чёрная)
-const TEXT_CARD_SHADOW          = "inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px rgba(15,23,42,0.25)";
+// 2) Ширина растворения (px). Правило: FEATHER <= INSET_X,
+//    тогда к боковым краям карточки halo уже полностью плотный.
+const TEXT_HALO_FEATHER = 60;
+
+// 3) Плотность и цвет
+const TEXT_HALO_BG   = "rgba(255,255,255,0.98)";  // почти белый
+const TEXT_HALO_BLUR = 4;                          // лёгкое смягчение для округления углов
+const TEXT_HALO_INSET_PX = 30;     // насколько halo выходит за карточку
+const TEXT_HALO_BLUR_PX  = 24;     // сила blur
+const TEXT_HALO_CENTER   = "rgba(255,255,255,0.98)";  // центр halo
+const TEXT_HALO_MID      = "rgba(255,255,255,0.55)";  // середина затухания
+const TEXT_HALO_EDGE     = "rgba(255,255,255,0)";     // край
+
+// ─── Карточка подписи — белая ───
+const TEXT_CARD_BG       = "bg-white";
+const TEXT_CARD_SHADOW   = "0 2px 12px rgba(15,23,42,0.08)";
+const TEXT_CARD_FEATHER_PX = 6;    // маленький feather, только для смягчения краёв
+
+// ─── Градиентный текст (фиолетовый → синий → зелёный) ───
+const TEXT_TITLE_GRADIENT =
+  "bg-gradient-to-r from-purple-700 via-blue-600 to-emerald-600 bg-clip-text text-transparent";
+const TEXT_DESC_GRADIENT =
+  "bg-gradient-to-r from-purple-600 via-blue-500 to-emerald-500 bg-clip-text text-transparent";
 
 // Размер скриншотов (база для scale = 1.0)
 const SCREENSHOT_BASE_MAX_VW = 53;   // было 80 / 1.5
@@ -2046,14 +2062,20 @@ const SLIDE_TRANSITION_MS   = 300;
 const SLIDE_PAUSE_RATIO     = 0.4;
 
 // Text
-// Text (существующие)
 const TEXT_TRANSITION_MS   = 300;
 const TEXT_DELAY_MS        = 400;
-const TEXT_VISIBLE_OFFSET  = 0.5;
+const TEXT_VISIBLE_OFFSET  = 0.05;
 const TEXT_EXPAND_MAX      = 20;
-const TEXT_EXPAND_POWER    = 2;
-const TEXT_FADE_START      = 0.05;
-const TEXT_FADE_END        = 0.55;
+const TEXT_EXPAND_POWER    = 6;
+
+// ─── Кривая погасания: START < END ───
+const TEXT_FADE_START      = 0.05;   // начинаем гаснуть сразу после центра
+const TEXT_FADE_END        = 0.28;   // полностью прозрачен чуть раньше, чем пропадает halo (0.30)
+const TEXT_FADE_POWER      = 1.4;    // 1 = линейно, >1 = держит плотность дольше, потом быстро гаснет
+
+// ─── Размытие текста при росте (смягчает края глифов) ───
+const TEXT_BLUR_MAX_PX     = 6;      // к концу fade текст размыт на 6px
+const TEXT_BLUR_POWER      = 1.4;
 
 // ─── Появление фона подписи (halo + стеклянная карточка) ───
 const TEXT_BG_VISIBLE_OFFSET = 0.10;   // при каком absOff фон полностью видим (α = 1)
@@ -2126,6 +2148,33 @@ const SecurityLockOverlay: React.FC<{ secProgress: number }> = ({ secProgress })
   );
 };
 
+// ─── Растворение скриншотов в фоне ───
+const SHARP_FEATHER_PCT = 24;    // % feather для резкой картинки с каждой стороны
+const HALO_FEATHER_PCT  = 40;   // % для halo-1 (самый плотный)
+const HALO_FEATHER_STEP = 20;    // прибавка для каждого следующего halo
+                                // halo-2 = 14 + 6 = 20%, halo-3 = 26%
+
+const makeFeatherMask = (featherPx: number) => `
+  linear-gradient(to right,
+    transparent 0,
+    black ${featherPx}px,
+    black calc(100% - ${featherPx}px),
+    transparent 100%),
+  linear-gradient(to bottom,
+    transparent 0,
+    black ${featherPx}px,
+    black calc(100% - ${featherPx}px),
+    transparent 100%)
+`;
+
+const makeFeatherStyle = (featherPx: number): React.CSSProperties => ({
+  WebkitMaskImage: makeFeatherMask(featherPx),
+  WebkitMaskComposite: "source-in",
+  maskImage: makeFeatherMask(featherPx),
+  maskComposite: "intersect",
+});
+
+
 const FeatureScreenshotsCarousel: React.FC = () => {
   const containerRef = React.useRef<HTMLElement>(null);
   const [rawProgress, setRawProgress] = React.useState(0);
@@ -2180,7 +2229,7 @@ const FeatureScreenshotsCarousel: React.FC = () => {
           <div className="relative max-w-6xl w-full mx-auto px-4 md:px-6 pt-6 md:pt-10 pb-8">
             <Badge className="text-eyebrow mb-3">Интерфейс</Badge>
             <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white">
-              Как это работает
+              Почему это работает
             </h2>
           </div>
         </div>
@@ -2194,7 +2243,18 @@ const FeatureScreenshotsCarousel: React.FC = () => {
             const textOpacity =
               absOff <= TEXT_FADE_START ? 1 :
               absOff >= TEXT_FADE_END   ? 0 :
-              1 - (absOff - TEXT_FADE_START) / (TEXT_FADE_END - TEXT_FADE_START);
+              Math.pow(
+                1 - (absOff - TEXT_FADE_START) / (TEXT_FADE_END - TEXT_FADE_START),
+                TEXT_FADE_POWER
+              );
+
+            // Размытие текста растёт синхронно с его масштабом
+            const textBlurT = Math.min(1, absOff / TEXT_FADE_END);
+            const textBlur  = TEXT_BLUR_MAX_PX * Math.pow(textBlurT, TEXT_BLUR_POWER);
+
+            // Экспоненциальный рост scale
+            const textT     = Math.min(1, absOff / TEXT_FADE_END);
+            const textScale = 1 + Math.pow(textT, TEXT_EXPAND_POWER) * (TEXT_EXPAND_MAX - 1);
 
             // ─── Появление/исчезновение фона подписи ───
             const bgOpacity =
@@ -2231,10 +2291,6 @@ const FeatureScreenshotsCarousel: React.FC = () => {
             const imgMaxW = baseVW * perScale;
             const imgMaxH = baseVH * perScale;
 
-            // Экспоненциальный рост scale при уходе от центра
-            const textT = Math.max(0, Math.min(1, absOff / TEXT_FADE_END));
-            const textScale = 1 + Math.pow(textT, TEXT_EXPAND_POWER) * (TEXT_EXPAND_MAX - 1);
-
             return (
               <div
                 key={item.id}
@@ -2249,52 +2305,58 @@ const FeatureScreenshotsCarousel: React.FC = () => {
                 }}
               >
                 <div className="relative inline-block isolate">
-                  {/* Halo 1 — плотное ядро, alpha ≈ 100% на краю */}
-                  <img
-                    src={item.image}
-                    aria-hidden="true"
-                    className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
-                    style={{
-                      transform: `scale(${HALO_SCALE_1})`,
-                      filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
-                    }}
-                  />
-                  <img
-                    src={item.image}
-                    aria-hidden="true"
-                    className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
-                    style={{
-                      transform: `scale(${HALO_SCALE_2})`,
-                      filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
-                    }}
-                  />
-                  <img
-                    src={item.image}
-                    aria-hidden="true"
-                    className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
-                    style={{
-                      transform: `scale(${HALO_SCALE_3})`,
-                      filter: `blur(${HALO_BLUR_3}px) saturate(1.2)`,
-                    }}
-                  />
+                  {/* Halo 1 — плотное ядро */}
+<img
+  src={item.image}
+  aria-hidden="true"
+  className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+  style={{
+    ...makeFeatherStyle(HALO_FEATHER_PCT),
+    transform: `scale(${HALO_SCALE_1})`,
+    filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
+  }}
+/>
+{/* Halo 2 */}
+<img
+  src={item.image}
+  aria-hidden="true"
+  className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+  style={{
+    ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP),
+    transform: `scale(${HALO_SCALE_2})`,
+    filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
+  }}
+/>
+{/* Halo 3 */}
+<img
+  src={item.image}
+  aria-hidden="true"
+  className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+  style={{
+    ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP * 2),
+    transform: `scale(${HALO_SCALE_3})`,
+    filter: `blur(${HALO_BLUR_3}px) saturate(1.2)`,
+  }}
+/>
 
                   {/* Резкая картинка — задаёт размер обёртки.
                       Blur, если это скриншот безопасности и secProgress > LOCK_BLUR_START. */}
                   <div className="relative z-10 inline-block overflow-hidden rounded-[24px] md:rounded-[32px]">
                     <img
-                      src={item.image}
-                      alt={item.title}
-                      className="block select-none pointer-events-none"
-                      style={{
-                        maxWidth: `${imgMaxW}vw`,
-                        maxHeight: `${imgMaxH}vh`,
-                        width: "auto",
-                        height: "auto",
-                        filter: lockBlur > 0.5 ? `blur(${lockBlur}px)` : undefined,
-                        transition: `filter ${SLIDE_TRANSITION_MS}ms ease-out`,
-                      }}
-                      loading="lazy"
-                    />
+  src={item.image}
+  alt={item.title}
+  className="block select-none pointer-events-none"
+  style={{
+    ...makeFeatherStyle(SHARP_FEATHER_PCT),
+    maxWidth: `${imgMaxW}vw`,
+    maxHeight: `${imgMaxH}vh`,
+    width: "auto",
+    height: "auto",
+    filter: lockBlur > 0.5 ? `blur(${lockBlur}px)` : undefined,
+    transition: `filter ${SLIDE_TRANSITION_MS}ms ease-out`,
+  }}
+  loading="lazy"
+/>
                   </div>
 
                   {/* Замок — острый, z-20, монтируется при secProgress ≥ LOCK_APPEAR_AT */}
@@ -2306,27 +2368,34 @@ const FeatureScreenshotsCarousel: React.FC = () => {
   style={{
     width: "calc(100% - 1.5rem)",
     maxWidth: "calc(100% - 1.5rem)",
-    transform: "translateX(-50%)",   // только центрирование
-    // без opacity — управляется отдельно для фона и текста
+    transform: "translateX(-50%)",
   }}
 >
-  {/* Halo (тень-градиент) — управляется bgOpacity */}
-  <div
-    aria-hidden="true"
-    className={`pointer-events-none absolute ${TEXT_HALO_INSET} rounded-2xl ${TEXT_HALO_BG_LIGHT} ${TEXT_HALO_BG_DARK} ${TEXT_HALO_BLUR}`}
-    style={{
-      opacity: bgOpacity,
-      willChange: "opacity",
-      ...(TEXT_BG_TRANSITION_MS > 0 && {
-        transition: `opacity ${TEXT_BG_TRANSITION_MS}ms ease-out`,
-      }),
-    }}
-  />
+  {/* ─── Halo: linear feather по 4 сторонам, асимметричный вынос ─── */}
+<div
+  aria-hidden="true"
+  className="pointer-events-none absolute"
+  style={{
+    top:    `-${TEXT_HALO_INSET_Y}px`,
+    bottom: `-${TEXT_HALO_INSET_Y}px`,
+    left:   `-${TEXT_HALO_INSET_X}px`,
+    right:  `-${TEXT_HALO_INSET_X}px`,
+    background: TEXT_HALO_BG,
+    filter: `blur(${TEXT_HALO_BLUR}px)`,
+    ...makeFeatherStyle(TEXT_HALO_FEATHER),
+    opacity: bgOpacity,
+    willChange: "opacity",
+    ...(TEXT_BG_TRANSITION_MS > 0 && {
+      transition: `opacity ${TEXT_BG_TRANSITION_MS}ms ease-out`,
+    }),
+  }}
+/>
 
-  {/* Стеклянная карточка — управляется bgOpacity */}
+  {/* ─── Карточка: белая, непрозрачная, только мягкие края ─── */}
   <div
-    className={`relative overflow-hidden rounded-xl ${TEXT_GLASS_LIGHT} ${TEXT_GLASS_DARK} backdrop-blur-2xl ring-1 ring-white/50 dark:ring-white/20`}
+    className={`relative overflow-hidden rounded-xl ${TEXT_CARD_BG} ring-1 ring-black/5`}
     style={{
+      ...makeFeatherStyle(TEXT_CARD_FEATHER_PX),
       boxShadow: TEXT_CARD_SHADOW,
       opacity: bgOpacity,
       willChange: "opacity",
@@ -2335,14 +2404,8 @@ const FeatureScreenshotsCarousel: React.FC = () => {
       }),
     }}
   >
-    {/* Sheen */}
-    <span
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 rounded-xl bg-[linear-gradient(135deg,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0.03)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.08)_100%)]"
-    />
-
-    {/* Spacer — держит размер карточки по тексту */}
-    <div className="px-4 py-3 opacity-0 select-none" aria-hidden="true">
+    {/* Spacer — держит размер карточки */}
+    <div className="px-4 py-3 text-center opacity-0 select-none" aria-hidden="true">
       <h3 className="text-sm md:text-base font-semibold mb-1 line-clamp-2">
         {item.title}
       </h3>
@@ -2352,24 +2415,25 @@ const FeatureScreenshotsCarousel: React.FC = () => {
     </div>
   </div>
 
-  {/* Текст — управляется textOpacity + textScale, вылетает из карточки */}
+  {/* ─── Текст — всегда чёрный ─── */}
   <div
     className="absolute inset-0 pointer-events-none"
     style={{
       opacity: textOpacity,
       transform: `scale(${textScale})`,
       transformOrigin: "center bottom",
-      willChange: "transform, opacity",
+      filter: textBlur > 0.15 ? `blur(${textBlur}px)` : undefined,
+      willChange: "transform, opacity, filter",
     }}
   >
-    <div className="px-4 py-3">
-      <h3 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
-        {item.title}
-      </h3>
-      <p className="text-xs md:text-sm text-gray-800 dark:text-gray-200 leading-snug line-clamp-2">
-        {item.description}
-      </p>
-    </div>
+    <div className="px-4 py-3 text-center">
+    <h3 className={`inline-block text-eyebrow ${TEXT_TITLE_GRADIENT} mb-1 line-clamp-2`}>
+      {item.title}
+    </h3>
+    <p className={`inline-block text-eyebrow ${TEXT_DESC_GRADIENT} leading-snug line-clamp-2`}>
+      {item.description}
+    </p>
+  </div>
   </div>
 </div>
                 </div>
