@@ -2120,10 +2120,14 @@ const SLIDE_PAUSE_RATIO     = 0.4;
 const TEXT_VISIBLE_OFFSET  = 1.05;
 const TEXT_EXPAND_POWER    = 6;
 
+  // Clamp: 20× produced giant costly glyph rasters without being
+  // visually better than 6× (opacity hits 0 long before either).
+  const TEXT_EXPAND_MAX_SAFE = 6;
 // ─── Кривая погасания: START < END ───
 const TEXT_FADE_START      = 0.05;   // начинаем гаснуть сразу после центра
 const TEXT_FADE_END        = 0.28;   // полностью прозрачен чуть раньше, чем пропадает halo (0.30)
-const TEXT_FADE_POWER      = 0.2;    // 1 = линейно, >1 = держит плотность дольше, потом быстро гаснет
+const TEXT_FADE_POWER      = 0.01;    // 1 = линейно, >1 = держит плотность дольше, потом быстро гаснет
+const TEXT_FADE_POWER_MOBILE      = 0.1;    // 1 = линейно, >1 = держит плотность дольше, потом быстро гаснет
 
 // ─── Размытие текста при росте (смягчает края глифов) ───
 const TEXT_BLUR_MAX_PX     = 6;      // к концу fade текст размыт на 6px
@@ -2268,6 +2272,10 @@ const FeatureScreenshotsCarousel: React.FC = () => {
   return isMobile ? <FeatureScreenshotsMobile /> : <FeatureScreenshotsDesktop />;
 };
 
+const SCREENSHOT_BASE_MOBILE_SVH = 38;
+const SCREENSHOT_UNIFORM_MAX_HEIGHT_MOBILE_SVH =
+  SCREENSHOT_BASE_MOBILE_SVH * SCREENSHOT_REF_SCALE;   // 38 × 0.9 = 34.2 svh
+
 /* ═══════════════════════════════════════════════════════════
    MOBILE — baked CSS-animations triggered by finger scroll
    ═══════════════════════════════════════════════════════════ */
@@ -2276,6 +2284,7 @@ const FeatureScreenshotsMobile: React.FC = () => {
   const slideRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const imageRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const textRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const sharpRefs = React.useRef<(HTMLImageElement | null)[]>([]);   // ← добавьте эту строку
   const total = SCREENSHOTS.length;
 
   /* Базовая высота картинки на мобилке. */
@@ -2312,7 +2321,7 @@ const FeatureScreenshotsMobile: React.FC = () => {
           absOff >= TEXT_FADE_END ? 0 :
           Math.pow(
             1 - (absOff - TEXT_FADE_START) / (TEXT_FADE_END - TEXT_FADE_START),
-            TEXT_FADE_POWER
+            TEXT_FADE_POWER_MOBILE
           );
 
         const visible = absOff < 0.999;
@@ -2326,11 +2335,30 @@ const FeatureScreenshotsMobile: React.FC = () => {
         if (imgEl) {
           imgEl.style.transform = `translate3d(0,0,0) scale(${slideScale.toFixed(3)})`;
         }
+        const item = SCREENSHOTS[i];
+        const isSecurity  = item.id === "anonymizeddata";
+        const secProgress = isSecurity ? Math.max(0, Math.min(1, 1 - absOff)) : 0;
+        const lockBlur    = Math.max(0, (secProgress - LOCK_BLUR_START) / (1 - LOCK_BLUR_START)) * LOCK_BLUR_MAX_PX;
+
+        const sharpEl = sharpRefs.current[i];
+        if (sharpEl) {
+          sharpEl.style.filter = lockBlur > 0.15 ? `blur(${lockBlur.toFixed(2)}px)` : "none";
+          sharpEl.style.transition = `filter ${SLIDE_TRANSITION_MS}ms ease-out`;
+        }
 
         const textEl = textRefs.current[i];
-        if (textEl) {
-          textEl.style.opacity = textOpacity.toFixed(3);
-        }
+          if (textEl) {
+            // ─── как desktop: blur и scale растут с расстоянием ───
+            const textBlurT = Math.min(1, absOff / TEXT_FADE_END);
+            const textBlur  = TEXT_BLUR_MAX_PX * Math.pow(textBlurT, TEXT_BLUR_POWER);
+
+            const textT     = Math.min(1, absOff / TEXT_FADE_END);
+            const textScale = 1 + Math.pow(textT, TEXT_EXPAND_POWER) * 2;
+
+            textEl.style.opacity = textOpacity.toFixed(3);
+            textEl.style.transform = `scale(${textScale.toFixed(3)})`;
+            textEl.style.filter = textBlur > 0.15 ? `blur(${textBlur.toFixed(2)}px)` : "none";
+          }
       });
     };
 
@@ -2422,25 +2450,26 @@ const FeatureScreenshotsMobile: React.FC = () => {
 
                     {/* Sharp image — 15px pixel feather + rounded clip */}
                     <div
-                      className="relative z-10 inline-block overflow-hidden rounded-[24px]"
-                      style={{ maxHeight: `${imgMaxH}svh` }}
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.title || item.description}
-                        className="block select-none pointer-events-none"
-                        style={{
-                          ...makeFeatherStyle(SHARP_FEATHER_PCT),
-                          maxHeight: `${imgMaxH}svh`,
-                          maxWidth: "100%",
-                          width: "auto",
-                          height: "auto",
-                        }}
-                        loading="eager"
-                        decoding="async"
-                      />
-                    </div>
-
+  className="relative z-10 inline-block overflow-hidden rounded-[24px]"
+  style={{ maxHeight: `${SCREENSHOT_UNIFORM_MAX_HEIGHT_MOBILE_SVH}svh` }}
+>
+  <img
+    ref={(el) => { sharpRefs.current[i] = el; }}   // ← новое
+    src={item.image}
+    alt={item.title || item.description}
+    className="block select-none pointer-events-none"
+    style={{
+      ...makeFeatherStyle(SHARP_FEATHER_PCT),
+      maxHeight: `${imgMaxH}svh`,
+      maxWidth: "100%",
+      width: "auto",
+      height: "auto",
+      // filter управляется из apply() через ref — не дублируем в style
+    }}
+    loading="eager"
+    decoding="async"
+  />
+</div>
                     {item.id === "anonymizeddata" && (
                       <div
                         className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
@@ -2456,19 +2485,25 @@ const FeatureScreenshotsMobile: React.FC = () => {
 
                   {/* ── Текст под картинкой, своя кривая opacity ── */}
                   <div
-                    ref={(el) => { textRefs.current[i] = el; }}
-                    className="text-center px-2 max-w-[320px]"
-                    style={{ opacity: 0, willChange: "opacity" }}
-                  >
-                    {item.title && (
-                      <h3 className={cn("text-base font-semibold mb-1", TEXT_TITLE_GRADIENT)}>
-                        {item.title}
-                      </h3>
-                    )}
-                    <p className={cn("text-sm leading-snug", TEXT_DESC_GRADIENT)}>
-                      {item.description}
-                    </p>
-                  </div>
+  ref={(el) => { textRefs.current[i] = el; }}
+  className="text-center px-2 max-w-[320px]"
+  style={{
+    opacity: 0,
+    transform: "scale(1)",
+    transformOrigin: "center top",
+    filter: "none",
+    willChange: "transform, opacity",
+  }}
+>
+  {item.title && (
+    <h3 className={cn("text-base font-semibold mb-1", TEXT_TITLE_GRADIENT)}>
+      {item.title}
+    </h3>
+  )}
+  <p className={cn("text-sm leading-snug", TEXT_DESC_GRADIENT)}>
+    {item.description}
+  </p>
+</div>
                 </div>
               </div>
             );
@@ -2484,10 +2519,10 @@ const FeatureScreenshotsMobile: React.FC = () => {
    ═══════════════════════════════════════════════════════════ */
 const FeatureScreenshotsDesktop: React.FC = () => {
   const containerRef = React.useRef<HTMLElement>(null);
+  const total = SCREENSHOTS.length
   const [rawProgress, setRawProgress] = React.useState(0);
   const lastProgressRef = React.useRef(0);
   const rafRef = React.useRef(0);
-  const total = SCREENSHOTS.length;
 
   React.useLayoutEffect(() => {
     const el = containerRef.current;
@@ -2525,9 +2560,6 @@ const FeatureScreenshotsDesktop: React.FC = () => {
 
   const currentFloat = applyDwell(rawProgress, total, SLIDE_PAUSE_RATIO);
 
-  // Clamp: 20× produced giant costly glyph rasters without being
-  // visually better than 6× (opacity hits 0 long before either).
-  const TEXT_EXPAND_MAX_SAFE = 6;
 
   return (
     <section
