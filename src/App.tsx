@@ -22,6 +22,7 @@ const Integrations = lazy(() => import("@/components/onboarding/Integrations").t
 const TermsOfUsePage = lazy(() => import("@/pages/Documents/TermsOfUsePage"));
 const PersonalDataConsentPage = lazy(() => import("@/pages/Documents/PersonalDataConsentPage"));
 const AdminDashboard = lazy(() => import("@/pages/Admin/AdminDashboard"));
+const ResearchAdmin = lazy(() => import("@/pages/Admin/ResearchAdmin"));
 
 function FullScreenLoader() {
   return (
@@ -121,6 +122,7 @@ function Routing() {
         <Route path="/dashboard" element={<AdminDashboard />} />
         <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
 
+        <Route path="/dashboard/research" element={<ResearchAdmin />} />
         <Route path="/dashboard/blog" element={<BlogAdmin />} />
         <Route path="/dashboard/blog/:id" element={<BlogAdmin />} />
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Combine, Download, Eye, NotebookPen, RefreshCw, Search, ShieldAlert, Sheet as SheetIcon, X } from "lucide-react";
+import { ArrowLeft, Combine, Download, Eye, Lightbulb, NotebookPen, RefreshCw, Search, ShieldAlert, Sheet as SheetIcon, X } from "lucide-react";
 import { ApiError, api } from "@/app/api/client";
 import { errorText } from "@/app/lib/format";
 import { useAuthStore } from "@/store/authStore";
@@ -251,6 +251,9 @@ export default function AdminDashboard() {
         <button type="button" className={toolButton} onClick={refresh} aria-label="Обновить данные" title="Обновить данные">
           <RefreshCw size={14} className={cn(loadingSheet && "animate-spin")} />
         </button>
+        <Link to="/dashboard/research" className={toolButton}>
+          <Lightbulb size={14} /> Гипотезы
+        </Link>
         <button type="button" className={cn(toolButton, notesOpen && "border-sky-500 text-sky-700 dark:text-sky-300")} onClick={() => setNotesOpen((open) => !open)}>
           <NotebookPen size={14} /> Заметки
         </button>

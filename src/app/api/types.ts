@@ -13,6 +13,32 @@ export interface User {
 }
 
 /** The note all admins share on the dashboard; one admin at a time edits it after locking it */
+export interface ResearchQuestionAdmin {
+  id: number;
+  text: string;
+  text_en: string | null;
+  options: string[];
+  options_en: string[];
+  active: boolean;
+  position: number;
+  created_at: string | null;
+}
+
+export interface ResearchAnswerRow {
+  user_id: number | null;
+  answer: string | null;
+  source: "option" | "text" | "chat" | "skip";
+  channel: "web" | "telegram";
+  created_at: string;
+}
+
+export interface ResearchSummary {
+  questions: (ResearchQuestionAdmin & { asked: number; answered: number; counts: Record<string, number>; answers: ResearchAnswerRow[] })[];
+  wishes: { user_id: number | null; wish: string; message: string | null; channel: "web" | "telegram"; created_at: string }[];
+}
+
+export type ResearchQuestionSave = Omit<ResearchQuestionAdmin, "id" | "created_at">;
+
 export interface AdminNote {
   text: string;
   version: number;
@@ -175,7 +201,19 @@ export interface AssistantEvent {
 
 export type AgendaScope = "today" | "tomorrow" | "week";
 
-export type AssistantReply =
+/** A question the team asks to learn where to take Deyla; it comes with a reply. `answer` / `skipped` after it. */
+export interface ChatQuestion {
+  id: number;
+  text: string;
+  options: string[];
+  answer?: string | null;
+  skipped?: boolean;
+}
+
+/** What the assistant answers; any kind may carry a team question. */
+export type AssistantReply = AssistantReplyBody & { question?: ChatQuestion };
+
+type AssistantReplyBody =
   | {
       kind: "proposal";
       draft_id: number;

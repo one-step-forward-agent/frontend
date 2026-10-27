@@ -2,6 +2,9 @@ import { reachGoal } from "@/app/lib/metrics";
 import type { TableData, TableInfo } from "@/pages/Admin/sheet";
 import type {
   AdminNote,
+  ResearchQuestionAdmin,
+  ResearchQuestionSave,
+  ResearchSummary,
   AgendaScope,
   AssistantReply,
   Calendar,
@@ -258,6 +261,12 @@ export const api = {
         name: "assistant_rating",
         params: { value },
       }),
+    /** A team question under a reply: an offered option, the user's own words or skip. */
+    answerQuestion: (questionId: number, body: { option?: string; answer?: string; skip?: boolean; message_id?: number }) =>
+      request<{ text: string; skipped: boolean }>(`/api/assistant/questions/${questionId}/answer`, json("POST", body), {
+        name: "assistant_question_answer",
+        params: { kind: body.skip ? "skip" : body.option ? "option" : "text" },
+      }),
     history: () => request<HistoryMessage[]>("/api/assistant/history?limit=60"),
     /** «Очистить историю»: переписка пропадает у пользователя и у ассистента. */
     clearHistory: () => request<{ cleared: number }>("/api/assistant/history", { method: "DELETE" }, "assistant_history_clear"),
@@ -361,6 +370,10 @@ export const api = {
     lockNote: () => request<AdminNote>("/api/admin/notes/lock", { method: "POST" }),
     unlockNote: () => request<AdminNote>("/api/admin/notes/unlock", { method: "POST" }),
     saveNote: (text: string, version: number) => request<AdminNote>("/api/admin/notes", json("PUT", { text, version })),
+    research: () => request<ResearchSummary>("/api/admin/research"),
+    createQuestion: (question: ResearchQuestionSave) => request<ResearchQuestionAdmin>("/api/admin/research/questions", json("POST", question)),
+    updateQuestion: (id: number, question: ResearchQuestionSave) => request<ResearchQuestionAdmin>(`/api/admin/research/questions/${id}`, json("PUT", question)),
+    deleteQuestion: (id: number) => request<void>(`/api/admin/research/questions/${id}`, { method: "DELETE" }),
   },
     aiSources: {
     list: () => request<AiChatSource[]>("/api/ai-sources"),

@@ -6,6 +6,7 @@ import type {
   AssistantEvent,
   CalendarEvent,
   AssistantReply,
+  ChatQuestion,
   ChatFile,
   DraftItem,
   HistoryMessage,
@@ -615,9 +616,81 @@ function ChatMessage({
               )}
             </p>
           )}
+          {reply.question && <QuestionCard question={reply.question} messageId={message.serverId} />}
           {rating}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── QuestionCard: a question of the team under a reply ─── */
+
+function QuestionCard({ question, messageId }: { question: ChatQuestion; messageId?: number }) {
+  const [result, setResult] = useState<{ answer: string | null; skipped: boolean } | null>(
+    question.answer !== undefined || question.skipped ? { answer: question.answer ?? null, skipped: Boolean(question.skipped) } : null
+  );
+  const [own, setOwn] = useState("");
+  const [busy, setBusy] = useState(false);
+  const reportError = useErrorToast();
+
+  const answer = async (body: { option?: string; answer?: string; skip?: boolean }) => {
+    setBusy(true);
+    try {
+      await api.assistant.answerQuestion(question.id, { ...body, message_id: messageId });
+      setResult({ answer: body.skip ? null : body.option ?? body.answer ?? null, skipped: Boolean(body.skip) });
+    } catch {
+      reportError(tr("Не удалось сохранить ответ", "Could not save the answer"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-sky-400/30 bg-sky-500/[0.06] p-3" role="group" aria-label={tr("Вопрос от команды Deyla", "A question from the Deyla team")}>
+      <p className="text-[11px] uppercase tracking-widest font-medium text-sky-700 dark:text-sky-300 mb-1">
+        🙋 {tr("Вопрос от команды Deyla", "A question from the Deyla team")}
+      </p>
+      <p className="font-medium">{question.text}</p>
+      {result ? (
+        <p className="mt-2 text-[13px] text-gray-600 dark:text-gray-300">
+          {result.skipped ? tr("Пропущено", "Skipped") : <>✓ {tr("Ваш ответ", "Your answer")}: <em>{result.answer}</em></>}
+        </p>
+      ) : (
+        <>
+          {question.options.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {question.options.map((option) => (
+                <button key={option} type="button" className={GLASS_CHIP} disabled={busy} onClick={() => answer({ option })}>
+                  <span className="relative">{option}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <form
+            className="mt-2 flex items-center gap-1.5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (own.trim()) answer({ answer: own.trim() });
+            }}
+          >
+            <input
+              value={own}
+              onChange={(event) => setOwn(event.target.value)}
+              maxLength={2000}
+              placeholder={tr("Свой ответ", "Your own answer")}
+              aria-label={tr("Свой ответ", "Your own answer")}
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white/70 px-2.5 py-1.5 text-[13px] dark:border-white/15 dark:bg-white/5"
+            />
+            <button type="submit" className={GLASS_CHIP} disabled={busy || !own.trim()}>
+              <span className="relative">{tr("Ответить", "Answer")}</span>
+            </button>
+            <button type="button" className="px-2 py-1.5 text-[13px] text-gray-500 hover:text-gray-800 dark:hover:text-gray-200" disabled={busy} onClick={() => answer({ skip: true })}>
+              {tr("Пропустить", "Skip")}
+            </button>
+          </form>
+        </>
+      )}
     </div>
   );
 }
