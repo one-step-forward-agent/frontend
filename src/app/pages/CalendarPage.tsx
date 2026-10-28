@@ -7,10 +7,11 @@ import { TimeGrid } from "../components/TimeGrid";
 import { RecommendationList } from "../components/recommendations";
 import { Icon } from "../components/icons";
 import { IcsImportButton } from "../components/IcsImport";
-import { Empty, ErrorNote } from "../components/ui";
+import { Empty, ErrorNote, useErrorToast } from "../components/ui";
 import {
   addDays,
   dayKey,
+  errorText,
   formatDate,
   formatMonth,
   occursOn,
@@ -19,7 +20,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "../lib/format";
-import { useAsync, useCalendarSync, useTags, useTasksChanged, useToday } from "../lib/hooks";
+import { notifyTasksChanged, useAsync, useCalendarSync, useTags, useTasksChanged, useToday } from "../lib/hooks";
 import { navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -151,6 +152,21 @@ export function CalendarPage() {
   }, [events.reload, recommendations.reload]);
   useTasksChanged(reloadAll);
   useCalendarSync();
+  const showError = useErrorToast();
+
+  // A task dragged in the grid stands in its new place at once; if the server refuses, it goes back
+  const moveEvent = async (moved: CalendarEvent, start: Date, end: Date) => {
+    const before = events.data ?? [];
+    const times = { start_at: start.toISOString(), end_at: end.toISOString() };
+    events.setData(before.map((item) => (item.id === moved.id ? { ...item, ...times } : item)));
+    try {
+      await api.events.update(moved.id, times);
+      notifyTasksChanged();
+    } catch (error) {
+      events.setData(before);
+      showError(errorText(error));
+    }
+  };
 
   const byDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -331,7 +347,10 @@ export function CalendarPage() {
             days={days}
             events={events.data ?? []}
             onOpenDay={(day) => go(day, "day")}
-            onPickHour={(day, hour) => navigate(`/events/new?day=${dayKey(day)}&time=${String(hour).padStart(2, "0")}:00`)}
+            onPickTime={(day, minutes) =>
+              navigate(`/events/new?day=${dayKey(day)}&time=${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`)
+            }
+            onMove={moveEvent}
           />
           {events.loading && !events.data && (
             <p className="px-3 pt-2 text-sm text-gray-400 dark:text-gray-500">{tr("Загружаем…", "Loading…")}</p>

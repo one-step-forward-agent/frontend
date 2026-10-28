@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import type { CalendarEvent } from "../api/types";
 import { occursOn, sameDay, startOfDay } from "../lib/format";
 import { useNow, useTags } from "../lib/hooks";
@@ -10,18 +10,35 @@ import { LOCALE, tr } from "@/i18n";
  * Days by the hour, as in Google Calendar: the hours down the side, one column per day (one for the day view,
  * seven for the week), timed tasks as blocks in their place, overlapping ones side by side, tasks without a time
  * in a row above, and a red line at the current time in today's column that moves every minute.
- * A click on an empty hour asks for a new task at that hour of that day.
+ * A click on an empty half hour asks for a new task at that time of that day; a timed task is dragged with the mouse
+ * to another time (and, in the week, another day), by half hours, keeping its length.
  */
 
 const HOUR_PX = 48;
 const MIN_BLOCK_PX = 22;
 const GUTTER_PX = 48;
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
+const DAY_MINUTES = 24 * 60;
+// The grid's step: new tasks and dragged ones land on whole and half hours
+const SLOT_MINUTES = 30;
+const SLOT_PX = (SLOT_MINUTES / 60) * HOUR_PX;
+// Less than this is a click that opens the task, not a drag
+const DRAG_THRESHOLD_PX = 4;
 
 const minutesOf = (date: Date) => date.getHours() * 60 + date.getMinutes();
 const clock = (date: Date) => date.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
+const clockOf = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value));
 
 type Placed = { event: CalendarEvent; top: number; height: number; lane: number; lanes: number };
+type Drag = { event: CalendarEvent; column: number; start: number; length: number; x: number; y: number; moved: boolean };
+type Spot = { id: number; title: string; column: number; start: number; length: number };
+
+/** Only a task with a time within one day moves by dragging: a multi-day one is changed in its card */
+function draggable(event: CalendarEvent): boolean {
+  const start = new Date(event.start_at);
+  return !event.all_day && sameDay(start, new Date(new Date(event.end_at).getTime() - 1));
+}
 
 /** Blocks with their place in one day: overlapping tasks share the width in lanes */
 function place(events: CalendarEvent[], day: Date): Placed[] {
@@ -67,20 +84,79 @@ export function TimeGrid({
   days,
   events,
   onOpenDay,
-  onPickHour,
+  onPickTime,
+  onMove,
 }: {
   days: Date[];
   events: CalendarEvent[];
   onOpenDay?: (day: Date) => void;
-  onPickHour?: (day: Date, hour: number) => void;
+  /** `minutes` from midnight, on a whole or half hour */
+  onPickTime?: (day: Date, minutes: number) => void;
+  onMove?: (event: CalendarEvent, start: Date, end: Date) => void;
 }) {
   const now = useNow();
-  // The empty hour under the pointer: a hint where a click puts the new task
-  const [hovered, setHovered] = useState<{ column: number; hour: number } | null>(null);
+  const hoursRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<Drag | null>(null);
+  // The click that ends a drag must not open the task
+  const dragged = useRef(false);
+  const [spot, setSpot] = useState<Spot | null>(null);
+
+  const spotOf = (current: Drag, pointer: PointerEvent): Spot => {
+    const box = hoursRef.current?.getBoundingClientRect();
+    const width = box ? (box.width - GUTTER_PX) / days.length : 1;
+    const column = clamp(current.column + Math.round((pointer.clientX - current.x) / width), 0, days.length - 1);
+    const moved = current.start + ((pointer.clientY - current.y) / HOUR_PX) * 60;
+    const start = clamp(Math.round(moved / SLOT_MINUTES) * SLOT_MINUTES, 0, DAY_MINUTES - current.length);
+    return { id: current.event.id, title: current.event.title, column, start, length: current.length };
+  };
+
+  const startDrag = (pointer: PointerEvent<HTMLElement>, event: CalendarEvent, column: number) => {
+    // A finger scrolls the grid; dragging is for the mouse and the pen
+    if (!onMove || pointer.button !== 0 || pointer.pointerType === "touch" || !draggable(event)) return;
+    const start = new Date(event.start_at);
+    drag.current = {
+      event,
+      column,
+      start: minutesOf(start),
+      length: Math.round((new Date(event.end_at).getTime() - start.getTime()) / 60_000),
+      x: pointer.clientX,
+      y: pointer.clientY,
+      moved: false,
+    };
+    pointer.currentTarget.setPointerCapture(pointer.pointerId);
+  };
+
+  const moveDrag = (pointer: PointerEvent) => {
+    const current = drag.current;
+    if (!current) return;
+    if (!current.moved && Math.hypot(pointer.clientX - current.x, pointer.clientY - current.y) < DRAG_THRESHOLD_PX) return;
+    current.moved = true;
+    setSpot(spotOf(current, pointer));
+  };
+
+  const endDrag = (pointer: PointerEvent) => {
+    const current = drag.current;
+    drag.current = null;
+    setSpot(null);
+    if (!current?.moved) return;
+    dragged.current = true;
+    const target = spotOf(current, pointer);
+    if (target.column === current.column && target.start === current.start) return;
+    const day = days[target.column];
+    const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, target.start);
+    onMove?.(current.event, start, new Date(start.getTime() + target.length * 60_000));
+  };
+
+  const cancelDrag = () => {
+    drag.current = null;
+    setSpot(null);
+  };
+  // The empty half hour under the pointer: a hint where a click puts the new task
+  const [hovered, setHovered] = useState<{ column: number; minutes: number } | null>(null);
   // Only the column itself is an empty spot: a click on a task opens the task
-  const hourAt = (mouse: MouseEvent<HTMLDivElement>) =>
+  const slotAt = (mouse: MouseEvent<HTMLDivElement>) =>
     mouse.target === mouse.currentTarget
-      ? Math.min(23, Math.max(0, Math.floor((mouse.clientY - mouse.currentTarget.getBoundingClientRect().top) / HOUR_PX)))
+      ? clamp(Math.floor((mouse.clientY - mouse.currentTarget.getBoundingClientRect().top) / SLOT_PX), 0, DAY_MINUTES / SLOT_MINUTES - 1) * SLOT_MINUTES
       : null;
   const { byId: tagsById } = useTags();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -195,7 +271,7 @@ export function TimeGrid({
           </div>
         )}
 
-        <div className="relative grid" style={{ ...template, height: 24 * HOUR_PX }}>
+        <div ref={hoursRef} className={cn("relative grid", spot && "select-none")} style={{ ...template, height: 24 * HOUR_PX }}>
           {/* The hours: a label in the gutter and a line across all days */}
           {HOURS.map((hour) => (
             <div
@@ -212,6 +288,15 @@ export function TimeGrid({
               <span className="flex-1 border-t border-gray-500/10 dark:border-white/[0.06]" />
             </div>
           ))}
+          {/* Half hours: a fainter dashed line, no label */}
+          {HOURS.map((hour) => (
+            <span
+              key={`half-${hour}`}
+              aria-hidden="true"
+              className="absolute right-0 border-t border-dashed border-gray-500/[0.07] dark:border-white/[0.04] pointer-events-none"
+              style={{ top: hour * HOUR_PX + SLOT_PX, left: GUTTER_PX }}
+            />
+          ))}
 
           <span />
           {columns.map(({ day, placed }, index) => (
@@ -220,45 +305,57 @@ export function TimeGrid({
               role="gridcell"
               className={cn(
                 "relative min-w-0",
-                onPickHour && "cursor-pointer",
+                onPickTime && "cursor-pointer",
                 multi && "border-l border-gray-500/10 dark:border-white/[0.06]",
                 multi && index === todayIndex && "bg-red-500/[0.03]"
               )}
               onClick={(mouse) => {
-                const hour = hourAt(mouse);
-                if (hour !== null) onPickHour?.(day, hour);
+                const minutes = slotAt(mouse);
+                if (minutes !== null) onPickTime?.(day, minutes);
               }}
               onMouseMove={(mouse) => {
-                const hour = hourAt(mouse);
-                setHovered(hour === null ? null : { column: index, hour });
+                const minutes = slotAt(mouse);
+                setHovered(minutes === null ? null : { column: index, minutes });
               }}
               onMouseLeave={() => setHovered(null)}
             >
-              {onPickHour && hovered?.column === index && (
+              {onPickTime && hovered?.column === index && (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-0.5 rounded-lg px-1.5 py-0.5 text-[11px] tabular-nums pointer-events-none bg-sky-500/10 ring-1 ring-sky-400/30 text-sky-700 dark:text-sky-300"
-                  style={{ top: hovered.hour * HOUR_PX + 1, height: HOUR_PX - 2 }}
+                  className="absolute inset-x-0.5 rounded-md px-1.5 text-[11px] leading-[22px] tabular-nums pointer-events-none bg-sky-500/10 ring-1 ring-sky-400/30 text-sky-700 dark:text-sky-300"
+                  style={{ top: (hovered.minutes / 60) * HOUR_PX + 1, height: SLOT_PX - 2 }}
                 >
-                  + {String(hovered.hour).padStart(2, "0")}:00
+                  + {clockOf(hovered.minutes)}
                 </span>
               )}
               {placed.map(({ event, top, height, lane, lanes }) => {
                 const start = new Date(event.start_at);
                 const end = new Date(event.end_at);
                 const tag = event.tag_ids?.map((id) => tagsById.get(id)).find(Boolean);
+                const movable = !!onMove && draggable(event);
                 return (
                   <Link
                     key={event.id}
                     to={`/events/${event.id}`}
                     title={`${clock(start)}–${clock(end)} ${event.title}`}
+                    draggable={false}
+                    onClick={(click) => {
+                      if (!dragged.current) return;
+                      dragged.current = false;
+                      click.preventDefault();
+                    }}
+                    onPointerDown={(pointer) => startDrag(pointer, event, index)}
+                    onPointerMove={moveDrag}
+                    onPointerUp={endDrag}
+                    onPointerCancel={cancelDrag}
                     className={cn(
                       "absolute z-[1] overflow-hidden rounded-lg px-1.5 py-0.5 leading-tight",
                       multi ? "text-[11px]" : "text-xs",
                       "bg-indigo-500/15 dark:bg-indigo-400/15 ring-1 ring-indigo-400/30 text-gray-900 dark:text-white",
                       "backdrop-blur-sm hover:ring-indigo-400/60 hover:z-[2] transition-shadow",
+                      movable && (spot?.id === event.id ? "cursor-grabbing" : "cursor-grab"),
                       tag && `tag-${tag.color}`,
-                      (event.completed_at || end < now) && "opacity-55",
+                      spot?.id === event.id ? "opacity-30" : (event.completed_at || end < now) && "opacity-55",
                       event.completed_at && "line-through"
                     )}
                     style={{
@@ -278,6 +375,24 @@ export function TimeGrid({
                   </Link>
                 );
               })}
+
+              {/* Where the dragged task lands: its new time while the mouse is down */}
+              {spot?.column === index && (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "absolute inset-x-0.5 z-[3] overflow-hidden rounded-lg px-1.5 py-0.5 leading-tight pointer-events-none",
+                    multi ? "text-[11px]" : "text-xs",
+                    "bg-sky-500/25 ring-2 ring-sky-400/70 text-gray-900 dark:text-white shadow-lg"
+                  )}
+                  style={{ top: (spot.start / 60) * HOUR_PX, height: Math.max((spot.length / 60) * HOUR_PX - 2, MIN_BLOCK_PX) }}
+                >
+                  <span className="block font-medium break-words">{spot.title}</span>
+                  <span className="block tabular-nums font-semibold text-sky-700 dark:text-sky-300">
+                    {clockOf(spot.start)}–{clockOf((spot.start + spot.length) % DAY_MINUTES)}
+                  </span>
+                </span>
+              )}
 
               {index === todayIndex && (
                 <div

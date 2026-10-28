@@ -209,7 +209,7 @@ function initialState(event?: CalendarEvent, day?: string | null, time?: string 
   // Новая задача не получает текущие дату и время автоматически: только выбранные в календаре (день, час в сетке)
   const date = parseDayKey(day ?? null) ? (day as string) : "";
   const start = date && time && CLOCK_VALUE.test(time) ? time : "";
-  // Час в сетке — задача на час; в 23:00 окончание не ставим, иначе оно уйдёт на следующий день
+  // Время из сетки — задача на час; с 23:00 окончание не ставим, иначе оно уйдёт на следующий день
   const end = start && start < "23:00" ? `${String(Number(start.slice(0, 2)) + 1).padStart(2, "0")}${start.slice(2)}` : "";
   return {
     title: "",
