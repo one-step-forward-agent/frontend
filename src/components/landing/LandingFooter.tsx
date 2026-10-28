@@ -48,7 +48,7 @@ const LandingFooter: React.FC = () => {
             {config?.online && (
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {tr("Все системы работают", "All systems operational")}
+                {tr("Deyla работает 24/7, чтобы вы не работали по вечерам", "All systems operational")}
               </div>
             )}
           </div>
@@ -68,14 +68,6 @@ const LandingFooter: React.FC = () => {
                   <Arrow />
                 </Link>
               </li>
-              {bot && (
-                <li>
-                  <a href={bot} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                    <Send size={14} aria-hidden="true" />
-                    {tr("Телеграм-бот", "Telegram bot")}
-                  </a>
-                </li>
-              )}
             </ul>
           </div>
 
