@@ -179,7 +179,9 @@ interface FormState {
 
 const clock = (date: Date) => formatTime(date);
 
-function initialState(event?: CalendarEvent, day?: string | null): FormState {
+const CLOCK_VALUE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+function initialState(event?: CalendarEvent, day?: string | null, time?: string | null): FormState {
   if (event) {
     const start = new Date(event.start_at);
     const end = new Date(event.end_at);
@@ -204,12 +206,16 @@ function initialState(event?: CalendarEvent, day?: string | null): FormState {
       repeat: parseRepeat(event.recurrence_rule),
     };
   }
-  // Новая задача не получает текущие дату и время автоматически: дата — только если её выбрали (день в календаре)
+  // Новая задача не получает текущие дату и время автоматически: только выбранные в календаре (день, час в сетке)
+  const date = parseDayKey(day ?? null) ? (day as string) : "";
+  const start = date && time && CLOCK_VALUE.test(time) ? time : "";
+  // Час в сетке — задача на час; в 23:00 окончание не ставим, иначе оно уйдёт на следующий день
+  const end = start && start < "23:00" ? `${String(Number(start.slice(0, 2)) + 1).padStart(2, "0")}${start.slice(2)}` : "";
   return {
     title: "",
-    date: parseDayKey(day ?? null) ? (day as string) : "",
-    time: "",
-    endTime: "",
+    date,
+    time: start,
+    endTime: end,
     endDate: "",
     multiDay: false,
     deadlineDate: "",
@@ -270,18 +276,20 @@ function toPayload(state: FormState, timezone: string): EventCreate | string {
 export function EventForm({
   event,
   day,
+  time,
   calendars = [],
   onSaved,
   onCancel,
 }: {
   event?: CalendarEvent;
   day?: string | null;
+  time?: string | null;
   calendars?: Calendar[];
   onSaved: (event: CalendarEvent) => void;
   onCancel?: () => void;
 }) {
   const { user } = useAuth();
-  const [state, setState] = useState(() => initialState(event, day));
+  const [state, setState] = useState(() => initialState(event, day, time));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setState((current) => ({ ...current, [key]: value }));

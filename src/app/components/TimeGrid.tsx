@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { CalendarEvent } from "../api/types";
 import { occursOn, sameDay, startOfDay } from "../lib/format";
 import { useNow, useTags } from "../lib/hooks";
@@ -10,6 +10,7 @@ import { LOCALE, tr } from "@/i18n";
  * Days by the hour, as in Google Calendar: the hours down the side, one column per day (one for the day view,
  * seven for the week), timed tasks as blocks in their place, overlapping ones side by side, tasks without a time
  * in a row above, and a red line at the current time in today's column that moves every minute.
+ * A click on an empty hour asks for a new task at that hour of that day.
  */
 
 const HOUR_PX = 48;
@@ -66,12 +67,21 @@ export function TimeGrid({
   days,
   events,
   onOpenDay,
+  onPickHour,
 }: {
   days: Date[];
   events: CalendarEvent[];
   onOpenDay?: (day: Date) => void;
+  onPickHour?: (day: Date, hour: number) => void;
 }) {
   const now = useNow();
+  // The empty hour under the pointer: a hint where a click puts the new task
+  const [hovered, setHovered] = useState<{ column: number; hour: number } | null>(null);
+  // Only the column itself is an empty spot: a click on a task opens the task
+  const hourAt = (mouse: MouseEvent<HTMLDivElement>) =>
+    mouse.target === mouse.currentTarget
+      ? Math.min(23, Math.max(0, Math.floor((mouse.clientY - mouse.currentTarget.getBoundingClientRect().top) / HOUR_PX)))
+      : null;
   const { byId: tagsById } = useTags();
   const scrollRef = useRef<HTMLDivElement>(null);
   const multi = days.length > 1;
@@ -210,10 +220,29 @@ export function TimeGrid({
               role="gridcell"
               className={cn(
                 "relative min-w-0",
+                onPickHour && "cursor-pointer",
                 multi && "border-l border-gray-500/10 dark:border-white/[0.06]",
                 multi && index === todayIndex && "bg-red-500/[0.03]"
               )}
+              onClick={(mouse) => {
+                const hour = hourAt(mouse);
+                if (hour !== null) onPickHour?.(day, hour);
+              }}
+              onMouseMove={(mouse) => {
+                const hour = hourAt(mouse);
+                setHovered(hour === null ? null : { column: index, hour });
+              }}
+              onMouseLeave={() => setHovered(null)}
             >
+              {onPickHour && hovered?.column === index && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-0.5 rounded-lg px-1.5 py-0.5 text-[11px] tabular-nums pointer-events-none bg-sky-500/10 ring-1 ring-sky-400/30 text-sky-700 dark:text-sky-300"
+                  style={{ top: hovered.hour * HOUR_PX + 1, height: HOUR_PX - 2 }}
+                >
+                  + {String(hovered.hour).padStart(2, "0")}:00
+                </span>
+              )}
               {placed.map(({ event, top, height, lane, lanes }) => {
                 const start = new Date(event.start_at);
                 const end = new Date(event.end_at);

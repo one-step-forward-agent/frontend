@@ -57,6 +57,7 @@ export function NewEventPage() {
       <GlassCard>
         <EventForm
           day={query.get("day")}
+          time={query.get("time")}
           calendars={calendars.data}
           onSaved={(event) => {
             toast(tr("Задача создана", "Task created"));

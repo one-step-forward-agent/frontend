@@ -327,7 +327,12 @@ export function CalendarPage() {
       {view !== "month" ? (
         /* День и неделя — по часам, как в Google Календаре: неделя — семь колонок рядом */
         <div className={cn("relative overflow-hidden rounded-2xl p-2 sm:p-3", GLASS_BODY)}>
-          <TimeGrid days={days} events={events.data ?? []} onOpenDay={(day) => go(day, "day")} />
+          <TimeGrid
+            days={days}
+            events={events.data ?? []}
+            onOpenDay={(day) => go(day, "day")}
+            onPickHour={(day, hour) => navigate(`/events/new?day=${dayKey(day)}&time=${String(hour).padStart(2, "0")}:00`)}
+          />
           {events.loading && !events.data && (
             <p className="px-3 pt-2 text-sm text-gray-400 dark:text-gray-500">{tr("Загружаем…", "Loading…")}</p>
           )}
