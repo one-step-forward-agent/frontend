@@ -2,20 +2,11 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { MascotFade } from "@/components/MascotFade";
 import {
-  Sparkles, Send, Calendar, BarChart3,
-  Mic, Zap, Target, ArrowRight, Check,
+  Sparkles, Send,
+  Mic, ArrowRight, Check,
   Reply,
-  Copy,
-  Download,
-  Pin,
   Forward,
   Trash2,
-  ArrowDown,
-  Hash,
-  Video,
-  ListChecks,
-  ChevronLeft,
-  ChevronRight,
   Lock,
   type LucideIcon,
 } from "lucide-react";
@@ -66,17 +57,6 @@ export const Start: React.FC = () => {
     </div>
   );
 };
-
-/* ─── Liquid Glass — единый стиль ────────────────────────── */
-const GLASS_BODY =
-  "bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl " +
-  "ring-1 ring-white/30 dark:ring-white/10 " +
-  "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] " +
-  "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]";
-
-const GLASS_SHEEN_PILL =
-  "pointer-events-none absolute inset-0 rounded-full " +
-  "bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]";
 
 type MenuItem = {
   label: string;
@@ -299,29 +279,6 @@ const GTDAggregation: React.FC = () => (
   </div>
 );
 
-const SourceBadge: React.FC<{ kind: "jira" | "trueconf" | "slack" }> = ({ kind }) => {
-  const cfg = {
-    jira:     { label: "Jira",     tint: "jira" as const },
-    trueconf: { label: "TrueConf", tint: "trueconf" as const },
-    slack:    { label: "Slack",    tint: "slack" as const },
-  }[kind];
-
-  return (
-    <span
-      className={cn(
-        "shrink-0 inline-flex items-center gap-1.5",
-        "text-[10px] px-1.5 py-0.5 rounded",
-        "bg-gray-100/80 dark:bg-gray-800/80",
-        "backdrop-blur-sm",
-        "ring-1 ring-white/40 dark:ring-white/5",
-        "text-gray-700 dark:text-gray-300 font-medium",
-      )}
-    >
-      <GlassDot tint={cfg.tint} size={6} />
-      {cfg.label}
-    </span>
-  );
-};
 
 type GlassTint = "red" | "amber" | "slate" | "blue" | "jira" | "trueconf" | "slack";
 
@@ -362,36 +319,6 @@ const GlassDot: React.FC<{ tint: GlassTint; size?: number }> = ({
       }}
     />
   </span>
-);
-
-const GlassPill: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span
-    className={cn(
-      "relative inline-flex items-center gap-1.5",
-      "px-2.5 py-1 rounded-full",
-      "bg-white/35 dark:bg-white/[0.04]",
-      "backdrop-blur-md",
-      "ring-1 ring-white/50 dark:ring-white/10",
-      "shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.05)]",
-      "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)]",
-      "text-[11px] uppercase tracking-widest font-medium",
-      "text-gray-600 dark:text-gray-300",
-    )}
-  >
-    {children}
-  </span>
-);
-
-const SectionLabel: React.FC<{ tint: GlassTint; children: React.ReactNode }> = ({
-  tint,
-  children,
-}) => (
-  <div className="mb-2">
-    <GlassPill>
-      <GlassDot tint={tint} size={7} />
-      {children}
-    </GlassPill>
-  </div>
 );
 
 const GTD_RESPONSE = (
@@ -725,33 +652,6 @@ const DeylaChatCard: React.FC<DeylaChatCardProps> = ({
   </div>
 );
 
-type PageBlob = {
-  left: string;
-  top: string;
-  size: string;
-  gradient: string;
-  shape: string;
-  duration: string;
-  delay: string;
-};
-
-const PAGE_BLOBS: PageBlob[] = [
-  { left: "-10%", top: "-2%",  size: "32rem", gradient: "from-blue-500/22     to-indigo-500/10",   shape: "60% 40% 70% 30% / 60% 30% 70% 40%", duration: "24s", delay: "0s"   },
-  { left: "55%",  top: "6%",   size: "28rem", gradient: "from-purple-500/18   to-fuchsia-500/10",  shape: "40% 60% 30% 70% / 50% 60% 40% 50%", duration: "28s", delay: "3s"   },
-
-  { left: "60%",  top: "16%",  size: "30rem", gradient: "from-indigo-500/20   to-violet-500/10",   shape: "50% 50% 60% 40% / 40% 50% 60% 50%", duration: "30s", delay: "5s"   },
-  { left: "-14%", top: "26%",  size: "28rem", gradient: "from-cyan-500/15     to-blue-500/8",      shape: "70% 30% 50% 50% / 50% 40% 60% 50%", duration: "26s", delay: "2s"   },
-
-  { left: "58%",  top: "36%",  size: "30rem", gradient: "from-fuchsia-500/16  to-purple-500/8",    shape: "60% 40% 40% 60% / 50% 50% 40% 60%", duration: "24s", delay: "4s"   },
-  { left: "-10%", top: "46%",  size: "32rem", gradient: "from-blue-500/18     to-indigo-500/8",    shape: "40% 60% 50% 50% / 60% 40% 60% 40%", duration: "32s", delay: "6s"   },
-
-  { left: "70%",  top: "56%",  size: "28rem", gradient: "from-purple-500/16   to-pink-500/8",      shape: "50% 50% 30% 70% / 40% 60% 40% 60%", duration: "28s", delay: "1s"   },
-  { left: "-8%",  top: "66%",  size: "30rem", gradient: "from-indigo-500/18   to-blue-500/8",      shape: "60% 40% 50% 50% / 50% 50% 60% 40%", duration: "30s", delay: "3.5s" },
-
-  { left: "40%",  top: "80%",  size: "30rem", gradient: "from-fuchsia-500/14  to-purple-500/8",    shape: "40% 60% 60% 40% / 50% 50% 40% 60%", duration: "32s", delay: "5s"   },
-  { left: "-12%", top: "92%",  size: "28rem", gradient: "from-blue-500/16     to-cyan-500/8",      shape: "50% 50% 40% 60% / 60% 40% 50% 50%", duration: "34s", delay: "7s"   },
-];
-
 const PageBackdrop: React.FC = () => (
   <>
     <style>{`
@@ -808,19 +708,6 @@ const PageBackdrop: React.FC = () => (
     `}</style>
 
     <div aria-hidden="true" className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-      {PAGE_BLOBS.map((b, i) => (
-        <div
-          key={`blob-${i}`}
-          className={`absolute bg-gradient-to-br blur-3xl page-blob ${b.gradient}`}
-          style={{
-            left: b.left,
-            top: b.top,
-            width: b.size,
-            height: b.size,
-            borderRadius: b.shape,
-          }}
-        />
-      ))}
 
 
       <div
@@ -1276,36 +1163,32 @@ const INTEGRATIONS = [
   { src: "/images/TelegramWB.webp",           alt: "Telegram",         w: 44 },
 ];
 
-// Насколько секция наезжает на предыдущий блок сверху (задает длину верхнего градиента)
-const FINAL_CTA_OVERLAP_TOP_VH = 30; 
-// Дополнительное пространство снизу (задает длину нижнего градиента)
-const FINAL_CTA_EXTRA_BOTTOM_VH = 15; 
+// Насколько секция наезжает на предыдущий блок сверху
+const FINAL_CTA_OVERLAP_TOP_VH = 10; 
+// Дополнительное пространство снизу
+const FINAL_CTA_EXTRA_BOTTOM_VH = 25; 
 
-// АЛЬФА СРЕДНЕЙ ЧАСТИ: 1 - полностью непрозрачный центр, 0.5 - полупрозрачный
+// АЛЬФА СРЕДНЕЙ ЧАСТИ
 const FINAL_CTA_GRADIENT_ALPHA = 0.5; 
 
 // Насколько опустить верхнюю границу неактивного контейнера (в процентах)
-const FINAL_CTA_INACTIVE_TOP_INSET = 35; 
+const FINAL_CTA_INACTIVE_TOP_INSET = 0; 
 
-// НОВОЕ: Насколько опустить сам градиент сверху (в vh). Увеличивай, чтобы градиент начинался ниже.
-const FINAL_CTA_MASK_TOP_OFFSET_VH = 25; 
+// 🔥 УМЕНЬШИЛИ ОТСТУП С 15 ДО 8, ЧТОБЫ МАСКА НЕ ОБРЕЗАЛАСЬ clipPath
+const FINAL_CTA_HORIZONTAL_GRADIENT_VW = 8; 
 
-// Ширина градиента слева и справа (в vw)
-const FINAL_CTA_HORIZONTAL_GRADIENT_VW = 15; 
-
-// Вертикальная маска (управляет верхом и низом)
+// 🔥 НОВАЯ МАСКА: Градиент достигает плотности всего за 15% (было 30%), 
+// поэтому верхняя часть стала визуально меньше и компактнее.
 const FINAL_CTA_MASK_VERTICAL = `
   linear-gradient(
     to bottom,
-    rgba(0,0,0,0) 0vh,
-    rgba(0,0,0,0) ${FINAL_CTA_MASK_TOP_OFFSET_VH}vh,
-    rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) calc(${FINAL_CTA_MASK_TOP_OFFSET_VH}vh + ${FINAL_CTA_OVERLAP_TOP_VH}vh),
-    rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) calc(100vh + ${FINAL_CTA_OVERLAP_TOP_VH}vh),
-    rgba(0,0,0,0) calc(100vh + ${FINAL_CTA_OVERLAP_TOP_VH + FINAL_CTA_EXTRA_BOTTOM_VH}vh)
+    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) 15%,
+    rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) 85%,
+    rgba(0,0,0,0) 100%
   )
 `;
 
-// Горизонтальная маска (управляет левом и правом)
 const FINAL_CTA_MASK_HORIZONTAL = `
   linear-gradient(
     to right,
@@ -1316,9 +1199,7 @@ const FINAL_CTA_MASK_HORIZONTAL = `
   )
 `;
 
-// Объединяем маски
 const FINAL_CTA_MASK = `${FINAL_CTA_MASK_VERTICAL}, ${FINAL_CTA_MASK_HORIZONTAL}`;
-
 const ORBIT_PERIOD_MS = 24000;
 const ORBIT_TRANSITION_MS = 700;
 // On a phone the orbit and the row of calendars are smaller, so all seven icons fit the screen
@@ -1467,24 +1348,15 @@ const FinalCTA: React.FC<{
   }, [active, isNarrow]);
   // ─── Маска на смартфоне короче: 20vh фейд-ин, 85vh конец solid, 105vh конец fade
 // Это компенсирует укороченный блок (см. minHeight ниже).
-const ctaMaskVertical = isNarrow
-  ? `linear-gradient(
-      to bottom,
-      rgba(0,0,0,0) 0vh,
-      rgba(0,0,0,0) 20vh,
-      rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) 45vh,
-      rgba(0,0,0,${FINAL_CTA_GRADIENT_ALPHA}) 85vh,
-      rgba(0,0,0,0) 105vh
-    )`
-  : FINAL_CTA_MASK_VERTICAL;
-
+const ctaMaskVertical = FINAL_CTA_MASK_VERTICAL;
 const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
+
 
    return (
     <section
       ref={sectionRef}
       id="integrations"
-      className="relative isolate w-full overflow-hidden"
+      className="relative isolate w-full overflow-x-clip"
       style={{
         marginTop: `-${FINAL_CTA_OVERLAP_TOP_VH}vh`,
         paddingTop: `${FINAL_CTA_OVERLAP_TOP_VH}vh`,
@@ -1534,14 +1406,14 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
           "flex flex-col items-center justify-center"
         )}
         style={{
-  // Mobile: 60svh = −15% сверху −25% снизу от исходных 100vh
-  minHeight: isNarrow ? "60svh" : "100vh",
+      // Mobile: 60svh = −15% сверху −25% снизу от исходных 100vh
+      minHeight: isNarrow ? "10svh" : "80vh", 
 }}
       >
         {/* ... (Остальной контент FinalCTA без изменений) ... */}
         <div className="text-center max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
-            {tr("Ваш день живёт в\u00a0Google, Jira, Notion и\u00a0блокноте.", "Your day lives in\u00a0Google, Jira, Notion and\u00a0a notebook.")}{" "}
+            {tr("Ваш день живёт в\u00a0Google, Notion и\u00a0блокноте.", "Your day lives in\u00a0Google, Jira, Notion and\u00a0a notebook.")}{" "}
             <span className="text-gray-900/85 dark:text-white/85">
               {tr("Deyla задаёт единый ритм.", "Deyla sets one rhythm.")}
             </span>
@@ -1549,9 +1421,6 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
         </div>
 
         <div className="mt-16 flex flex-col items-center text-center">
-          <p className="text-lg md:text-xl font-medium">
-            {tr("Личный ассистент, который держит день в\u00a0форме.", "A personal assistant that keeps your day in\u00a0shape.")}
-          </p>
 
           <div className="relative mt-10 flex justify-center">
             <div aria-hidden="true" className="absolute left-1/2 top-1/2 pointer-events-none" style={{ width: 0, height: 0 }}>
@@ -1672,6 +1541,7 @@ const SlideFlight: React.FC<SlideProps> = ({ mobile }) => (
   <div className={SLIDE_PAD(mobile)}>
     <div className={cn("max-w-5xl mx-auto", SLIDE_INNER(mobile))}>
       <div className={SLIDE_HEAD(mobile)}>
+        <Badge className="text-eyebrow mb-3">{tr("Парсинг документов", "Documents parsing")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
           {tr("Пересылайте события", "Forward events")}
         </h2>
@@ -1879,7 +1749,8 @@ const UserCaseCarousel: React.FC<{
       aria-roledescription="carousel"
       aria-label={tr("Сценарии использования", "Use cases")}
     >
-      <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col">
+      {/* 🔥 ДОБАВЛЕН pt-14 md:pt-0, чтобы контент не уезжал под шапку */}
+      <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col pt-20 md:pt-3">
         <div ref={stageRef} className="relative flex-1 w-full overflow-hidden">
           <div
             ref={trackRef}
@@ -1945,7 +1816,7 @@ const DesktopAgentVideoSection: React.FC = () => {
         <div className="mb-8 md:mb-12 text-center">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
             {tr(
-              "Deyla может взять тяжёлую задачу на себя",
+              "Deyla может как взять тяжёлую задачу на себя",
               "Deyla can take a project and run with it"
             )}
           </h2>
@@ -2024,7 +1895,7 @@ const SCREENSHOTS = [
     lightImage: "/images/functional/whitetheme/today.png",
     darkImage: "/images/functional/darktheme/today.png",
     scale: 1.0,
-    title: "Все задачи, встречи и дедлайны собраны в одном месте. Deyla работает 24/7, чтобы вы не работали по вечерам.",
+    title: "Все задачи и аналитика в одном месте.",
     description: "",
   },
   {
@@ -2032,24 +1903,24 @@ const SCREENSHOTS = [
     lightImage: "/images/functional/whitetheme/assistant.png",
     darkImage: "/images/functional/darktheme/assistant.png",
     scale: 0.8,
-    title: "Развивайте идеи и делитесь обратной связью прямо в диалоге. Чем больше вы работаете вместе, тем лучше Deyla понимает ваши предпочтения и ход мыслей.",
+    title: "Deyla понимает ваши предпочтения и ход мыслей.",
     description: "",
   },
-  {
-    id: "thisweek",
-    lightImage: "/images/functional/whitetheme/calendar.png",
-    darkImage: "/images/functional/darktheme/calendar.png",
-    scale: 1.35,
-    title: "Расширение ваших возможностей",
-    description: "Когда Deyla знает ваши цели и требования, вы можете браться за большее, не руководя каждым шагом.",
-  },
+  //{
+  //  id: "thisweek",
+  //  lightImage: "/images/functional/whitetheme/calendar.png",
+  //  darkImage: "/images/functional/darktheme/calendar.png",
+  //  scale: 1.35,
+  //  title: "Расширение ваших возможностей",
+  //  description: "",
+  //},
   {
     id: "anonymizeddata",
     lightImage: "/images/functional/whitetheme/dashboard.png",
     darkImage: "/images/functional/darktheme/dashboard.png",
     scale: 0.9,
-    title: "Контроль всегда остаётся у вас",
-    description: "Deyla использует механизмы защиты информации и меры конфиденциальности. Все данные обезличены.",
+    title: "Deyla использует механизмы защиты информации и меры конфиденциальности.",
+    description: "",
   },
 ];
 
@@ -2355,26 +2226,26 @@ const FeatureScreenshotsMobile: React.FC = () => {
     };
   }, [total]);
 
-    return (
+        return (
     <section
       ref={containerRef}
       className="relative"
       style={{ height: `calc(100svh * ${total})` }}
     >
-      <div className="sticky top-0 h-[100svh] overflow-hidden">
-        {/* 🔥 Заголовок сделан absolute, чтобы он не сдвигал контент вниз */}
-        <div className="absolute top-10 left-0 w-full z-30 pt-14 pointer-events-none">
+      <div className="sticky top-10 h-[100svh] overflow-hidden pt-10 md:pt-20">
+        {/* Заголовок */}
+        <div className="absolute top-20 left-0 w-full z-30 pointer-events-none">
           <div className="text-center max-w-6xl w-full mx-auto px-4">
             <h2 className="text-3xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
               {tr(
-                "И помочь довести работу",
+                "Так и помочь вам довести работу до конца",
                 "Deyla can halp a project"
               )}
             </h2>
           </div>
         </div>
 
-        {/* 🔥 Слайды занимают 100% высоты экрана и центрируются ровно посередине */}
+        {/* Слайды */}
         {SCREENSHOTS.map((item, i) => {
           const imgSrc = isDark ? item.darkImage : item.lightImage;
           const perScale = item.scale || 1;
@@ -2386,7 +2257,8 @@ const FeatureScreenshotsMobile: React.FC = () => {
             <div
               key={item.id}
               ref={(el) => { slideRefs.current[i] = el; }}
-              className="absolute inset-0 flex flex-col items-center justify-center px-2 pointer-events-none"
+              // 🔥 ДОБАВЛЕН pt-24, чтобы сместить центр вниз (под заголовок)
+              className="absolute inset-0 flex flex-col items-center justify-center px-2 pt-24 pointer-events-none"
               style={{ opacity: 0, visibility: "hidden", transition: "none" }}
             >
               <div className="flex flex-col items-center gap-6 w-full max-w-full">
@@ -2404,9 +2276,11 @@ const FeatureScreenshotsMobile: React.FC = () => {
                       ref={(el) => { sharpRefs.current[i] = el; }}
                       src={imgSrc}
                       alt={item.title || item.description}
-                      className="block select-none pointer-events-none w-full object-contain"
+                      // 🔥 УБРАН w-full, чтобы картинка сжималась по контенту. Маска теперь ляжет на ее края.
+                      className="block select-none pointer-events-none max-w-full max-h-full object-contain"
                       style={{
-                        ...makeFeatherStyle(SHARP_FEATHER_PCT),
+                        // 🔥 ИСПОЛЬЗУЕМ ПРОЦЕНТНУЮ МАСКУ (10% с боков, сверху и снизу)
+                        ...makeFeatherStylePct(10),
                         maxHeight: `${containerMaxH}svh`,
                       }}
                       loading="eager"
@@ -2440,11 +2314,13 @@ const FeatureScreenshotsMobile: React.FC = () => {
                   }}
                 >
                   {item.title && (
-                    <h3 className={cn("text-base font-semibold mb-1", TEXT_TITLE_GRADIENT)}>
+                    // 🔥 УВЕЛИЧЕН КЕГЛЬ: text-base заменен на text-3xl (как у заголовка)
+                    <h3 className={cn("text-3xl font-semibold mb-2", TEXT_TITLE_GRADIENT)}>
                       {item.title}
                     </h3>
                   )}
-                  <p className={cn("text-sm leading-snug", TEXT_DESC_GRADIENT)}>
+                  {/* 🔥 УВЕЛИЧЕН КЕГЛЬ: text-sm заменен на text-lg */}
+                  <p className={cn("text-lg leading-snug", TEXT_DESC_GRADIENT)}>
                     {item.description}
                   </p>
                 </div>
@@ -2536,7 +2412,7 @@ const FeatureScreenshotsDesktop: React.FC = () => {
         <div className="mb-8 text-center relative max-w-6xl w-full mx-auto px-4 md:px-6 pt-6 md:pt-20 pb-8">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
             {tr(
-              "И помочь довести работу",
+              "Так и помочь вам довести работу до конца",
               "Deyla can halp a project"
             )}
           </h2>
@@ -2550,10 +2426,6 @@ const FeatureScreenshotsDesktop: React.FC = () => {
             const absOff = Math.abs(offset);
             const eased  = Math.pow(absOff, 1.2);
             const BASE_DESKTOP_VH = 53; // бывшая SCREENSHOT_BASE_MAX_VH
-            const perScale = item.scale || 1;
-            const imgMaxW = BASE_DESKTOP_VH * perScale;
-            const imgMaxH = BASE_DESKTOP_VH * perScale;
-
             const textOpacity =
               absOff <= TEXT_FADE_START ? 1 :
               absOff >= TEXT_FADE_END ? 0 :
@@ -2588,7 +2460,7 @@ const FeatureScreenshotsDesktop: React.FC = () => {
             // Fully invisible → skip painting entirely.
             const hidden = slideOpacity < 0.01 && textOpacity < 0.01;
 
-            const containerMaxH = Math.min(imgMaxH, 56);
+            const containerMaxH = 56;
 
             return (
               <div
@@ -2606,66 +2478,66 @@ const FeatureScreenshotsDesktop: React.FC = () => {
   }}
 >
   <div className="flex flex-col items-center gap-6 md:gap-8">
-    {/* ── Скриншот + halo + замок ── */}
-    <div className="relative inline-block isolate">
-      <img
-        src={imgSrc}
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
-        style={{
-          ...makeFeatherStyle(HALO_FEATHER_PCT),
-          transform: `scale(${HALO_SCALE_1})`,
-          filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
-        }}
-      />
-      <img
-        src={imgSrc}
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
-        style={{
-          ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP),
-          transform: `scale(${HALO_SCALE_2})`,
-          filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
-        }}
-      />
-      <img
-        src={imgSrc}
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
-        style={{
-          ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP * 2),
-          transform: `scale(${HALO_SCALE_3})`,
-          filter: `blur(${HALO_BLUR_3}px) saturate(1.2)`,
-        }}
-      />
-
-      <div
-        className="relative z-10 inline-block overflow-hidden rounded-[24px] md:rounded-[32px]"
-        style={{ maxHeight: `${containerMaxH}vh` }}
-      >
+          {/* ── Скриншот + halo + замок ── */}
+      <div className="relative inline-block isolate">
+        {/* Halo 1 */}
         <img
           src={imgSrc}
-          alt={item.title}
-          className="block select-none pointer-events-none"
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
           style={{
-            ...makeFeatherStyle(SHARP_FEATHER_PCT),
-            maxWidth: `${imgMaxW}vw`,
-            maxHeight: `${imgMaxH}vh`,
-            width: "auto",
-            height: "auto",
-            filter: lockBlur > 0.5 ? `blur(${lockBlur}px)` : undefined,
-            transition: `filter ${SLIDE_TRANSITION_MS}ms ease-out`,
+            ...makeFeatherStyle(HALO_FEATHER_PCT),
+            transform: `scale(${HALO_SCALE_1})`,
+            filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
           }}
-          loading="lazy"
         />
-      </div>
+        {/* Halo 2 */}
+        <img
+          src={imgSrc}
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+          style={{
+            ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP),
+            transform: `scale(${HALO_SCALE_2})`,
+            filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
+          }}
+        />
+        {/* Halo 3 */}
+        <img
+          src={imgSrc}
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+          style={{
+            ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP * 2),
+            transform: `scale(${HALO_SCALE_3})`,
+            filter: `blur(${HALO_BLUR_3}px) saturate(1.2)`,
+          }}
+        />
 
-      {isSecurity && <SecurityLockOverlay secProgress={secProgress} />}
-    </div>
+        {/* 🔥 ИЗМЕНЕННЫЙ БЛОК: Жесткая высота 56vh */}
+        <div
+          className="relative z-10 inline-block overflow-hidden rounded-[24px] md:rounded-[32px]"
+          style={{ height: "54vh" }} 
+        >
+          <img
+            src={imgSrc}
+            alt={item.title}
+            className="block select-none pointer-events-none h-full w-auto"
+            style={{
+              ...makeFeatherStyle(SHARP_FEATHER_PCT),
+              filter: lockBlur > 0.5 ? `blur(${lockBlur}px)` : undefined,
+              transition: `filter ${SLIDE_TRANSITION_MS}ms ease-out`,
+            }}
+            loading="lazy"
+          />
+        </div>
+
+        {isSecurity && <SecurityLockOverlay secProgress={secProgress} />}
+      </div>
 
     {/* ── Текст ПОД картинкой: без halo, без карточки, без фона ── */}
     <div
-      className="text-center px-4 max-w-3xl pointer-events-none"
+      className="text-center px-4 max-w-5xl pointer-events-none"
       style={{
         opacity: textOpacity,
         transform: `scale(${textScale})`,
