@@ -998,10 +998,9 @@ const MOCK_TASKS: Array<{
   done?: boolean;
   isNew?: boolean;   // ← новое
 }> = [
-  { time: "09:30", title: tr("Лекция по программированию", "Programming lecture") },
   { time: "11:10", title: tr("Лекция по экономике", "Economics lecture") },
   { time: "16:00", title: tr("Созвон с командой", "Team call"), isNew: true },
-  { time: "18:30", title: tr("Сделать лабораторную работу", "Do the lab assignment") },
+  { time: "18:30", title: tr("Встреча с поставщиком", "Do the lab assignment") },
 ];
 
 const AI_RECOMMENDATION_STUDENT = tr(
@@ -1164,9 +1163,11 @@ const INTEGRATIONS = [
 ];
 
 // Насколько секция наезжает на предыдущий блок сверху
-const FINAL_CTA_OVERLAP_TOP_VH = 10; 
+const FINAL_CTA_OVERLAP_TOP_VH = -5; 
 // Дополнительное пространство снизу
 const FINAL_CTA_EXTRA_BOTTOM_VH = 25; 
+
+const FINAL_CTA_MOBILE_GAP_VH = 20;
 
 // АЛЬФА СРЕДНЕЙ ЧАСТИ
 const FINAL_CTA_GRADIENT_ALPHA = 0.5; 
@@ -1359,7 +1360,9 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
       className="relative isolate w-full overflow-x-clip"
       style={{
         marginTop: `-${FINAL_CTA_OVERLAP_TOP_VH}vh`,
-        paddingTop: `${FINAL_CTA_OVERLAP_TOP_VH}vh`,
+        paddingTop: isNarrow
+  ? `${FINAL_CTA_OVERLAP_TOP_VH + FINAL_CTA_MOBILE_GAP_VH}vh`  // 10 + 20 = 30vh на мобилке
+  : `${FINAL_CTA_OVERLAP_TOP_VH}vh`,                            // 10vh на десктопе 
         paddingBottom: `${FINAL_CTA_EXTRA_BOTTOM_VH}vh`,
       }}
     >
@@ -1420,7 +1423,7 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
           </h2>
         </div>
 
-        <div className="mt-16 flex flex-col items-center text-center">
+        <div className="flex flex-col items-center text-center">
 
           <div className="relative mt-10 flex justify-center">
             <div aria-hidden="true" className="absolute left-1/2 top-1/2 pointer-events-none" style={{ width: 0, height: 0 }}>
