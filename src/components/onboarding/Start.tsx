@@ -1917,14 +1917,14 @@ const SCREENSHOTS = [
   //  title: "Расширение ваших возможностей",
   //  description: "",
   //},
-  {
-    id: "anonymizeddata",
-    lightImage: "/images/functional/whitetheme/dashboard.png",
-    darkImage: "/images/functional/darktheme/dashboard.png",
-    scale: 0.9,
-    title: "Deyla использует механизмы защиты информации и меры конфиденциальности.",
-    description: "",
-  },
+  //{
+  //  id: "anonymizeddata",
+  //  lightImage: "/images/functional/whitetheme/dashboard.png",
+  //  darkImage: "/images/functional/darktheme/dashboard.png",
+  //  scale: 0.9,
+  //  title: "Deyla использует механизмы защиты информации и меры конфиденциальности.",
+  //  description: "",
+  //},
 ];
 
 
