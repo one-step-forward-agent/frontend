@@ -182,7 +182,6 @@ const GTDAggregation: React.FC = () => (
   <div className="relative w-full max-w-[320px]">
     <div
       aria-hidden="true"
-      className="absolute inset-[-10%] -z-10 rounded-full bg-slate-400/10 blur-3xl"
     />
 
     <div className="grid grid-cols-2 gap-3 mb-1">
@@ -214,33 +213,17 @@ const GTDAggregation: React.FC = () => (
       >
         <defs>
           <linearGradient id="gtd-line-down" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="currentColor" stopOpacity="0" />
-            <stop offset="35%"  stopColor="currentColor" stopOpacity="0.4" />
             <stop offset="100%" stopColor="currentColor" stopOpacity="0.85" />
           </linearGradient>
 
           <radialGradient id="gtd-node" cx="35%" cy="30%" r="65%">
-            <stop offset="0%"   stopColor="#ffffff"       stopOpacity="0.95" />
             <stop offset="55%"  stopColor="currentColor"  stopOpacity="0.55" />
-            <stop offset="100%" stopColor="currentColor"  stopOpacity="0.3" />
           </radialGradient>
 
           <filter id="gtd-glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="2.5" />
           </filter>
         </defs>
-
-        {/* мягкое свечение под линиями */}
-        <g
-          filter="url(#gtd-glow)"
-          opacity="0.35"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        >
-          <path d="M100 4 Q100 32 200 46" />
-          <path d="M300 4 Q300 32 200 46" />
-        </g>
 
         {/* сами линии */}
         <g
@@ -281,13 +264,9 @@ const GTDAggregation: React.FC = () => (
         <defs>
           <linearGradient id="gtd-line-bottom" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%"   stopColor="currentColor" stopOpacity="0.85" />
-            <stop offset="60%"  stopColor="currentColor" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
           </linearGradient>
           <radialGradient id="gtd-node-bottom" cx="35%" cy="30%" r="65%">
-            <stop offset="0%"   stopColor="#ffffff"       stopOpacity="0.95" />
             <stop offset="55%"  stopColor="currentColor"  stopOpacity="0.55" />
-            <stop offset="100%" stopColor="currentColor"  stopOpacity="0.3" />
           </radialGradient>
         </defs>
 
@@ -809,6 +788,22 @@ const PageBackdrop: React.FC = () => (
         /* если reduced-motion: показать только первую рекомендацию */
         .ai-reco-a { opacity: 1; }
         .ai-reco-b { opacity: 0; }
+      }
+      @media (max-width: 767px) {
+        #usecases .backdrop-blur-sm,
+        #usecases .backdrop-blur-md,
+        #usecases .backdrop-blur-xl,
+        #usecases .backdrop-blur-2xl {
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+        #usecases .shadow-sm,
+        #usecases .shadow-md,
+        #usecases .shadow-lg,
+        #usecases .shadow-xl,
+        #usecases .shadow-2xl {
+          box-shadow: none !important;
+        }
       }
     `}</style>
 
@@ -1677,9 +1672,8 @@ const SlideFlight: React.FC<SlideProps> = ({ mobile }) => (
   <div className={SLIDE_PAD(mobile)}>
     <div className={cn("max-w-5xl mx-auto", SLIDE_INNER(mobile))}>
       <div className={SLIDE_HEAD(mobile)}>
-        <Badge className="text-eyebrow mb-3">{tr("Парсинг документов", "Document parsing")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
-          {tr("Пересылайте события — Deyla всё спланирует", "Forward events — Deyla plans the rest")}
+          {tr("Пересылайте события", "Forward events")}
         </h2>
       </div>
 
@@ -1775,8 +1769,6 @@ const USE_CASE_SLIDES: { id: string; render: (mobile: boolean) => React.ReactNod
   { id: "finance", render: (mobile) => <SlideFinance mobile={mobile} /> },
   { id: "gtd",     render: (mobile) => <SlideGTD mobile={mobile} />     },
 ];
-
-const SWIPE_MIN_PX = 40;
 
 const UserCaseCarousel: React.FC<{
   /** Оставлен для обратной совместимости. Больше не используется. */
@@ -1887,7 +1879,7 @@ const UserCaseCarousel: React.FC<{
       aria-roledescription="carousel"
       aria-label={tr("Сценарии использования", "Use cases")}
     >
-      <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col pt-14 md:pt-0">
+      <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col">
         <div ref={stageRef} className="relative flex-1 w-full overflow-hidden">
           <div
             ref={trackRef}
@@ -1951,12 +1943,9 @@ const DesktopAgentVideoSection: React.FC = () => {
     <section className="relative py-16 md:py-24 px-4 md:px-6">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8 md:mb-12 text-center">
-          <Badge className="text-eyebrow mb-3">
-            {tr("Парсинг документов", "Document parsing")}
-          </Badge>
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
             {tr(
-              "Deyla может взять тяжёлую задачу и самостоятельно вести её дальше",
+              "Deyla может взять тяжёлую задачу на себя",
               "Deyla can take a project and run with it"
             )}
           </h2>
@@ -2032,76 +2021,64 @@ const DesktopAgentVideoSection: React.FC = () => {
 const SCREENSHOTS = [
   {
     id: "today",
-    image: "/images/functional/today.png",
+    lightImage: "/images/functional/whitetheme/today.png",
+    darkImage: "/images/functional/darktheme/today.png",
     scale: 1.0,
-    title: "Передовой ИИ, на который можно положиться",
-    description: "Все задачи, встречи и дедлайны собраны в одном месте. Deyla работает 24/7, чтобы вы не работали по вечерам.",
+    title: "Все задачи, встречи и дедлайны собраны в одном месте. Deyla работает 24/7, чтобы вы не работали по вечерам.",
+    description: "",
   },
   {
     id: "assistant",
-    image: "/images/functional/assistant.png",
+    lightImage: "/images/functional/whitetheme/assistant.png",
+    darkImage: "/images/functional/darktheme/assistant.png",
     scale: 0.8,
     title: "Развивайте идеи и делитесь обратной связью прямо в диалоге. Чем больше вы работаете вместе, тем лучше Deyla понимает ваши предпочтения и ход мыслей.",
     description: "",
   },
   {
     id: "thisweek",
-    image: "/images/functional/thisweek.png",
+    lightImage: "/images/functional/whitetheme/calendar.png",
+    darkImage: "/images/functional/darktheme/calendar.png",
     scale: 1.35,
     title: "Расширение ваших возможностей",
     description: "Когда Deyla знает ваши цели и требования, вы можете браться за большее, не руководя каждым шагом.",
   },
   {
     id: "anonymizeddata",
-    image: "/images/functional/anonymizeddata.png",
+    lightImage: "/images/functional/whitetheme/dashboard.png",
+    darkImage: "/images/functional/darktheme/dashboard.png",
     scale: 0.9,
     title: "Контроль всегда остаётся у вас",
-    description: "Deyla использует механизмы шифрования информации и меры конфиденциальности. Все данные обезличены.",
+    description: "Deyla использует механизмы защиты информации и меры конфиденциальности. Все данные обезличены.",
   },
 ];
-/* ─── Эталон высоты для скриншотов ───
-   «anonymizeddata» — самый короткий слайд; все, что выше,
-   обрезаем снизу до его высоты, чтобы ряд смотрелся ровно. */
-const SCREENSHOT_BASE_MAX_VH = 53;   // было 80 / 1.5
-const SCREENSHOT_REF_ID = "anonymizeddata";
-const SCREENSHOT_REF_SCALE =
-  SCREENSHOTS.find((s) => s.id === SCREENSHOT_REF_ID)?.scale ?? 0.9;
-const SCREENSHOT_UNIFORM_MAX_HEIGHT_VH =
-  SCREENSHOT_BASE_MAX_VH * SCREENSHOT_REF_SCALE;
+
+
+const useIsDarkTheme = () => {
+  const [isDark, setIsDark] = React.useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return document.documentElement.classList.contains("dark");
+  });
+  React.useLayoutEffect(() => {
+    const update = () => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    };
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+  return isDark;
+};
 
 /* ─── Настройки ─── */
 // Halos
 const HALO_SCALE_1 = 1.08;
-const HALO_BLUR_1  = 8;
-const HALO_SCALE_2 = 1.20;
-const HALO_BLUR_2  = 24;
-const HALO_SCALE_3 = 1.35;
-const HALO_BLUR_3  = 48;
-
-
-// ─── Halo подписи ───
-// ─── Halo подписи ───
-// 1) Размер: насколько halo выходит за карточку
-const TEXT_HALO_INSET_X = 60;   // горизонтальный вынос (px)
-const TEXT_HALO_INSET_Y = 90;   // вертикальный вынос (px) — больше = выше ореол
-
-// 2) Ширина растворения (px). Правило: FEATHER <= INSET_X,
-//    тогда к боковым краям карточки halo уже полностью плотный.
-const TEXT_HALO_FEATHER = 60;
-
-// 3) Плотность и цвет
-const TEXT_HALO_BG   = "rgba(255,255,255,0.98)";  // почти белый
-const TEXT_HALO_BLUR = 4;                          // лёгкое смягчение для округления углов
-const TEXT_HALO_INSET_PX = 30;     // насколько halo выходит за карточку
-const TEXT_HALO_BLUR_PX  = 24;     // сила blur
-const TEXT_HALO_CENTER   = "rgba(255,255,255,0.98)";  // центр halo
-const TEXT_HALO_MID      = "rgba(255,255,255,0.55)";  // середина затухания
-const TEXT_HALO_EDGE     = "rgba(255,255,255,0)";     // край
-
-// ─── Карточка подписи — белая ───
-const TEXT_CARD_BG       = "bg-white";
-const TEXT_CARD_SHADOW   = "0 2px 12px rgba(15,23,42,0.08)";
-const TEXT_CARD_FEATHER_PX = 6;    // маленький feather, только для смягчения краёв
+const HALO_BLUR_1  = 20;
+const HALO_SCALE_2 = 1.15;
+const HALO_BLUR_2  = 50;
+const HALO_SCALE_3 = 1.25;
+const HALO_BLUR_3  = 120;
 
 // ─── Градиентный текст (фиолетовый → синий → зелёный) ───
 const TEXT_TITLE_GRADIENT =
@@ -2205,20 +2182,28 @@ const SecurityLockOverlay: React.FC<{ secProgress: number }> = ({ secProgress })
 };
 
 // ─── Растворение скриншотов в фоне ───
-const SHARP_FEATHER_PCT = 15;      // ← 7% от каждой стороны, а не 24 px
-const HALO_FEATHER_PCT  = 40;     // (halo остаются в px — они и так размыты)
-const HALO_FEATHER_STEP = 20;
+const SHARP_FEATHER_PCT = 40;      // Увеличили для более мягких краев основной картинки
+const HALO_FEATHER_PCT  = 60;
+const HALO_FEATHER_STEP = 40;
 
 const makeFeatherMask = (featherPx: number) => `
   linear-gradient(to right,
-    transparent 0,
+    transparent 0%,
+    rgba(0,0,0,0.2) ${featherPx * 0.2}px,
+    rgba(0,0,0,0.8) ${featherPx * 0.5}px,
     black ${featherPx}px,
     black calc(100% - ${featherPx}px),
+    rgba(0,0,0,0.8) calc(100% - ${featherPx * 0.5}px),
+    rgba(0,0,0,0.2) calc(100% - ${featherPx * 0.2}px),
     transparent 100%),
   linear-gradient(to bottom,
-    transparent 0,
+    transparent 0%,
+    rgba(0,0,0,0.2) ${featherPx * 0.2}px,
+    rgba(0,0,0,0.8) ${featherPx * 0.5}px,
     black ${featherPx}px,
     black calc(100% - ${featherPx}px),
+    rgba(0,0,0,0.8) calc(100% - ${featherPx * 0.5}px),
+    rgba(0,0,0,0.2) calc(100% - ${featherPx * 0.2}px),
     transparent 100%)
 `;
 
@@ -2272,22 +2257,18 @@ const FeatureScreenshotsCarousel: React.FC = () => {
   return isMobile ? <FeatureScreenshotsMobile /> : <FeatureScreenshotsDesktop />;
 };
 
-const SCREENSHOT_BASE_MOBILE_SVH = 38;
-const SCREENSHOT_UNIFORM_MAX_HEIGHT_MOBILE_SVH =
-  SCREENSHOT_BASE_MOBILE_SVH * SCREENSHOT_REF_SCALE;   // 38 × 0.9 = 34.2 svh
-
 /* ═══════════════════════════════════════════════════════════
    MOBILE — baked CSS-animations triggered by finger scroll
    ═══════════════════════════════════════════════════════════ */
 const FeatureScreenshotsMobile: React.FC = () => {
+  const isDark = useIsDarkTheme();
   const containerRef = React.useRef<HTMLElement>(null);
   const slideRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const imageRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const textRefs = React.useRef<(HTMLDivElement | null)[]>([]);
-  const sharpRefs = React.useRef<(HTMLImageElement | null)[]>([]);   // ← добавьте эту строку
+  const sharpRefs = React.useRef<(HTMLImageElement | null)[]>([]);
   const total = SCREENSHOTS.length;
 
-  /* Базовая высота картинки на мобилке. */
   const SCREENSHOT_BASE_MOBILE_SVH = 38;
 
   React.useLayoutEffect(() => {
@@ -2310,12 +2291,10 @@ const FeatureScreenshotsMobile: React.FC = () => {
         const absOff = Math.abs(offset);
         const eased = Math.pow(absOff, 1.2);
 
-        // slideOpacity — ровно как desktop
         const falloff = offset < 0 ? OPACITY_FALLOFF_EXIT : OPACITY_FALLOFF_ENTER;
         const slideOpacity = Math.pow(Math.max(0, 1 - eased), falloff);
         const slideScale = 1 + eased * (SLIDE_MAX_SCALE - 1);
 
-        // textOpacity — ровно как desktop
         const textOpacity =
           absOff <= TEXT_FADE_START ? 1 :
           absOff >= TEXT_FADE_END ? 0 :
@@ -2347,18 +2326,17 @@ const FeatureScreenshotsMobile: React.FC = () => {
         }
 
         const textEl = textRefs.current[i];
-          if (textEl) {
-            // ─── как desktop: blur и scale растут с расстоянием ───
-            const textBlurT = Math.min(1, absOff / TEXT_FADE_END);
-            const textBlur  = TEXT_BLUR_MAX_PX * Math.pow(textBlurT, TEXT_BLUR_POWER);
+        if (textEl) {
+          const textBlurT = Math.min(1, absOff / TEXT_FADE_END);
+          const textBlur  = TEXT_BLUR_MAX_PX * Math.pow(textBlurT, TEXT_BLUR_POWER);
 
-            const textT     = Math.min(1, absOff / TEXT_FADE_END);
-            const textScale = 1 + Math.pow(textT, TEXT_EXPAND_POWER) * 2;
+          const textT     = Math.min(1, absOff / TEXT_FADE_END);
+          const textScale = 1 + Math.pow(textT, TEXT_EXPAND_POWER) * 2;
 
-            textEl.style.opacity = textOpacity.toFixed(3);
-            textEl.style.transform = `scale(${textScale.toFixed(3)})`;
-            textEl.style.filter = textBlur > 0.15 ? `blur(${textBlur.toFixed(2)}px)` : "none";
-          }
+          textEl.style.opacity = textOpacity.toFixed(3);
+          textEl.style.transform = `scale(${textScale.toFixed(3)})`;
+          textEl.style.filter = textBlur > 0.15 ? `blur(${textBlur.toFixed(2)}px)` : "none";
+        }
       });
     };
 
@@ -2377,138 +2355,103 @@ const FeatureScreenshotsMobile: React.FC = () => {
     };
   }, [total]);
 
-  return (
+    return (
     <section
       ref={containerRef}
       className="relative"
       style={{ height: `calc(100svh * ${total})` }}
     >
-      <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col">
-        <div className="shrink-0 relative z-10 pt-14">
-          <div className="max-w-6xl mx-auto px-4 pt-4 pb-6">
-            <Badge className="text-eyebrow mb-3">Интерфейс</Badge>
-            <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
-              Почему это работает
+      <div className="sticky top-0 h-[100svh] overflow-hidden">
+        {/* 🔥 Заголовок сделан absolute, чтобы он не сдвигал контент вниз */}
+        <div className="absolute top-10 left-0 w-full z-30 pt-14 pointer-events-none">
+          <div className="text-center max-w-6xl w-full mx-auto px-4">
+            <h2 className="text-3xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
+              {tr(
+                "И помочь довести работу",
+                "Deyla can halp a project"
+              )}
             </h2>
           </div>
         </div>
 
-        <div className="relative flex-1">
-          {SCREENSHOTS.map((item, i) => {
-            const perScale = item.scale || 1;
-            const imgMaxH = SCREENSHOT_BASE_MOBILE_SVH * perScale;
+        {/* 🔥 Слайды занимают 100% высоты экрана и центрируются ровно посередине */}
+        {SCREENSHOTS.map((item, i) => {
+          const imgSrc = isDark ? item.darkImage : item.lightImage;
+          const perScale = item.scale || 1;
+          const imgMaxH = SCREENSHOT_BASE_MOBILE_SVH * perScale;
+          
+          const containerMaxH = Math.min(imgMaxH, 70);
 
-            return (
-              <div
-                key={item.id}
-                ref={(el) => { slideRefs.current[i] = el; }}
-                className="absolute inset-0 flex items-center justify-center px-4 py-4 pointer-events-none"
-                style={{ opacity: 0, visibility: "hidden", transition: "none" }}
-              >
-                <div className="flex flex-col items-center gap-6 w-full max-w-[360px]">
-                  {/* ── Тот же блок, что на десктопе: 3 halo + sharp ── */}
+          return (
+            <div
+              key={item.id}
+              ref={(el) => { slideRefs.current[i] = el; }}
+              className="absolute inset-0 flex flex-col items-center justify-center px-2 pointer-events-none"
+              style={{ opacity: 0, visibility: "hidden", transition: "none" }}
+            >
+              <div className="flex flex-col items-center gap-6 w-full max-w-full">
+                
+                {/* ── Резкая картинка ── */}
+                <div
+                  ref={(el) => { imageRefs.current[i] = el; }}
+                  className="relative w-full isolate will-change-transform flex justify-center"
+                >
                   <div
-                    ref={(el) => { imageRefs.current[i] = el; }}
-                    className="relative inline-block isolate will-change-transform"
+                    className="relative z-10 overflow-hidden rounded-[24px] w-full flex justify-center"
+                    style={{ maxHeight: `${containerMaxH}svh` }}
                   >
-                    {/* Halo 1 — pixel feather 40px */}
                     <img
-                      src={item.image}
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full rounded-[24px] pointer-events-none select-none z-0"
+                      ref={(el) => { sharpRefs.current[i] = el; }}
+                      src={imgSrc}
+                      alt={item.title || item.description}
+                      className="block select-none pointer-events-none w-full object-contain"
                       style={{
-                        ...makeFeatherStyle(HALO_FEATHER_PCT),
-                        transform: `scale(${HALO_SCALE_1})`,
-                        filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
+                        ...makeFeatherStyle(SHARP_FEATHER_PCT),
+                        maxHeight: `${containerMaxH}svh`,
                       }}
                       loading="eager"
+                      decoding="async"
                     />
-                    {/* Halo 2 — 60px */}
-                    <img
-                      src={item.image}
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full rounded-[24px] pointer-events-none select-none z-0"
-                      style={{
-                        ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP),
-                        transform: `scale(${HALO_SCALE_2})`,
-                        filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
-                      }}
-                      loading="eager"
-                    />
-                    {/* Halo 3 — 80px */}
-                    <img
-                      src={item.image}
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full rounded-[24px] pointer-events-none select-none z-0"
-                      style={{
-                        ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP * 2),
-                        transform: `scale(${HALO_SCALE_3})`,
-                        filter: `blur(${HALO_BLUR_3}px) saturate(1.2)`,
-                      }}
-                      loading="eager"
-                    />
-
-                    {/* Sharp image — 15px pixel feather + rounded clip */}
-                    <div
-  className="relative z-10 inline-block overflow-hidden rounded-[24px]"
-  style={{ maxHeight: `${SCREENSHOT_UNIFORM_MAX_HEIGHT_MOBILE_SVH}svh` }}
->
-  <img
-    ref={(el) => { sharpRefs.current[i] = el; }}   // ← новое
-    src={item.image}
-    alt={item.title || item.description}
-    className="block select-none pointer-events-none"
-    style={{
-      ...makeFeatherStyle(SHARP_FEATHER_PCT),
-      maxHeight: `${imgMaxH}svh`,
-      maxWidth: "100%",
-      width: "auto",
-      height: "auto",
-      // filter управляется из apply() через ref — не дублируем в style
-    }}
-    loading="eager"
-    decoding="async"
-  />
-</div>
-                    {item.id === "anonymizeddata" && (
-                      <div
-                        className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-                        role="img"
-                        aria-label="Данные защищены"
-                      >
-                        <div className="rounded-2xl ring-1 ring-white/50 bg-white/85 p-3 shadow-lg">
-                          <Lock className="w-8 h-8 text-blue-600" strokeWidth={2.5} aria-hidden="true" />
-                        </div>
-                      </div>
-                    )}
                   </div>
 
-                  {/* ── Текст под картинкой, своя кривая opacity ── */}
-                  <div
-  ref={(el) => { textRefs.current[i] = el; }}
-  className="text-center px-2 max-w-[320px]"
-  style={{
-    opacity: 0,
-    transform: "scale(1)",
-    transformOrigin: "center top",
-    filter: "none",
-    willChange: "transform, opacity",
-  }}
->
-  {item.title && (
-    <h3 className={cn("text-base font-semibold mb-1", TEXT_TITLE_GRADIENT)}>
-      {item.title}
-    </h3>
-  )}
-  <p className={cn("text-sm leading-snug", TEXT_DESC_GRADIENT)}>
-    {item.description}
-  </p>
-</div>
+                  {item.id === "anonymizeddata" && (
+                    <div
+                      className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+                      role="img"
+                      aria-label="Данные защищены"
+                    >
+                      <div className="rounded-2xl ring-1 ring-white/50 bg-white/85 p-3 shadow-lg">
+                        <Lock className="w-8 h-8 text-blue-600" strokeWidth={2.5} aria-hidden="true" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Текст под картинкой ── */}
+                <div
+                  ref={(el) => { textRefs.current[i] = el; }}
+                  className="text-center px-4 max-w-[90%]"
+                  style={{
+                    opacity: 0,
+                    transform: "scale(1)",
+                    transformOrigin: "center top",
+                    filter: "none",
+                    willChange: "transform, opacity",
+                  }}
+                >
+                  {item.title && (
+                    <h3 className={cn("text-base font-semibold mb-1", TEXT_TITLE_GRADIENT)}>
+                      {item.title}
+                    </h3>
+                  )}
+                  <p className={cn("text-sm leading-snug", TEXT_DESC_GRADIENT)}>
+                    {item.description}
+                  </p>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -2518,6 +2461,7 @@ const FeatureScreenshotsMobile: React.FC = () => {
    DESKTOP — исходный эффект, но без лагов
    ═══════════════════════════════════════════════════════════ */
 const FeatureScreenshotsDesktop: React.FC = () => {
+  const isDark = useIsDarkTheme(); // ← добавить
   const containerRef = React.useRef<HTMLElement>(null);
   const total = SCREENSHOTS.length
   const [rawProgress, setRawProgress] = React.useState(0);
@@ -2588,19 +2532,27 @@ const FeatureScreenshotsDesktop: React.FC = () => {
             aria-hidden="true"
             className="absolute inset-0 bg-gradient-to-b from-white via-white/95 to-transparent dark:from-gray-950 dark:via-gray-950/95 dark:to-transparent pointer-events-none"
           />
-          <div className="relative max-w-6xl w-full mx-auto px-4 md:px-6 pt-6 md:pt-10 pb-8">
-            <Badge className="text-eyebrow mb-3">Интерфейс</Badge>
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white">
-              Почему это работает
-            </h2>
-          </div>
+          
+        <div className="mb-8 text-center relative max-w-6xl w-full mx-auto px-4 md:px-6 pt-6 md:pt-20 pb-8">
+          <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
+            {tr(
+              "И помочь довести работу",
+              "Deyla can halp a project"
+            )}
+          </h2>
+        </div>
         </div>
 
         <div className="relative flex-1">
           {SCREENSHOTS.map((item, i) => {
+            const imgSrc = isDark ? item.darkImage : item.lightImage; // ← добавить
             const offset = i - currentFloat;
             const absOff = Math.abs(offset);
             const eased  = Math.pow(absOff, 1.2);
+            const BASE_DESKTOP_VH = 53; // бывшая SCREENSHOT_BASE_MAX_VH
+            const perScale = item.scale || 1;
+            const imgMaxW = BASE_DESKTOP_VH * perScale;
+            const imgMaxH = BASE_DESKTOP_VH * perScale;
 
             const textOpacity =
               absOff <= TEXT_FADE_START ? 1 :
@@ -2636,9 +2588,7 @@ const FeatureScreenshotsDesktop: React.FC = () => {
             // Fully invisible → skip painting entirely.
             const hidden = slideOpacity < 0.01 && textOpacity < 0.01;
 
-            const perScale = item.scale || 1;
-            const imgMaxW = SCREENSHOT_BASE_MAX_VH * perScale;
-            const imgMaxH = SCREENSHOT_BASE_MAX_VH * perScale;
+            const containerMaxH = Math.min(imgMaxH, 56);
 
             return (
               <div
@@ -2659,7 +2609,7 @@ const FeatureScreenshotsDesktop: React.FC = () => {
     {/* ── Скриншот + halo + замок ── */}
     <div className="relative inline-block isolate">
       <img
-        src={item.image}
+        src={imgSrc}
         aria-hidden="true"
         className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
         style={{
@@ -2669,7 +2619,7 @@ const FeatureScreenshotsDesktop: React.FC = () => {
         }}
       />
       <img
-        src={item.image}
+        src={imgSrc}
         aria-hidden="true"
         className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
         style={{
@@ -2679,7 +2629,7 @@ const FeatureScreenshotsDesktop: React.FC = () => {
         }}
       />
       <img
-        src={item.image}
+        src={imgSrc}
         aria-hidden="true"
         className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
         style={{
@@ -2691,10 +2641,10 @@ const FeatureScreenshotsDesktop: React.FC = () => {
 
       <div
         className="relative z-10 inline-block overflow-hidden rounded-[24px] md:rounded-[32px]"
-        style={{ maxHeight: `${SCREENSHOT_UNIFORM_MAX_HEIGHT_VH}vh` }}
+        style={{ maxHeight: `${containerMaxH}vh` }}
       >
         <img
-          src={item.image}
+          src={imgSrc}
           alt={item.title}
           className="block select-none pointer-events-none"
           style={{
