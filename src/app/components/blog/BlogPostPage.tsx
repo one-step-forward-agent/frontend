@@ -6,7 +6,8 @@ import { LOCALE, tr } from "@/i18n";
 import { cn } from "@/utils/cn";
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
-import { blogApi } from "@/app/lib/blogApi";
+import { api } from "@/app/api/client";
+import { trackReading } from "@/app/lib/blogApi";
 import type { BlogPost } from "@/types/blog";
 import { BLOG_HEADING_GRADIENT, BLOG_TAG_PILL, renderBlocks } from "./BlogRenderer";
 
@@ -46,15 +47,33 @@ function useSeo(post: BlogPost | null) {
 
 export default function BlogPostPage() {
   const { slug = "" } = useParams();
-  const [post, setPost] = React.useState<BlogPost | null>(() => blogApi.getBySlug(slug));
+  // undefined: loading; null: no such published post
+  const [post, setPost] = React.useState<BlogPost | null | undefined>(undefined);
+  const article = React.useRef<HTMLElement>(null);
 
   React.useEffect(() => {
-    setPost(blogApi.getBySlug(slug));
-    const on = () => setPost(blogApi.getBySlug(slug));
-    window.addEventListener("blog:changed", on);
-    return () => window.removeEventListener("blog:changed", on);
+    setPost(undefined);
+    api.blog.post(slug).then(setPost).catch(() => setPost(null));
   }, [slug]);
-  useSeo(post);
+  useSeo(post ?? null);
+
+  // The view counts once the post is on the screen; reading time and depth follow until the reader leaves
+  const shownSlug = post?.slug;
+  React.useEffect(() => {
+    if (!shownSlug) return;
+    return trackReading(shownSlug, api.blog.startView, () => article.current);
+  }, [shownSlug]);
+
+  if (post === undefined) {
+    return (
+      <div className="relative min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
+        <LandingHeader />
+        <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 pt-32 pb-20 text-gray-500 dark:text-gray-400">
+          {tr("Загрузка…", "Loading…")}
+        </main>
+      </div>
+    );
+  }
 
   if (!post || post.status !== "published") {
     return (
@@ -78,7 +97,7 @@ export default function BlogPostPage() {
     <div className="relative min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white overflow-x-clip">
       <LandingHeader />
       <main className="relative z-10">
-        <article className="max-w-3xl mx-auto px-4 md:px-6 pt-28 md:pt-36 pb-20">
+        <article ref={article} className="max-w-3xl mx-auto px-4 md:px-6 pt-28 md:pt-36 pb-20">
           <Link to="/blog" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-8">
             <ArrowLeft size={14} /> {tr("Все статьи", "All posts")}
           </Link>

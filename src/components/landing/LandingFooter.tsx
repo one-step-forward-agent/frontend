@@ -48,7 +48,7 @@ const LandingFooter: React.FC = () => {
             {config?.online && (
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {tr("Deyla работает 24/7, чтобы вы не работали по вечерам", "All systems operational")}
+                {tr("Deyla работает 24/7, чтобы вы не работали по вечерам", "Deyla works 24/7 so you don't have to work evenings")}
               </div>
             )}
           </div>

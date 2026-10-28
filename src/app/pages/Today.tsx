@@ -41,9 +41,6 @@ const EVENING_HOUR = 18;
 
 const PAGE = "relative max-w-5xl mx-auto pt-[1.5vh]";
 
-const movable = (event: CalendarEvent) =>
-  event.all_day && !event.completed_at && !event.series_id && !event.is_fixed;
-
 // Meetings from other calendars cannot be ticked here: once over, they simply happened
 const EXTERNAL_SOURCES = ["google", "apple", "jira", "notion"];
 
@@ -59,7 +56,8 @@ const calendarLink = (view: "day" | "week", day: Date) =>
 export function TodayPage() {
   useTitle(tr("Сегодня", "Today"));
   const user = useUser();
-  const now = new Date();
+  // Ticks every minute: a task whose time is over joins the card without a reload
+  const now = useNow();
   const today = useToday();
 
   const events = useAsync(
@@ -88,12 +86,15 @@ export function TodayPage() {
   useCalendarSync();
 
   const todays = (events.data ?? []).filter((event) => occursOn(event, today));
-  const untimed = todays.filter((event) => event.all_day);
   const overdue = (events.data ?? []).filter(
     (event) => unfinished(event) && new Date(event.end_at) <= today
   );
-  const leftToday =
-    now.getHours() >= EVENING_HOUR ? untimed.filter(movable) : [];
+  // A task whose time is over and not ticked counts at any hour; in the evening every unticked one of today does,
+  // with a time or without
+  const evening = now.getHours() >= EVENING_HOUR;
+  const leftToday = todays.filter(
+    (event) => unfinished(event) && (evening || (!event.all_day && new Date(event.end_at) <= now))
+  );
 
   return (
     <div className="relative max-w-3xl mx-auto pt-[1.5vh]">
@@ -337,9 +338,11 @@ function MoveSuggestion({
 
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-gray-900 dark:text-white">
-            {overdue.length
-              ? `${tr("Не завершено с прошлых дней", "Unfinished from previous days")}: ${overdue.length}`
-              : `${tr("Не успеваете? Осталось задач", "Running late? Tasks left")}: ${leftToday.length}`}
+            {overdue.length && leftToday.length
+              ? `${tr("Не завершено", "Unfinished")}: ${items.length}`
+              : overdue.length
+                ? `${tr("Не завершено с прошлых дней", "Unfinished from previous days")}: ${overdue.length}`
+                : `${tr("Не успеваете? Осталось задач", "Running late? Tasks left")}: ${leftToday.length}`}
           </p>
 
           {expanded ? (

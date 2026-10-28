@@ -20,6 +20,8 @@ const when = (value: string) => new Date(value).toLocaleString("ru-RU", { day: "
 
 function message(error: unknown): string {
   if (error instanceof ApiError && error.status === 403) return "Раздел только для администраторов";
+  // The site is newer than the server: the section's API is not deployed yet
+  if (error instanceof ApiError && error.status === 404) return "На сервере ещё нет этого раздела — обновите бэкенд";
   return error instanceof Error ? error.message : "Не получилось — попробуйте ещё раз";
 }
 

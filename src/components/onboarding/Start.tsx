@@ -328,13 +328,13 @@ const GTD_RESPONSE = (
         <div>
           <p className="font-semibold text-gray-900 dark:text-white">{tr("Чт, 03.10", "Thu, 03.10")}</p>
           <p className="text-gray-600 dark:text-gray-300">
-            {tr("09:00–10:30 — Ревью PR #482 · 11:00–12:00", "09:00–10:30 — Review PR #482")}
+            {tr("09:00–10:30 — Ревью PR #482 · 11:00–12:00", "09:00–10:30 — Review PR #482 · 11:00–12:00")}
           </p>
         </div>
         <div>
           <p className="font-semibold text-gray-900 dark:text-white">{tr("Пт, 04.10", "Fri, 04.10")}</p>
           <p className="text-gray-600 dark:text-gray-300">
-            {tr("09:00–10:00 — Ответить клиенту · 10:00–12:00", "09:00–10:00 — Reply to the client")}
+            {tr("09:00–10:00 — Ответить клиенту · 10:00–12:00", "09:00–10:00 — Reply to the client · 10:00–12:00")}
           </p>
         </div>
         <div>
@@ -939,17 +939,17 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
         </Badge>
 
         <h1 className="text-eyebrowtext-4xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
-          {tr("Deyla заберёт", "Plan your day")}{" "}
+          {tr("Deyla заберёт", "Deyla takes")}{" "}
           <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-            {tr("от 1 часа", "in a minute")}
+            {tr("от 1 часа", "an hour or more")}
           </span>
-          {tr(" Вашей работы", "")}{" "}
+          {tr(" Вашей работы", " of work off your plate")}{" "}
         </h1>
 
         <p className="mt-5 text-lg text-gray-600 dark:text-gray-400 max-w-xl">
           {tr(
             "Скажите о своих планах — Deyla поставит их в календарь, напомнит, а ещё выполнит работу за вас",
-            "Tell Deyla your plans — it finds time in your calendar, sets priorities and reminds you"
+            "Tell Deyla your plans — it puts them in your calendar, reminds you, and even does the work for you"
           )}
         </p>
 
@@ -1000,12 +1000,12 @@ const MOCK_TASKS: Array<{
 }> = [
   { time: "11:10", title: tr("Лекция по экономике", "Economics lecture") },
   { time: "16:00", title: tr("Созвон с командой", "Team call"), isNew: true },
-  { time: "18:30", title: tr("Встреча с поставщиком", "Do the lab assignment") },
+  { time: "18:30", title: tr("Встреча с поставщиком", "Meeting with a supplier") },
 ];
 
 const AI_RECOMMENDATION_STUDENT = tr(
   "Не успели задачу? Перенесём на завтра",
-  "Didn't finish a task? Move it tomorrow"
+  "Didn't finish a task? Let's move it to tomorrow"
 );
 const AI_RECOMMENDATION_PRO = tr("Уделим больше времени изучению английского?", "Shall we spend more time on English?");
 
@@ -1416,7 +1416,7 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
         {/* ... (Остальной контент FinalCTA без изменений) ... */}
         <div className="text-center max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
-            {tr("Ваш день живёт в\u00a0Google, Notion и\u00a0блокноте.", "Your day lives in\u00a0Google, Jira, Notion and\u00a0a notebook.")}{" "}
+            {tr("Ваш день живёт в\u00a0Google, Notion и\u00a0блокноте.", "Your day lives in\u00a0Google, Notion and\u00a0a notebook.")}{" "}
             <span className="text-gray-900/85 dark:text-white/85">
               {tr("Deyla задаёт единый ритм.", "Deyla sets one rhythm.")}
             </span>
@@ -1544,7 +1544,7 @@ const SlideFlight: React.FC<SlideProps> = ({ mobile }) => (
   <div className={SLIDE_PAD(mobile)}>
     <div className={cn("max-w-5xl mx-auto", SLIDE_INNER(mobile))}>
       <div className={SLIDE_HEAD(mobile)}>
-        <Badge className="text-eyebrow mb-3">{tr("Парсинг документов", "Documents parsing")}</Badge>
+        <Badge className="text-eyebrow mb-3">{tr("Парсинг документов", "Reads your documents")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
           {tr("Пересылайте события", "Forward events")}
         </h2>
@@ -1580,10 +1580,10 @@ const SlideFinance: React.FC<SlideProps> = ({ mobile }) => (
       <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Из рабочего чата — в план", "From a work chat to your plan")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
-          {tr("Deyla работает там же, где и вы", "Deyla work where you do")}
+          {tr("Deyla работает там же, где и вы", "Deyla works where you do")}
         </h2>
         <p className="mt-3 text-gray-600 dark:text-gray-400">
-          {tr("Начните проект в Deyla, поделитесь контекстом с рабочей командой в Telegram — и позвольте Deyla довести дело до конца.", "Start a project in ChatGPT, share context with your team in Slack — and let Deyla finish the job. The assistant keeps context across all channels.")}
+          {tr("Начните проект в Deyla, поделитесь контекстом с рабочей командой в Telegram — и позвольте Deyla довести дело до конца.", "Start a project in Deyla, share the context with your team in Telegram — and let Deyla see it through.")}
         </p>
       </div>
 
@@ -1601,7 +1601,7 @@ const SlideFinance: React.FC<SlideProps> = ({ mobile }) => (
                 <strong className="font-semibold">{tr("27 декабря", "27 December")}</strong>{" "}
                 {tr(
                   "и напомню за день.",
-                  "and will remind you a day before. Confirm in a private message — it's all in the calendar"
+                  "and will remind you a day before."
                 )}
               </>
             }
@@ -1618,7 +1618,7 @@ const SlideGTD: React.FC<SlideProps> = ({ mobile }) => (
       <div className={SLIDE_HEAD(mobile)}>
         <Badge className="text-eyebrow mb-3">{tr("Систематизация и дисциплина", "Structure and discipline")}</Badge>
         <h2 className={SLIDE_TITLE(mobile)}>
-          {tr("Всё разложено по полочкам", "One sentence — and everything is in order")}
+          {tr("Всё разложено по полочкам", "Everything in its place")}
         </h2>
       </div>
 
@@ -1820,7 +1820,7 @@ const DesktopAgentVideoSection: React.FC = () => {
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
             {tr(
               "Deyla может как взять тяжёлую задачу на себя",
-              "Deyla can take a project and run with it"
+              "Deyla can take a heavy task off your hands"
             )}
           </h2>
         </div>
@@ -1898,7 +1898,7 @@ const SCREENSHOTS = [
     lightImage: "/images/functional/whitetheme/today.png",
     darkImage: "/images/functional/darktheme/today.png",
     scale: 1.0,
-    title: "Все задачи и аналитика в одном месте.",
+    title: tr("Все задачи и аналитика в одном месте.", "All your tasks and insights in one place."),
     description: "",
   },
   {
@@ -1906,7 +1906,7 @@ const SCREENSHOTS = [
     lightImage: "/images/functional/whitetheme/assistant.png",
     darkImage: "/images/functional/darktheme/assistant.png",
     scale: 0.8,
-    title: "Deyla понимает ваши предпочтения и ход мыслей.",
+    title: tr("Deyla понимает ваши предпочтения и ход мыслей.", "Deyla understands your preferences and the way you think."),
     description: "",
   },
   //{
@@ -1922,7 +1922,7 @@ const SCREENSHOTS = [
   //  lightImage: "/images/functional/whitetheme/dashboard.png",
   //  darkImage: "/images/functional/darktheme/dashboard.png",
   //  scale: 0.9,
-  //  title: "Deyla использует механизмы защиты информации и меры конфиденциальности.",
+  //  title: tr("Deyla использует механизмы защиты информации и меры конфиденциальности.", "Deyla protects your data and keeps it private."),
   //  description: "",
   //},
 ];
@@ -2027,7 +2027,7 @@ const SecurityLockOverlay: React.FC<{ secProgress: number }> = ({ secProgress })
     <div
       className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
       role="img"
-      aria-label="Данные защищены"
+      aria-label={tr("Данные защищены", "Your data is protected")}
     >
       {/* drop-анимация на внешнем слое */}
       <div className="lock-enter">
@@ -2242,7 +2242,7 @@ const FeatureScreenshotsMobile: React.FC = () => {
             <h2 className="text-3xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
               {tr(
                 "Так и помочь вам довести работу до конца",
-                "Deyla can halp a project"
+                "or help you see the work through"
               )}
             </h2>
           </div>
@@ -2295,7 +2295,7 @@ const FeatureScreenshotsMobile: React.FC = () => {
                     <div
                       className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
                       role="img"
-                      aria-label="Данные защищены"
+                      aria-label={tr("Данные защищены", "Your data is protected")}
                     >
                       <div className="rounded-2xl ring-1 ring-white/50 bg-white/85 p-3 shadow-lg">
                         <Lock className="w-8 h-8 text-blue-600" strokeWidth={2.5} aria-hidden="true" />
@@ -2416,7 +2416,7 @@ const FeatureScreenshotsDesktop: React.FC = () => {
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
             {tr(
               "Так и помочь вам довести работу до конца",
-              "Deyla can halp a project"
+              "or help you see the work through"
             )}
           </h2>
         </div>

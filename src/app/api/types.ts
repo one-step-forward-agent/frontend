@@ -210,8 +210,8 @@ export interface ChatQuestion {
   skipped?: boolean;
 }
 
-/** What the assistant answers; any kind may carry a team question. */
-export type AssistantReply = AssistantReplyBody & { question?: ChatQuestion };
+/** What the assistant answers; any kind may carry a team question and ready answers to send with one tap. */
+export type AssistantReply = AssistantReplyBody & { question?: ChatQuestion; replies?: string[] };
 
 type AssistantReplyBody =
   | {

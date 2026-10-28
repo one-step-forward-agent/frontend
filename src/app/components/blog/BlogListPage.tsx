@@ -6,18 +6,16 @@ import { LOCALE, tr } from "@/i18n";
 import { cn } from "@/utils/cn";
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
-import { blogApi } from "@/app/lib/blogApi";
+import { api } from "@/app/api/client";
 import type { BlogPost } from "@/types/blog";
 import { BLOG_HEADING_GRADIENT, BLOG_TAG_PILL } from "./BlogRenderer";
 
 export default function BlogListPage() {
-  const [posts, setPosts] = React.useState<BlogPost[]>(() => blogApi.published());
+  const [posts, setPosts] = React.useState<BlogPost[] | null>(null);
 
   React.useEffect(() => {
     document.title = tr("Блог — Deyla", "Blog — Deyla");
-    const on = () => setPosts(blogApi.published());
-    window.addEventListener("blog:changed", on);
-    return () => window.removeEventListener("blog:changed", on);
+    api.blog.posts().then(setPosts).catch(() => setPosts([]));
   }, []);
 
   return (
@@ -38,7 +36,9 @@ export default function BlogListPage() {
               "What's new in Deyla, how we build the assistant, and how teams use it")}
         </p>
 
-        {posts.length === 0 ? (
+        {posts === null ? (
+          <p className="mt-16 text-gray-500 dark:text-gray-400">{tr("Загрузка…", "Loading…")}</p>
+        ) : posts.length === 0 ? (
           <p className="mt-16 text-gray-500 dark:text-gray-400">
             {tr("Скоро", "No published posts yet")}
           </p>

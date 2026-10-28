@@ -38,7 +38,7 @@ export type BlogBlock =
   | QuoteBlock | CalloutBlock | DividerBlock;
 
 export interface BlogPost {
-  id: string;
+  id: number;
   slug: string;
   status: "draft" | "published";
   title: string;
@@ -47,9 +47,9 @@ export interface BlogPost {
   coverAlt?: string;
   tags: string[];
   author?: string;
-  publishedAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
   seo: {
     title?: string;
     description?: string;
@@ -57,4 +57,27 @@ export interface BlogPost {
     canonical?: string;
   };
   blocks: BlogBlock[];
+}
+/** What the editor sends: the post without the fields the server sets */
+export type BlogPostSave = Omit<BlogPost, "id" | "publishedAt" | "createdAt" | "updatedAt">;
+
+export interface BlogReadStats {
+  views: number;
+  /** Unique readers (one browser counts once) */
+  readers: number;
+  avg_read_seconds: number;
+  /** Average scroll depth through the article, % */
+  avg_scroll: number;
+  /** Share of views that scrolled to 90 % or further, % */
+  read_through: number;
+}
+
+/** /api/admin/blog/stats: the blog or one post over the last `days` */
+export interface BlogStats {
+  days: number;
+  totals: BlogReadStats;
+  posts: (BlogReadStats & { id: number; title: string; slug: string; status: BlogPost["status"]; views_7d: number })[];
+  daily: { date: string; views: number; readers: number }[];
+  sources: { source: string; views: number }[];
+  depth: { label: string; views: number }[];
 }

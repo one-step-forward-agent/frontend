@@ -29,7 +29,16 @@ export const tr = (ru: string, en: string): string => (isEn ? en : ru);
 /** For dates and numbers: toLocaleDateString(LOCALE, …) */
 export const LOCALE = isEn ? "en-GB" : "ru-RU";
 
-if (typeof document !== "undefined") document.documentElement.lang = lang;
+if (typeof document !== "undefined") {
+  document.documentElement.lang = lang;
+  if (isEn) {
+    // index.html is in Russian: the landing's tab and search snippet in English (the app's pages set their own title)
+    document.title = "Deyla — plan your day in a minute";
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute("content", "Deyla is a personal AI assistant: calendar, tasks and reminders in Telegram. Plan your day in a minute.");
+  }
+}
 
 export function setLang(next: Lang) {
   if (next === lang) return;

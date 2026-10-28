@@ -616,6 +616,16 @@ function ChatMessage({
               )}
             </p>
           )}
+          {/* The assistant asks or offers something: its ready answers, under the latest reply only */}
+          {onSend && reply.replies && reply.replies.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {reply.replies.map((text) => (
+                <button key={text} type="button" className={GLASS_CHIP} onClick={() => onSend(text)}>
+                  <span className="relative">{text}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {reply.question && <QuestionCard question={reply.question} messageId={message.serverId} />}
           {rating}
         </div>

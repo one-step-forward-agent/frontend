@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowUp, ArrowDown, Plus, Trash2, Image as ImageIcon,
   Heading1, Heading2, Heading3, Quote, Info, Minus, Save, Eye,
@@ -9,7 +9,8 @@ import { Button } from "@/app/components/ui";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
 import { tr } from "@/i18n";
-import { blogApi, makeSlug, newBlockId } from "@/app/lib/blogApi";
+import { api } from "@/app/api/client";
+import { makeSlug, newBlockId, toSave } from "@/app/lib/blogApi";
 import type { BlogBlock, BlogBlockType, BlogPost } from "@/types/blog";
 import { BLOG_HEADING_GRADIENT, renderBlocks } from "./BlogRenderer";
 
@@ -45,6 +46,36 @@ const textareaCls =
   "bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 " +
   "backdrop-blur-xl outline-none focus:ring-blue-400/60 " +
   "text-gray-900 dark:text-white placeholder:text-gray-400 resize-y";
+
+/* ─── Картинка: ссылка или загруженный файл ─── */
+const PictureInput = ({ value, onChange, placeholder }: { value: string; onChange: (url: string) => void; placeholder: string }) => {
+  const [busy, setBusy] = React.useState(false);
+  const [problem, setProblem] = React.useState<string | null>(null);
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      onChange((await api.admin.uploadBlogImage(file)).url);
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : "Не получилось загрузить");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div>
+      <div className="flex gap-2">
+        <input className={inputCls} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
+        <label className={cn("shrink-0 inline-flex items-center gap-1.5 px-3 h-10 rounded-xl text-sm cursor-pointer bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06]", busy && "opacity-50 pointer-events-none")}>
+          <ImageIcon size={14} /> {busy ? "Загрузка…" : "Загрузить"}
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ""; }} />
+        </label>
+      </div>
+      {problem && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{problem}</p>}
+    </div>
+  );
+};
 
 /* ─── Кнопка «добавить блок» ─── */
 const AddBlockMenu = ({ onAdd }: { onAdd: (t: BlogBlockType) => void }) => {
@@ -148,9 +179,8 @@ const BlockCard = ({
 
       {block.type === "image" && (
         <div className="space-y-2">
-          <input className={inputCls} placeholder="URL изображения"
-            value={block.src}
-            onChange={(e) => update({ src: e.target.value } as Partial<BlogBlock>)} />
+          <PictureInput placeholder="URL изображения" value={block.src}
+            onChange={(src) => update({ src } as Partial<BlogBlock>)} />
           <input className={inputCls} placeholder="Alt-текст"
             value={block.alt}
             onChange={(e) => update({ alt: e.target.value } as Partial<BlogBlock>)} />
@@ -197,27 +227,54 @@ const BlockCard = ({
 };
 
 /* ─── Основной редактор ─── */
-const BlogEditor: React.FC<{ id: string }> = ({ id }) => {
-  const navigate = useNavigate();
-  const [post, setPost] = React.useState<BlogPost | null>(() => blogApi.getById(id));
+const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
+  const [post, setPost] = React.useState<BlogPost | null>(null);
+  const [loading, setLoading] = React.useState(true);
   const [preview, setPreview] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const [problem, setProblem] = React.useState<string | null>(null);
+  // Unsaved edits: leaving asks first
+  const [dirty, setDirty] = React.useState(false);
   const dragFrom = React.useRef<number | null>(null);
 
   React.useEffect(() => {
-    setPost(blogApi.getById(id));
+    setLoading(true);
+    api.admin.blogPost(id).then(setPost).catch(() => setPost(null)).finally(() => setLoading(false));
   }, [id]);
 
+  React.useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  if (loading) return <p className="p-6 text-gray-500">Загрузка…</p>;
   if (!post) {
     return <p className="p-6 text-gray-500">Пост не найден. <Link className="text-blue-600" to="/dashboard/blog">Назад</Link></p>;
   }
 
-  const patch = (p: Partial<BlogPost>) => setPost((prev) => prev ? { ...prev, ...p } : prev);
+  const patch = (p: Partial<BlogPost>) => {
+    setDirty(true);
+    setPost((prev) => prev ? { ...prev, ...p } : prev);
+  };
 
-  const save = (status?: BlogPost["status"]) => {
+  const save = async (status?: BlogPost["status"]) => {
     if (!post) return;
-    const next = blogApi.update(post.id, { ...post, ...(status ? { status } : {}) });
-    if (next) { setPost(next); setSaved(true); window.setTimeout(() => setSaved(false), 1500); }
+    setSaving(true);
+    setProblem(null);
+    try {
+      const next = await api.admin.saveBlogPost(post.id, { ...toSave(post), ...(status ? { status } : {}) });
+      setPost(next);
+      setDirty(false);
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 1500);
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : "Не получилось сохранить");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addBlock = (type: BlogBlockType) => {
@@ -251,15 +308,27 @@ const BlogEditor: React.FC<{ id: string }> = ({ id }) => {
           >
             <Eye size={14} /> {preview ? tr("Редактор", "Editor") : tr("Превью", "Preview")}
           </button>
-          <button type="button" onClick={() => save("draft")}
-            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06]">
-            <Save size={14} /> {tr("Черновик", "Draft")}
+          <button type="button" onClick={() => save()} disabled={saving}
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06] disabled:opacity-50">
+            <Save size={14} /> {tr("Сохранить", "Save")}{dirty ? " •" : ""}
           </button>
-          <button type="button" onClick={() => save("published")}
+          {post.status === "published" && (
+            <button type="button" onClick={() => save("draft")} disabled={saving}
+              className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06] disabled:opacity-50">
+              <X size={14} /> {tr("Снять с публикации", "Unpublish")}
+            </button>
+          )}
+          <button type="button" onClick={() => save("published")} disabled={saving}
             className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm text-white bg-gradient-to-br from-blue-500 to-violet-500 shadow-md hover:brightness-110">
             <CheckCircle2 size={14} /> {tr("Опубликовать", "Publish")}
           </button>
         </div>
+
+        {problem && (
+          <div className="mb-4 px-4 py-2 rounded-xl bg-red-500/10 ring-1 ring-red-400/30 text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
+            <AlertTriangle size={14} /> {problem}
+          </div>
+        )}
 
         {saved && (
           <div className="mb-4 px-4 py-2 rounded-xl bg-emerald-500/10 ring-1 ring-emerald-400/30 text-emerald-700 dark:text-emerald-300 text-sm">
@@ -286,7 +355,7 @@ const BlogEditor: React.FC<{ id: string }> = ({ id }) => {
               <div className="rounded-2xl p-4 bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 backdrop-blur-xl space-y-3">
                 <Field label={tr("Заголовок", "Title")}>
                   <input className={inputCls} value={post.title}
-                    onChange={(e) => patch({ title: e.target.value, slug: makeSlug(e.target.value) })} />
+                    onChange={(e) => patch({ title: e.target.value, ...(post.publishedAt ? {} : { slug: makeSlug(e.target.value) }) })} />
                 </Field>
                 <Field label="Slug">
                   <input className={inputCls} value={post.slug}
@@ -307,9 +376,9 @@ const BlogEditor: React.FC<{ id: string }> = ({ id }) => {
                       onChange={(e) => patch({ tags: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />
                   </Field>
                 </div>
-                <Field label={tr("Обложка (URL)", "Cover (URL)")}>
-                  <input className={inputCls} value={post.coverImage ?? ""}
-                    onChange={(e) => patch({ coverImage: e.target.value })} />
+                <Field label={tr("Обложка", "Cover")}>
+                  <PictureInput placeholder="https://… или загрузите файл" value={post.coverImage ?? ""}
+                    onChange={(coverImage) => patch({ coverImage })} />
                 </Field>
                 <Field label={tr("Alt обложки", "Cover alt")}>
                   <input className={inputCls} value={post.coverAlt ?? ""}
@@ -352,8 +421,8 @@ const BlogEditor: React.FC<{ id: string }> = ({ id }) => {
                       onChange={(e) => patch({ seo: { ...post.seo, description: e.target.value } })} />
                   </Field>
                   <Field label="OG image">
-                    <input className={inputCls} value={post.seo.ogImage ?? ""}
-                      onChange={(e) => patch({ seo: { ...post.seo, ogImage: e.target.value } })} />
+                    <PictureInput placeholder="По умолчанию — обложка" value={post.seo.ogImage ?? ""}
+                      onChange={(ogImage) => patch({ seo: { ...post.seo, ogImage } })} />
                   </Field>
                   <Field label="Canonical">
                     <input className={inputCls} value={post.seo.canonical ?? ""}
@@ -369,9 +438,14 @@ const BlogEditor: React.FC<{ id: string }> = ({ id }) => {
                   {post.publishedAt && ` · ${new Date(post.publishedAt).toLocaleDateString()}`}
                 </p>
                 {post.status === "published" && (
-                  <Link to={`/blog/${post.slug}`} className="text-sm text-blue-600 dark:text-blue-300 hover:underline">
-                    Открыть на сайте
-                  </Link>
+                  <div className="flex flex-col gap-1">
+                    <a href={`/blog/${post.slug}`} target="_blank" rel="noreferrer" className="text-sm text-blue-600 dark:text-blue-300 hover:underline">
+                      Открыть на сайте
+                    </a>
+                    <Link to={`/dashboard/blog/${post.id}/stats`} className="text-sm text-blue-600 dark:text-blue-300 hover:underline">
+                      Статистика поста
+                    </Link>
+                  </div>
                 )}
               </div>
             </aside>

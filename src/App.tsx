@@ -125,6 +125,7 @@ function Routing() {
         <Route path="/dashboard/research" element={<ResearchAdmin />} />
         <Route path="/dashboard/blog" element={<BlogAdmin />} />
         <Route path="/dashboard/blog/:id" element={<BlogAdmin />} />
+        <Route path="/dashboard/blog/:id/stats" element={<BlogAdmin view="stats" />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

@@ -1,4 +1,5 @@
 import { reachGoal } from "@/app/lib/metrics";
+import type { BlogPost, BlogPostSave, BlogStats } from "@/types/blog";
 import type { TableData, TableInfo } from "@/pages/Admin/sheet";
 import type {
   AdminNote,
@@ -374,6 +375,23 @@ export const api = {
     createQuestion: (question: ResearchQuestionSave) => request<ResearchQuestionAdmin>("/api/admin/research/questions", json("POST", question)),
     updateQuestion: (id: number, question: ResearchQuestionSave) => request<ResearchQuestionAdmin>(`/api/admin/research/questions/${id}`, json("PUT", question)),
     deleteQuestion: (id: number) => request<void>(`/api/admin/research/questions/${id}`, { method: "DELETE" }),
+    blogPosts: () => request<BlogPost[]>("/api/admin/blog/posts"),
+    blogPost: (id: number) => request<BlogPost>(`/api/admin/blog/posts/${id}`),
+    createBlogPost: (post: BlogPostSave) => request<BlogPost>("/api/admin/blog/posts", json("POST", post)),
+    saveBlogPost: (id: number, post: BlogPostSave) => request<BlogPost>(`/api/admin/blog/posts/${id}`, json("PUT", post)),
+    duplicateBlogPost: (id: number) => request<BlogPost>(`/api/admin/blog/posts/${id}/duplicate`, { method: "POST" }),
+    deleteBlogPost: (id: number) => request<void>(`/api/admin/blog/posts/${id}`, { method: "DELETE" }),
+    resetBlogViews: (id: number) => request<void>(`/api/admin/blog/posts/${id}/views`, { method: "DELETE" }),
+    uploadBlogImage: (file: File) => request<{ url: string }>("/api/admin/blog/images", upload("file", file)),
+    blogStats: (days: number, postId?: number) =>
+      request<BlogStats>(`/api/admin/blog/stats?days=${days}${postId ? `&post_id=${postId}` : ""}`),
+  },
+  /** The public blog: published posts and how they are read */
+  blog: {
+    posts: () => request<BlogPost[]>("/api/blog/posts"),
+    post: (slug: string) => request<BlogPost>(`/api/blog/posts/${encodeURIComponent(slug)}`),
+    startView: (slug: string, visitor: string, referrer: string | null) =>
+      request<{ id: number | null; key: string | null }>(`/api/blog/posts/${encodeURIComponent(slug)}/views`, json("POST", { visitor, referrer })),
   },
     aiSources: {
     list: () => request<AiChatSource[]>("/api/ai-sources"),
