@@ -3,6 +3,8 @@ import type { BlogPost, BlogPostSave, BlogStats } from "@/types/blog";
 import type { TableData, TableInfo } from "@/pages/Admin/sheet";
 import type {
   AdminNote,
+  Broadcasts,
+  BroadcastSave,
   ResearchQuestionAdmin,
   ResearchQuestionSave,
   ResearchSummary,
@@ -14,6 +16,19 @@ import type {
   EventFile,
   EventLink,
   DraftItem,
+  Friend,
+  Friends,
+  FriendInviteCard,
+  FriendTaskAction,
+  FriendTaskCard,
+  TeamChatMessage,
+  TeamDetail,
+  TeamInviteLink,
+  TeamProject,
+  TeamSummary,
+  TeamTask,
+  TeamTaskAction,
+  TeamTaskCard,
   IcsImportResult,
   HistoryMessage,
   Integration,
@@ -301,6 +316,49 @@ export const api = {
       return request<AssistantReply & { message_id?: number }>("/api/assistant/chat/file", init, "assistant_file");
     },
   },
+  friends: {
+    list: () => request<Friends>("/api/friends"),
+    invite: (email: string, nickname?: string) => request<Friend>("/api/friends", json("POST", { email, nickname: nickname || null }), "friend_invite"),
+    update: (id: number, body: { nickname?: string | null; auto_accept?: boolean; unblock?: boolean }) =>
+      request<Friend>(`/api/friends/${id}`, json("PATCH", body), "friend_update"),
+    answer: (id: number, decision: "accept" | "decline") => request<FriendInviteCard>(`/api/friends/${id}/${decision}`, { method: "POST" }, `friend_${decision}`),
+    remove: (id: number) => request<void>(`/api/friends/${id}`, { method: "DELETE" }, "friend_remove"),
+    settings: (checkDefault: boolean) => request<{ check_default: boolean }>("/api/friends/settings", json("PUT", { check_default: checkDefault })),
+    /** Friend cards that came to the chat after message `after` */
+    inbox: (after: number) => request<HistoryMessage[]>(`/api/friends/inbox?after=${after}`),
+    act: (taskId: number, action: FriendTaskAction) =>
+      request<FriendTaskCard>(`/api/friend-tasks/${taskId}/${action}`, { method: "POST" }, { name: "friend_task", params: { action } }),
+  },
+  teams: {
+    list: () => request<TeamSummary[]>("/api/teams"),
+    create: (body: { name: string; tag?: string; my_name?: string }) => request<TeamDetail>("/api/teams", json("POST", body), "team_create"),
+    get: (id: number) => request<TeamDetail>(`/api/teams/${id}`),
+    update: (id: number, body: { name?: string; task_confirm?: "required" | "auto"; check_default?: boolean }) => request<TeamDetail>(`/api/teams/${id}`, json("PATCH", body), "team_update"),
+    remove: (id: number) => request<void>(`/api/teams/${id}`, { method: "DELETE" }, "team_delete"),
+    invites: (id: number) => request<TeamInviteLink[]>(`/api/teams/${id}/invites`),
+    invite: (id: number, note?: string) => request<TeamInviteLink>(`/api/teams/${id}/invites`, json("POST", { note: note || null }), "team_invite"),
+    revokeInvite: (id: number, inviteId: number) => request<void>(`/api/teams/${id}/invites/${inviteId}`, { method: "DELETE" }),
+    inviteInfo: (token: string) =>
+      request<{ team: { id: number; name: string; tag: string }; already_member: boolean; suggested_name: string; expires_at: string }>(`/api/teams/join/${encodeURIComponent(token)}`),
+    join: (token: string, name: string) => request<TeamDetail>(`/api/teams/join/${encodeURIComponent(token)}`, json("POST", { name }), "team_join"),
+    updateMember: (id: number, memberId: number, body: { name?: string; role?: "admin" | "member" }) => request<TeamDetail>(`/api/teams/${id}/members/${memberId}`, json("PATCH", body)),
+    removeMember: (id: number, memberId: number) => request<void>(`/api/teams/${id}/members/${memberId}`, { method: "DELETE" }, "team_member_remove"),
+    projects: (id: number) => request<TeamProject[]>(`/api/teams/${id}/projects`),
+    saveProject: (id: number, body: { name?: string; description?: string | null; status?: "active" | "archived"; deadline_at?: string | null }, projectId?: number) =>
+      request<TeamProject>(projectId ? `/api/teams/${id}/projects/${projectId}` : `/api/teams/${id}/projects`, json(projectId ? "PATCH" : "POST", body), "team_project_save"),
+    removeProject: (id: number, projectId: number) => request<void>(`/api/teams/${id}/projects/${projectId}`, { method: "DELETE" }),
+    tasks: (id: number) => request<TeamTask[]>(`/api/teams/${id}/tasks`),
+    createTask: (
+      id: number,
+      body: { title: string; description?: string | null; assignee_id?: number | null; project_id?: number | null; deadline_at?: string | null; start_at?: string | null }
+    ) => request<TeamTask>(`/api/teams/${id}/tasks`, json("POST", body), "team_task_create"),
+    updateTask: (id: number, taskId: number, body: Partial<Pick<TeamTask, "title" | "description" | "assignee_id" | "project_id" | "deadline_at" | "start_at" | "status">>) =>
+      request<TeamTask>(`/api/teams/${id}/tasks/${taskId}`, json("PATCH", body), "team_task_update"),
+    removeTask: (id: number, taskId: number) => request<void>(`/api/teams/${id}/tasks/${taskId}`, { method: "DELETE" }),
+    act: (taskId: number, action: TeamTaskAction) => request<TeamTaskCard>(`/api/team-tasks/${taskId}/${action}`, { method: "POST" }, { name: "team_task", params: { action } }),
+    chat: (id: number) => request<TeamChatMessage[]>(`/api/teams/${id}/chat`),
+    send: (id: number, text: string) => request<AssistantReply & { message_id?: number }>(`/api/teams/${id}/chat`, json("POST", { text }), "team_chat"),
+  },
   integrations: {
     list: () => request<Integration[]>("/api/integrations"),
     connect: async (slug: string, values: Record<string, unknown>, returnTo?: string) => {
@@ -375,6 +433,8 @@ export const api = {
     createQuestion: (question: ResearchQuestionSave) => request<ResearchQuestionAdmin>("/api/admin/research/questions", json("POST", question)),
     updateQuestion: (id: number, question: ResearchQuestionSave) => request<ResearchQuestionAdmin>(`/api/admin/research/questions/${id}`, json("PUT", question)),
     deleteQuestion: (id: number) => request<void>(`/api/admin/research/questions/${id}`, { method: "DELETE" }),
+    broadcasts: () => request<Broadcasts>("/api/admin/broadcasts"),
+    sendBroadcast: (broadcast: BroadcastSave) => request<{ batch: string; recipients: number }>("/api/admin/broadcasts", json("POST", broadcast)),
     blogPosts: () => request<BlogPost[]>("/api/admin/blog/posts"),
     blogPost: (id: number) => request<BlogPost>(`/api/admin/blog/posts/${id}`),
     createBlogPost: (post: BlogPostSave) => request<BlogPost>("/api/admin/blog/posts", json("POST", post)),

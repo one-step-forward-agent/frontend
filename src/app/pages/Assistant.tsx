@@ -12,6 +12,11 @@ import type {
   HistoryMessage,
   ReminderSettings,
   DeleteScope,
+  FriendInviteCard,
+  FriendTaskAction,
+  FriendTaskCard,
+  TeamTaskAction,
+  TeamTaskCard,
 } from "../api/types";
 import { DeleteScopeButtons } from "../components/events";
 import { RecommendationList } from "../components/recommendations";
@@ -78,6 +83,8 @@ const ABILITIES = isEn
     ];
 
 let messageId = 0;
+const FRIEND_POLL_MS = 15000;
+const FRIEND_KINDS = ["friend_task", "friend_invite", "team_task"];
 
 function fromHistory(items: HistoryMessage[]): Message[] {
   return items.map((item) =>
@@ -135,6 +142,30 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       active = false;
     };
   }, []);
+
+  // A friend's task or invitation may come while the chat is open: asked for every few seconds, not while hidden
+  const latest = useRef(0);
+  latest.current = messages.reduce((top, item) => (item.role === "assistant" && item.serverId ? Math.max(top, item.serverId) : top), 0);
+  useEffect(() => {
+    if (!loaded) return;
+    const poll = () => {
+      if (document.hidden) return;
+      api.friends
+        .inbox(latest.current)
+        .then((items) => {
+          if (!items.length) return;
+          setMessages((current) => {
+            const known = new Set(current.map((item) => (item.role === "assistant" ? item.serverId : undefined)));
+            const fresh = fromHistory(items.filter((item) => !known.has(item.id)));
+            return fresh.length ? [...current, ...fresh] : current;
+          });
+          if (items.some((item) => (item.reply as FriendTaskCard | null)?.status === "accepted")) notifyTasksChanged();
+        })
+        .catch(() => undefined);
+    };
+    const timer = window.setInterval(poll, FRIEND_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [loaded]);
 
   // Only the list scrolls: the page stays put and the input never leaves the screen.
   // The history opens at its last message at once, before it is painted; only new messages glide in.
@@ -481,7 +512,7 @@ function ChatMessage({
 
   const reply = message.reply;
   const rating =
-    message.serverId && reply.kind !== "topic" ? (
+    message.serverId && reply.kind !== "topic" && !FRIEND_KINDS.includes(reply.kind) ? (
       <Rating messageId={message.serverId} initial={message.rating ?? null} />
     ) : null;
 
@@ -564,6 +595,9 @@ function ChatMessage({
                 />
               )}
             </>
+          )}
+          {(reply.kind === "friend_task" || reply.kind === "friend_invite" || reply.kind === "team_task") && (
+            <TaskCard reply={reply} onReply={(next) => onReply(message.id, next)} />
           )}
           {reply.kind === "stats" && <StatsReply stats={reply} />}
           {reply.kind === "help" && (
@@ -986,6 +1020,90 @@ function UndoButton({
       <Button variant="ghost" size="sm" icon="left" busy={busy} onClick={undo}>
         {tr("Отменить", "Undo")}
       </Button>
+    </div>
+  );
+}
+
+/* ─── TaskCard: a friend's task or invitation, or a team's task, with its buttons ─── */
+
+const FRIEND_BUTTONS: Record<FriendTaskAction | TeamTaskAction, { label: string; icon?: "check" | "close" | "clock" | "play" | "trash" | "bell"; variant?: "primary" | "ghost" }> = {
+  accept: { label: tr("Принять", "Accept"), icon: "check", variant: "primary" },
+  reject: { label: tr("Отклонить", "Decline"), icon: "close" },
+  block: { label: tr("Отклонить и не присылать 10 мин", "Decline, pause for 10 min"), icon: "clock", variant: "ghost" },
+  start: { label: tr("Начал(а)", "I've started"), icon: "play", variant: "primary" },
+  cancel: { label: tr("Отменить задачу", "Cancel the task"), icon: "trash", variant: "ghost" },
+  check_on: { label: tr("Включить контроль", "Turn the check on"), icon: "bell", variant: "ghost" },
+  check_off: { label: tr("Выключить контроль", "Turn the check off"), icon: "bell", variant: "ghost" },
+  done: { label: tr("Выполнено", "Done"), icon: "check", variant: "primary" },
+};
+
+export function TaskCard({ reply, onReply }: { reply: FriendTaskCard | FriendInviteCard | TeamTaskCard; onReply: (next: AssistantReply) => void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const reportError = useErrorToast();
+
+  const run = async (key: string, action: () => Promise<AssistantReply>) => {
+    setBusy(key);
+    try {
+      const next = await action();
+      onReply(next);
+      if ((next.kind === "friend_task" && next.status === "accepted") || (next.kind === "team_task" && next.confirm === "accepted")) notifyTasksChanged();
+    } catch (error) {
+      reportError(errorText(error));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="space-y-2.5">
+      <RichText text={reply.text} />
+      {reply.kind === "team_task" && reply.actions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {reply.actions.map((action) => (
+            <Button
+              key={action}
+              size="sm"
+              variant={FRIEND_BUTTONS[action].variant ?? "secondary"}
+              icon={FRIEND_BUTTONS[action].icon}
+              busy={busy === action}
+              disabled={busy !== null}
+              onClick={() => run(action, () => api.teams.act(reply.task_id, action))}
+            >
+              {FRIEND_BUTTONS[action].label}
+            </Button>
+          ))}
+          <Link to={`/teams/${reply.team_id}`} className="self-center text-xs underline text-gray-500 dark:text-gray-400">
+            @{reply.team}
+          </Link>
+        </div>
+      )}
+      {reply.kind === "friend_task" && reply.actions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {reply.actions.map((action) => (
+            <Button
+              key={action}
+              size="sm"
+              variant={FRIEND_BUTTONS[action].variant ?? "secondary"}
+              icon={FRIEND_BUTTONS[action].icon}
+              busy={busy === action}
+              disabled={busy !== null}
+              onClick={() => run(action, () => api.friends.act(reply.task_id, action))}
+            >
+              {FRIEND_BUTTONS[action].label}
+            </Button>
+          ))}
+        </div>
+      )}
+      {reply.kind === "friend_invite" && reply.actions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          <Button size="sm" variant="primary" icon="check" busy={busy === "accept"} disabled={busy !== null} onClick={() => run("accept", () => api.friends.answer(reply.friend_id, "accept"))}>
+            {tr("Добавить в друзья", "Add as a friend")}
+          </Button>
+          <Button size="sm" icon="close" busy={busy === "decline"} disabled={busy !== null} onClick={() => run("decline", () => api.friends.answer(reply.friend_id, "decline"))}>
+            {tr("Отклонить", "Decline")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

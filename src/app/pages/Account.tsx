@@ -46,6 +46,8 @@ const SECTIONS = [
   { id: "telegram", label: "Telegram" },
   { id: "appearance", label: tr("Оформление и язык", "Appearance & language") },
   { id: "integrations", label: tr("Интеграции", "Integrations") },
+  { id: "friends", label: tr("Друзья", "Friends") },
+  { id: "teams", label: tr("Команды", "Teams") },
   { id: "import", label: tr("Импорт .ics", ".ics import") },
   { id: "security", label: tr("Безопасность", "Security") },
 ];
@@ -176,6 +178,8 @@ export function AccountPage() {
           <TelegramSection />
           <AppearanceSection />
           <IntegrationsSection />
+          <FriendsSection />
+          <TeamsSection />
           <ImportSection />
           <SecuritySection />
         </div>
@@ -725,6 +729,86 @@ function IntegrationsSection() {
             <p className="muted small">
               {tr("Пока ничего не подключено.", "Nothing is connected yet.")}{" "}
               <Link to="/integrations">{tr("Подключить календарь", "Connect a calendar")}</Link>
+            </p>
+          ))}
+      </GlassCard>
+    </div>
+  );
+}
+
+// Friends sit next to the integrations: the list and the settings are on their own page
+function FriendsSection() {
+  const friends = useAsync(() => api.friends.list(), []);
+  const accepted = friends.data?.friends.filter((item) => item.status === "accepted") ?? [];
+  const incoming = friends.data?.friends.filter((item) => item.status === "incoming").length ?? 0;
+  return (
+    <div id="friends" className="anchor">
+      <GlassCard
+        title={tr("Друзья", "Friends")}
+        actions={
+          <Link to="/friends" className="btn btn-secondary btn-sm h-8 px-3 text-xs">
+            {tr("Управлять", "Manage")}
+          </Link>
+        }
+      >
+        <p className="muted small">
+          {tr(
+            "Совместное планирование: «Добавь Маше купить хлеб завтра в 18:00» — и задача уйдёт другу на подтверждение.",
+            "Planning together: “Add Masha to buy bread tomorrow at 6 pm” — and the task goes to your friend to confirm."
+          )}
+        </p>
+        {friends.error && <ErrorNote message={friends.error} onRetry={friends.reload} />}
+        {friends.data && (
+          <p className="muted small">
+            {accepted.length
+              ? `${tr("В друзьях", "Friends")}: ${accepted.map((item) => item.name).join(", ")}`
+              : tr("Пока никого.", "No one yet.")}{" "}
+            {incoming > 0 && (
+              <Link to="/friends">{tr(`Приглашений: ${incoming}`, `Invitations: ${incoming}`)}</Link>
+            )}
+            {!accepted.length && !incoming && <Link to="/friends">{tr("Добавить друга", "Add a friend")}</Link>}
+          </p>
+        )}
+      </GlassCard>
+    </div>
+  );
+}
+
+// Teams sit next to the integrations and friends: each team is managed on its own page
+function TeamsSection() {
+  const teams = useAsync(() => api.teams.list(), []);
+  return (
+    <div id="teams" className="anchor">
+      <GlassCard
+        title={tr("Команды", "Teams")}
+        actions={
+          <Link to="/teams" className="btn btn-secondary btn-sm h-8 px-3 text-xs">
+            {tr("Управлять", "Manage")}
+          </Link>
+        }
+      >
+        <p className="muted small">
+          {tr(
+            "Общие проекты и задачи с ассистентом команды. Участников приглашают по ссылке.",
+            "Shared projects and tasks with the team's assistant. Members join by a link."
+          )}
+        </p>
+        {teams.error && <ErrorNote message={teams.error} onRetry={teams.reload} />}
+        {teams.data &&
+          (teams.data.length ? (
+            <ul className="simple-list">
+              {teams.data.map((team) => (
+                <li key={team.id}>
+                  <Link to={`/teams/${team.id}`} className="truncate">
+                    {team.name} <span className="muted">@{team.tag}</span>
+                  </Link>
+                  <Badge>{team.role === "admin" ? tr("админ", "admin") : `${team.members} ${tr("участн.", "members")}`}</Badge>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted small">
+              {tr("Пока ни одной.", "None yet.")} <Link to="/teams">{tr("Создать команду", "Create a team")}</Link>
             </p>
           ))}
       </GlassCard>

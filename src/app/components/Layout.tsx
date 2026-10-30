@@ -9,6 +9,9 @@ import { Icon, type IconName } from "./icons";
 import { ErrorBoundary, useToast } from "./ui";
 import { AssistantChat } from "../pages/Assistant";
 import { Tour } from "./Tour";
+import { api } from "../api/client";
+import type { TeamSummary } from "../api/types";
+import { useTeamsChanged } from "../pages/Teams";
 import { cn } from "@/utils/cn";
 import React from "react";
 import { tr, LOCALE } from "@/i18n";
@@ -29,6 +32,7 @@ const SIDEBAR: NavItem[] = [
   NAV[1],
   NAV[3],
   { to: "/events/new", label: tr("Новая задача", "New task"), icon: "plus" },
+  { to: "/teams", label: tr("Команды", "Teams"), icon: "user" },
 ];
 
 const TABS: NavItem[] = [
@@ -41,7 +45,7 @@ const TABS: NavItem[] = [
 
 // Where the corner chat would only get in the way: the chat page itself and the task form with its buttons
 const NO_DOCK = ["/assistant", "/events/new"];
-const ACCOUNT_PATHS = ["/account", "/settings", "/integrations"];
+const ACCOUNT_PATHS = ["/account", "/settings", "/integrations", "/friends"];
 
 // The first-visit hints point at these (see Tour.tsx)
 const TOUR_IDS: Record<string, string> = {
@@ -51,7 +55,20 @@ const TOUR_IDS: Record<string, string> = {
   "/tasks": "tasks",
   "/events/new": "new",
   "/account": "account",
+  "/teams": "teams",
 };
+
+// Relationships among the top three spheres of the onboarding: the tour stresses planning with friends
+const RELATIONSHIPS = ["отношения", "relationships", "семья", "family", "друзья", "friends"];
+function relationshipsFirst(user: User): boolean {
+  const spheres = Array.isArray(user.profile?.spheres) ? (user.profile.spheres as { name?: unknown; priority?: unknown }[]) : [];
+  return spheres.some(
+    (sphere) =>
+      typeof sphere?.name === "string" &&
+      RELATIONSHIPS.includes(sphere.name.trim().toLowerCase()) &&
+      (typeof sphere.priority !== "number" || sphere.priority < 3)
+  );
+}
 
 const isActive = (to: string, path: string) =>
   to === "/"
@@ -262,6 +279,7 @@ export function Layout({ children }: { children: ReactNode }) {
     </Link>
   );
 })}
+            <SidebarTeams path={path} />
           </nav>
 
           <div className="shrink-0 px-3 py-2.5 flex items-center gap-1.5">
@@ -348,7 +366,7 @@ export function Layout({ children }: { children: ReactNode }) {
         {docked && <ChatDock path={path} />}
 
         {/* ═══ Подсказки при первом входе ═══ */}
-        {user && <Tour userId={user.id} />}
+        {user && <Tour userId={user.id} relationships={relationshipsFirst(user)} />}
 
         {/* ═══ TABBAR (mobile) — парящий ═══ */}
         <nav
@@ -511,6 +529,38 @@ function ChatDock({ path }: { path: string }) {
       )}
     >
       <AssistantChat panel onClose={() => setOpen(false)} />
+    </div>
+  );
+}
+
+/** The user's teams under "Команды" in the sidebar: each opens its page (tasks, projects, chat). */
+function SidebarTeams({ path }: { path: string }) {
+  const [teams, setTeams] = useState<TeamSummary[]>([]);
+  const load = React.useCallback(() => {
+    api.teams.list().then(setTeams).catch(() => undefined);
+  }, []);
+  useEffect(load, [load]);
+  useTeamsChanged(load);
+  if (!teams.length) return null;
+  return (
+    <div className="-mt-1 ml-6 flex flex-col gap-0.5" aria-label={tr("Ваши команды", "Your teams")}>
+      {teams.map((team) => {
+        const active = path === `/teams/${team.id}` || path.startsWith(`/teams/${team.id}?`);
+        return (
+          <Link
+            key={team.id}
+            to={`/teams/${team.id}`}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "flex items-center gap-1.5 px-2 h-7 rounded-lg text-xs truncate",
+              active ? "text-sky-800 dark:text-sky-100 bg-sky-500/10" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            )}
+          >
+            <span className="truncate">@{team.tag}</span>
+            {team.my_open_tasks > 0 && <span className="ml-auto tabular-nums text-[10px] text-gray-500">{team.my_open_tasks}</span>}
+          </Link>
+        );
+      })}
     </div>
   );
 }

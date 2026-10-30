@@ -23,6 +23,7 @@ const TermsOfUsePage = lazy(() => import("@/pages/Documents/TermsOfUsePage"));
 const PersonalDataConsentPage = lazy(() => import("@/pages/Documents/PersonalDataConsentPage"));
 const AdminDashboard = lazy(() => import("@/pages/Admin/AdminDashboard"));
 const ResearchAdmin = lazy(() => import("@/pages/Admin/ResearchAdmin"));
+const BroadcastAdmin = lazy(() => import("@/pages/Admin/BroadcastAdmin"));
 
 function FullScreenLoader() {
   return (
@@ -123,6 +124,7 @@ function Routing() {
         <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="/dashboard/research" element={<ResearchAdmin />} />
+        <Route path="/dashboard/broadcast" element={<BroadcastAdmin />} />
         <Route path="/dashboard/blog" element={<BlogAdmin />} />
         <Route path="/dashboard/blog/:id" element={<BlogAdmin />} />
         <Route path="/dashboard/blog/:id/stats" element={<BlogAdmin view="stats" />} />

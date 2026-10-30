@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import type { CalendarEvent } from "../api/types";
 import { EventList } from "../components/events";
 import { TimeGrid } from "../components/TimeGrid";
+import { taskColor } from "../components/tags";
 import { RecommendationList } from "../components/recommendations";
 import { Icon } from "../components/icons";
 import { Empty, ErrorNote, useErrorToast } from "../components/ui";
@@ -147,10 +148,11 @@ export function CalendarPage() {
   useCalendarSync();
   const showError = useErrorToast();
 
-  // A task dragged in the grid stands in its new place at once; if the server refuses, it goes back
+  // A task dragged or stretched in the grid stands in its new place at once; if the server refuses, it goes back.
+  // A task without a time dropped on an hour gets that time
   const moveEvent = async (moved: CalendarEvent, start: Date, end: Date) => {
     const before = events.data ?? [];
-    const times = { start_at: start.toISOString(), end_at: end.toISOString() };
+    const times = { start_at: start.toISOString(), end_at: end.toISOString(), all_day: false };
     events.setData(before.map((item) => (item.id === moved.id ? { ...item, ...times } : item)));
     try {
       await api.events.update(moved.id, times);
@@ -406,6 +408,7 @@ export function CalendarPage() {
                       <span className="hidden sm:flex flex-col gap-0.5 min-w-0">
                         {items.slice(0, MAX_CHIPS).map((event) => {
                           const tag = event.tag_ids?.map((id) => tagsById.get(id)).find(Boolean);
+                          const color = taskColor(event, tagsById);
                           const time = event.all_day
                             ? ""
                             : new Date(event.start_at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
@@ -417,14 +420,15 @@ export function CalendarPage() {
                                 "relative block min-w-0 line-clamp-2 break-words",
                                 "pl-2 pr-1.5 py-0.5 rounded-md text-[11px] leading-[14px]",
                                 statusChip(event, now),
-                                tag && `tag-${tag.color}`
+                                color.className
                               )}
+                              style={color.own ? { background: "var(--tag-bg)" } : undefined}
                             >
                               {/* Сфера задачи — полоска её цвета, чтобы было видно, о чём задача */}
                               <span
                                 aria-hidden="true"
                                 className="absolute left-0 inset-y-0.5 w-[3px] rounded-full"
-                                style={{ background: tag ? "var(--dot)" : "transparent" }}
+                                style={{ background: color.className ? "var(--dot)" : "transparent" }}
                               />
                               {event.title}
                             </span>

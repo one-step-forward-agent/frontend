@@ -9,6 +9,58 @@ import { tr } from "@/i18n";
 
 export const TAG_COLORS: TagColor[] = ["indigo", "blue", "green", "amber", "red", "pink", "violet", "slate"];
 
+const COLOR_NAMES: Record<TagColor, string> = {
+  indigo: tr("Индиго", "Indigo"),
+  blue: tr("Синий", "Blue"),
+  green: tr("Зелёный", "Green"),
+  amber: tr("Янтарный", "Amber"),
+  red: tr("Красный", "Red"),
+  pink: tr("Розовый", "Pink"),
+  violet: tr("Фиолетовый", "Violet"),
+  slate: tr("Серый", "Grey"),
+};
+
+/** How a task is coloured in the calendar: its own colour fills it, a tag only marks its edge. */
+export function taskColor(event: { color?: TagColor | null; tag_ids?: number[] }, tagsById: Map<number, Tag>): { className?: string; own: boolean } {
+  if (event.color) return { className: `tag-${event.color}`, own: true };
+  const tag = event.tag_ids?.map((id) => tagsById.get(id)).find(Boolean);
+  return { className: tag ? `tag-${tag.color}` : undefined, own: false };
+}
+
+/** The task's colour in its form: none (the usual) or one of the tag palette. */
+export function ColorPicker({ value, onChange }: { value: TagColor | null; onChange: (color: TagColor | null) => void }) {
+  const swatch = "w-7 h-7 rounded-full inline-flex items-center justify-center ring-offset-2 ring-offset-white dark:ring-offset-gray-900 transition-shadow";
+  return (
+    <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label={tr("Цвет задачи", "Task colour")}>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === null}
+        title={tr("Без цвета", "No colour")}
+        onClick={() => onChange(null)}
+        className={`${swatch} border border-dashed border-gray-400 text-gray-500 ${value === null ? "ring-2 ring-sky-500" : ""}`}
+      >
+        <Icon name="close" size={12} />
+      </button>
+      {TAG_COLORS.map((color) => (
+        <button
+          key={color}
+          type="button"
+          role="radio"
+          aria-checked={value === color}
+          title={COLOR_NAMES[color]}
+          aria-label={COLOR_NAMES[color]}
+          onClick={() => onChange(color)}
+          className={`tag-${color} ${swatch} ${value === color ? "ring-2 ring-[var(--dot)]" : ""}`}
+          style={{ background: "var(--dot)" }}
+        >
+          {value === color && <Icon name="check" size={13} className="text-white" />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function TagChip({ tag, onRemove }: { tag: Tag; onRemove?: () => void }) {
   return (
     <span className={`tag tag-${tag.color}`}>

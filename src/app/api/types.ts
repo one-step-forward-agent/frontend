@@ -39,6 +39,32 @@ export interface ResearchSummary {
 
 export type ResearchQuestionSave = Omit<ResearchQuestionAdmin, "id" | "created_at">;
 
+/** A Telegram message from the team to every user with the bot linked */
+export interface BroadcastSave {
+  text: string;
+  text_en: string | null;
+  /** Only to the admin's own Telegram, to see how it looks */
+  test: boolean;
+}
+
+export interface BroadcastRow {
+  batch: string;
+  created_at: string;
+  text: string | null;
+  text_en: string | null;
+  by: string | null;
+  total: number;
+  sent: number;
+  queued: number;
+  failed: number;
+}
+
+export interface Broadcasts {
+  recipients: { ru: number; en: number };
+  me_linked: boolean;
+  history: BroadcastRow[];
+}
+
 export interface AdminNote {
   text: string;
   version: number;
@@ -107,6 +133,8 @@ export interface CalendarEvent {
   /** Нельзя переносить: подсказки и автоперенос планируют вокруг такой задачи. */
   is_fixed: boolean;
   tag_ids: number[];
+  /** The colour the user chose for the task; null: the usual one (or its tag's) */
+  color?: TagColor | null;
 }
 
 export type TagColor = "indigo" | "blue" | "green" | "amber" | "red" | "pink" | "violet" | "slate";
@@ -134,6 +162,7 @@ export interface EventCreate {
   deadline_at?: string | null;
   is_fixed?: boolean;
   tag_ids?: number[];
+  color?: TagColor | null;
 }
 
 export interface EventFile {
@@ -261,7 +290,164 @@ type AssistantReplyBody =
       reminders: { id: number; text: string; at: string; label: string; repeat?: string | null; file?: string | null }[];
     }
   | { kind: "answer" | "not_found" | "edit_error" | "cancelled"; text: string }
-  | { kind: "nothing" };
+  | { kind: "nothing" }
+  | FriendTaskCard
+  | FriendInviteCard
+  | TeamTaskCard;
+
+/* ─── Teams (backend app/services/teams.py) ─── */
+
+export type TeamTaskAction = "accept" | "reject" | "start" | "done" | "check_on" | "check_off";
+export type TeamTaskStatus = "todo" | "in_progress" | "done";
+
+export interface TeamTaskCard {
+  kind: "team_task";
+  task_id: number;
+  team_id: number;
+  team: string;
+  event: string;
+  role: "assignee" | "creator";
+  other: string;
+  assignee: string | null;
+  title: string;
+  status: TeamTaskStatus;
+  confirm: "pending" | "accepted" | "rejected" | null;
+  check: boolean;
+  check_state: string | null;
+  actions: TeamTaskAction[];
+  text: string;
+}
+
+export interface TeamSummary {
+  id: number;
+  name: string;
+  tag: string;
+  role: "admin" | "member";
+  my_name: string;
+  members: number;
+  my_open_tasks: number;
+}
+
+export interface TeamMemberInfo {
+  id: number;
+  name: string;
+  role: "admin" | "member";
+  me: boolean;
+  /** Tags of the other teams you share with them */
+  tags: string[];
+  joined_at: string | null;
+}
+
+export interface TeamDetail {
+  id: number;
+  name: string;
+  tag: string;
+  task_confirm: "required" | "auto";
+  check_default: boolean;
+  me: { id: number; name: string; role: "admin" | "member" };
+  members: TeamMemberInfo[];
+}
+
+export interface TeamInviteLink {
+  id: number;
+  note: string | null;
+  url: string;
+  token: string;
+  expires_at: string;
+  state: "active" | "used" | "expired" | "revoked";
+}
+
+export interface TeamProject {
+  id: number;
+  name: string;
+  description: string | null;
+  status: "active" | "archived";
+  deadline_at: string | null;
+  tasks: number;
+  done: number;
+  progress: number;
+}
+
+export interface TeamTask {
+  id: number;
+  title: string;
+  description: string | null;
+  project_id: number | null;
+  project: string | null;
+  assignee_id: number | null;
+  assignee: string | null;
+  deadline_at: string | null;
+  start_at: string | null;
+  status: TeamTaskStatus;
+  confirm: "pending" | "accepted" | "rejected" | null;
+  check: boolean;
+  check_state: string | null;
+  overdue: boolean;
+  created_at: string | null;
+}
+
+export interface TeamChatMessage {
+  id: number;
+  role: "user" | "assistant";
+  text: string;
+  reply: AssistantReply | null;
+  created_at: string;
+}
+
+/* ─── Friends: tasks given in the chat (backend app/services/friends.py) ─── */
+
+export type FriendTaskAction = "accept" | "reject" | "block" | "start" | "cancel" | "check_on" | "check_off";
+
+export interface FriendTaskCard {
+  kind: "friend_task";
+  task_id: number;
+  /** What the card tells: sent, request, accepted, started, missed… */
+  event: string;
+  role: "sender" | "performer";
+  friend: string;
+  title: string;
+  when: string;
+  start: string;
+  all_day: boolean;
+  shared: boolean;
+  status: "pending" | "accepted" | "rejected" | "cancelled";
+  check: boolean;
+  check_state: "asked" | "started" | "missed" | null;
+  actions: FriendTaskAction[];
+  /** The card in markdown, the same the bot shows */
+  text: string;
+}
+
+export interface FriendInviteCard {
+  kind: "friend_invite";
+  friend_id: number;
+  friend: string;
+  status: string;
+  event?: string;
+  actions: ("accept_friend" | "decline_friend")[];
+  text: string;
+}
+
+export interface Friend {
+  id: number;
+  name: string;
+  nickname: string | null;
+  own_name: string | null;
+  email: string;
+  /** requested: waiting for them; incoming: they asked you */
+  status: "requested" | "incoming" | "accepted";
+  auto_accept: boolean;
+  blocked_until: string | null;
+  telegram: boolean;
+  since: string | null;
+  /** Tags of the teams you are both in */
+  teams?: string[];
+}
+
+export interface Friends {
+  friends: Friend[];
+  check_default: boolean;
+}
 
 /** A file sent with a message: the chat shows its name, the server has read it. */
 export interface ChatFile {

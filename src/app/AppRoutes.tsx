@@ -7,6 +7,8 @@ import { AssistantPage } from "./pages/Assistant";
 import { CalendarPage } from "./pages/CalendarPage";
 import { EventPage, NewEventPage } from "./pages/EventPage";
 import { IntegrationsPage } from "./pages/Integrations";
+import { FriendsPage } from "./pages/Friends";
+import { JoinTeamPage, TeamPage, TeamsPage } from "./pages/Teams";
 import { AccountPage } from "./pages/Account";
 import { TasksPage } from "./pages/Tasks";
 import { TodayPage } from "./pages/Today";
@@ -22,6 +24,11 @@ const ROUTES: [string, (params: Record<string, string>) => ReactNode][] = [
   ["/events/:id", ({ id }) => (/^\d+$/.test(id) ? <EventPage key={id} id={Number(id)} /> : <NotFound />)],
   ["/assistant", () => <AssistantPage />],
   ["/integrations", () => <IntegrationsPage />],
+  ["/friends", () => <FriendsPage />],
+  ["/teams", () => <TeamsPage />],
+  ["/teams/:id", ({ id }) => (/^\d+$/.test(id) ? <TeamPage key={id} id={Number(id)} /> : <NotFound />)],
+  // A one-time invitation link: a guest signs in first and comes back here
+  ["/join/:token", ({ token }) => <JoinTeamPage token={token} />],
   ["/account", () => <AccountPage />],
   // Старые ссылки (бот, письма) ведут в настройки — теперь это аккаунт
   ["/settings", () => <AccountPage />],

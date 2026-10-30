@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { api } from "../api/client";
-import type { Calendar, CalendarEvent, DeleteScope, EventCreate, Priority } from "../api/types";
+import type { Calendar, CalendarEvent, DeleteScope, EventCreate, Priority, TagColor } from "../api/types";
 import { useAuth } from "../auth";
 import {
   PRIORITIES,
@@ -25,7 +25,7 @@ import { notifyTasksChanged } from "../lib/hooks";
 import { Link } from "../router";
 import { Icon } from "./icons";
 import { NO_REPEAT, RepeatEditor, parseRepeat, repeatError, repeatRule, sameRule, type Repeat } from "./repeat";
-import { TagList, TagPicker } from "./tags";
+import { ColorPicker, TagList, TagPicker } from "./tags";
 import { TimeField } from "@/components/ui/time-field";
 import { Badge, Button, Field, Switch } from "./ui";
 import { LOCALE, tr } from "@/i18n";
@@ -169,6 +169,7 @@ interface FormState {
   deadlineTime: string;
   fixed: boolean;
   tagIds: number[];
+  color: TagColor | null;
   calendarId: string;
   priority: Priority;
   location: string;
@@ -198,6 +199,7 @@ function initialState(event?: CalendarEvent, day?: string | null, time?: string 
       deadlineTime: deadline && !(deadline.getHours() === 23 && deadline.getMinutes() === 59) ? clock(deadline) : "",
       fixed: event.is_fixed,
       tagIds: event.tag_ids ?? [],
+      color: event.color ?? null,
       calendarId: String(event.calendar_id),
       priority: plainPriority(event.priority),
       location: event.location ?? "",
@@ -222,6 +224,7 @@ function initialState(event?: CalendarEvent, day?: string | null, time?: string 
     deadlineTime: "",
     fixed: false,
     tagIds: [],
+    color: null,
     calendarId: "",
     priority: "medium",
     location: "",
@@ -270,6 +273,7 @@ function toPayload(state: FormState, timezone: string): EventCreate | string {
     deadline_at: deadlineDay ? at(deadlineDay, state.deadlineTime || "23:59").toISOString() : null,
     is_fixed: state.fixed,
     tag_ids: state.tagIds,
+    color: state.color,
   };
 }
 
@@ -385,6 +389,11 @@ export function EventForm({
       <Field label={tr("Теги", "Tags")}>
         <TagPicker value={state.tagIds} onChange={(ids) => set("tagIds", ids)} />
       </Field>
+
+      <div>
+        <span className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{tr("Цвет в календаре", "Colour in the calendar")}</span>
+        <ColorPicker value={state.color} onChange={(color) => set("color", color)} />
+      </div>
 
       <details className="more" open={hasDetails}>
         <summary>{tr("Дедлайн и детали", "Deadline and details")}</summary>

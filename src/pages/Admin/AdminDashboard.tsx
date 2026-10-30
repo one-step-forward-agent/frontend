@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Combine, Download, Eye, Lightbulb, NotebookPen, RefreshCw, Search, ShieldAlert, Sheet as SheetIcon, X } from "lucide-react";
+import { ArrowLeft, Combine, Download, Eye, Lightbulb, NotebookPen, RefreshCw, Search, Send, ShieldAlert, Sheet as SheetIcon, X } from "lucide-react";
 import { ApiError, api } from "@/app/api/client";
 import { errorText } from "@/app/lib/format";
 import { useAuthStore } from "@/store/authStore";
@@ -253,6 +253,9 @@ export default function AdminDashboard() {
         </button>
         <Link to="/dashboard/research" className={toolButton}>
           <Lightbulb size={14} /> Гипотезы
+        </Link>
+        <Link to="/dashboard/broadcast" className={toolButton}>
+          <Send size={14} /> Рассылка
         </Link>
         <button type="button" className={cn(toolButton, notesOpen && "border-sky-500 text-sky-700 dark:text-sky-300")} onClick={() => setNotesOpen((open) => !open)}>
           <NotebookPen size={14} /> Заметки

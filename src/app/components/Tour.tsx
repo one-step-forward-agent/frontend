@@ -10,8 +10,15 @@ import { tr } from "@/i18n";
  * Seen once per user in this browser. The awards have their own hints, shown the first time the level bar is.
  */
 
-type Step = { target?: string; title: string; text: string; always?: boolean };
-export type TourName = "main" | "rewards";
+// `friends`: the step about friends, worded more strongly for those who put relationships first in onboarding.
+// `offer`: the step asks whether to show more; agreeing starts that tour
+type Step = { target?: string; title: string; text: string; always?: boolean; friends?: boolean; offer?: TourName };
+
+const RELATIONSHIPS_TEXT = tr(
+  "Отношения у вас в приоритете — добавьте близких в «Аккаунт → Друзья», чтобы планировать вместе: «Добавь Маше купить хлеб завтра в 18:00», «нам с Машей кино в субботу в 19». Друг подтвердит задачу в чате или Telegram.",
+  "Relationships are a priority for you — add the people close to you in Account → Friends to plan together: “Add Masha to buy bread tomorrow at 6 pm”, “cinema for me and Masha on Saturday at 7 pm”. Your friend confirms in the chat or Telegram."
+);
+export type TourName = "main" | "rewards" | "teams";
 
 const STEPS: Step[] = [
   {
@@ -55,6 +62,23 @@ const STEPS: Step[] = [
     target: "account",
     title: tr("Профиль и интеграции", "Profile and integrations"),
     text: tr("Подключите Telegram — туда приходят напоминания. В «Интеграциях» — Google, Яндекс, Apple и Samsung Calendar, Jira и Notion.", "Connect Telegram — reminders arrive there. Integrations has Google, Yandex, Apple and Samsung Calendar, Jira and Notion."),
+  },
+  {
+    target: "account",
+    friends: true,
+    title: tr("Планируйте с друзьями", "Plan with friends"),
+    text: tr(
+      "Добавьте друзей в «Аккаунт → Друзья» и давайте задачи прямо в чате: «Добавь Маше купить хлеб завтра в 18:00» или «нам с Машей кино в субботу в 19».",
+      "Add friends in Account → Friends and give tasks right in the chat: “Add Masha to buy bread tomorrow at 6 pm” or “cinema for me and Masha on Saturday at 7 pm”."
+    ),
+  },
+  {
+    offer: "teams",
+    title: tr("Попробуете работу в команде?", "Try teamwork?"),
+    text: tr(
+      "В Deyla можно вести общие проекты: ставить задачи коллегам, видеть их загрузку и прогресс, а ассистент команды поможет всё распределить. Показать, как это устроено?",
+      "Deyla can run shared projects: give colleagues tasks, see their workload and progress, and the team's assistant helps share out the work. Shall I show you how it works?"
+    ),
   },
   // Temporarily off together with "Перенос из чатов с нейросетями" (Integrations.tsx)
   // {
@@ -101,8 +125,49 @@ const REWARD_STEPS: Step[] = [
   },
 ];
 
-const TOURS: Record<TourName, Step[]> = { main: STEPS, rewards: REWARD_STEPS };
-const KEYS: Record<TourName, string> = { main: "deyla.tour.v1", rewards: "deyla.tour.rewards.v1" };
+const TEAM_STEPS: Step[] = [
+  {
+    target: "teams",
+    always: true,
+    title: tr("Команды", "Teams"),
+    text: tr(
+      "Здесь ваши команды. Создайте команду и пригласите коллег: каждая ссылка — для одного человека и действует 24 часа. Вступая, участник сам выбирает имя в команде.",
+      "Your teams live here. Create a team and invite colleagues: each link is for one person and works for 24 hours. A member chooses their own name in the team when joining."
+    ),
+  },
+  {
+    title: tr("Проекты и задачи", "Projects and tasks"),
+    text: tr(
+      "У команды есть проекты и задачи: название, описание, исполнитель, срок и статус. На вкладке «Задачи» видно, что у кого в работе, а у проектов — прогресс.",
+      "A team has projects and tasks: a name, a description, a performer, a deadline and a status. The Tasks tab shows who is doing what, and projects show their progress."
+    ),
+  },
+  {
+    title: tr("Ассистент команды", "The team's assistant"),
+    text: tr(
+      "На вкладке «Чат» — ассистент команды: «Поставь Ивану задачу подготовить презентацию к пятнице», «Кто сколько загружен?», «Что просрочено?», «Отчёт о прогрессе», «Предложи перераспределение».",
+      "The Chat tab has the team's assistant: “Assign Ivan to prepare the slides by Friday”, “Who is busy?”, “What is overdue?”, “Progress report”, “Suggest a reallocation”."
+    ),
+  },
+  {
+    target: "assistant",
+    title: tr("Из личного чата тоже можно", "From your personal chat too"),
+    text: tr(
+      "Назовите команду по тегу: «В команде @Разработка поручи Ивану подготовить презентацию». Задачи, которые поручили вам, приходят сюда и в Telegram — их можно принять или отклонить.",
+      "Name the team by its tag: “In the team @Development assign Ivan to prepare the slides”. Tasks given to you come here and to Telegram — accept or decline them."
+    ),
+  },
+  {
+    title: tr("Подтверждение и контроль", "Confirmation and check"),
+    text: tr(
+      "В настройках команды — две независимые опции: исполнитель подтверждает задачу или получает её сразу; и контроль выполнения — Deyla спросит исполнителя, начал ли он, и сообщит вам.",
+      "A team has two separate settings: the performer confirms a task or gets it at once; and the execution check — Deyla asks the performer whether they've started and tells you."
+    ),
+  },
+];
+
+const TOURS: Record<TourName, Step[]> = { main: STEPS, rewards: REWARD_STEPS, teams: TEAM_STEPS };
+const KEYS: Record<TourName, string> = { main: "deyla.tour.v1", rewards: "deyla.tour.rewards.v1", teams: "deyla.tour.teams.v1" };
 const RESTART = "deyla:tour";
 const GUTTER = 16;
 const CARD_WIDTH = 340;
@@ -148,8 +213,10 @@ function visibleTarget(id: string | undefined): HTMLElement | null {
 }
 
 /** The steps that make sense on this screen: those without a target, and those whose target is visible. */
-function available(name: TourName): Step[] {
-  return TOURS[name].filter((step) => !step.target || step.always || visibleTarget(step.target));
+function available(name: TourName, relationships: boolean): Step[] {
+  return TOURS[name]
+    .filter((step) => !step.target || step.always || visibleTarget(step.target))
+    .map((step) => (step.friends && relationships ? { ...step, title: tr("Близкие — в друзья", "Bring your people in"), text: RELATIONSHIPS_TEXT } : step));
 }
 
 type Place = { spot: DOMRect | null; top: number; left: number; width: number };
@@ -173,7 +240,7 @@ function place(step: Step, cardHeight: number): Place {
   return { spot, top: clampTop(top), left: clampLeft(spot.left + spot.width / 2 - width / 2), width };
 }
 
-export function Tour({ userId }: { userId: number }) {
+export function Tour({ userId, relationships = false }: { userId: number; relationships?: boolean }) {
   const [tour, setTour] = useState<TourName>("main");
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -189,9 +256,9 @@ export function Tour({ userId }: { userId: number }) {
       showing.current = true;
       setTour(name);
       setIndex(0);
-      setSteps(available(name));
+      setSteps(available(name, relationships));
     },
-    [userId]
+    [userId, relationships]
   );
 
   useEffect(() => {
@@ -339,6 +406,19 @@ export function Tour({ userId }: { userId: number }) {
                 <Icon name="left" size={16} />
               </button>
             )}
+            {step.offer && (
+              <button
+                type="button"
+                onClick={() => {
+                  const offer = step.offer!;
+                  finish();
+                  window.setTimeout(() => startTour(offer), 0);
+                }}
+                className="h-9 px-4 rounded-xl text-sm font-medium text-white bg-sky-600 hover:bg-sky-500"
+              >
+                {tr("Показать", "Show me")}
+              </button>
+            )}
             <button
   ref={next}
   type="button"
@@ -364,7 +444,7 @@ export function Tour({ userId }: { userId: number }) {
     className="pointer-events-none absolute inset-0 rounded-xl bg-[linear-gradient(135deg,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0.03)_25%,transparent_45%,transparent_75%,rgba(255,255,255,0.05)_100%)]"
   />
   <span className="relative">
-    {last ? (tour === "main" ? tr("Начать", "Start") : tr("Понятно", "Got it")) : tr("Далее", "Next")}
+    {step.offer ? tr("Не сейчас", "Not now") : last ? (tour === "main" ? tr("Начать", "Start") : tr("Понятно", "Got it")) : tr("Далее", "Next")}
   </span>
 </button>
           </span>
