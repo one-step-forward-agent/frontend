@@ -55,9 +55,8 @@ const QUICK_ACTIONS: { label: string; fill?: string }[] = [
   { label: tr("Анализ недели", "Week analysis") },
 ];
 
-const TOPIC_REPLIES = isEn
-  ? ["How do I do it?", "Help me replan", "What can I move?"]
-  : ["Как это сделать?", "Помоги перепланировать", "Что можно перенести?"];
+// The recommendation already comes explained in detail, so only the follow-ups are offered
+const TOPIC_REPLIES = isEn ? ["Help me replan", "What can I move?"] : ["Помоги перепланировать", "Что можно перенести?"];
 
 // What the chat can do, said once on an empty chat: plain text, not buttons to press
 const ABILITIES = isEn
@@ -240,12 +239,12 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
 
   const topic = panel ? null : query.get("topic");
   const topicText = panel ? null : query.get("text");
-  // ?ask=1: the recommendation's "Как это сделать?" button — the question is asked right away
-  const askHow = query.get("ask") === "1";
+  // The recommendation comes back explained in detail; the model writes it, so the typing dots show meanwhile
   useEffect(() => {
     if (!loaded || !topic || !topicText || handled.current === `topic:${topic}`) return;
     handled.current = `topic:${topic}`;
     navigate("/assistant", { replace: true });
+    setBusy(true);
     api.assistant
       .topic(topic.slice(0, 120), topicText.slice(0, 600))
       .then((reply) => {
@@ -257,9 +256,9 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
             JSON.stringify(last.reply) === JSON.stringify(reply);
           return same ? items : [...items, { id: ++messageId, role: "assistant", reply }];
         });
-        if (askHow) void send(TOPIC_REPLIES[0]);
       })
-      .catch(() => push({ id: ++messageId, role: "error", text: TEMPORARY_ERROR }));
+      .catch(() => push({ id: ++messageId, role: "error", text: TEMPORARY_ERROR }))
+      .finally(() => setBusy(false));
   }, [topic, topicText, loaded]);
 
   const replace = (id: number, reply: AssistantReply) =>
@@ -500,10 +499,10 @@ function ChatMessage({
             <Icon name="assistant" size={12} />
             {tr("Рекомендация", "Recommendation")}
           </span>
-          <p className="relative">
-            <strong className="font-semibold">{reply.title}.</strong>{" "}
-            <RichText text={reply.text} inline />
-          </p>
+          <p className="relative font-semibold text-[15px] mb-2">{reply.title}</p>
+          <div className="relative leading-relaxed">
+            <RichText text={reply.details || reply.text} />
+          </div>
           {onSend && (
             <div className="relative mt-3 flex flex-wrap gap-1.5">
               {TOPIC_REPLIES.map((text) => (
@@ -596,7 +595,7 @@ function ChatMessage({
               ))}
             </div>
           )}
-          {reply.kind === "advice" && <AdviceReply items={reply.items} onAppend={onAppend} send={send} />}
+          {reply.kind === "advice" && <AdviceReply items={reply.items} onAppend={onAppend} />}
           {reply.kind === "reminders" && <RemindersReply initial={reply.settings} />}
           {reply.kind === "reminder" && (
             <ReminderReply reply={reply} onDone={(text) => onReply(message.id, { kind: "cancelled", text })} />
@@ -1221,20 +1220,17 @@ function StatsReply({ stats }: { stats: Extract<AssistantReply, { kind: "stats" 
 function AdviceReply({
   items,
   onAppend,
-  send,
 }: {
   items: Extract<AssistantReply, { kind: "advice" }>["items"];
   onAppend: (reply: AssistantReply) => void;
-  send?: (text: string) => void;
 }) {
   const reportError = useErrorToast();
   if (!items.length) return <p>{tr("Пока советовать нечего — план в порядке.", "Nothing to advise yet — the plan looks fine.")}</p>;
 
-  // "Как это сделать?": the recommendation becomes the topic and the question is asked at once
+  // "Подробнее": the recommendation becomes the topic, explained in detail
   const discuss = async (index: number) => {
     try {
       onAppend(await api.assistant.topic(items[index].title, items[index].text));
-      send?.(TOPIC_REPLIES[0]);
     } catch {
       reportError(TEMPORARY_ERROR);
     }

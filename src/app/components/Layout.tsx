@@ -131,50 +131,6 @@ export function Brand() {
   );
 }
 
-/* ─── Avatar ────────────────────────────────────────────── */
-
-export function Avatar({
-  user,
-  size = 28,
-}: {
-  user: User | null | undefined;
-  size?: number;
-}) {
-  return (
-    <span
-      className={cn(
-        "relative shrink-0 rounded-full inline-flex items-center justify-center overflow-hidden",
-        // ─── Liquid Glass body — как у Brand ───
-        "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
-        "ring-1 ring-white/30 dark:ring-white/10",
-        "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
-        "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]"
-      )}
-      style={{ width: size, height: size }}
-      aria-hidden="true"
-    >
-      {/* Sheen — тот же блик, что у Brand */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.35)_0%,rgba(255,255,255,0.08)_25%,transparent_45%,transparent_75%,rgba(255,255,255,0.12)_100%)]"
-      />
-
-      {/* Буква — БЕЗ брендового тинта, только стекло */}
-      <span
-        className={cn(
-          "relative inline-flex items-center justify-center font-semibold",
-          "text-[11px]",
-          // Тёмный на светлом, белый на тёмном — читается на любом стекле
-          "text-gray-900 dark:text-white",
-          "drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
-        )}
-      >
-        {(user?.name || user?.email || "?").charAt(0).toUpperCase()}
-      </span>
-    </span>
-  );
-}
-
 /** Скрывать верхнюю плашку при скролле вниз, показывать при скролле вверх. */
 function useHideOnScroll(threshold = 80): boolean {
   const [hidden, setHidden] = React.useState(false);
@@ -322,7 +278,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   : "hover:bg-white/[0.03] dark:hover:bg-white/[0.015]"
               )}
             >
-              <Avatar user={user} size={26} />
+              <Icon name="user" size={18} className="shrink-0 text-gray-500 dark:text-gray-400" />
               <span className="min-w-0 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
                 {tr("Профиль", "Profile")}
               </span>

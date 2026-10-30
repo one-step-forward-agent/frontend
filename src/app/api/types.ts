@@ -235,7 +235,7 @@ type AssistantReplyBody =
       /** A task moved with the buttons: "Вернуть" moves it back to `from` */
       moved?: { event_id: number; from: string; to: string; from_label: string };
     }
-  | { kind: "topic"; title: string; text: string }
+  | { kind: "topic"; title: string; text: string; details?: string }
   | { kind: "delete_proposal"; draft_id: number; count: number; title: string; events: AssistantEvent[]; series?: boolean; answer: string | null }
   | { kind: "deleted"; count: number; text: string }
   | { kind: "completed"; events: AssistantEvent[]; event_ids: number[]; text: string }

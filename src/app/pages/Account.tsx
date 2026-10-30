@@ -5,7 +5,6 @@ import type { Integration, ReminderSettings, Source, Tag, TagColor, TelegramLink
 import { LanguagePicker, ThemePicker } from "@/theme";
 import { useAuth, useSignOut, useUser } from "../auth";
 import { Icon } from "../components/icons";
-import { Avatar } from "../components/Layout";
 import { TimeField } from "@/components/ui/time-field";
 import { restartTour, startTour } from "../components/Tour";
 import { IcsImportButton } from "../components/IcsImport";
@@ -110,7 +109,6 @@ export function AccountPage() {
         <GlassCard>
           <div className="-m-4 sm:-m-5 flex items-center gap-4">
             <div className="flex items-center gap-4 flex-1 min-w-0 p-4 sm:p-5">
-              <Avatar user={user} size={56} />
               <div className="min-w-0 flex-1">
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
                   {user.name || tr("Аккаунт", "Account")}

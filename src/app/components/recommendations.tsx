@@ -4,12 +4,12 @@ import { RichText } from "./RichText";
 import { Icon } from "./icons";
 import { tr } from "@/i18n";
 
-/** Ссылка в чат: рекомендация становится темой, и ассистента сразу спрашивают, как её применить (ask=1). */
+/** Ссылка в чат: рекомендация становится темой и приходит расписанной подробно. */
 export function discussLink(item: Recommendation): string {
-  return `/assistant?${new URLSearchParams({ topic: item.title, text: item.text, ask: "1" })}`;
+  return `/assistant?${new URLSearchParams({ topic: item.title, text: item.text })}`;
 }
 
-const HOW_TO = tr("Как это сделать?", "How do I do it?");
+const HOW_TO = tr("Подробнее", "More detail");
 
 /**
  * На экранах — только заголовки (до 4 слов): каждая строка открывает чат, где совет расписан подробно.
@@ -24,7 +24,7 @@ export function RecommendationList({
   items: Recommendation[] | undefined;
   label?: string;
   full?: boolean;
-  /** В самом чате «Как это сделать?» открывает тему здесь же, а не переходом. */
+  /** В самом чате «Подробнее» открывает тему здесь же, а не переходом. */
   onDiscuss?: (index: number) => void;
 }) {
   if (items === undefined) return <p className="muted small">{label}</p>;
