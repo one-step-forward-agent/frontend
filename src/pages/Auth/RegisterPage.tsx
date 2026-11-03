@@ -7,7 +7,7 @@ import {
 
 import { useAuthStore } from "@/store/authStore";
 import { Alert, FormField, Input } from "@/components/ui";
-import { sendMetricGoal } from "@/utils/metrics";
+import { reachGoal } from "@/app/lib/metrics";
 import { safeNext } from "./LoginPage";
 import { SignInButtons } from "./SignInButtons";
 import { cn } from "@/utils/cn";
@@ -113,7 +113,7 @@ const RegisterPage: React.FC = () => {
         email, password, name: username, timezone, website, form_ms: Date.now() - openedAt.current,
         email_code: emailCode.trim() || undefined, email_token: emailToken ?? undefined,
       });
-      sendMetricGoal("registration_success");
+      reachGoal("registration_success");
       // A fresh account goes through onboarding, which is applied at its last step.
       const next = searchParams.get("next");
       navigate(next ? safeNext(next) : "/onboarding/field-of-activity", { replace: true });
