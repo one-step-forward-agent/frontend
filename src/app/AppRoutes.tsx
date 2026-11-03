@@ -10,6 +10,7 @@ import { IntegrationsPage } from "./pages/Integrations";
 import { FriendsPage } from "./pages/Friends";
 import { JoinTeamPage, TeamPage, TeamsPage } from "./pages/Teams";
 import { AccountPage } from "./pages/Account";
+import { DesktopLoginPage } from "./pages/DesktopLogin";
 import { TasksPage } from "./pages/Tasks";
 import { TodayPage } from "./pages/Today";
 import { Link, match, useLocation, useTitle } from "./router";
@@ -30,6 +31,8 @@ const ROUTES: [string, (params: Record<string, string>) => ReactNode][] = [
   // A one-time invitation link: a guest signs in first and comes back here
   ["/join/:token", ({ token }) => <JoinTeamPage token={token} />],
   ["/account", () => <AccountPage />],
+  // The Windows app signs in through the browser: a guest signs in first and comes back here
+  ["/desktop-login", () => <DesktopLoginPage />],
   // Старые ссылки (бот, письма) ведут в настройки — теперь это аккаунт
   ["/settings", () => <AccountPage />],
 ];

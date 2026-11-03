@@ -336,6 +336,10 @@ export const api = {
     edit: (id: number, body: { title?: string; date?: string; time?: string | null }) => request<AssistantReply>(`/api/send-drafts/${id}`, json("PATCH", body), "send_draft_edit"),
     act: (id: number, action: "send" | "cancel") => request<AssistantReply>(`/api/send-drafts/${id}/${action}`, { method: "POST" }, { name: "send_draft", params: { action } }),
   },
+  /** The Windows app signs in through the browser (backend app/api/desktop.py) */
+  desktop: {
+    authorize: (body: { port: number; challenge: string; state: string }) => request<{ redirect: string }>("/api/desktop/authorize", json("POST", body), "desktop_authorize"),
+  },
   teams: {
     list: () => request<TeamSummary[]>("/api/teams"),
     create: (body: { name: string; tag?: string; my_name?: string }) => request<TeamDetail>("/api/teams", json("POST", body), "team_create"),
