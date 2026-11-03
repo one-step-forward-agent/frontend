@@ -32,6 +32,8 @@ const SIDEBAR: NavItem[] = [
   NAV[1],
   NAV[3],
   { to: "/events/new", label: tr("Новая задача", "New task"), icon: "plus" },
+  // Friends above Teams: the list of the user's teams goes right under the Teams item
+  { to: "/friends", label: tr("Друзья", "Friends"), icon: "friends" },
   { to: "/teams", label: tr("Команды", "Teams"), icon: "user" },
 ];
 
@@ -45,7 +47,7 @@ const TABS: NavItem[] = [
 
 // Where the corner chat would only get in the way: the chat page itself and the task form with its buttons
 const NO_DOCK = ["/assistant", "/events/new"];
-const ACCOUNT_PATHS = ["/account", "/settings", "/integrations", "/friends"];
+const ACCOUNT_PATHS = ["/account", "/settings", "/integrations"];
 
 // The first-visit hints point at these (see Tour.tsx)
 const TOUR_IDS: Record<string, string> = {

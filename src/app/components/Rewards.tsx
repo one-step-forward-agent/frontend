@@ -1,8 +1,12 @@
 // Points, levels and sphere badges: the level bar under the progress on Today and the badges in Account.
 // The server counts everything from the ticked tasks (GET /api/rewards); the page only shows it.
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { api } from "../api/client";
 import type { Rewards } from "../api/types";
+import { useAuth, useUser } from "../auth";
+import { errorText } from "../lib/format";
+import { Button, useErrorToast } from "./ui";
 import { Icon } from "./icons";
 import { startTour } from "./Tour";
 import { cn } from "@/utils/cn";
@@ -40,15 +44,9 @@ export function LevelBar({ rewards }: { rewards: Rewards }) {
 }
 
 /** The badges of each onboarding sphere: earned, the one in progress with its count, and the later ones */
-export function BadgeList({ rewards }: { rewards: Rewards }) {
+export function BadgeList({ rewards, onSpheres }: { rewards: Rewards; onSpheres?: () => void }) {
   const spheres = [...new Set(rewards.badges.map((badge) => badge.sphere))];
-  if (!spheres.length) {
-    return (
-      <p className="muted small">
-        {tr("Выберите сферы жизни в онбординге — для каждой появятся свои значки.", "Choose your life areas in onboarding — each gets its own badges.")}
-      </p>
-    );
-  }
+  if (!spheres.length) return <SpherePicker onSaved={onSpheres} />;
   return (
     <ul className="space-y-3" data-tour="badges">
       {spheres.map((sphere) => {
@@ -87,5 +85,73 @@ export function BadgeList({ rewards }: { rewards: Rewards }) {
         );
       })}
     </ul>
+  );
+}
+
+// The onboarding's presets; colours as in its palette
+const SPHERE_PRESETS = [
+  tr("Работа", "Work"),
+  tr("Учёба", "Study"),
+  tr("Спорт", "Sport"),
+  tr("Языки", "Languages"),
+  tr("Отдых", "Rest"),
+  tr("Отношения", "Relationships"),
+];
+const SPHERE_COLORS = ["#64748b", "#14b8a6", "#f97316", "#8b5cf6", "#f43f5e", "#f59e0b", "#06b6d4", "#ec4899", "#6366f1", "#84cc16"];
+
+/** No spheres yet (onboarding skipped): pick them right here. The server makes a tag of each, as onboarding does */
+function SpherePicker({ onSaved }: { onSaved?: () => void }) {
+  const user = useUser();
+  const { setUser } = useAuth();
+  const reportError = useErrorToast();
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const toggle = (name: string) => setChosen((list) => (list.includes(name) ? list.filter((item) => item !== name) : [...list, name]));
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      const spheres = chosen.map((name, index) => ({
+        id: Math.random().toString(36).slice(2, 9),
+        name,
+        color: SPHERE_COLORS[index % SPHERE_COLORS.length],
+        priority: index,
+      }));
+      setUser(await api.me.saveOnboarding({ ...(user.profile ?? {}), spheres }));
+      onSaved?.();
+    } catch (error) {
+      reportError(errorText(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="muted small">
+        {tr(
+          "Выберите сферы жизни — для каждой появятся свои значки и тег.",
+          "Choose your life areas — each gets its own badges and tag."
+        )}
+      </p>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label={tr("Сферы жизни", "Life areas")}>
+        {SPHERE_PRESETS.map((name) => (
+          <button
+            key={name}
+            type="button"
+            aria-pressed={chosen.includes(name)}
+            className={cn("chip-toggle", chosen.includes(name) && "active")}
+            onClick={() => toggle(name)}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+      <Button size="sm" variant="primary" busy={busy} disabled={!chosen.length} onClick={save}>
+        {tr("Выбрать сферы", "Choose areas")}
+        {chosen.length > 0 && ` · ${chosen.length}`}
+      </Button>
+    </div>
   );
 }

@@ -1,15 +1,16 @@
 // src/pages/Account.tsx
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { api } from "../api/client";
 import type { Integration, ReminderSettings, Source, Tag, TagColor, TelegramLink } from "../api/types";
 import { LanguagePicker, ThemePicker } from "@/theme";
 import { useAuth, useSignOut, useUser } from "../auth";
-import { Icon } from "../components/icons";
+import { Icon, type IconName } from "../components/icons";
 import { TimeField } from "@/components/ui/time-field";
 import { restartTour, startTour } from "../components/Tour";
 import { IcsImportButton } from "../components/IcsImport";
 import { TAG_COLORS, TagChip } from "../components/tags";
 import { BadgeList, LevelBar } from "../components/Rewards";
+import { ActivityGrid } from "../components/ActivityGrid";
 import {
   Badge,
   Button,
@@ -22,35 +23,52 @@ import {
   useToast,
 } from "../components/ui";
 import {
+  GLASS_BODY,
   GlassCard,
   GlassNavItem,
   GlassPill,
   COMPACT_FIELD,
   COMPACT_CHIPS,
   COMPACT_INLINE_FORM,
-  COMPACT_SELECT,
 } from "@/components/dashboard/glass";
 import { SOURCE_LABELS, browserTimezone, errorText, formatDateTime, formatLead } from "../lib/format";
 import { notifyTagsChanged, useAction, useAsync, useMediaQuery, useTags } from "../lib/hooks";
 import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
-import { useAuthStore } from "@/store/authStore";
-import { useNavigate } from "react-router-dom";
 import { LOCALE, isEn, tr } from "@/i18n";
 
-const SECTIONS = [
-  { id: "profile", label: tr("Профиль", "Profile") },
-  { id: "rewards", label: tr("Награды", "Awards") },
-  { id: "tags", label: tr("Теги", "Tags") },
-  { id: "reminders", label: tr("Уведомления", "Notifications") },
-  { id: "telegram", label: "Telegram" },
-  { id: "appearance", label: tr("Оформление и язык", "Appearance & language") },
-  { id: "integrations", label: tr("Интеграции", "Integrations") },
-  { id: "friends", label: tr("Друзья", "Friends") },
-  { id: "teams", label: tr("Команды", "Teams") },
-  { id: "import", label: tr("Импорт .ics", ".ics import") },
-  { id: "security", label: tr("Безопасность", "Security") },
+// Settings in groups, by how often they are changed; Security is last as the danger zone.
+// Calendars, friends and teams are not settings: they are the cards above the menu (see Hub)
+const GROUPS = [
+  {
+    label: tr("Аккаунт", "Account"),
+    items: [
+      { id: "profile", label: tr("Профиль", "Profile") },
+      { id: "appearance", label: tr("Оформление и язык", "Appearance & language") },
+    ],
+  },
+  {
+    label: tr("Планирование", "Planning"),
+    items: [
+      { id: "reminders", label: tr("Уведомления", "Notifications") },
+      { id: "tags", label: tr("Теги", "Tags") },
+      { id: "activity", label: tr("Активность", "Activity") },
+      { id: "rewards", label: tr("Награды", "Awards") },
+    ],
+  },
+  {
+    label: tr("Подключения", "Connections"),
+    items: [
+      { id: "telegram", label: "Telegram" },
+      { id: "import", label: tr("Импорт .ics", ".ics import") },
+    ],
+  },
+  {
+    label: "",
+    items: [{ id: "security", label: tr("Безопасность", "Security") }],
+  },
 ];
+const SECTIONS = GROUPS.flatMap((group) => group.items);
 
 /** Раздел, который сейчас на экране: подсвечивается в меню. */
 function useActiveSection(): string {
@@ -136,50 +154,67 @@ export function AccountPage() {
         </GlassCard>
       </div>
 
+      {/* ─── Календари, друзья, команды ─────────────── */}
+      <Hub />
+
       {/* ─── Layout: меню + секции ─────────────────── */}
       <div className="grid lg:grid-cols-[220px_minmax(0,1fr)] gap-6 lg:gap-8">
         {wide ? (
-          <nav className="sticky top-6 self-start space-y-1" aria-label={tr("Разделы аккаунта", "Account sections")}>
-            {SECTIONS.map((section) => (
-              <GlassNavItem
-                key={section.id}
-                href={`#${section.id}`}
-                active={active === section.id}
-                onClick={(event) => {
-                  event.preventDefault();
-                  goTo(section.id);
-                }}
-              >
-                {section.label}
-              </GlassNavItem>
+          <nav className="sticky top-6 self-start space-y-4" aria-label={tr("Разделы аккаунта", "Account sections")}>
+            {GROUPS.map((group, index) => (
+              <div key={index} className={cn("space-y-0.5", !group.label && "pt-3 border-t border-black/5 dark:border-white/10")}>
+                {group.label && (
+                  <p className="px-3.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                    {group.label}
+                  </p>
+                )}
+                {group.items.map((section) => (
+                  <GlassNavItem
+                    key={section.id}
+                    href={`#${section.id}`}
+                    active={active === section.id}
+                    className={cn(
+                      "py-2",
+                      active === section.id && "bg-white/[0.08] dark:bg-white/[0.05] text-gray-900 dark:text-white"
+                    )}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      goTo(section.id);
+                    }}
+                  >
+                    {section.label}
+                  </GlassNavItem>
+                ))}
+              </div>
             ))}
           </nav>
         ) : (
-          <label className="block">
-            <select
-              value={active}
-              onChange={(event) => goTo(event.target.value)}
-              className={COMPACT_SELECT}
-            >
-              {SECTIONS.map((section) => (
-                <option key={section.id} value={section.id}>
-                  {section.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <nav
+            className="-mx-4 px-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"
+            aria-label={tr("Разделы аккаунта", "Account sections")}
+          >
+            {SECTIONS.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                aria-current={active === section.id ? "true" : undefined}
+                className={cn("chip-toggle shrink-0 whitespace-nowrap", active === section.id && "active")}
+                onClick={() => goTo(section.id)}
+              >
+                {section.label}
+              </button>
+            ))}
+          </nav>
         )}
 
         <div className="space-y-6 min-w-0">
           <ProfileSection />
-          <RewardsSection />
-          <TagsSection />
-          <RemindersSection />
-          <TelegramSection />
           <AppearanceSection />
-          <IntegrationsSection />
-          <FriendsSection />
-          <TeamsSection />
+          <RemindersSection />
+          <TagsSection />
+          <ActivitySection />
+          <RewardsSection />
+          <TelegramSection />
           <ImportSection />
           <SecuritySection />
         </div>
@@ -265,6 +300,16 @@ function ProfileSection() {
   );
 }
 
+function ActivitySection() {
+  return (
+    <div id="activity" className="anchor">
+      <GlassCard title={tr("Активность", "Activity")}>
+        <ActivityGrid />
+      </GlassCard>
+    </div>
+  );
+}
+
 function RewardsSection() {
   const user = useUser();
   const { setUser } = useAuth();
@@ -310,7 +355,7 @@ function RewardsSection() {
           (rewards.data ? (
             <div className="space-y-5">
               <LevelBar rewards={rewards.data} />
-              <BadgeList rewards={rewards.data} />
+              <BadgeList rewards={rewards.data} onSpheres={rewards.reload} />
             </div>
           ) : (
             <Loading />
@@ -685,134 +730,91 @@ function connectedRows(items: Integration[]): ProfileRow[] {
   return rows;
 }
 
-function IntegrationsSection() {
+// Calendars, friends and teams are features with their own pages, not settings: they open the profile as
+// cards with their status, so they are seen first. The ids keep the old /account#friends links working
+function Hub() {
   const integrations = useAsync(() => api.integrations.list(), []);
-  return (
-    <div id="integrations" className="anchor">
-      <GlassCard
-        title={tr("Интеграции", "Integrations")}
-        actions={
-          <Link
-            to="/integrations"
-            className="btn btn-secondary btn-sm h-8 px-3 text-xs"
-          >
-            {tr("Управлять", "Manage")}
-          </Link>
-        }
-      >
-        <p className="muted small">
-          {tr(
-            "Google Calendar, Яндекс Календарь, Apple Calendar, Samsung Calendar, Jira и Notion: подключение, импорт и отправка задач.",
-            "Google Calendar, Yandex Calendar, Apple Calendar, Samsung Calendar, Jira and Notion: connecting, importing and sending tasks."
-          )}
-        </p>
-        {integrations.error && (
-          <ErrorNote message={integrations.error} onRetry={integrations.reload} />
-        )}
-        {integrations.data &&
-          (connectedRows(integrations.data).length ? (
-            <ul className="simple-list">
-              {connectedRows(integrations.data).map((item) => (
-                <li key={item.slug}>
-                  <span className="truncate">{item.title}</span>
-                  {item.connection ? (
-                    <Badge tone={item.connection.status === "error" ? "bad" : "ok"}>
-                      {item.connection.status === "error" ? tr("ошибка", "error") : tr("подключено", "connected")}
-                    </Badge>
-                  ) : (
-                    <Badge>{tr("через Google", "via Google")}</Badge>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted small">
-              {tr("Пока ничего не подключено.", "Nothing is connected yet.")}{" "}
-              <Link to="/integrations">{tr("Подключить календарь", "Connect a calendar")}</Link>
-            </p>
-          ))}
-      </GlassCard>
-    </div>
-  );
-}
-
-// Friends sit next to the integrations: the list and the settings are on their own page
-function FriendsSection() {
   const friends = useAsync(() => api.friends.list(), []);
+  const teams = useAsync(() => api.teams.list(), []);
+
+  const rows = integrations.data ? connectedRows(integrations.data) : [];
+  const broken = rows.some((row) => row.connection?.status === "error");
   const accepted = friends.data?.friends.filter((item) => item.status === "accepted") ?? [];
   const incoming = friends.data?.friends.filter((item) => item.status === "incoming").length ?? 0;
+
   return (
-    <div id="friends" className="anchor">
-      <GlassCard
-        title={tr("Друзья", "Friends")}
-        actions={
-          <Link to="/friends" className="btn btn-secondary btn-sm h-8 px-3 text-xs">
-            {tr("Управлять", "Manage")}
-          </Link>
+    <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <HubCard
+        id="integrations"
+        to="/integrations"
+        icon="calendar"
+        title={tr("Календари и сервисы", "Calendars & services")}
+        loading={integrations.loading}
+        status={
+          rows.length
+            ? rows.map((row) => row.title).join(", ")
+            : tr("Подключите Google, Яндекс, Notion…", "Connect Google, Yandex, Notion…")
         }
-      >
-        <p className="muted small">
-          {tr(
-            "Совместное планирование: «Добавь Маше купить хлеб завтра в 18:00» — и задача уйдёт другу на подтверждение.",
-            "Planning together: “Add Masha to buy bread tomorrow at 6 pm” — and the task goes to your friend to confirm."
-          )}
-        </p>
-        {friends.error && <ErrorNote message={friends.error} onRetry={friends.reload} />}
-        {friends.data && (
-          <p className="muted small">
-            {accepted.length
-              ? `${tr("В друзьях", "Friends")}: ${accepted.map((item) => item.name).join(", ")}`
-              : tr("Пока никого.", "No one yet.")}{" "}
-            {incoming > 0 && (
-              <Link to="/friends">{tr(`Приглашений: ${incoming}`, `Invitations: ${incoming}`)}</Link>
-            )}
-            {!accepted.length && !incoming && <Link to="/friends">{tr("Добавить друга", "Add a friend")}</Link>}
-          </p>
-        )}
-      </GlassCard>
+        badge={broken ? <Badge tone="bad">{tr("ошибка", "error")}</Badge> : rows.length > 0 && <Badge tone="ok">{rows.length}</Badge>}
+      />
+      <HubCard
+        id="friends"
+        to="/friends"
+        icon="friends"
+        title={tr("Друзья", "Friends")}
+        loading={friends.loading}
+        status={
+          accepted.length
+            ? accepted.map((item) => item.name).join(", ")
+            : tr("Планируйте вместе: задачи друг другу", "Plan together: tasks for each other")
+        }
+        badge={incoming > 0 && <Badge tone="ok">{tr(`+${incoming} приглаш.`, `+${incoming} invite${incoming > 1 ? "s" : ""}`)}</Badge>}
+      />
+      <HubCard
+        id="teams"
+        to="/teams"
+        icon="user"
+        title={tr("Команды", "Teams")}
+        loading={teams.loading}
+        status={
+          teams.data?.length
+            ? teams.data.map((team) => `@${team.tag}`).join(", ")
+            : tr("Общие проекты с ассистентом команды", "Shared projects with a team assistant")
+        }
+        badge={!!teams.data?.length && <Badge>{teams.data.length}</Badge>}
+      />
     </div>
   );
 }
 
-// Teams sit next to the integrations and friends: each team is managed on its own page
-function TeamsSection() {
-  const teams = useAsync(() => api.teams.list(), []);
+function HubCard(props: {
+  id: string;
+  to: string;
+  icon: IconName;
+  title: string;
+  status: string;
+  loading: boolean;
+  badge?: ReactNode;
+}) {
   return (
-    <div id="teams" className="anchor">
-      <GlassCard
-        title={tr("Команды", "Teams")}
-        actions={
-          <Link to="/teams" className="btn btn-secondary btn-sm h-8 px-3 text-xs">
-            {tr("Управлять", "Manage")}
-          </Link>
-        }
-      >
-        <p className="muted small">
-          {tr(
-            "Общие проекты и задачи с ассистентом команды. Участников приглашают по ссылке.",
-            "Shared projects and tasks with the team's assistant. Members join by a link."
-          )}
-        </p>
-        {teams.error && <ErrorNote message={teams.error} onRetry={teams.reload} />}
-        {teams.data &&
-          (teams.data.length ? (
-            <ul className="simple-list">
-              {teams.data.map((team) => (
-                <li key={team.id}>
-                  <Link to={`/teams/${team.id}`} className="truncate">
-                    {team.name} <span className="muted">@{team.tag}</span>
-                  </Link>
-                  <Badge>{team.role === "admin" ? tr("админ", "admin") : `${team.members} ${tr("участн.", "members")}`}</Badge>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted small">
-              {tr("Пока ни одной.", "None yet.")} <Link to="/teams">{tr("Создать команду", "Create a team")}</Link>
-            </p>
-          ))}
-      </GlassCard>
-    </div>
+    <Link
+      id={props.id}
+      to={props.to}
+      className={cn(
+        "anchor group relative block rounded-2xl p-4 transition-colors",
+        GLASS_BODY,
+        "hover:bg-white/[0.12] dark:hover:bg-white/[0.05]"
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <Icon name={props.icon} size={18} className="text-sky-600 dark:text-sky-400 shrink-0" />
+        <span className="font-medium text-gray-900 dark:text-white truncate">{props.title}</span>
+        <span className="ml-auto shrink-0">{props.badge}</span>
+      </div>
+      <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 min-h-[2rem]">
+        {props.loading ? "…" : props.status}
+      </p>
+    </Link>
   );
 }
 
@@ -974,7 +976,6 @@ function TelegramSection() {
 
 function SecuritySection() {
   const logout = useSignOut();
-  const navigate = useNavigate();
   const errorToast = useErrorToast();
   const [deleting, setDeleting] = useState(false);
 
@@ -983,8 +984,9 @@ function SecuritySection() {
     setDeleting(true);
     try {
       await api.me.remove();
-      useAuthStore.setState({ user: null, isAuthenticated: false, error: null });
-      navigate("/", { replace: true });
+      // A full load, not a route change: clearing the session in place made the app guard race this
+      // redirect and land on /login?next=/app/account, which looked as if the account were still there
+      window.location.replace("/");
     } catch (error) {
       errorToast(errorText(error));
       setDeleting(false);

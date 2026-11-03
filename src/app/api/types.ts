@@ -487,6 +487,13 @@ export interface Stats {
   best_streak: number;
 }
 
+/** Ticked tasks per day over the last 53 weeks, and each tag's count for the year */
+export interface Activity {
+  days: { date: string; done: number }[];
+  total: number;
+  tags: { id: number; done: number }[];
+}
+
 /** A challenge in an onboarding sphere: `goal` ticked tasks with the sphere's tag. */
 export interface RewardBadge {
   sphere: string;

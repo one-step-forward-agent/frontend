@@ -36,6 +36,7 @@ import type {
   Recommendation,
   ReminderHistoryItem,
   ReminderSettings,
+  Activity,
   Rewards,
   Stats,
   DeleteScope,
@@ -250,6 +251,7 @@ export const api = {
       request<{ file_id: number; text: string }>(`/api/files/${id}/text`, { method: "POST" }, "file_text_extract"),
   },
   stats: (days = 7) => request<Stats>(`/api/stats?days=${days}`),
+  activity: (tagId?: number) => request<Activity>(`/api/stats/activity${tagId ? `?tag_id=${tagId}` : ""}`),
   rewards: () => request<Rewards>("/api/rewards"),
   recommendations: (scope: "today" | "week" | "month" = "today", day?: string) =>
     request<{ items: Recommendation[] }>(`/api/recommendations?scope=${scope}${day ? `&day=${day}` : ""}`).then((result) => result.items),
