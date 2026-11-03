@@ -293,7 +293,24 @@ type AssistantReplyBody =
   | { kind: "nothing" }
   | FriendTaskCard
   | FriendInviteCard
-  | TeamTaskCard;
+  | TeamTaskCard
+  | SendDraftCard;
+
+/** A task or reminder for a friend, or a team member's task, waiting for «Отправить» (backend app/services/send_drafts.py) */
+export interface SendDraftCard {
+  kind: "send_draft";
+  draft_id: number;
+  type: "friend_task" | "friend_reminder" | "team_task";
+  to: string;
+  title: string;
+  /** YYYY-MM-DD and HH:MM in the user's time; time is null for a task without a time */
+  date: string | null;
+  time: string | null;
+  when: string;
+  status: "open" | "sent" | "cancelled";
+  actions: ("send" | "edit" | "cancel")[];
+  text: string;
+}
 
 /* ─── Teams (backend app/services/teams.py) ─── */
 
@@ -396,7 +413,7 @@ export interface TeamChatMessage {
 
 /* ─── Friends: tasks given in the chat (backend app/services/friends.py) ─── */
 
-export type FriendTaskAction = "accept" | "reject" | "block" | "start" | "cancel" | "check_on" | "check_off";
+export type FriendTaskAction = "accept" | "reject" | "start" | "cancel" | "check_on" | "check_off";
 
 export interface FriendTaskCard {
   kind: "friend_task";
@@ -413,6 +430,8 @@ export interface FriendTaskCard {
   status: "pending" | "accepted" | "rejected" | "cancelled";
   check: boolean;
   check_state: "asked" | "started" | "missed" | null;
+  /** «Напомни Маше …»: in the friend's calendar with a reminder at that time; the sender can cancel it */
+  reminder?: boolean;
   actions: FriendTaskAction[];
   /** The card in markdown, the same the bot shows */
   text: string;

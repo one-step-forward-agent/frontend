@@ -216,7 +216,7 @@ export default function ResearchAdmin() {
         <section className="mt-10">
           <h2 className="mb-1 text-xl font-semibold">Пожелания</h2>
           <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-            Что пользователи просили, а Dayla пока не умеет. Ассистент ответил им: «Я учту ваше пожелание и скоро смогу это для вас сделать».
+            Что пользователи просили, а Dayla пока не умеет. Сюда попадает только то, что пользователь сам решил отправить кнопкой «Отправить пожелание»; просьбы не о планах (код, рецепты, домашние задания) ассистент отклоняет и не записывает.
           </p>
           {data && data.wishes.length === 0 && <p className="text-sm text-gray-500">Пока нет.</p>}
           <ul className="divide-y divide-gray-100 text-[13px] dark:divide-white/5">

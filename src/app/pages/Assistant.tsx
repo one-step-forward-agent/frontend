@@ -15,6 +15,7 @@ import type {
   FriendInviteCard,
   FriendTaskAction,
   FriendTaskCard,
+  SendDraftCard,
   TeamTaskAction,
   TeamTaskCard,
 } from "../api/types";
@@ -84,7 +85,7 @@ const ABILITIES = isEn
 
 let messageId = 0;
 const FRIEND_POLL_MS = 15000;
-const FRIEND_KINDS = ["friend_task", "friend_invite", "team_task"];
+const FRIEND_KINDS = ["friend_task", "friend_invite", "team_task", "send_draft"];
 
 function fromHistory(items: HistoryMessage[]): Message[] {
   return items.map((item) =>
@@ -599,6 +600,7 @@ function ChatMessage({
           {(reply.kind === "friend_task" || reply.kind === "friend_invite" || reply.kind === "team_task") && (
             <TaskCard reply={reply} onReply={(next) => onReply(message.id, next)} />
           )}
+          {reply.kind === "send_draft" && <SendDraft reply={reply} onReply={(next) => onReply(message.id, next)} />}
           {reply.kind === "stats" && <StatsReply stats={reply} />}
           {reply.kind === "help" && (
             <div className="space-y-3">
@@ -1029,7 +1031,6 @@ function UndoButton({
 const FRIEND_BUTTONS: Record<FriendTaskAction | TeamTaskAction, { label: string; icon?: "check" | "close" | "clock" | "play" | "trash" | "bell"; variant?: "primary" | "ghost" }> = {
   accept: { label: tr("Принять", "Accept"), icon: "check", variant: "primary" },
   reject: { label: tr("Отклонить", "Decline"), icon: "close" },
-  block: { label: tr("Отклонить и не присылать 10 мин", "Decline, pause for 10 min"), icon: "clock", variant: "ghost" },
   start: { label: tr("Начал(а)", "I've started"), icon: "play", variant: "primary" },
   cancel: { label: tr("Отменить задачу", "Cancel the task"), icon: "trash", variant: "ghost" },
   check_on: { label: tr("Включить контроль", "Turn the check on"), icon: "bell", variant: "ghost" },
@@ -1089,7 +1090,7 @@ export function TaskCard({ reply, onReply }: { reply: FriendTaskCard | FriendInv
               disabled={busy !== null}
               onClick={() => run(action, () => api.friends.act(reply.task_id, action))}
             >
-              {FRIEND_BUTTONS[action].label}
+              {action === "cancel" && reply.reminder ? tr("Отменить напоминание", "Cancel the reminder") : FRIEND_BUTTONS[action].label}
             </Button>
           ))}
         </div>
@@ -1101,6 +1102,99 @@ export function TaskCard({ reply, onReply }: { reply: FriendTaskCard | FriendInv
           </Button>
           <Button size="sm" icon="close" busy={busy === "decline"} disabled={busy !== null} onClick={() => run("decline", () => api.friends.answer(reply.friend_id, "decline"))}>
             {tr("Отклонить", "Decline")}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── SendDraft: a task or reminder for someone else, sent only on «Отправить» ─── */
+
+const DRAFT_INPUT =
+  "w-full rounded-lg border border-gray-300 bg-white/70 px-3 py-2 text-sm text-gray-900 dark:border-white/15 dark:bg-white/5 dark:text-white";
+
+export function SendDraft({ reply, onReply }: { reply: SendDraftCard; onReply: (next: AssistantReply) => void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(reply.title);
+  const [day, setDay] = useState(reply.date ?? "");
+  const [time, setTime] = useState(reply.time ?? "");
+  const reportError = useErrorToast();
+  const reminder = reply.type === "friend_reminder";
+
+  const run = async (key: string, action: () => Promise<AssistantReply>) => {
+    setBusy(key);
+    try {
+      const next = await action();
+      if (next.kind === "answer") {
+        // Not sent (the friend paused tasks …): said in words, the draft stays
+        reportError(next.text);
+        return;
+      }
+      setEditing(false);
+      onReply(next);
+      if (next.kind !== "send_draft") notifyTasksChanged();
+    } catch (error) {
+      reportError(errorText(error));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const save = (event: FormEvent) => {
+    event.preventDefault();
+    const body: { title?: string; date?: string; time?: string | null } = {};
+    if (title.trim() && title.trim() !== reply.title) body.title = title.trim();
+    if (day && day !== reply.date) body.date = day;
+    if ((time || null) !== reply.time) body.time = time || null;
+    if (Object.keys(body).length === 0) {
+      setEditing(false);
+      return;
+    }
+    run("edit", () => api.sendDrafts.edit(reply.draft_id, body));
+  };
+
+  return (
+    <div className="space-y-2.5">
+      <RichText text={reply.text} />
+      {editing && (
+        <form className="space-y-2" onSubmit={save}>
+          <input className={DRAFT_INPUT} value={title} maxLength={300} onChange={(event) => setTitle(event.target.value)} aria-label={tr("Название", "Title")} />
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              className={cn(DRAFT_INPUT, "w-auto")}
+              value={day}
+              min={new Date().toISOString().slice(0, 10)}
+              onChange={(event) => setDay(event.target.value)}
+              onClick={(click) => openPicker(click.currentTarget)}
+              aria-label={tr("День", "Day")}
+            />
+            <TimeField value={time} onChange={setTime} allowEmpty={!reminder} label={tr("Время", "Time")} />
+          </div>
+          <div className="flex gap-1.5">
+            <Button size="sm" type="submit" variant="primary" icon="check" busy={busy === "edit"} disabled={busy !== null || !title.trim() || (reminder && !time)}>
+              {tr("Сохранить", "Save")}
+            </Button>
+            <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => setEditing(false)}>
+              {tr("Не менять", "Keep as is")}
+            </Button>
+          </div>
+        </form>
+      )}
+      {!editing && reply.actions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          <Button size="sm" variant="primary" icon="check" busy={busy === "send"} disabled={busy !== null} onClick={() => run("send", () => api.sendDrafts.act(reply.draft_id, "send"))}>
+            {reminder ? tr("Поставить напоминание", "Set the reminder") : tr("Отправить", "Send")}
+          </Button>
+          {reply.actions.includes("edit") && (
+            <Button size="sm" icon="calendar" disabled={busy !== null} onClick={() => setEditing(true)}>
+              {tr("Изменить", "Change")}
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" icon="close" busy={busy === "cancel"} disabled={busy !== null} onClick={() => run("cancel", () => api.sendDrafts.act(reply.draft_id, "cancel"))}>
+            {tr("Отмена", "Cancel")}
           </Button>
         </div>
       )}

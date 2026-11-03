@@ -11,7 +11,7 @@ import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_CHIP } from "@/components/dashboard/glass";
 import { tr } from "@/i18n";
-import { TaskCard } from "./Assistant";
+import { SendDraft, TaskCard } from "./Assistant";
 
 /**
  * Teams: a list of the user's teams and a form to create one; a team's page with its tasks, projects, members and
@@ -622,6 +622,8 @@ function TeamChatTab({ team }: { team: TeamDetail }) {
             <div key={item.id} className="max-w-[92%] rounded-2xl rounded-bl-sm bg-gray-500/[0.06] dark:bg-white/[0.04] px-3.5 py-2.5 text-sm text-gray-900 dark:text-white space-y-2">
               {item.reply && item.reply.kind === "team_task" ? (
                 <TaskCard reply={item.reply} onReply={(next) => replace(item.id, next)} />
+              ) : item.reply && item.reply.kind === "send_draft" ? (
+                <SendDraft reply={item.reply} onReply={(next) => replace(item.id, next)} />
               ) : (
                 <RichText text={item.reply && "text" in item.reply && typeof item.reply.text === "string" ? item.reply.text : item.text} />
               )}

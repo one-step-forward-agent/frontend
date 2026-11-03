@@ -331,6 +331,11 @@ export const api = {
     act: (taskId: number, action: FriendTaskAction) =>
       request<FriendTaskCard>(`/api/friend-tasks/${taskId}/${action}`, { method: "POST" }, { name: "friend_task", params: { action } }),
   },
+  /** Drafts of what the chat sends to a friend or team member: nothing goes out before send */
+  sendDrafts: {
+    edit: (id: number, body: { title?: string; date?: string; time?: string | null }) => request<AssistantReply>(`/api/send-drafts/${id}`, json("PATCH", body), "send_draft_edit"),
+    act: (id: number, action: "send" | "cancel") => request<AssistantReply>(`/api/send-drafts/${id}/${action}`, { method: "POST" }, { name: "send_draft", params: { action } }),
+  },
   teams: {
     list: () => request<TeamSummary[]>("/api/teams"),
     create: (body: { name: string; tag?: string; my_name?: string }) => request<TeamDetail>("/api/teams", json("POST", body), "team_create"),
