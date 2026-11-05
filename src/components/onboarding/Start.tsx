@@ -1650,11 +1650,14 @@ const UserCaseCarousel: React.FC<{
   const containerRef = React.useRef<HTMLElement>(null);
   const trackRef = React.useRef<HTMLDivElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
-  const [viewportW, setViewportW] = React.useState(0);
+  // Инициализируем сразу по окну, чтобы первый рендер на телефоне был вертикальным
+  const [viewportW, setViewportW] = React.useState(() =>
+    typeof window !== "undefined" ? window.innerWidth : 0
+  );
   const [stageH, setStageH] = React.useState(0);
   const total = USE_CASE_SLIDES.length;
 
-  /* ─── Ширина вьюпорта — только она переключает mobile/desktop ─── */
+  /* ─── Ширина вьюпорта ─── */
   React.useLayoutEffect(() => {
     const update = () => setViewportW(window.innerWidth);
     update();
@@ -1662,11 +1665,7 @@ const UserCaseCarousel: React.FC<{
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  /* ─── РЕАЛЬНАЯ высота области под слайд.
-     Здесь критично мерить именно flex-1 (100svh − pt-14 на мобилке),
-     а не window.innerHeight: на телефоне innerHeight > 100svh
-     (адресная строка), и если считать scale по нему, верхняя часть
-     слайда (бейджи и заголовки) обрезается сверху. ─── */
+  /* ─── РЕАЛЬНАЯ высота stage (только для desktop) ─── */
   React.useLayoutEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -1676,9 +1675,9 @@ const UserCaseCarousel: React.FC<{
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [viewportW]); // ← пересоздаём observer при смене mobile ↔ desktop
 
-  /* ─── Натуральные высоты слайдов (до scale) ─── */
+  /* ─── Натуральные высоты слайдов ─── */
   const measurementsRef = React.useRef<Record<number, number>>({});
   const [measureVersion, setMeasureVersion] = React.useState(0);
   const handleMeasured = React.useCallback((idx: number, designHeight: number) => {
@@ -1705,8 +1704,9 @@ const UserCaseCarousel: React.FC<{
     return Math.min(viewportW / designWidth, stageH / maxDesignHeight);
   }, [viewportW, stageH, designWidth, maxDesignHeight]);
 
-  /* ─── Скролл: пишем transform прямо в DOM, без setState ─── */
+  /* ─── Скролл: ТОЛЬКО desktop ─── */
   React.useLayoutEffect(() => {
+    if (mobile) return; // на мобилке трека нет — выходим
     const container = containerRef.current;
     const track = trackRef.current;
     if (!container || !track) return;
@@ -1741,8 +1741,30 @@ const UserCaseCarousel: React.FC<{
       window.removeEventListener("resize", schedule);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [total]);
+  }, [total, mobile]); // ← переподключаем при mobile ↔ desktop
 
+  /* ═══════════════════════════════════════════════════════════
+     MOBILE — обычный вертикальный поток, никакой карусели
+     ═══════════════════════════════════════════════════════════ */
+  if (mobile) {
+    return (
+      <section
+        id="usecases"
+        className="relative"
+        aria-label={tr("Сценарии использования", "Use cases")}
+      >
+        {USE_CASE_SLIDES.map((slide) => (
+          <div key={slide.id}>
+            {slide.render(true)}
+          </div>
+        ))}
+      </section>
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     DESKTOP — sticky-горизонтальная карусель как была
+     ═══════════════════════════════════════════════════════════ */
   return (
     <section
       ref={containerRef}
@@ -1752,7 +1774,6 @@ const UserCaseCarousel: React.FC<{
       aria-roledescription="carousel"
       aria-label={tr("Сценарии использования", "Use cases")}
     >
-      {/* 🔥 ДОБАВЛЕН pt-14 md:pt-0, чтобы контент не уезжал под шапку */}
       <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col pt-20 md:pt-3">
         <div ref={stageRef} className="relative flex-1 w-full overflow-hidden">
           <div
@@ -1771,7 +1792,7 @@ const UserCaseCarousel: React.FC<{
                   designWidth={designWidth}
                   onMeasured={measuredCallbacks[i]}
                 >
-                  {slide.render(mobile)}
+                  {slide.render(false)}
                 </ScaledSlide>
               </div>
             ))}
@@ -1909,6 +1930,46 @@ const SCREENSHOTS = [
     title: tr("Deyla понимает ваши предпочтения и ход мыслей.", "Deyla understands your preferences and the way you think."),
     description: "",
   },
+  {
+    id: "commandprojects",
+    lightImage: "/images/functional/whitetheme/commandprojects.png",
+    darkImage: "/images/functional/darktheme/commandprojects.png",
+    scale: 0.8,
+    title: tr("Создавайте команды.", "Deyla understands your preferences and the way you think."),
+    description: "",
+  },
+  {
+    id: "comandassistant",
+    lightImage: "/images/functional/whitetheme/comandassistant.png",
+    darkImage: "images/functional/darktheme/comandassistant.png",
+    scale: 0.8,
+    title: tr("Оставьте операционку на Deyla.", "Deyla understands your preferences and the way you think."),
+    description: "",
+  },
+  {
+    id: "doingforme",
+    lightImage: "/images/functional/whitetheme/doingforme.png",
+    darkImage: "/images/functional/darktheme/doingforme.png",
+    scale: 0.4,
+    title: tr("Делегируйте задачи Deyla.", "Deyla understands your preferences and the way you think."),
+    description: "",
+  },
+  {
+    id: "friends",
+    lightImage: "/images/functional/whitetheme/friends.png",
+    darkImage: "/images/functional/darktheme/friends.png",
+    scale: 0.8,
+    title: tr("Стройте совместные планы с друзьями.", "Deyla understands your preferences and the way you think."),
+    description: "",
+  },
+  {
+    id: "gamification",
+    lightImage: "/images/functional/whitetheme/gamification.png",
+    darkImage: "/images/functional/darktheme/gamification.png",
+    scale: 1.0,
+    title: tr("", ""),
+    description: "",
+  },
   //{
   //  id: "thisweek",
   //  lightImage: "/images/functional/whitetheme/calendar.png",
@@ -1917,14 +1978,14 @@ const SCREENSHOTS = [
   //  title: "Расширение ваших возможностей",
   //  description: "",
   //},
-  //{
-  //  id: "anonymizeddata",
-  //  lightImage: "/images/functional/whitetheme/dashboard.png",
-  //  darkImage: "/images/functional/darktheme/dashboard.png",
-  //  scale: 0.9,
-  //  title: tr("Deyla использует механизмы защиты информации и меры конфиденциальности.", "Deyla protects your data and keeps it private."),
-  //  description: "",
-  //},
+  {
+    id: "anonymizeddata",
+    lightImage: "/images/functional/whitetheme/dashboard.png",
+    darkImage: "/images/functional/darktheme/dashboard.png",
+    scale: 0.9,
+    title: tr("Deyla использует механизмы защиты информации и меры конфиденциальности.", "Deyla protects your data and keeps it private."),
+    description: "",
+  },
 ];
 
 
