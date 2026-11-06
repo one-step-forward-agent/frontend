@@ -52,6 +52,8 @@ export const Start: React.FC = () => {
 
         <FeatureScreenshotsCarousel />
 
+        <DataProtectionSection />
+
         <LandingFooter />
       </div>
     </div>
@@ -1967,7 +1969,7 @@ const SCREENSHOTS = [
     lightImage: "/images/functional/whitetheme/gamification.png",
     darkImage: "/images/functional/darktheme/gamification.png",
     scale: 1.0,
-    title: tr("", ""),
+    title: tr("Геймифицируйте свой прогресс", "True gamification"),
     description: "",
   },
   //{
@@ -1978,14 +1980,6 @@ const SCREENSHOTS = [
   //  title: "Расширение ваших возможностей",
   //  description: "",
   //},
-  {
-    id: "anonymizeddata",
-    lightImage: "/images/functional/whitetheme/dashboard.png",
-    darkImage: "/images/functional/darktheme/dashboard.png",
-    scale: 0.9,
-    title: tr("Deyla использует механизмы защиты информации и меры конфиденциальности.", "Deyla protects your data and keeps it private."),
-    description: "",
-  },
 ];
 
 
@@ -2300,9 +2294,9 @@ const FeatureScreenshotsMobile: React.FC = () => {
         {/* Заголовок */}
         <div className="absolute top-20 left-0 w-full z-30 pointer-events-none">
           <div className="text-center max-w-6xl w-full mx-auto px-4">
-            <h2 className="text-3xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
               {tr(
-                "Так и помочь вам довести работу до конца",
+                "Deyla использует механизмы защиты информации и меры конфиденциальности",
                 "or help you see the work through"
               )}
             </h2>
@@ -2344,7 +2338,8 @@ const FeatureScreenshotsMobile: React.FC = () => {
                       className="block select-none pointer-events-none max-w-full max-h-full object-contain"
                       style={{
                         // 🔥 ИСПОЛЬЗУЕМ ПРОЦЕНТНУЮ МАСКУ (10% с боков, сверху и снизу)
-                        ...makeFeatherStylePct(10),
+                        ...makeFeatherStylePct(14),
+                        padding: 14,                    // 14px прозрачного «буфера»
                         maxHeight: `${containerMaxH}svh`,
                       }}
                       loading="eager"
@@ -2551,6 +2546,7 @@ const FeatureScreenshotsDesktop: React.FC = () => {
           className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
           style={{
             ...makeFeatherStyle(HALO_FEATHER_PCT),
+            padding: HALO_FEATHER_PCT,
             transform: `scale(${HALO_SCALE_1})`,
             filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
           }}
@@ -2566,17 +2562,6 @@ const FeatureScreenshotsDesktop: React.FC = () => {
             filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
           }}
         />
-        {/* Halo 3 */}
-        <img
-          src={imgSrc}
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
-          style={{
-            ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP * 2),
-            transform: `scale(${HALO_SCALE_3})`,
-            filter: `blur(${HALO_BLUR_3}px) saturate(1.2)`,
-          }}
-        />
 
         {/* 🔥 ИЗМЕНЕННЫЙ БЛОК: Жесткая высота 56vh */}
         <div
@@ -2588,15 +2573,13 @@ const FeatureScreenshotsDesktop: React.FC = () => {
             alt={item.title}
             className="block select-none pointer-events-none h-full w-auto"
             style={{
-              ...makeFeatherStyle(SHARP_FEATHER_PCT),
+              ...makeFeatherStyle(15),
               filter: lockBlur > 0.5 ? `blur(${lockBlur}px)` : undefined,
               transition: `filter ${SLIDE_TRANSITION_MS}ms ease-out`,
             }}
             loading="lazy"
           />
         </div>
-
-        {isSecurity && <SecurityLockOverlay secProgress={secProgress} />}
       </div>
 
     {/* ── Текст ПОД картинкой: без halo, без карточки, без фона ── */}
@@ -2629,6 +2612,60 @@ const FeatureScreenshotsDesktop: React.FC = () => {
           })}
         </div>
       </div>
+    </section>
+  );
+};
+
+const SECURITY_SCREENSHOT = {
+  id: "anonymizeddata",
+  lightImage: "/images/functional/whitetheme/safety.png",
+  darkImage: "/images/functional/whitetheme/safety.png",
+  scale: 2,
+  title: tr(
+    "Deyla использует механизмы защиты информации и меры конфиденциальности.",
+    "Deyla protects your data and keeps it private."
+  ),
+  description: "",
+} as const;
+
+const DataProtectionSection: React.FC = () => {
+  const isDark = useIsDarkTheme();
+  const imgSrc = isDark
+    ? SECURITY_SCREENSHOT.darkImage
+    : SECURITY_SCREENSHOT.lightImage;
+
+  return (
+    <section className="relative py-16 md:py-24 px-4 md:px-6">
+      <div className="max-w-6xl mx-auto flex flex-col items-center gap-6 md:gap-8">
+
+        {/* Скриншот + замок */}
+        <div className="relative inline-block isolate">
+          <div
+            className="relative z-10 inline-block overflow-hidden rounded-[24px] md:rounded-[32px]"
+            style={{ height: "50vh", maxHeight: 520 }}
+          >
+            <img
+              src={imgSrc}
+              alt={SECURITY_SCREENSHOT.title}
+              className="block select-none pointer-events-none h-full w-auto"
+              style={makeFeatherStylePct(8)}
+              loading="lazy"
+            />
+          </div>
+
+        </div>
+
+        {/* Заголовок */}
+
+          <div className="text-center max-w-6xl w-full mx-auto px-4">
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-4xl mx-auto">
+              {tr(
+                "Deyla использует механизмы защиты информации и меры конфиденциальности",
+                "Deyla protects your data and keeps it private."
+              )}
+            </h2>
+          </div>
+        </div>
     </section>
   );
 };
