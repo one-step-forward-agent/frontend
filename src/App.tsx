@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, type ReactNode } from "react";
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { NavigationBridge } from "@/app/router";
 import { ToastProvider } from "@/app/components/ui";
@@ -11,6 +11,8 @@ import { YandexMetrika } from "@/components/YandexMetrika";
 import { useAuthStore } from "@/store/authStore";
 import { LanguageToggle, ThemeProvider, ThemeToggle } from "@/theme";
 import { tr } from "@/i18n";
+import { installAdminApiMock } from "@/dev/mockAdminApi";
+import { api } from "@/app/api/client";
 
 const BlogListPage = lazy(() => import("@/app/components/blog/BlogListPage"));
 const BlogPostPage = lazy(() => import("@/app/components/blog/BlogPostPage"));
@@ -24,6 +26,54 @@ const PersonalDataConsentPage = lazy(() => import("@/pages/Documents/PersonalDat
 const AdminDashboard = lazy(() => import("@/pages/Admin/AdminDashboard"));
 const ResearchAdmin = lazy(() => import("@/pages/Admin/ResearchAdmin"));
 const BroadcastAdmin = lazy(() => import("@/pages/Admin/BroadcastAdmin"));
+
+/* ──────────────────────────────────────────────────────────────────
+   Dev auth bypass — VITE_DEV_AUTH_BYPASS=true
+   ──────────────────────────────────────────────────────────────────
+   Инжектит мок-админа в auth-store, чтобы /dashboard/* (admin-only)
+   открывались без реального логина.
+
+   • Вызывается на уровне модуля — ДО первого рендера, поэтому даже
+     страницы, читающие useAuthStore при монтировании, сразу видят
+     админа и не успевают редиректнуть на /login.
+   • loadUser() пропускается в этом режиме — иначе он перезатрёт мок
+     тем, что реально лежит в localStorage (обычно ничего).
+   • DEV-only: не включается, если переменная не задана при сборке.
+
+   ⚠ Если у тебя в auth-store другие имена полей (например
+     user.role === "superadmin" или user.is_superuser), поправь
+     DEV_MOCK_ADMIN_USER — см. комментарий к объекту.
+   ────────────────────────────────────────────────────────────────── */
+const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
+
+/**
+ * Поля, которые обычно проверяют админские страницы:
+ *   user.is_admin | user.isAdmin | user.role === "admin"
+ * Если в проекте используются другие — добавь/замени здесь.
+ */
+const DEV_MOCK_ADMIN_USER = {
+  id: 0,
+  email: "dev-admin@local",
+  name: "Dev Admin",
+  first_name: "Dev",
+  last_name: "Admin",
+  is_admin: true,
+  isAdmin: true,
+  role: "admin",
+} as const;
+
+function applyDevAuthBypass() {
+  if (!DEV_AUTH_BYPASS) return;
+  useAuthStore.setState({
+    user: DEV_MOCK_ADMIN_USER,
+    isAuthenticated: true,
+    isLoading: false,
+  } as any);
+  installAdminApiMock(api);
+}
+
+// Синхронно, до первого рендера:
+applyDevAuthBypass();
 
 function FullScreenLoader() {
   return (
@@ -67,6 +117,18 @@ function PrivacyPolicyRedirect() {
   return <FullScreenLoader />;
 }
 
+/* ──────────────────────────────────────────────────────────────────
+   Layout для /dashboard/* — переприменяет мок на каждом монтировании
+   на случай, если стор был сброшен (logout, loadUser и т.п.). В
+   production-режиме (без VITE_DEV_AUTH_BYPASS) — no-op.
+   ────────────────────────────────────────────────────────────────── */
+function AdminBypassLayout() {
+  useLayoutEffect(() => {
+    if (DEV_AUTH_BYPASS) applyDevAuthBypass();
+  }, []);
+  return <Outlet />;
+}
+
 function NotFoundPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-white px-4 text-center dark:bg-gray-950">
@@ -86,6 +148,12 @@ function NotFoundPage() {
 function Routing() {
   const loadUser = useAuthStore((state) => state.loadUser);
   useEffect(() => {
+    if (DEV_AUTH_BYPASS) {
+      // Не даём loadUser() перезаписать мок — заодно обновляем его на случай
+      // сброса (например, если какая-то страница сделала setState(null)).
+      applyDevAuthBypass();
+      return;
+    }
     loadUser();
   }, [loadUser]);
 
@@ -119,15 +187,19 @@ function Routing() {
         <Route path="/blog/:slug" element={<BlogPostPage />} />
 
         <Route path="/app/*" element={<AppRoutes />} />
-        {/* Admins only (users.is_admin): the backend refuses everyone else */}
-        <Route path="/dashboard" element={<AdminDashboard />} />
-        <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
 
-        <Route path="/dashboard/research" element={<ResearchAdmin />} />
-        <Route path="/dashboard/broadcast" element={<BroadcastAdmin />} />
-        <Route path="/dashboard/blog" element={<BlogAdmin />} />
-        <Route path="/dashboard/blog/:id" element={<BlogAdmin />} />
-        <Route path="/dashboard/blog/:id/stats" element={<BlogAdmin view="stats" />} />
+        {/* Admins only (users.is_admin): the backend refuses everyone else.
+            Обёрнуто в AdminBypassLayout — при VITE_DEV_AUTH_BYPASS=true мок
+            переустанавливается на каждом заходе, чтобы страницы открывались. */}
+        <Route element={<AdminBypassLayout />}>
+          <Route path="/dashboard" element={<AdminDashboard />} />
+          <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard/research" element={<ResearchAdmin />} />
+          <Route path="/dashboard/broadcast" element={<BroadcastAdmin />} />
+          <Route path="/dashboard/blog" element={<BlogAdmin />} />
+          <Route path="/dashboard/blog/:id" element={<BlogAdmin />} />
+          <Route path="/dashboard/blog/:id/stats" element={<BlogAdmin view="stats" />} />
+        </Route>
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

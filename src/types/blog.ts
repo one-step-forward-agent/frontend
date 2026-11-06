@@ -1,41 +1,91 @@
-export type BlogBlockType =
-  | "heading" | "paragraph" | "image" | "quote" | "callout" | "divider";
+/* ════════════════════════════════════════════════════════════════════
+   Блоки поста
+   ────────────────────────────────────────────────────────────────────
+   Любой блок может содержать вложенные блоки (`children`), которые
+   рендерятся сразу после него. Это позволяет строить произвольные
+   композиции: например, список с картинкой-иллюстрацией внутри,
+   callout с подсказками-списками и т.п.
 
-interface BlogBlockBase { id: string; type: BlogBlockType; }
+   Текстовые поля (`text`, `items`, `title`, `excerpt`) поддерживают
+   Markdown: `**bold**`, `*italic*`, `` `code` ``, `[text](url)`,
+   списки `1.` / `-`, цитаты `>`.
+   ════════════════════════════════════════════════════════════════════ */
+
+export type BlogBlockType =
+  | "heading"
+  | "paragraph"
+  | "image"
+  | "quote"
+  | "callout"
+  | "divider"
+  | "list";
+
+interface BlogBlockBase {
+  id: string;
+  type: BlogBlockType;
+  /** Вложенные блоки — отрисовываются сразу после текущего. */
+  children?: BlogBlock[];
+}
 
 export interface HeadingBlock extends BlogBlockBase {
   type: "heading";
   level: 1 | 2 | 3;
+  /** Markdown поддерживается (inline-разметка). */
   text: string;
 }
+
 export interface ParagraphBlock extends BlogBlockBase {
   type: "paragraph";
+  /** Markdown: inline + блочные элементы (списки, цитаты). */
   text: string;
 }
+
 export interface ImageBlock extends BlogBlockBase {
   type: "image";
   src: string;
   alt: string;
   caption?: string;
 }
+
 export interface QuoteBlock extends BlogBlockBase {
   type: "quote";
+  /** Markdown поддерживается. */
   text: string;
   author?: string;
 }
+
 export interface CalloutBlock extends BlogBlockBase {
   type: "callout";
   variant: "info" | "tip" | "warning";
   title?: string;
+  /** Markdown поддерживается. */
   text: string;
 }
+
 export interface DividerBlock extends BlogBlockBase {
   type: "divider";
 }
 
+export interface ListBlock extends BlogBlockBase {
+  type: "list";
+  /** true → `<ol>`, false → `<ul>`. */
+  ordered: boolean;
+  /** Пункты списка; каждый поддерживает inline-Markdown. */
+  items: string[];
+}
+
 export type BlogBlock =
-  | HeadingBlock | ParagraphBlock | ImageBlock
-  | QuoteBlock | CalloutBlock | DividerBlock;
+  | HeadingBlock
+  | ParagraphBlock
+  | ImageBlock
+  | QuoteBlock
+  | CalloutBlock
+  | DividerBlock
+  | ListBlock;
+
+/* ════════════════════════════════════════════════════════════════════
+   Пост
+   ════════════════════════════════════════════════════════════════════ */
 
 export interface BlogPost {
   id: number;
@@ -58,8 +108,16 @@ export interface BlogPost {
   };
   blocks: BlogBlock[];
 }
+
 /** What the editor sends: the post without the fields the server sets */
-export type BlogPostSave = Omit<BlogPost, "id" | "publishedAt" | "createdAt" | "updatedAt">;
+export type BlogPostSave = Omit<
+  BlogPost,
+  "id" | "publishedAt" | "createdAt" | "updatedAt"
+>;
+
+/* ════════════════════════════════════════════════════════════════════
+   Статистика
+   ════════════════════════════════════════════════════════════════════ */
 
 export interface BlogReadStats {
   views: number;
@@ -76,7 +134,13 @@ export interface BlogReadStats {
 export interface BlogStats {
   days: number;
   totals: BlogReadStats;
-  posts: (BlogReadStats & { id: number; title: string; slug: string; status: BlogPost["status"]; views_7d: number })[];
+  posts: (BlogReadStats & {
+    id: number;
+    title: string;
+    slug: string;
+    status: BlogPost["status"];
+    views_7d: number;
+  })[];
   daily: { date: string; views: number; readers: number }[];
   sources: { source: string; views: number }[];
   depth: { label: string; views: number }[];
