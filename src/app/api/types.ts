@@ -132,6 +132,7 @@ export interface CalendarEvent {
   /** The repeat in words: «каждый день», «по будням» */
   recurrence?: string | null;
   completed_at: string | null;
+  team_task?: { task_id: number; status: TeamTaskStatus } | null;
   deadline_at: string | null;
   /** Нельзя переносить: подсказки и автоперенос планируют вокруг такой задачи. */
   is_fixed: boolean;

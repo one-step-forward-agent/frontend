@@ -211,13 +211,13 @@ function DaySchedule({ events }: { events: CalendarEvent[] }) {
 
   return (
     <div className="space-y-5">
-      <AssignedTaskGroup events={assigned} />
+      <AssignedTaskGroup events={assigned} startBeforeComplete />
       {timed.length > 0 && (
         <section>
           <h3 className="schedule-heading">{tr("Расписание", "Schedule")}</h3>
           <ul className="event-list is-cards">
             {timed.flatMap((event, index) =>
-              index === nowAt ? [nowLine, <EventRow key={event.id} event={event} />] : [<EventRow key={event.id} event={event} />]
+              index === nowAt ? [nowLine, <EventRow key={event.id} event={event} startBeforeComplete />] : [<EventRow key={event.id} event={event} startBeforeComplete />]
             )}
             {nowAt === timed.length && nowLine}
           </ul>
@@ -228,7 +228,7 @@ function DaySchedule({ events }: { events: CalendarEvent[] }) {
           <h3 className="schedule-heading">{tr("Без времени", "No time")}</h3>
           <ul className="event-list is-cards">
             {untimed.map((event) => (
-              <EventRow key={event.id} event={event} />
+              <EventRow key={event.id} event={event} startBeforeComplete />
             ))}
           </ul>
         </section>
@@ -357,7 +357,7 @@ function MoveSuggestion({
                 )}
               </p>
               <div className="mt-3">
-                <EventList events={items} showDate />
+                <EventList events={items} showDate startBeforeComplete />
               </div>
             </>
           ) : (

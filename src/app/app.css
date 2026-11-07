@@ -415,6 +415,7 @@
 .fd-app .event-check { flex: none; width: 22px; height: 22px; margin-left: 4px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--prio); border-radius: 50%; background: color-mix(in srgb, var(--prio) 10%, var(--surface-solid)); color: #fff; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
 .fd-app .event-check:hover { border-color: var(--accent); }
 .fd-app .event-check.checked { background: #10b981; border-color: transparent; }
+.fd-app .event-check.in-progress { background: #d97706; border-color: transparent; }
 /* A done task fades as a whole — time, title, tags — instead of a crossed-out title */
 .fd-app .event-item.is-done > .event-row { opacity: 0.45; transition: opacity 0.15s; }
 .fd-app .event-item.is-done > .event-row:hover { opacity: 0.7; }

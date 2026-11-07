@@ -33,20 +33,37 @@ import { AssignedTaskSchedule } from "./AssignedTaskSchedule";
 import { TaskVisibility } from "./TaskVisibility";
 import { TaskFilePicker } from "./TaskFilePicker";
 
-export function EventRow({ event, showDate = false, extra }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode }) {
+export function EventRow({ event, showDate = false, extra, startBeforeComplete = false }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode; startBeforeComplete?: boolean }) {
   const reportError = useErrorToast();
   const start = new Date(event.start_at);
   const last = lastDay(event);
   const multiDay = !sameDay(last, start);
   const [done, setDone] = useState(!!event.completed_at);
   const [busy, setBusy] = useState(false);
+  const [teamStatus, setTeamStatus] = useState(event.team_task?.status);
   useEffect(() => setDone(!!event.completed_at), [event.completed_at]);
+  useEffect(() => setTeamStatus(event.team_task?.status), [event.team_task?.status]);
+  const staged = startBeforeComplete && !!event.team_task;
+  const inProgress = staged && !done && teamStatus === "in_progress";
+  const actionLabel = done
+    ? (staged ? tr("Вернуть в работу", "Return to in progress") : tr("Снять отметку", "Unmark"))
+    : staged && !inProgress ? tr("Начать выполнение", "Start execution")
+    : tr("Выполнено", "Done");
 
   const toggle = async () => {
+    if (busy) return;
     setBusy(true);
-    setDone(!done);
+    if (!staged) setDone(!done);
     try {
-      await api.events.complete(event.id, !done);
+      if (staged && !done && event.team_task) {
+        const result = await api.teams.act(event.team_task.task_id, inProgress ? "done" : "start");
+        setTeamStatus(result.status);
+        setDone(result.status === "done");
+      } else {
+        await api.events.complete(event.id, !done);
+        setDone(!done);
+        if (staged) setTeamStatus("in_progress");
+      }
       notifyTasksChanged();
     } catch (error) {
       setDone(done);
@@ -57,7 +74,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
   };
 
   // В списке — только то, что нужно, чтобы выбрать задачу, и повтор; откуда она и место — в карточке
-  const hasMeta = !!(multiDay || (event.deadline_at && !done) || event.tag_ids?.length || event.recurrence);
+  const hasMeta = !!(inProgress || multiDay || (event.deadline_at && !done) || event.tag_ids?.length || event.recurrence);
   // Не выполнена, а время уже прошло — красная; выполненная — зелёная
   const missed = !done && new Date(event.end_at) <= new Date();
   const end = new Date(event.end_at);
@@ -67,13 +84,15 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
       <button
         type="button"
         role="checkbox"
-        aria-checked={done}
-        aria-label={done ? `${tr("Снять отметку", "Unmark")}: ${event.title}` : `${tr("Выполнено", "Done")}: ${event.title}`}
-        className={`event-check ${done ? "checked" : ""}`}
+        aria-checked={inProgress ? "mixed" : done}
+        aria-label={`${actionLabel}: ${event.title}`}
+        title={`${actionLabel}: ${event.title}`}
+        className={`event-check ${done ? "checked" : inProgress ? "in-progress" : ""}`}
         disabled={busy}
         onClick={toggle}
       >
         {done && <Icon name="check" size={14} />}
+        {inProgress && <Icon name="play" size={12} />}
       </button>
       <Link to={`/events/${event.id}`} className={`event-row priority-${event.priority} ${done ? "done" : ""}`}>
         <span className={`event-time ${event.all_day ? "untimed" : ""} ${showDate ? "with-date" : ""}`}>
@@ -90,6 +109,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
           <span className="event-title">{event.title}</span>
           {hasMeta && (
             <span className="event-meta">
+              {inProgress && <span className="text-amber-700 dark:text-amber-300">{tr("Выполняется", "In progress")}</span>}
               {multiDay && <span>{tr("по", "until")} {formatDate(last, { day: "numeric", month: "short" })}</span>}
               {event.recurrence && (
                 <span className="inline-flex items-center gap-1">
@@ -117,11 +137,11 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
   );
 }
 
-export function EventList({ events, showDate, extra }: { events: CalendarEvent[]; showDate?: boolean; extra?: (event: CalendarEvent) => ReactNode }) {
+export function EventList({ events, showDate, extra, startBeforeComplete = false }: { events: CalendarEvent[]; showDate?: boolean; extra?: (event: CalendarEvent) => ReactNode; startBeforeComplete?: boolean }) {
   return (
     <ul className="event-list">
       {events.map((event) => (
-        <EventRow key={event.id} event={event} showDate={showDate} extra={extra?.(event)} />
+        <EventRow key={event.id} event={event} showDate={showDate} extra={extra?.(event)} startBeforeComplete={startBeforeComplete} />
       ))}
     </ul>
   );

@@ -22,7 +22,7 @@ export function assignmentGroups(events: CalendarEvent[]) {
   return [...groups.values()];
 }
 
-export function AssignedTaskGroup({ events, compact = false }: { events: CalendarEvent[]; compact?: boolean }) {
+export function AssignedTaskGroup({ events, compact = false, startBeforeComplete = false }: { events: CalendarEvent[]; compact?: boolean; startBeforeComplete?: boolean }) {
   if (!events.length) return null;
   return <div className="min-w-0 space-y-2">{assignmentGroups(events).map(group => {
     const done = group.events.filter(event => event.completed_at).length;
@@ -31,7 +31,7 @@ export function AssignedTaskGroup({ events, compact = false }: { events: Calenda
         {group.label} · {group.events.length}{done ? ` · ${done} ${tr("выполнено", "done")}` : ""}
       </summary>
       <div className="mt-2 min-w-0">
-        {compact ? <ul className="space-y-1">{group.events.map(event => <li key={event.id} className="flex min-w-0 items-start gap-1"><Link to={`/events/${event.id}`} className={`min-w-0 flex-1 break-words text-xs text-gray-800 dark:text-gray-200 hover:underline ${event.completed_at ? "line-through opacity-60" : ""}`}>{event.all_day ? "" : `${new Date(event.start_at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })} · `}{event.title}</Link><AssignedTaskSchedule event={event} /></li>)}</ul> : <EventList events={group.events} />}
+        {compact ? <ul className="space-y-1">{group.events.map(event => <li key={event.id} className="flex min-w-0 items-start gap-1"><Link to={`/events/${event.id}`} className={`min-w-0 flex-1 break-words text-xs text-gray-800 dark:text-gray-200 hover:underline ${event.completed_at ? "line-through opacity-60" : ""}`}>{event.all_day ? "" : `${new Date(event.start_at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })} · `}{event.title}</Link><AssignedTaskSchedule event={event} /></li>)}</ul> : <EventList events={group.events} startBeforeComplete={startBeforeComplete} />}
       </div>
     </details>;
   })}</div>;
