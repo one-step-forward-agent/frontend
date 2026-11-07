@@ -52,7 +52,8 @@ export const Start: React.FC = () => {
 
         <FeatureScreenshotsCarousel />
 
-        <DataProtectionSection />
+        {/* Заменили DataProtectionSection на новую карусель */}
+        <SecurityCarousel />
 
         <LandingFooter />
       </div>
@@ -207,7 +208,6 @@ const GTDAggregation: React.FC = () => (
           </filter>
         </defs>
 
-        {/* сами линии */}
         <g
           stroke="url(#gtd-line-down)"
           strokeWidth="1.25"
@@ -579,7 +579,6 @@ const DeylaChatCard: React.FC<DeylaChatCardProps> = ({
   <div
     className={cn(
       "relative overflow-hidden rounded-2xl",
-      // ═══ правка №1 — внешняя обёртка ═══
       "bg-white/55 dark:bg-gray-900/40 max-md:bg-white/92 dark:max-md:bg-gray-900/90",
       "backdrop-blur-2xl max-md:backdrop-blur-none",
       "ring-1 ring-white/60 dark:ring-white/10",
@@ -593,7 +592,6 @@ const DeylaChatCard: React.FC<DeylaChatCardProps> = ({
           <div
             className={cn(
               "max-w-[82%] rounded-2xl rounded-br-sm",
-              // ═══ правка №2 — сообщение пользователя (синий пузырь) ═══
               "bg-gradient-to-br from-blue-500/90 to-blue-600/90",
               "backdrop-blur-md max-md:backdrop-blur-none text-white px-4 py-2.5",
               "ring-1 ring-white/25",
@@ -622,7 +620,6 @@ const DeylaChatCard: React.FC<DeylaChatCardProps> = ({
           <div
             className={cn(
               "rounded-2xl rounded-bl-sm px-4 py-3",
-              // ═══ правка №3 — сообщение Deyla ═══
               "bg-white/55 dark:bg-white/[0.06] max-md:bg-white/95 dark:max-md:bg-gray-800/95",
               "backdrop-blur-md max-md:backdrop-blur-none",
               "ring-1 ring-white/50 dark:ring-white/5",
@@ -641,7 +638,6 @@ const DeylaChatCard: React.FC<DeylaChatCardProps> = ({
     <div
       className={cn(
         "relative px-4 py-3 border-t border-white/40 dark:border-white/5",
-        // ═══ правка №4 — нижняя строка «Сообщение Deyla…» ═══
         "bg-white/25 dark:bg-white/[0.02] max-md:bg-white/60 dark:max-md:bg-gray-900/40",
         "backdrop-blur-md max-md:backdrop-blur-none",
       )}
@@ -666,7 +662,6 @@ const PageBackdrop: React.FC = () => (
         50%      { transform: scale(1.5); opacity: 1; }
       }
 
-      /* ─── Crossfade для AI-рекомендаций ─────────────── */
       @keyframes ai-reco-a {
         0%, 45%   { opacity: 1; }
         55%, 95%  { opacity: 0; }
@@ -687,7 +682,6 @@ const PageBackdrop: React.FC = () => (
 
       @media (prefers-reduced-motion: reduce) {
         .page-blob, .page-pulse, .ai-reco-a, .ai-reco-b { animation: none; }
-        /* если reduced-motion: показать только первую рекомендацию */
         .ai-reco-a { opacity: 1; }
         .ai-reco-b { opacity: 0; }
       }
@@ -710,8 +704,6 @@ const PageBackdrop: React.FC = () => (
     `}</style>
 
     <div aria-hidden="true" className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-
-
       <div
         className="absolute inset-0 opacity-[0.035] dark:opacity-[0.06]"
         style={{
@@ -883,7 +875,6 @@ const HeroScene: React.FC = () => (
         transform: `scale(calc(100cqw / ${HERO_SCENE_W*1.1}px))`,
       }}
     >
-      {/* ── Маскот ──────── */}
       <div
         className="absolute z-0"
         style={{
@@ -998,7 +989,7 @@ const MOCK_TASKS: Array<{
   time: string;
   title: string;
   done?: boolean;
-  isNew?: boolean;   // ← новое
+  isNew?: boolean;
 }> = [
   { time: "11:10", title: tr("Лекция по экономике", "Economics lecture") },
   { time: "16:00", title: tr("Созвон с командой", "Team call"), isNew: true },
@@ -1037,8 +1028,6 @@ const HeroMockup: React.FC = () => (
                 "relative flex items-center gap-2.5 p-2.5 rounded transition-colors",
                 "hover:bg-gray-50 dark:hover:bg-gray-800/60",
                 t.done && "opacity-60",
-
-                // ─── Подсветка новой задачи ───
                 t.isNew &&
                   "bg-blue-50/70 dark:bg-blue-950/30 " +
                   "ring-1 ring-blue-200/70 dark:ring-blue-800/50 " +
@@ -1049,7 +1038,6 @@ const HeroMockup: React.FC = () => (
                 {t.time}
               </span>
 
-              {/* Цветная полоска слева: у новой — синяя, у обычных — прозрачная */}
               <span
                 aria-hidden="true"
                 className={cn(
@@ -1067,7 +1055,6 @@ const HeroMockup: React.FC = () => (
                 {t.title}
               </span>
 
-              {/* Бейдж «Новое» */}
               {t.isNew && (
                 <span
                   className={cn(
@@ -1164,24 +1151,13 @@ const INTEGRATIONS = [
   { src: "/images/TelegramWB.webp",           alt: "Telegram",         w: 44 },
 ];
 
-// Насколько секция наезжает на предыдущий блок сверху
 const FINAL_CTA_OVERLAP_TOP_VH = -5; 
-// Дополнительное пространство снизу
 const FINAL_CTA_EXTRA_BOTTOM_VH = 25; 
-
 const FINAL_CTA_MOBILE_GAP_VH = 20;
-
-// АЛЬФА СРЕДНЕЙ ЧАСТИ
 const FINAL_CTA_GRADIENT_ALPHA = 0.5; 
-
-// Насколько опустить верхнюю границу неактивного контейнера (в процентах)
 const FINAL_CTA_INACTIVE_TOP_INSET = 0; 
-
-// 🔥 УМЕНЬШИЛИ ОТСТУП С 15 ДО 8, ЧТОБЫ МАСКА НЕ ОБРЕЗАЛАСЬ clipPath
 const FINAL_CTA_HORIZONTAL_GRADIENT_VW = 8; 
 
-// 🔥 НОВАЯ МАСКА: Градиент достигает плотности всего за 15% (было 30%), 
-// поэтому верхняя часть стала визуально меньше и компактнее.
 const FINAL_CTA_MASK_VERTICAL = `
   linear-gradient(
     to bottom,
@@ -1205,25 +1181,19 @@ const FINAL_CTA_MASK_HORIZONTAL = `
 const FINAL_CTA_MASK = `${FINAL_CTA_MASK_VERTICAL}, ${FINAL_CTA_MASK_HORIZONTAL}`;
 const ORBIT_PERIOD_MS = 24000;
 const ORBIT_TRANSITION_MS = 700;
-// On a phone the orbit and the row of calendars are smaller, so all seven icons fit the screen
 const PHONE_MAX_W = 640;
 const isPhoneWidth = () => window.innerWidth <= PHONE_MAX_W;
 const rowIconSize = () => (isPhoneWidth() ? 40 : 56);
 const rowGap = () => (isPhoneWidth() ? 8 : 12);
 const rowYOffset = () => (isPhoneWidth() ? 100 : 140);
 const orbitRadiusScale = () => (isPhoneWidth() ? 0.75 : 1 / 1.2);
-// Иконка рисуется в максимальном размере орбиты и уменьшается через scale():
-// анимация меняет только transform/opacity — без layout на каждом кадре.
 const ORBIT_ICON_BASE = 96;
 const ORBIT_ICON_IMG_BASE = 58;
-
-
 
 const FinalCTA: React.FC<{
   onStart: () => void;
   onActiveChange?: (active: boolean) => void;
 }> = ({ onStart, onActiveChange }) => {
-  // ... (код useRef и useEffect остается без изменений до return) ...
   const sectionRef = React.useRef<HTMLElement>(null);
   const [active, setActive] = React.useState(false);
   const lastActive = React.useRef(false);
@@ -1239,7 +1209,7 @@ const FinalCTA: React.FC<{
     return () => mq.removeEventListener("change", update);
   }, []);
 
-    React.useEffect(() => {
+  React.useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
     lastY.current = window.scrollY;
@@ -1252,8 +1222,6 @@ const FinalCTA: React.FC<{
       const visible = Math.max(0, visibleBottom - visibleTop);
       const ratio = visible / Math.min(vh, rect.height || vh);
       
-      // Убрали проверку goingUp. Теперь блок активируется при видимости > 50% 
-      // независимо от того, скроллим мы вверх или вниз.
       const next = ratio > 0.5;
       
       if (next !== lastActive.current) {
@@ -1273,7 +1241,6 @@ const FinalCTA: React.FC<{
   }, [onActiveChange]);
 
   React.useEffect(() => {
-    // ... (код анимации иконок остается без изменений) ...
     const N = INTEGRATIONS.length;
     const icons = iconRefs.current;
     if (!icons.length) return;
@@ -1349,11 +1316,9 @@ const FinalCTA: React.FC<{
       return () => window.removeEventListener("resize", applyStatic);
     }
   }, [active, isNarrow]);
-  // ─── Маска на смартфоне короче: 20vh фейд-ин, 85vh конец solid, 105vh конец fade
-// Это компенсирует укороченный блок (см. minHeight ниже).
+
 const ctaMaskVertical = FINAL_CTA_MASK_VERTICAL;
 const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
-
 
    return (
     <section
@@ -1363,8 +1328,8 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
       style={{
         marginTop: `-${FINAL_CTA_OVERLAP_TOP_VH}vh`,
         paddingTop: isNarrow
-  ? `${FINAL_CTA_OVERLAP_TOP_VH + FINAL_CTA_MOBILE_GAP_VH}vh`  // 10 + 20 = 30vh на мобилке
-  : `${FINAL_CTA_OVERLAP_TOP_VH}vh`,                            // 10vh на десктопе 
+  ? `${FINAL_CTA_OVERLAP_TOP_VH + FINAL_CTA_MOBILE_GAP_VH}vh`
+  : `${FINAL_CTA_OVERLAP_TOP_VH}vh`,
         paddingBottom: `${FINAL_CTA_EXTRA_BOTTOM_VH}vh`,
       }}
     >
@@ -1378,7 +1343,6 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
             : `inset(${FINAL_CTA_INACTIVE_TOP_INSET}% 12% 18% 12% round 32px)`,
           WebkitMaskImage: ctaMask,
           maskImage: ctaMask,
-          // Добавлено: Пересечение масок для создания градиента со всех сторон
           WebkitMaskComposite: "source-in",
           maskComposite: "intersect",
         }}
@@ -1396,7 +1360,6 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
             : `inset(${FINAL_CTA_INACTIVE_TOP_INSET}% 12% 18% 12% round 32px)`,
           WebkitMaskImage: ctaMask,
           maskImage: ctaMask,
-          // Добавлено: Пересечение масок для создания градиента со всех сторон
           WebkitMaskComposite: "source-in",
           maskComposite: "intersect",
         }}
@@ -1411,11 +1374,9 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
           "flex flex-col items-center justify-center"
         )}
         style={{
-      // Mobile: 60svh = −15% сверху −25% снизу от исходных 100vh
       minHeight: isNarrow ? "10svh" : "80vh", 
 }}
       >
-        {/* ... (Остальной контент FinalCTA без изменений) ... */}
         <div className="text-center max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
             {tr("Ваш день живёт в\u00a0Google, Notion и\u00a0блокноте.", "Your day lives in\u00a0Google, Notion and\u00a0a notebook.")}{" "}
@@ -1426,7 +1387,6 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
         </div>
 
         <div className="flex flex-col items-center text-center">
-
           <div className="relative mt-10 flex justify-center">
             <div aria-hidden="true" className="absolute left-1/2 top-1/2 pointer-events-none" style={{ width: 0, height: 0 }}>
               {INTEGRATIONS.map((i, idx) => (
@@ -1448,7 +1408,6 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
                 "rounded-full",
                 "transition-all duration-300 ease-out",
                 "hover:-translate-y-0.5 active:translate-y-0",
-                // Стеклянные стили кнопки
                 "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
                 "ring-1 ring-white/30 dark:ring-white/10",
                 "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
@@ -1456,7 +1415,6 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
                 "hover:bg-white/20 dark:hover:bg-white/[0.1]"
               )}
             >
-              {/* Блик для кнопки */}
               <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]" />
               
               <span className="relative inline-flex items-center">
@@ -1473,17 +1431,13 @@ const ctaMask = `${ctaMaskVertical}, ${FINAL_CTA_MASK_HORIZONTAL}`;
 
 
 const SLIDE_DESIGN_WIDTH = 1280;
-// Below this container width the slides switch to the stacked phone layout, designed 420px wide
 const SLIDE_MOBILE_BREAKPOINT = 768;
 const SLIDE_MOBILE_DESIGN_WIDTH = 420;
 
 interface ScaledSlideProps {
   children: React.ReactNode;
-  /** Общий scale для всех слайдов. */
   scale: number;
-  /** The width the slide is laid out at before scaling. */
   designWidth: number;
-  /** Натуральная высота контента в дизайн-пикселях (до transform). */
   onMeasured?: (designHeight: number) => void;
 }
 
@@ -1499,7 +1453,6 @@ const ScaledSlide: React.FC<ScaledSlideProps> = ({
     const inner = innerRef.current;
     if (!inner) return;
 
-    // offsetHeight не зависит от transform — это чистая высота layout'а.
     const update = () => onMeasured?.(inner.offsetHeight);
 
     update();
@@ -1527,11 +1480,6 @@ const ScaledSlide: React.FC<ScaledSlideProps> = ({
   );
 };
 
-const AUTO_ADVANCE_MS = 8000;
-const MANUAL_PAUSE_MS = 25000;
-
-/* A slide is laid out at a fixed design width and scaled to the screen. On a phone that width is narrow,
-   and the picture and the chat stand one under the other instead of side by side. */
 type SlideProps = { mobile: boolean };
 
 const SLIDE_PAD = (mobile: boolean) => (mobile ? "pt-4 pb-20" : "py-16");
@@ -1646,20 +1594,17 @@ const USE_CASE_SLIDES: { id: string; render: (mobile: boolean) => React.ReactNod
 ];
 
 const UserCaseCarousel: React.FC<{
-  /** Оставлен для обратной совместимости. Больше не используется. */
   paused?: boolean;
 }> = () => {
   const containerRef = React.useRef<HTMLElement>(null);
   const trackRef = React.useRef<HTMLDivElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
-  // Инициализируем сразу по окну, чтобы первый рендер на телефоне был вертикальным
   const [viewportW, setViewportW] = React.useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 0
   );
   const [stageH, setStageH] = React.useState(0);
   const total = USE_CASE_SLIDES.length;
 
-  /* ─── Ширина вьюпорта ─── */
   React.useLayoutEffect(() => {
     const update = () => setViewportW(window.innerWidth);
     update();
@@ -1667,7 +1612,6 @@ const UserCaseCarousel: React.FC<{
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  /* ─── РЕАЛЬНАЯ высота stage (только для desktop) ─── */
   React.useLayoutEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -1677,9 +1621,8 @@ const UserCaseCarousel: React.FC<{
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [viewportW]); // ← пересоздаём observer при смене mobile ↔ desktop
+  }, [viewportW]);
 
-  /* ─── Натуральные высоты слайдов ─── */
   const measurementsRef = React.useRef<Record<number, number>>({});
   const [measureVersion, setMeasureVersion] = React.useState(0);
   const handleMeasured = React.useCallback((idx: number, designHeight: number) => {
@@ -1698,7 +1641,6 @@ const UserCaseCarousel: React.FC<{
   const maxDesignHeight = React.useMemo(() => {
     const hs = Object.values(measurementsRef.current);
     return hs.length ? Math.max(...hs) : 0;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [measureVersion]);
 
   const scale = React.useMemo(() => {
@@ -1706,9 +1648,8 @@ const UserCaseCarousel: React.FC<{
     return Math.min(viewportW / designWidth, stageH / maxDesignHeight);
   }, [viewportW, stageH, designWidth, maxDesignHeight]);
 
-  /* ─── Скролл: ТОЛЬКО desktop ─── */
   React.useLayoutEffect(() => {
-    if (mobile) return; // на мобилке трека нет — выходим
+    if (mobile) return;
     const container = containerRef.current;
     const track = trackRef.current;
     if (!container || !track) return;
@@ -1723,7 +1664,7 @@ const UserCaseCarousel: React.FC<{
       if (scrollableHeight <= 0) return;
       const p = Math.max(0, Math.min(1, -rect.top / scrollableHeight));
       const maxTranslate = (total - 1) * rect.width;
-      const x = (p - 1) * maxTranslate;
+      const x = -p * maxTranslate;
       if (!Number.isFinite(lastX) || Math.abs(x - lastX) > 0.1) {
         lastX = x;
         track.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`;
@@ -1743,11 +1684,8 @@ const UserCaseCarousel: React.FC<{
       window.removeEventListener("resize", schedule);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [total, mobile]); // ← переподключаем при mobile ↔ desktop
+  }, [total, mobile]);
 
-  /* ═══════════════════════════════════════════════════════════
-     MOBILE — обычный вертикальный поток, никакой карусели
-     ═══════════════════════════════════════════════════════════ */
   if (mobile) {
     return (
       <section
@@ -1764,9 +1702,6 @@ const UserCaseCarousel: React.FC<{
     );
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     DESKTOP — sticky-горизонтальная карусель как была
-     ═══════════════════════════════════════════════════════════ */
   return (
     <section
       ref={containerRef}
@@ -1805,12 +1740,300 @@ const UserCaseCarousel: React.FC<{
   );
 };
 
+const SECURITY_SLIDES: { id: string; render: (mobile: boolean) => React.ReactNode }[] = [
+  {
+    id: "safety",
+    render: (mobile) => (
+      <div className={SLIDE_PAD(mobile)}>
+        <div className={cn("max-w-5xl mx-auto", SLIDE_INNER(mobile))}>
+          <div className={SLIDE_HEAD(mobile)}>
+            <Badge className="text-eyebrow mb-3">
+              {tr("Безопасность", "Security")}
+            </Badge>
+            <h2 className={SLIDE_TITLE(mobile)}>
+              {tr(
+                "Deyla охраняет вашу приватность",
+                "Deyla protects your data and keeps it private."
+              )}
+            </h2>
+          </div>
+          <div className="relative flex justify-center mt-4">
+            <div className="relative inline-block isolate w-full max-w-3xl">
+              {/* Halo 1 */}
+              <img
+                src="/images/functional/whitetheme/safety.png"
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none select-none z-0"
+                style={{
+                  ...makeFeatherStyle(HALO_FEATHER_PCT),
+                  padding: HALO_FEATHER_PCT,
+                  transform: `scale(${HALO_SCALE_1})`,
+                  filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
+                }}
+              />
+              {/* Halo 2 */}
+              <img
+                src="/images/functional/whitetheme/safety.png"
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none select-none z-0"
+                style={{
+                  ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP),
+                  transform: `scale(${HALO_SCALE_2})`,
+                  filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
+                }}
+              />
+              {/* Sharp Image */}
+              <div className="relative z-10 overflow-hidden rounded-2xl">
+                <img
+                  src="/images/functional/whitetheme/safety.png"
+                  alt={tr("Безопасность", "Security")}
+                  className="block w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "tgchannel",
+    render: (mobile) => (
+      <div className={SLIDE_PAD(mobile)}>
+        <div className={cn("max-w-5xl mx-auto", SLIDE_INNER(mobile))}>
+          <div className={SLIDE_HEAD(mobile)}>
+            <Badge className="text-eyebrow mb-3">
+              {tr("Наши соцсети", "Social media")}
+            </Badge>
+            <h2 className={SLIDE_TITLE(mobile)}>
+              {tr(
+                "Следите за нами в Telegram",
+                "Follow us on Telegram"
+              )}
+            </h2>
+          </div>
+          <div className="relative flex justify-center mt-4">
+            <div className="relative inline-block isolate w-full max-w-3xl">
+              {/* Halo 1 */}
+              <img
+                src="/images/functional/tgchannel.png"
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none select-none z-0"
+                style={{
+                  ...makeFeatherStyle(HALO_FEATHER_PCT),
+                  padding: HALO_FEATHER_PCT,
+                  transform: `scale(${HALO_SCALE_1})`,
+                  filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
+                }}
+              />
+              {/* Halo 2 */}
+              <img
+                src="/images/functional/tgchannel.png"
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none select-none z-0"
+                style={{
+                  ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP),
+                  transform: `scale(${HALO_SCALE_2})`,
+                  filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
+                }}
+              />
+              {/* Sharp Image */}
+              <div className="relative z-10 overflow-hidden rounded-2xl">
+                <img
+                  src="/images/functional/tgchannel.png"
+                  alt={tr("Telegram-канал", "Telegram channel")}
+                  className="block w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Кнопка перехода в канал в стиле FinalCTA */}
+          <div className="mt-10 flex justify-center relative z-20">
+            <a
+              href="https://t.me/deyla_planner"
+              target="_blank"
+              rel="noreferrer"
+              className={cn(
+                "group relative z-10 inline-flex items-center justify-center overflow-hidden",
+                "px-8 md:px-6 h-14 md:h-16",
+                "text-lg md:text-xl font-semibold text-gray-900 dark:text-white",
+                "rounded-full",
+                "transition-all duration-300 ease-out",
+                "hover:-translate-y-0.5 active:translate-y-0",
+                "bg-white/10 dark:bg-white/[0.05] backdrop-blur-xl",
+                "ring-1 ring-white/30 dark:ring-white/10",
+                "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+                "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]",
+                "hover:bg-white/20 dark:hover:bg-white/[0.1]",
+                "bg-white/80 md:bg-white/10 dark:bg-white/[0.05]" // Добавлено для видимости на белом фоне
+              )}
+            >
+              <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0.02)_25%,transparent_45%,transparent_75%,rgba(147,197,253,0.05)_100%)]" />
+              
+              <span className="relative inline-flex items-center">
+                {tr("Зайти в канал", "Join channel")}
+                <ArrowRight size={22} className="ml-2 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+];
+
+const SecurityCarousel: React.FC = () => {
+  const containerRef = React.useRef<HTMLElement>(null);
+  const trackRef = React.useRef<HTMLDivElement>(null);
+  const stageRef = React.useRef<HTMLDivElement>(null);
+  const [viewportW, setViewportW] = React.useState(() =>
+    typeof window !== "undefined" ? window.innerWidth : 0
+  );
+  const [stageH, setStageH] = React.useState(0);
+  const total = SECURITY_SLIDES.length;
+
+  React.useLayoutEffect(() => {
+    const update = () => setViewportW(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  React.useLayoutEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const update = () => setStageH(el.clientHeight);
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [viewportW]);
+
+  const measurementsRef = React.useRef<Record<number, number>>({});
+  const [measureVersion, setMeasureVersion] = React.useState(0);
+  const handleMeasured = React.useCallback((idx: number, designHeight: number) => {
+    if (measurementsRef.current[idx] === designHeight) return;
+    measurementsRef.current[idx] = designHeight;
+    setMeasureVersion((v) => v + 1);
+  }, []);
+  const measuredCallbacks = React.useMemo(
+    () => SECURITY_SLIDES.map((_, i) => (h: number) => handleMeasured(i, h)),
+    [handleMeasured]
+  );
+
+  const mobile = viewportW > 0 && viewportW < SLIDE_MOBILE_BREAKPOINT;
+  const designWidth = mobile ? SLIDE_MOBILE_DESIGN_WIDTH : SLIDE_DESIGN_WIDTH;
+
+  const maxDesignHeight = React.useMemo(() => {
+    const hs = Object.values(measurementsRef.current);
+    return hs.length ? Math.max(...hs) : 0;
+  }, [measureVersion]);
+
+  const scale = React.useMemo(() => {
+    if (!viewportW || !stageH || !maxDesignHeight) return 1;
+    return Math.min(viewportW / designWidth, stageH / maxDesignHeight);
+  }, [viewportW, stageH, designWidth, maxDesignHeight]);
+
+  React.useLayoutEffect(() => {
+    if (mobile) return;
+    const container = containerRef.current;
+    const track = trackRef.current;
+    if (!container || !track) return;
+
+    let rafId = 0;
+    let lastX = Number.NaN;
+
+    const apply = () => {
+      rafId = 0;
+      const rect = container.getBoundingClientRect();
+      const scrollableHeight = rect.height - window.innerHeight;
+      if (scrollableHeight <= 0) return;
+      const p = Math.max(0, Math.min(1, -rect.top / scrollableHeight));
+      const maxTranslate = (total - 1) * rect.width;
+      const x = -p * maxTranslate;
+      if (!Number.isFinite(lastX) || Math.abs(x - lastX) > 0.1) {
+        lastX = x;
+        track.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`;
+      }
+    };
+
+    const schedule = () => {
+      if (!rafId) rafId = requestAnimationFrame(apply);
+    };
+
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    apply();
+
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [total, mobile]);
+
+  if (mobile) {
+    return (
+      <section
+        id="security-features"
+        className="relative"
+        aria-label={tr("Особенности безопасности", "Security features")}
+      >
+        {SECURITY_SLIDES.map((slide) => (
+          <div key={slide.id}>
+            {slide.render(true)}
+          </div>
+        ))}
+      </section>
+    );
+  }
+
+  return (
+    <section
+      ref={containerRef}
+      id="security-features"
+      className="relative"
+      style={{ height: `calc(100svh * ${total})` }}
+      aria-roledescription="carousel"
+      aria-label={tr("Особенности безопасности", "Security features")}
+    >
+      <div className="sticky top-0 h-[100svh] overflow-hidden flex flex-col pt-20 md:pt-3">
+        <div ref={stageRef} className="relative flex-1 w-full overflow-hidden">
+          <div
+            ref={trackRef}
+            className="flex h-full will-change-transform"
+            style={{ width: `${total * 100}%` }}
+          >
+            {SECURITY_SLIDES.map((slide, i) => (
+              <div
+                key={slide.id}
+                className="h-full shrink-0"
+                style={{ width: `${100 / total}%`, contain: "layout" }}
+              >
+                <ScaledSlide
+                  scale={scale}
+                  designWidth={designWidth}
+                  onMeasured={measuredCallbacks[i]}
+                >
+                  {slide.render(false)}
+                </ScaledSlide>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+/* ═══════════════════════════════════════════════════════════ */
+
 const DesktopAgentVideoSection: React.FC = () => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const timeoutRef = React.useRef<number | null>(null);
   const [showComingSoon, setShowComingSoon] = React.useState(false);
 
-  // Процент затухания на каждой стороне
   const FADE = 15;
   const vMask = `linear-gradient(to bottom, transparent 0%, black ${FADE}%, black ${100 - FADE}%, transparent 100%)`;
   const hMask = `linear-gradient(to right, transparent 0%, black ${FADE}%, black ${100 - FADE}%, transparent 100%)`;
@@ -1818,7 +2041,6 @@ const DesktopAgentVideoSection: React.FC = () => {
 
   const handleEnded = () => {
     setShowComingSoon(true);
-    // Через 3 секунды — убрать оверлей, отмотать в начало и запустить заново
     timeoutRef.current = window.setTimeout(() => {
       setShowComingSoon(false);
       const v = videoRef.current;
@@ -1829,7 +2051,6 @@ const DesktopAgentVideoSection: React.FC = () => {
     }, 3000);
   };
 
-  // Чистим таймаут, если компонент размонтируется
   React.useEffect(() => {
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
@@ -1857,7 +2078,6 @@ const DesktopAgentVideoSection: React.FC = () => {
             maskComposite: "intersect",
           }}
         >
-          {/* Видео: loop убран, чтобы срабатывал onEnded */}
           <video
             ref={videoRef}
             className={cn(
@@ -1880,7 +2100,6 @@ const DesktopAgentVideoSection: React.FC = () => {
             />
           </video>
 
-          {/* Оверлей «Coming soon»: плавно проявляется и исчезает */}
           <div
             aria-hidden={!showComingSoon}
             className={cn(
@@ -1889,9 +2108,7 @@ const DesktopAgentVideoSection: React.FC = () => {
               showComingSoon ? "opacity-100" : "opacity-0"
             )}
           >
-            {/* Мягкая подложка под текстом, чтобы читалось поверх любого кадра */}
             <div className="absolute inset-0 bg-black/30" />
-
             <div
               className={cn(
                 "relative px-6 py-3 md:px-8 md:py-4 rounded-full",
@@ -1901,7 +2118,6 @@ const DesktopAgentVideoSection: React.FC = () => {
                 "shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.35)]",
                 "text-white font-semibold tracking-widest uppercase",
                 "text-sm md:text-base",
-                // Небольшой подъём, чтобы появление было «аккуратным»
                 "transition-transform duration-700 ease-out",
                 showComingSoon ? "translate-y-0 scale-100" : "translate-y-1 scale-95"
               )}
@@ -1972,16 +2188,7 @@ const SCREENSHOTS = [
     title: tr("Геймифицируйте свой прогресс", "True gamification"),
     description: "",
   },
-  //{
-  //  id: "thisweek",
-  //  lightImage: "/images/functional/whitetheme/calendar.png",
-  //  darkImage: "/images/functional/darktheme/calendar.png",
-  //  scale: 1.35,
-  //  title: "Расширение ваших возможностей",
-  //  description: "",
-  //},
 ];
-
 
 const useIsDarkTheme = () => {
   const [isDark, setIsDark] = React.useState<boolean>(() => {
@@ -2000,55 +2207,37 @@ const useIsDarkTheme = () => {
   return isDark;
 };
 
-/* ─── Настройки ─── */
-// Halos
-const HALO_SCALE_1 = 1.08;
-const HALO_BLUR_1  = 20;
-const HALO_SCALE_2 = 1.15;
-const HALO_BLUR_2  = 50;
-const HALO_SCALE_3 = 1.25;
-const HALO_BLUR_3  = 120;
-
-// ─── Градиентный текст (фиолетовый → синий → зелёный) ───
 const TEXT_TITLE_GRADIENT =
   "bg-gradient-to-r from-purple-700 via-blue-600 to-emerald-600 bg-clip-text text-transparent";
 const TEXT_DESC_GRADIENT =
   "bg-gradient-to-r from-purple-600 via-blue-500 to-emerald-500 bg-clip-text text-transparent";
 
-// Motion
 const OPACITY_FALLOFF_ENTER = 2.0;
 const OPACITY_FALLOFF_EXIT  = 0.5;
 const SLIDE_MAX_SCALE       = 2.0;
 const SLIDE_TRANSITION_MS   = 300;
 const SLIDE_PAUSE_RATIO     = 0.4;
 
-// Text
 const TEXT_VISIBLE_OFFSET  = 1.05;
 const TEXT_EXPAND_POWER    = 6;
+const TEXT_EXPAND_MAX_SAFE = 6;
 
-  // Clamp: 20× produced giant costly glyph rasters without being
-  // visually better than 6× (opacity hits 0 long before either).
-  const TEXT_EXPAND_MAX_SAFE = 6;
-// ─── Кривая погасания: START < END ───
-const TEXT_FADE_START      = 0.05;   // начинаем гаснуть сразу после центра
-const TEXT_FADE_END        = 0.28;   // полностью прозрачен чуть раньше, чем пропадает halo (0.30)
-const TEXT_FADE_POWER      = 0.01;    // 1 = линейно, >1 = держит плотность дольше, потом быстро гаснет
-const TEXT_FADE_POWER_MOBILE      = 0.1;    // 1 = линейно, >1 = держит плотность дольше, потом быстро гаснет
+const TEXT_FADE_START      = 0.05;
+const TEXT_FADE_END        = 0.28;
+const TEXT_FADE_POWER      = 0.01;
+const TEXT_FADE_POWER_MOBILE      = 0.1;
 
-// ─── Размытие текста при росте (смягчает края глифов) ───
-const TEXT_BLUR_MAX_PX     = 6;      // к концу fade текст размыт на 6px
+const TEXT_BLUR_MAX_PX     = 6;
 const TEXT_BLUR_POWER      = 1.4;
 
-// ─── Появление фона подписи (halo + стеклянная карточка) ───
-const TEXT_BG_VISIBLE_OFFSET = 0.10;   // при каком absOff фон полностью видим (α = 1)
-const TEXT_BG_FADE_END       = 0.30;   // при каком absOff фон полностью прозрачен (α = 0)
-const TEXT_BG_FADE_POWER     = 2;    // нелинейность затухания (1 = линейно, >1 = медленнее у центра)
-const TEXT_BG_TRANSITION_MS  = 0;      // CSS-переход opacity (0 = мгновенно, скролл-драйвен)
-// ─── Расширение текста при уходе ───
-// Lock
-const LOCK_APPEAR_AT    = 0.9;   // secProgress, при котором замок монтируется (drop-анимация стартует)
-const LOCK_BLUR_START   = 0.9;   // secProgress, при котором начинается blur скриншота
-const LOCK_BLUR_MAX_PX  = 3;     // максимальная сила blur
+const TEXT_BG_VISIBLE_OFFSET = 0.10;
+const TEXT_BG_FADE_END       = 0.30;
+const TEXT_BG_FADE_POWER     = 2;
+const TEXT_BG_TRANSITION_MS  = 0;
+
+const LOCK_APPEAR_AT    = 0.9;
+const LOCK_BLUR_START   = 0.9;
+const LOCK_BLUR_MAX_PX  = 3;
 const LOCK_SCALE_MIN    = 0.8;
 const LOCK_SCALE_MAX    = 1.8;
 const LOCK_BG_MIN       = 0.15;
@@ -2069,10 +2258,7 @@ function applyDwell(raw: number, total: number, dwellRatio: number): number {
   return segments;
 }
 
-/* ─── Замок — отдельный компонент, чтобы управлять моментом монтирования ─── */
 const SecurityLockOverlay: React.FC<{ secProgress: number }> = ({ secProgress }) => {
-  // Монтируется только при достаточно видимом слайде.
-  // Unmount при уходе → анимация replay при следующем подходе.
   if (secProgress < LOCK_APPEAR_AT) return null;
 
   const lockScale = LOCK_SCALE_MIN + secProgress * (LOCK_SCALE_MAX - LOCK_SCALE_MIN);
@@ -2084,9 +2270,7 @@ const SecurityLockOverlay: React.FC<{ secProgress: number }> = ({ secProgress })
       role="img"
       aria-label={tr("Данные защищены", "Your data is protected")}
     >
-      {/* drop-анимация на внешнем слое */}
       <div className="lock-enter">
-        {/* непрерывный рост scale на внутреннем слое */}
         <div
           style={{
             transform: `scale(${lockScale})`,
@@ -2110,10 +2294,14 @@ const SecurityLockOverlay: React.FC<{ secProgress: number }> = ({ secProgress })
   );
 };
 
-// ─── Растворение скриншотов в фоне ───
-const SHARP_FEATHER_PCT = 40;      // Увеличили для более мягких краев основной картинки
+const SHARP_FEATHER_PCT = 40;
 const HALO_FEATHER_PCT  = 60;
 const HALO_FEATHER_STEP = 40;
+
+const HALO_SCALE_1 = 1.08;
+const HALO_BLUR_1  = 20;
+const HALO_SCALE_2 = 1.15;
+const HALO_BLUR_2  = 50;
 
 const makeFeatherMask = (featherPx: number) => `
   linear-gradient(to right,
@@ -2143,10 +2331,6 @@ const makeFeatherStyle = (featherPx: number): React.CSSProperties => ({
   maskComposite: "intersect",
 });
 
-// ─── НОВОЕ: процентный вариант маски для sharp-слоя.
-//      Feather масштабируется вместе с изображением, поэтому thisweek
-//      (scale: 1.35 → самая большая картинка) больше не выглядит
-//      «отрезанным» по сравнению с today/assistant. ───
 const makeFeatherMaskPct = (pct: number) => `
   linear-gradient(to right,
     transparent 0%,
@@ -2167,8 +2351,6 @@ const makeFeatherStylePct = (pct: number): React.CSSProperties => ({
   maskComposite: "intersect",
 });
 
-
-/* ─── Роутер: mobile ⇄ desktop ─────────────────────────────── */
 const FeatureScreenshotsCarousel: React.FC = () => {
   const [isMobile, setIsMobile] = React.useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -2186,9 +2368,6 @@ const FeatureScreenshotsCarousel: React.FC = () => {
   return isMobile ? <FeatureScreenshotsMobile /> : <FeatureScreenshotsDesktop />;
 };
 
-/* ═══════════════════════════════════════════════════════════
-   MOBILE — baked CSS-animations triggered by finger scroll
-   ═══════════════════════════════════════════════════════════ */
 const FeatureScreenshotsMobile: React.FC = () => {
   const isDark = useIsDarkTheme();
   const containerRef = React.useRef<HTMLElement>(null);
@@ -2284,14 +2463,13 @@ const FeatureScreenshotsMobile: React.FC = () => {
     };
   }, [total]);
 
-        return (
+  return (
     <section
       ref={containerRef}
       className="relative"
       style={{ height: `calc(100svh * ${total})` }}
     >
       <div className="sticky top-10 h-[100svh] overflow-hidden pt-10 md:pt-20">
-        {/* Заголовок */}
         <div className="absolute top-20 left-0 w-full z-30 pointer-events-none">
           <div className="text-center max-w-6xl w-full mx-auto px-4">
             <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
@@ -2303,7 +2481,6 @@ const FeatureScreenshotsMobile: React.FC = () => {
           </div>
         </div>
 
-        {/* Слайды */}
         {SCREENSHOTS.map((item, i) => {
           const imgSrc = isDark ? item.darkImage : item.lightImage;
           const perScale = item.scale || 1;
@@ -2315,13 +2492,10 @@ const FeatureScreenshotsMobile: React.FC = () => {
             <div
               key={item.id}
               ref={(el) => { slideRefs.current[i] = el; }}
-              // 🔥 ДОБАВЛЕН pt-24, чтобы сместить центр вниз (под заголовок)
               className="absolute inset-0 flex flex-col items-center justify-center px-2 pt-24 pointer-events-none"
               style={{ opacity: 0, visibility: "hidden", transition: "none" }}
             >
               <div className="flex flex-col items-center gap-6 w-full max-w-full">
-                
-                {/* ── Резкая картинка ── */}
                 <div
                   ref={(el) => { imageRefs.current[i] = el; }}
                   className="relative w-full isolate will-change-transform flex justify-center"
@@ -2334,13 +2508,15 @@ const FeatureScreenshotsMobile: React.FC = () => {
                       ref={(el) => { sharpRefs.current[i] = el; }}
                       src={imgSrc}
                       alt={item.title || item.description}
-                      // 🔥 УБРАН w-full, чтобы картинка сжималась по контенту. Маска теперь ляжет на ее края.
                       className="block select-none pointer-events-none max-w-full max-h-full object-contain"
                       style={{
-                        // 🔥 ИСПОЛЬЗУЕМ ПРОЦЕНТНУЮ МАСКУ (10% с боков, сверху и снизу)
                         ...makeFeatherStylePct(14),
-                        padding: 14,                    // 14px прозрачного «буфера»
+                        padding: 14,
+                        boxSizing: "border-box",
                         maxHeight: `${containerMaxH}svh`,
+                        maxWidth: "80vw",
+                        width: "auto",
+                        height: "auto",
                       }}
                       loading="eager"
                       decoding="async"
@@ -2360,7 +2536,6 @@ const FeatureScreenshotsMobile: React.FC = () => {
                   )}
                 </div>
 
-                {/* ── Текст под картинкой ── */}
                 <div
                   ref={(el) => { textRefs.current[i] = el; }}
                   className="text-center px-4 max-w-[90%]"
@@ -2373,12 +2548,10 @@ const FeatureScreenshotsMobile: React.FC = () => {
                   }}
                 >
                   {item.title && (
-                    // 🔥 УВЕЛИЧЕН КЕГЛЬ: text-base заменен на text-3xl (как у заголовка)
                     <h3 className={cn("text-3xl font-semibold mb-2", TEXT_TITLE_GRADIENT)}>
                       {item.title}
                     </h3>
                   )}
-                  {/* 🔥 УВЕЛИЧЕН КЕГЛЬ: text-sm заменен на text-lg */}
                   <p className={cn("text-lg leading-snug", TEXT_DESC_GRADIENT)}>
                     {item.description}
                   </p>
@@ -2392,11 +2565,8 @@ const FeatureScreenshotsMobile: React.FC = () => {
   );
 };
 
-/* ═══════════════════════════════════════════════════════════
-   DESKTOP — исходный эффект, но без лагов
-   ═══════════════════════════════════════════════════════════ */
 const FeatureScreenshotsDesktop: React.FC = () => {
-  const isDark = useIsDarkTheme(); // ← добавить
+  const isDark = useIsDarkTheme();
   const containerRef = React.useRef<HTMLElement>(null);
   const total = SCREENSHOTS.length
   const [rawProgress, setRawProgress] = React.useState(0);
@@ -2412,7 +2582,6 @@ const FeatureScreenshotsDesktop: React.FC = () => {
       const sh = rect.height - window.innerHeight;
       if (sh <= 0) return;
       const p = Math.max(0, Math.min(1, -rect.top / sh));
-      // Skip re-render when the change is visually imperceptible.
       if (Math.abs(p - lastProgressRef.current) > 0.003) {
         lastProgressRef.current = p;
         setRawProgress(p);
@@ -2438,7 +2607,6 @@ const FeatureScreenshotsDesktop: React.FC = () => {
   }, []);
 
   const currentFloat = applyDwell(rawProgress, total, SLIDE_PAUSE_RATIO);
-
 
   return (
     <section
@@ -2480,11 +2648,11 @@ const FeatureScreenshotsDesktop: React.FC = () => {
 
         <div className="relative flex-1">
           {SCREENSHOTS.map((item, i) => {
-            const imgSrc = isDark ? item.darkImage : item.lightImage; // ← добавить
+            const imgSrc = isDark ? item.darkImage : item.lightImage;
             const offset = i - currentFloat;
             const absOff = Math.abs(offset);
             const eased  = Math.pow(absOff, 1.2);
-            const BASE_DESKTOP_VH = 53; // бывшая SCREENSHOT_BASE_MAX_VH
+            const BASE_DESKTOP_VH = 53;
             const textOpacity =
               absOff <= TEXT_FADE_START ? 1 :
               absOff >= TEXT_FADE_END ? 0 :
@@ -2516,98 +2684,95 @@ const FeatureScreenshotsDesktop: React.FC = () => {
             const lockBlur    = Math.max(0, (secProgress - LOCK_BLUR_START) / (1 - LOCK_BLUR_START)) * LOCK_BLUR_MAX_PX;
             const isCurrent   = absOff < TEXT_VISIBLE_OFFSET;
 
-            // Fully invisible → skip painting entirely.
             const hidden = slideOpacity < 0.01 && textOpacity < 0.01;
 
             const containerMaxH = 56;
 
             return (
               <div
-  key={item.id}
-  className="absolute inset-0 flex items-center justify-center"
-  style={{
-    opacity: slideOpacity,
-    visibility: hidden ? "hidden" : "visible",
-    zIndex: Math.round(20 - eased * 20),
-    transform: `translate3d(0,0,0) scale(${slideScale})`,
-    pointerEvents: isCurrent ? "auto" : "none",
-    willChange: isCurrent ? "transform, opacity" : "auto",
-    transition: `opacity ${SLIDE_TRANSITION_MS}ms ease-out`,
-    contain: "layout style",
-  }}
->
-  <div className="flex flex-col items-center gap-6 md:gap-8">
-          {/* ── Скриншот + halo + замок ── */}
-      <div className="relative inline-block isolate">
-        {/* Halo 1 */}
-        <img
-          src={imgSrc}
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
-          style={{
-            ...makeFeatherStyle(HALO_FEATHER_PCT),
-            padding: HALO_FEATHER_PCT,
-            transform: `scale(${HALO_SCALE_1})`,
-            filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
-          }}
-        />
-        {/* Halo 2 */}
-        <img
-          src={imgSrc}
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
-          style={{
-            ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP),
-            transform: `scale(${HALO_SCALE_2})`,
-            filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
-          }}
-        />
+                key={item.id}
+                className="absolute inset-0 flex items-center justify-center"
+                style={{
+                  opacity: slideOpacity,
+                  visibility: hidden ? "hidden" : "visible",
+                  zIndex: Math.round(20 - eased * 20),
+                  transform: `translate3d(0,0,0) scale(${slideScale})`,
+                  pointerEvents: isCurrent ? "auto" : "none",
+                  willChange: isCurrent ? "transform, opacity" : "auto",
+                  transition: `opacity ${SLIDE_TRANSITION_MS}ms ease-out`,
+                  contain: "layout style",
+                }}
+              >
+                <div className="flex flex-col items-center gap-6 md:gap-8">
+                  <div className="relative inline-block isolate">
+                    <img
+                      src={imgSrc}
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+                      style={{
+                        ...makeFeatherStyle(HALO_FEATHER_PCT),
+                        padding: HALO_FEATHER_PCT,
+                        transform: `scale(${HALO_SCALE_1})`,
+                        filter: `blur(${HALO_BLUR_1}px) saturate(1.15)`,
+                      }}
+                    />
+                    <img
+                      src={imgSrc}
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full rounded-[24px] md:rounded-[32px] pointer-events-none select-none z-0"
+                      style={{
+                        ...makeFeatherStyle(HALO_FEATHER_PCT + HALO_FEATHER_STEP),
+                        transform: `scale(${HALO_SCALE_2})`,
+                        filter: `blur(${HALO_BLUR_2}px) saturate(1.15)`,
+                      }}
+                    />
 
-        {/* 🔥 ИЗМЕНЕННЫЙ БЛОК: Жесткая высота 56vh */}
-        <div
-          className="relative z-10 inline-block overflow-hidden rounded-[24px] md:rounded-[32px]"
-          style={{ height: "54vh" }} 
-        >
-          <img
-            src={imgSrc}
-            alt={item.title}
-            className="block select-none pointer-events-none h-full w-auto"
-            style={{
-              ...makeFeatherStyle(15),
-              filter: lockBlur > 0.5 ? `blur(${lockBlur}px)` : undefined,
-              transition: `filter ${SLIDE_TRANSITION_MS}ms ease-out`,
-            }}
-            loading="lazy"
-          />
-        </div>
-      </div>
+                    <div
+                      className="relative z-10 inline-block overflow-hidden rounded-[24px] md:rounded-[32px]"
+                    >
+                      <img
+                        src={imgSrc}
+                        alt={item.title}
+                        className="block select-none pointer-events-none"
+                        style={{
+                          ...makeFeatherStyle(15),
+                          width: "auto",
+                          height: "auto",
+                          maxHeight: "54vh",
+                          maxWidth: "80vw",
+                          filter: lockBlur > 0.5 ? `blur(${lockBlur}px)` : undefined,
+                          transition: `filter ${SLIDE_TRANSITION_MS}ms ease-out`,
+                        }}
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
 
-    {/* ── Текст ПОД картинкой: без halo, без карточки, без фона ── */}
-    <div
-      className="text-center px-4 max-w-5xl pointer-events-none"
-      style={{
-        opacity: textOpacity,
-        transform: `scale(${textScale})`,
-        transformOrigin: "center top",
-        filter: textBlur > 0.15 ? `blur(${textBlur}px)` : undefined,
-        willChange: "transform, opacity",
-      }}
-    >
-      {item.title && (
-        <h3
-          className={`mx-auto w-fit font-semibold ${TEXT_TITLE_GRADIENT} mb-2 text-2xl md:text-4xl leading-tight`}
-        >
-          {item.title}
-        </h3>
-      )}
-      <p
-        className={`mx-auto w-fit ${TEXT_DESC_GRADIENT} leading-snug text-xl md:text-xl max-w-2xl`}
-      >
-        {item.description}
-      </p>
-    </div>
-  </div>
-</div>
+                  <div
+                    className="text-center px-4 max-w-5xl pointer-events-none"
+                    style={{
+                      opacity: textOpacity,
+                      transform: `scale(${textScale})`,
+                      transformOrigin: "center top",
+                      filter: textBlur > 0.15 ? `blur(${textBlur}px)` : undefined,
+                      willChange: "transform, opacity",
+                    }}
+                  >
+                    {item.title && (
+                      <h3
+                        className={`mx-auto w-fit font-semibold ${TEXT_TITLE_GRADIENT} mb-2 text-2xl md:text-4xl leading-tight`}
+                      >
+                        {item.title}
+                      </h3>
+                    )}
+                    <p
+                      className={`mx-auto w-fit ${TEXT_DESC_GRADIENT} leading-snug text-xl md:text-xl max-w-2xl`}
+                    >
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>
@@ -2616,56 +2781,4 @@ const FeatureScreenshotsDesktop: React.FC = () => {
   );
 };
 
-const SECURITY_SCREENSHOT = {
-  id: "anonymizeddata",
-  lightImage: "/images/functional/whitetheme/safety.png",
-  darkImage: "/images/functional/whitetheme/safety.png",
-  scale: 2,
-  title: tr(
-    "Deyla использует механизмы защиты информации и меры конфиденциальности.",
-    "Deyla protects your data and keeps it private."
-  ),
-  description: "",
-} as const;
-
-const DataProtectionSection: React.FC = () => {
-  const isDark = useIsDarkTheme();
-  const imgSrc = isDark
-    ? SECURITY_SCREENSHOT.darkImage
-    : SECURITY_SCREENSHOT.lightImage;
-
-  return (
-    <section className="relative py-16 md:py-24 px-4 md:px-6">
-      <div className="max-w-6xl mx-auto flex flex-col items-center gap-6 md:gap-8">
-
-        {/* Скриншот + замок */}
-        <div className="relative inline-block isolate">
-          <div
-            className="relative z-10 inline-block overflow-hidden rounded-[24px] md:rounded-[32px]"
-            style={{ height: "50vh", maxHeight: 520 }}
-          >
-            <img
-              src={imgSrc}
-              alt={SECURITY_SCREENSHOT.title}
-              className="block select-none pointer-events-none h-full w-auto"
-              style={makeFeatherStylePct(8)}
-              loading="lazy"
-            />
-          </div>
-
-        </div>
-
-        {/* Заголовок */}
-
-          <div className="text-center max-w-6xl w-full mx-auto px-4">
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-4xl mx-auto">
-              {tr(
-                "Deyla использует механизмы защиты информации и меры конфиденциальности",
-                "Deyla protects your data and keeps it private."
-              )}
-            </h2>
-          </div>
-        </div>
-    </section>
-  );
-};
+export default Start;
