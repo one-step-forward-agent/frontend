@@ -745,3 +745,9 @@
 @media (prefers-reduced-motion: reduce) {
   .fd-app *, .fd-app *::before, .fd-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+.fd-level-celebration { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+.fd-level-confetti { position: absolute; inset: 0; overflow: hidden; }
+.fd-level-confetti i { position: absolute; top: -20px; width: 8px; height: 14px; border-radius: 2px; animation: fd-confetti-fall 3s ease-in forwards; }
+.fd-level-message { position: absolute; top: max(24px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); width: min(380px, calc(100vw - 32px)); pointer-events: auto; }
+@keyframes fd-confetti-fall { to { transform: translateY(110vh) rotate(680deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .fd-level-confetti { display: none; } }

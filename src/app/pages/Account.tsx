@@ -1,6 +1,7 @@
 // src/pages/Account.tsx
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { api } from "../api/client";
+import { AssistantMemory } from "../components/AssistantMemory";
 import type { Integration, ReminderSettings, Source, Tag, TagColor, TelegramLink } from "../api/types";
 import { LanguagePicker, ThemePicker } from "@/theme";
 import { useAuth, useSignOut, useUser } from "../auth";
@@ -156,6 +157,7 @@ export function AccountPage() {
 
       {/* ─── Календари, друзья, команды ─────────────── */}
       <Hub />
+      <AssistantMemory />
 
       {/* ─── Layout: меню + секции ─────────────────── */}
       <div className="grid lg:grid-cols-[220px_minmax(0,1fr)] gap-6 lg:gap-8">

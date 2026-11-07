@@ -619,8 +619,8 @@ function ChatMessage({
             <div className="space-y-3">
               <p>
                 {tr(
-                  "Пишите как другу — текстом, голосом или документом. Всё, что меняет календарь, я сначала покажу на подтверждение.",
-                  "Write as you would to a friend — by text, voice or document. Anything that changes the calendar I'll show you to confirm first."
+                  "Пишите как другу — текстом, голосом или документом. Расскажите о своём ритме и предпочтениях: я запомню их для будущих планов. Память можно изменить в аккаунте. Всё, что меняет календарь, я сначала покажу на подтверждение.",
+                  "Write as you would to a friend — by text, voice or document. Tell me about your routine and preferences: I'll remember them for future plans. You can edit my memory in Account. Anything that changes the calendar I'll show you to confirm first."
                 )}
               </p>
               {reply.sections.map((section) => (

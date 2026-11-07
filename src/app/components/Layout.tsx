@@ -9,6 +9,7 @@ import { Icon, type IconName } from "./icons";
 import { ErrorBoundary, useToast } from "./ui";
 import { AssistantChat } from "../pages/Assistant";
 import { Tour } from "./Tour";
+import { LevelCelebration } from "./LevelCelebration";
 import { api } from "../api/client";
 import type { TeamSummary } from "../api/types";
 import { useTeamsChanged } from "../pages/Teams";
@@ -204,6 +205,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <>
+      <LevelCelebration />
       <div className="relative min-h-screen flex">
         {/* ═══ САЙДБАР ═══ */}
         <aside

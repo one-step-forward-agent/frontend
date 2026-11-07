@@ -145,6 +145,9 @@ async function request<T>(path: string, init: RequestInit = {}, goal?: Goal): Pr
   const response = await send(path, init);
   if (!response.ok) throw await errorFrom(response);
   fireGoal(goal);
+  if (init.method && init.method !== "GET" && /^\/api\/(events|assistant|teams|friends)(\/|$)/.test(path)) {
+    window.dispatchEvent(new Event("deyla:progress-changed"));
+  }
   if (response.status === 204) return undefined as T;
   return (await response.json().catch(() => undefined)) as T;
 }
@@ -194,6 +197,7 @@ export const api = {
   },
   me: {
     get: () => request<User>("/api/me"),
+    saveMemory: (notes: string[]) => request<User>("/api/me/assistant-memory", json("PUT", { notes })),
     update: (body: { name?: string | null; timezone?: string; rewards_enabled?: boolean }) =>
       request<User>("/api/me", json("PATCH", body), "me_update"),
     saveOnboarding: (profile: Record<string, unknown>) =>
@@ -256,6 +260,7 @@ export const api = {
   stats: (days = 7) => request<Stats>(`/api/stats?days=${days}`),
   activity: (tagId?: number) => request<Activity>(`/api/stats/activity${tagId ? `?tag_id=${tagId}` : ""}`),
   rewards: () => request<Rewards>("/api/rewards"),
+  rewardCelebration: () => request<{ level: number | null }>("/api/rewards/celebration", { method: "POST" }),
   recommendations: (scope: "today" | "week" | "month" = "today", day?: string) =>
     request<{ items: Recommendation[] }>(`/api/recommendations?scope=${scope}${day ? `&day=${day}` : ""}`).then((result) => result.items),
   tags: {
