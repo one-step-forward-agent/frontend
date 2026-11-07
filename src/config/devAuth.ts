@@ -20,6 +20,6 @@ export const DEV_USER: User = {
   // добавьте сюда остальные поля типа User, если они required
 } as User;
 
-console.warn(
-  "[devAuth] DEV_AUTH_BYPASS активен — все auth-запросы пропускаются"
-);
+if (DEV_AUTH_BYPASS) {
+  console.warn("[devAuth] DEV_AUTH_BYPASS активен — все auth-запросы пропускаются");
+}

@@ -14,6 +14,7 @@ import { makeSlug, newBlockId, toSave } from "@/app/lib/blogApi";
 import type { BlogBlock, BlogBlockType, BlogPost } from "@/types/blog";
 import { BLOG_HEADING_GRADIENT } from "./BlogRenderer";
 import { createPortal } from "react-dom";
+import { defaultUrlTransform } from "react-markdown";
 
 /* ════════════════════════════════════════════════════════════════════
    Локальные типы (расширяют BlogBlock, не трогая types/blog.ts)
@@ -259,7 +260,7 @@ const renderInline = (text: string): React.ReactNode => {
       );
     else if (m[5] && m[6])
       parts.push(
-        <a key={key++} href={m[6]} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-300 underline">
+        <a key={key++} href={defaultUrlTransform(m[6])} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-300 underline">
           {m[5]}
         </a>
       );

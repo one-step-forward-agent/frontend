@@ -45,6 +45,8 @@
 
   .dark body { @apply bg-gray-950 text-gray-100; }
   .dark input, .dark select, .dark textarea { @apply bg-gray-800 border-gray-700 text-white; }
+  .dark select { color-scheme: dark; }
+  .dark select option, .dark select optgroup { color: #f3f4f6; background-color: #1f2937; }
   .dark ::-webkit-scrollbar-thumb { background: #4a4a4e; }
   .dark ::-webkit-scrollbar-thumb:hover { background: #5e5e62; }
   .dark * { scrollbar-color: #4a4a4e transparent; }

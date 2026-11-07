@@ -1,6 +1,8 @@
 // src/pages/AssistantPage.tsx
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent, type RefObject } from "react";
 import { ApiError, api } from "../api/client";
+import { TeamTaskAccept } from "../components/TeamTaskAccept";
+import { AssignedTaskSchedule } from "../components/AssignedTaskSchedule";
 import { TelegramPrompt } from "../components/TelegramPrompt";
 import type {
   AssistantEvent,
@@ -210,6 +212,15 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
 
   const push = (message: Message) => setMessages((items) => [...items, message]);
 
+  const refreshDraftCards = async () => {
+    try {
+      // Corrections and natural-language cancellation can invalidate an earlier card.
+      setMessages(fromHistory(await api.assistant.history()));
+    } catch {
+      // The new reply is already shown; history can be refreshed when the chat reopens.
+    }
+  };
+
   const send = async (input: string, attached: File | null = null) => {
     const value = input.trim();
     if ((!value && !attached) || busy) return;
@@ -223,6 +234,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       if (reply.kind === "completed") notifyTasksChanged();
       const events = "events" in reply && Array.isArray(reply.events) ? (reply.events as { tag_ids?: number[] }[]) : [];
       if (events.some((event) => event.tag_ids?.some((id) => !tagsById.has(id)))) notifyTagsChanged();
+      if (reply.kind === "send_draft") await refreshDraftCards();
     } catch (error) {
       // A limit reached is not a failure to retry at once: the user is told when the assistant answers again
       // A limit reached, or a file that cannot be read: said in words, not as a failure to retry
@@ -251,6 +263,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
       const { message_id: serverId, ...reply } = await api.assistant.chatVoice(audio, duration, attached);
       push({ id: ++messageId, role: "assistant", reply: reply as AssistantReply, serverId });
       if (reply.kind === "completed") notifyTasksChanged();
+      if (reply.kind === "send_draft") await refreshDraftCards();
     } catch (error) {
       // Speech that could not be made out or a limit reached is said in words, not as a failure to retry
       const told = error instanceof ApiError && [413, 422, 429].includes(error.status);
@@ -1058,9 +1071,10 @@ export function TaskCard({ reply, onReply }: { reply: FriendTaskCard | FriendInv
   return (
     <div className="space-y-2.5">
       <RichText text={reply.text} />
+      {reply.kind !== "friend_invite" && reply.calendar_event_id && <AssignedTaskSchedule eventId={reply.calendar_event_id} title={reply.title} />}
       {reply.kind === "team_task" && reply.actions.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {reply.actions.map((action) => (
+          {reply.actions.map((action) => action === "accept" ? <TeamTaskAccept key={action} taskId={reply.task_id} suggested={reply.scheduled_day || reply.start_at || reply.deadline_at?.slice(0, 10)} onAccepted={onReply} /> : (
             <Button
               key={action}
               size="sm"
@@ -1186,7 +1200,7 @@ export function SendDraft({ reply, onReply }: { reply: SendDraftCard; onReply: (
       {!editing && reply.actions.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           <Button size="sm" variant="primary" icon="check" busy={busy === "send"} disabled={busy !== null} onClick={() => run("send", () => api.sendDrafts.act(reply.draft_id, "send"))}>
-            {reminder ? tr("Поставить напоминание", "Set the reminder") : tr("Отправить", "Send")}
+            {reply.operation === "cancel" ? tr("Подтвердить отмену", "Confirm cancellation") : reply.operation === "edit" ? tr("Подтвердить изменение", "Confirm change") : reminder ? tr("Поставить напоминание", "Set the reminder") : tr("Отправить", "Send")}
           </Button>
           {reply.actions.includes("edit") && (
             <Button size="sm" icon="calendar" disabled={busy !== null} onClick={() => setEditing(true)}>

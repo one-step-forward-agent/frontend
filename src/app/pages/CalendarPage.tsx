@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import type { CalendarEvent } from "../api/types";
 import { EventList } from "../components/events";
 import { TimeGrid } from "../components/TimeGrid";
+import { AssignedTaskGroup, assignmentGroups } from "../components/AssignedTaskGroup";
 import { taskColor } from "../components/tags";
 import { RecommendationList } from "../components/recommendations";
 import { Icon } from "../components/icons";
@@ -359,7 +360,11 @@ export function CalendarPage() {
 
             <div className="relative grid gap-1.5 grid-cols-7 grid-rows-6">
               {days.map((day) => {
-                const items = untimedFirst(byDay.get(dayKey(day)) ?? []);
+                const allItems = untimedFirst(byDay.get(dayKey(day)) ?? []);
+                const assigned = allItems.filter(event => event.assignment);
+                const items = allItems.filter(event => !event.assignment);
+                const groups = assignmentGroups(assigned);
+                const maxIndividuals = Math.max(0, MAX_CHIPS - groups.length);
                 const isToday = sameDay(day, today);
                 const isSelected = sameDay(day, selected);
                 const otherMonth = day.getMonth() !== month.getMonth();
@@ -375,7 +380,7 @@ export function CalendarPage() {
                     aria-label={`${formatDate(day, {
                       day: "numeric",
                       month: "long",
-                    })}, ${tr("событий", "events")}: ${items.length}`}
+                    })}, ${tr("событий", "events")}: ${allItems.length}`}
                     className={cn(
                       "group relative overflow-hidden rounded-xl aspect-square sm:aspect-auto sm:min-h-[124px]",
                       "transition-colors duration-200",
@@ -406,7 +411,8 @@ export function CalendarPage() {
                       </span>
 
                       <span className="hidden sm:flex flex-col gap-0.5 min-w-0">
-                        {items.slice(0, MAX_CHIPS).map((event) => {
+                        {groups.map(group => <span key={group.key} title={group.label} className="truncate rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[11px] text-sky-800 dark:text-sky-200">{group.label} · {group.events.length}</span>)}
+                        {items.slice(0, maxIndividuals).map((event) => {
                           const tag = event.tag_ids?.map((id) => tagsById.get(id)).find(Boolean);
                           const color = taskColor(event, tagsById);
                           const time = event.all_day
@@ -435,18 +441,19 @@ export function CalendarPage() {
                           );
                         })}
 
-                        {items.length > MAX_CHIPS && (
+                        {items.length > maxIndividuals && (
                           <span className="text-[10px] text-gray-500 dark:text-gray-400 px-1">
-                            +{items.length - MAX_CHIPS}
+                            +{items.length - maxIndividuals}
                           </span>
                         )}
                       </span>
 
-                      {items.length > 0 && (
+                      {allItems.length > 0 && (
                         <span
                           className="sm:hidden mt-auto flex flex-wrap items-center gap-0.5"
                           aria-hidden="true"
                         >
+                          {groups.map(group => <span key={group.key} title={group.label} className="block w-full truncate text-[9px] text-sky-700 dark:text-sky-200">{group.label} · {group.events.length}</span>)}
                           {items.slice(0, 3).map((event) => (
                             <i
                               key={event.id}
@@ -480,8 +487,9 @@ export function CalendarPage() {
 /* ─── DayEvents ─────────────────────────────────────────── */
 
 function DayEvents({ events, loading }: { events: CalendarEvent[]; loading: boolean }) {
-  const untimed = events.filter((event) => event.all_day);
-  const timed = events.filter((event) => !event.all_day);
+  const assigned = events.filter(event => event.assignment);
+  const untimed = events.filter((event) => event.all_day && !event.assignment);
+  const timed = events.filter((event) => !event.all_day && !event.assignment);
 
   if (!events.length)
   return (
@@ -498,6 +506,7 @@ function DayEvents({ events, loading }: { events: CalendarEvent[]; loading: bool
   // No "Без времени" headings: a task without a time simply shows none
   return (
     <div className="space-y-4">
+      <AssignedTaskGroup events={assigned} />
       {untimed.length > 0 && <EventList events={untimed} />}
       {timed.length > 0 && <EventList events={timed} />}
     </div>

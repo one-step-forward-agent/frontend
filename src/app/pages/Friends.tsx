@@ -1,5 +1,5 @@
 // src/app/pages/Friends.tsx
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "../api/client";
 import type { Friend } from "../api/types";
 import { Icon } from "../components/icons";
@@ -9,10 +9,12 @@ import { Link, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard } from "@/components/dashboard/glass";
 import { tr } from "@/i18n";
+import { FriendCalendar } from "../components/FriendCalendar";
+import { useAuthStore } from "@/store/authStore";
 
 /**
- * Friends: added here, given tasks in the assistant chat ("добавь Маше купить хлеб завтра в 18").
- * A friend's invitation and tasks come to the chat and to Telegram, with buttons to answer.
+ * Separate friend-task and reminder calendars; the introductory guide appears on the first visit.
+ * Invitations and assignments also come to the shared website/Telegram assistant.
  */
 
 const PAGE = "relative max-w-3xl mx-auto pt-[1.5vh]";
@@ -20,6 +22,7 @@ const INPUT =
   "w-full rounded-lg border border-gray-300 bg-white/70 px-3 py-2 text-sm text-gray-900 dark:border-white/15 dark:bg-white/5 dark:text-white";
 
 export const FRIEND_EXAMPLES = [
+  tr("Напомни Маше купить бананы через полтора часа", "Remind Masha to buy bananas in an hour and a half"),
   tr("Добавь Маше купить хлеб завтра в 18:00", "Add Masha to buy bread tomorrow at 6 pm"),
   tr("Поручи Олегу подготовить отчёт к пятнице без контроля", "Ask Oleg to prepare the report on Friday without check"),
   tr("Запланируй нам с Машей кино в субботу в 19:00", "Plan the cinema for me and Masha on Saturday at 7 pm"),
@@ -33,6 +36,20 @@ export function FriendsPage() {
   const { pending, run } = useAction(reportError);
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
+  const userId = useAuthStore(state => state.user?.id);
+  const [showGuide, setShowGuide] = useState(false);
+  const guideUser = useRef<number | null>(null);
+  useEffect(() => {
+    if (!userId || guideUser.current === userId) return;
+    guideUser.current = userId;
+    const key = `deyla-friends-guide-${userId}`;
+    try {
+      setShowGuide(localStorage.getItem(key) !== "seen");
+      localStorage.setItem(key, "seen");
+    } catch {
+      setShowGuide(true);
+    }
+  }, [userId]);
 
   const friends = data.data?.friends ?? [];
   const incoming = friends.filter((item) => item.status === "incoming");
@@ -73,7 +90,8 @@ export function FriendsPage() {
       />
 
       <div className="space-y-4">
-        <GlassCard title={tr("Как дать задачу", "How to give a task")}>
+        <FriendCalendar friends={friends} />
+        {showGuide && <GlassCard title={tr("Как дать задачу", "How to give a task")}>
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
             {tr(
               "Напишите ассистенту — друг получит задачу в чате Deyla и в Telegram и сможет принять или отклонить её. Совместная задача («нам с …») после принятия появится в обоих календарях.",
@@ -87,7 +105,9 @@ export function FriendsPage() {
               </Link>
             ))}
           </div>
-        </GlassCard>
+          <p className="my-2 text-xs text-gray-500 dark:text-gray-400">{tr("Задачи и напоминания находятся на отдельных вкладках: задачу друг принимает, а напоминание приходит в указанное время.", "Tasks and reminders have separate tabs: your friend accepts a task, while a reminder arrives at its scheduled time.")}</p>
+          <Button size="sm" onClick={() => setShowGuide(false)}>{tr("Понятно", "Got it")}</Button>
+        </GlassCard>}
 
         <GlassCard title={tr("Добавить друга", "Add a friend")}>
           <form onSubmit={invite} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">

@@ -29,6 +29,7 @@ import { ColorPicker, TagList, TagPicker } from "./tags";
 import { TimeField } from "@/components/ui/time-field";
 import { Badge, Button, Field, Switch } from "./ui";
 import { LOCALE, tr } from "@/i18n";
+import { AssignedTaskSchedule } from "./AssignedTaskSchedule";
 
 export function EventRow({ event, showDate = false, extra }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode }) {
   const start = new Date(event.start_at);
@@ -106,6 +107,7 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
           </span>
         )}
       </Link>
+      {event.assignment && <AssignedTaskSchedule event={event} />}
       {extra}
     </li>
   );

@@ -119,6 +119,7 @@ export interface CalendarEvent {
   priority: Priority;
   location: string | null;
   all_day: boolean;
+  assignment?: { kind: "friend" | "team"; task_id: number; team_id?: number | null; team_name?: string | null; project_id?: number | null; project_name?: string | null; friend_id?: number | null; friend_name?: string | null } | null;
   reminder_minutes: number | null;
   status: string;
   source: Source | string;
@@ -301,6 +302,7 @@ export interface SendDraftCard {
   kind: "send_draft";
   draft_id: number;
   type: "friend_task" | "friend_reminder" | "team_task";
+  operation?: "create" | "edit" | "cancel";
   to: string;
   title: string;
   /** YYYY-MM-DD and HH:MM in the user's time; time is null for a task without a time */
@@ -318,6 +320,7 @@ export type TeamTaskAction = "accept" | "reject" | "start" | "done" | "check_on"
 export type TeamTaskStatus = "todo" | "in_progress" | "done";
 
 export interface TeamTaskCard {
+  calendar_event_id?: number | null;
   kind: "team_task";
   task_id: number;
   team_id: number;
@@ -329,6 +332,9 @@ export interface TeamTaskCard {
   title: string;
   status: TeamTaskStatus;
   confirm: "pending" | "accepted" | "rejected" | null;
+  start_at?: string | null;
+  deadline_at?: string | null;
+  scheduled_day?: string | null;
   check: boolean;
   check_state: string | null;
   actions: TeamTaskAction[];
@@ -386,6 +392,7 @@ export interface TeamProject {
 }
 
 export interface TeamTask {
+  calendar_event_id?: number | null;
   id: number;
   title: string;
   description: string | null;
@@ -395,12 +402,14 @@ export interface TeamTask {
   assignee: string | null;
   deadline_at: string | null;
   start_at: string | null;
+  scheduled_day?: string | null;
   status: TeamTaskStatus;
   confirm: "pending" | "accepted" | "rejected" | null;
   check: boolean;
   check_state: string | null;
   overdue: boolean;
   created_at: string | null;
+  can_manage?: boolean;
 }
 
 export interface TeamChatMessage {
@@ -416,6 +425,7 @@ export interface TeamChatMessage {
 export type FriendTaskAction = "accept" | "reject" | "start" | "cancel" | "check_on" | "check_off";
 
 export interface FriendTaskCard {
+  calendar_event_id?: number | null;
   kind: "friend_task";
   task_id: number;
   /** What the card tells: sent, request, accepted, started, missed… */
@@ -425,6 +435,8 @@ export interface FriendTaskCard {
   title: string;
   when: string;
   start: string;
+  end?: string;
+  can_edit?: boolean;
   all_day: boolean;
   shared: boolean;
   status: "pending" | "accepted" | "rejected" | "cancelled";
@@ -466,6 +478,14 @@ export interface Friend {
 export interface Friends {
   friends: Friend[];
   check_default: boolean;
+}
+
+export interface FriendTaskWrite {
+  title: string;
+  date: string;
+  time: string | null;
+  reminder?: boolean;
+  shared?: boolean;
 }
 
 /** A file sent with a message: the chat shows its name, the server has read it. */

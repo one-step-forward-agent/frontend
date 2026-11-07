@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { api } from "../api/client";
 import type { CalendarEvent, DeleteScope, EventFile } from "../api/types";
 import { DeleteScopeButtons, EventForm } from "../components/events";
+import { AssignedTaskSchedule } from "../components/AssignedTaskSchedule";
 import { TagList } from "../components/tags";
 import { Icon } from "../components/icons";
 import {
@@ -29,7 +30,7 @@ import {
   formatLead,
   formatSize,
 } from "../lib/format";
-import { notifyTasksChanged, useAction, useAsync } from "../lib/hooks";
+import { notifyTasksChanged, useAction, useAsync, useTasksChanged } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
@@ -74,6 +75,7 @@ export function NewEventPage() {
 
 export function EventPage({ id }: { id: number }) {
   const event = useAsync(() => api.events.get(id), [id]);
+  useTasksChanged(event.reload);
   const [editing, setEditing] = useState(false);
   const [askScope, setAskScope] = useState(false);
   const toast = useToast();
@@ -156,6 +158,7 @@ export function EventPage({ id }: { id: number }) {
         title={item.title}
         actions={
           <>
+            {item.assignment && <AssignedTaskSchedule event={item} />}
             <Button
               size="sm"
               icon="check"

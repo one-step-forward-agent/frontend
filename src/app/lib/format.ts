@@ -113,6 +113,15 @@ export function eventTimeRange(event: CalendarEvent): string {
 }
 
 export function occursOn(event: CalendarEvent, day: Date): boolean {
+  if (event.all_day) {
+    try {
+      const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: event.timezone || "UTC", year: "numeric", month: "2-digit", day: "2-digit" });
+      const key = dayKey(day);
+      return formatter.format(new Date(event.start_at)) <= key && formatter.format(new Date(event.end_at)) > key;
+    } catch {
+      // Legacy external events may have an unrecognized time zone.
+    }
+  }
   const dayStart = startOfDay(day).getTime();
   const dayEnd = dayStart + DAY;
   return new Date(event.start_at).getTime() < dayEnd && new Date(event.end_at).getTime() > dayStart;

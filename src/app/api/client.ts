@@ -21,6 +21,8 @@ import type {
   FriendInviteCard,
   FriendTaskAction,
   FriendTaskCard,
+  FriendTaskWrite,
+  SendDraftCard,
   TeamChatMessage,
   TeamDetail,
   TeamInviteLink,
@@ -319,6 +321,9 @@ export const api = {
     },
   },
   friends: {
+    tasks: (id: number, first: string, last: string) => request<FriendTaskCard[]>(`/api/friends/${id}/tasks?date_from=${first}&date_to=${last}`),
+    createTask: (id: number, body: FriendTaskWrite) => request<SendDraftCard>(`/api/friends/${id}/tasks`, json("POST", body)),
+    editTask: (id: number, body: FriendTaskWrite) => request<FriendTaskCard>(`/api/friend-tasks/${id}`, json("PATCH", body)),
     list: () => request<Friends>("/api/friends"),
     invite: (email: string, nickname?: string) => request<Friend>("/api/friends", json("POST", { email, nickname: nickname || null }), "friend_invite"),
     update: (id: number, body: { nickname?: string | null; auto_accept?: boolean; unblock?: boolean }) =>
@@ -366,7 +371,7 @@ export const api = {
     updateTask: (id: number, taskId: number, body: Partial<Pick<TeamTask, "title" | "description" | "assignee_id" | "project_id" | "deadline_at" | "start_at" | "status">>) =>
       request<TeamTask>(`/api/teams/${id}/tasks/${taskId}`, json("PATCH", body), "team_task_update"),
     removeTask: (id: number, taskId: number) => request<void>(`/api/teams/${id}/tasks/${taskId}`, { method: "DELETE" }),
-    act: (taskId: number, action: TeamTaskAction) => request<TeamTaskCard>(`/api/team-tasks/${taskId}/${action}`, { method: "POST" }, { name: "team_task", params: { action } }),
+    act: (taskId: number, action: TeamTaskAction, schedule?: { day: string; start_time: string | null }) => request<TeamTaskCard>(`/api/team-tasks/${taskId}/${action}`, schedule ? json("POST", schedule) : { method: "POST" }, { name: "team_task", params: { action } }),
     chat: (id: number) => request<TeamChatMessage[]>(`/api/teams/${id}/chat`),
     send: (id: number, text: string) => request<AssistantReply & { message_id?: number }>(`/api/teams/${id}/chat`, json("POST", { text }), "team_chat"),
   },

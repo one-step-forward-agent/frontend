@@ -6,6 +6,7 @@ import { useNow, useTags } from "../lib/hooks";
 import { Link } from "../router";
 import { cn } from "@/utils/cn";
 import { LOCALE, tr } from "@/i18n";
+import { AssignedTaskGroup } from "./AssignedTaskGroup";
 
 /**
  * Days by the hour, as in Google Calendar: the hours down the side, one column per day (one for the day view,
@@ -208,13 +209,14 @@ export function TimeGrid({
         const own = events.filter((event) => occursOn(event, day));
         return {
           day,
-          allDay: own.filter((event) => event.all_day),
-          placed: place(own.filter((event) => !event.all_day), day),
+          assigned: own.filter(event => event.assignment),
+          allDay: own.filter((event) => event.all_day && !event.assignment),
+          placed: place(own.filter((event) => !event.all_day && !event.assignment), day),
         };
       }),
     [days, events]
   );
-  const hasAllDay = columns.some((column) => column.allDay.length > 0);
+  const hasAllDay = columns.some((column) => column.allDay.length > 0 || column.assigned.length > 0);
   const todayIndex = days.findIndex((day) => sameDay(day, now));
   const nowTop = (minutesOf(now) / 60) * HOUR_PX;
 
@@ -278,12 +280,13 @@ export function TimeGrid({
             )}
 
             {hasAllDay && (
-              <div className="grid py-1" style={template} role="row" aria-label={tr("Задачи без времени", "Tasks without a time")}>
+              <div className="grid py-1" style={template} role="row" aria-label={tr("Задачи дня", "Tasks for the day")}>
                 <span className="pr-1.5 pt-1 text-right text-[10px] leading-tight text-gray-400 dark:text-gray-500">
-                  {tr("без времени", "no time")}
+                  {tr("задачи", "tasks")}
                 </span>
-                {columns.map(({ day, allDay }, index) => (
+                {columns.map(({ day, allDay, assigned }, index) => (
                   <div key={day.getTime()} className="min-w-0 flex flex-col gap-0.5 px-0.5">
+                    <AssignedTaskGroup events={assigned} compact />
                     {allDay.map((event) => {
                       const color = taskColor(event, tagsById);
                       const placeable = !!onMove && draggable(event);

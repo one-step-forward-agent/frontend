@@ -5,6 +5,7 @@ import { TelegramPrompt } from "../components/TelegramPrompt";
 import type { CalendarEvent, Recommendation, Stats } from "../api/types";
 import { useUser } from "../auth";
 import { EventList, EventRow } from "../components/events";
+import { AssignedTaskGroup } from "../components/AssignedTaskGroup";
 import { Icon } from "../components/icons";
 import { RecommendationList } from "../components/recommendations";
 import { LevelBar } from "../components/Rewards";
@@ -188,14 +189,15 @@ export function TodayPage() {
 
 /* ─── DaySchedule ───────────────────────────────────────── */
 
-/** Today's tasks as cards: the timed ones in order of their start with a red line at the current time
- * (between the tasks already begun and the ones still ahead), then the ones without a time. */
+/** Assigned tasks share one collapsed group; personal tasks keep their schedule and time markers. */
 function DaySchedule({ events }: { events: CalendarEvent[] }) {
   const now = useNow();
-  const timed = events
+  const assigned = events.filter((event) => event.assignment);
+  const personal = events.filter((event) => !event.assignment);
+  const timed = personal
     .filter((event) => !event.all_day)
     .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
-  const untimed = events.filter((event) => event.all_day);
+  const untimed = personal.filter((event) => event.all_day);
   const ahead = timed.findIndex((event) => new Date(event.start_at) > now);
   const nowAt = ahead < 0 ? timed.length : ahead;
 
@@ -209,6 +211,7 @@ function DaySchedule({ events }: { events: CalendarEvent[] }) {
 
   return (
     <div className="space-y-5">
+      <AssignedTaskGroup events={assigned} />
       {timed.length > 0 && (
         <section>
           <h3 className="schedule-heading">{tr("Расписание", "Schedule")}</h3>

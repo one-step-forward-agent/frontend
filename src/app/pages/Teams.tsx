@@ -6,12 +6,14 @@ import { Icon } from "../components/icons";
 import { RichText } from "../components/RichText";
 import { Badge, Button, ConfirmButton, ErrorNote, Field, Loading, PageHeader, Switch, useErrorToast, useToast } from "../components/ui";
 import { formatDate, formatTime } from "../lib/format";
-import { useAction, useAsync } from "../lib/hooks";
+import { useAction, useAsync, useTasksChanged } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_CHIP } from "@/components/dashboard/glass";
 import { tr } from "@/i18n";
 import { SendDraft, TaskCard } from "./Assistant";
+import { TeamTaskAccept } from "../components/TeamTaskAccept";
+import { AssignedTaskSchedule } from "../components/AssignedTaskSchedule";
 
 /**
  * Teams: a list of the user's teams and a form to create one; a team's page with its tasks, projects, members and
@@ -173,6 +175,7 @@ export function TeamPage({ id }: { id: number }) {
 
 function TasksTab({ team }: { team: TeamDetail }) {
   const tasks = useAsync(() => api.teams.tasks(team.id), [team.id]);
+  useTasksChanged(tasks.reload);
   const projects = useAsync(() => api.teams.projects(team.id), [team.id]);
   const reportError = useErrorToast();
   const { pending, run } = useAction(reportError);
@@ -276,6 +279,8 @@ function TasksTab({ team }: { team: TeamDetail }) {
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {task.assignee ?? tr("без исполнителя", "no performer")}
                   {task.project && <> · {task.project}</>}
+                  {task.scheduled_day && <> · {tr("день выполнения", "work day")}: {task.scheduled_day}</>}
+                  {!task.scheduled_day && task.start_at && <> · {tr("начало", "start")}: {when(task.start_at)}</>}
                   {task.deadline_at && (
                     <span className={cn(task.overdue && "text-rose-600 dark:text-rose-400 font-medium")}>
                       {" "}
@@ -289,7 +294,7 @@ function TasksTab({ team }: { team: TeamDetail }) {
               <select
                 className={cn(INPUT, "w-auto py-1 text-xs")}
                 value={task.status}
-                disabled={pending === `status-${task.id}`}
+                disabled={pending === `status-${task.id}` || task.confirm === "pending" || task.confirm === "rejected" || (!task.can_manage && task.assignee_id !== team.members.find(member => member.me)?.id)}
                 onChange={(event) => setStatus(task, event.target.value as TeamTaskStatus)}
                 aria-label={tr("Статус", "Status")}
               >
@@ -299,7 +304,12 @@ function TasksTab({ team }: { team: TeamDetail }) {
                   </option>
                 ))}
               </select>
-              <ConfirmButton size="sm" icon="trash" onConfirm={async () => (await run(`remove-${task.id}`, async () => (await api.teams.removeTask(team.id, task.id), true))) && tasks.reload()} />
+              {task.calendar_event_id && <AssignedTaskSchedule eventId={task.calendar_event_id} title={task.title} />}
+              {task.confirm === "pending" && task.assignee_id === team.members.find(member => member.me)?.id && <div className="w-full flex flex-wrap gap-2">
+                <TeamTaskAccept taskId={task.id} suggested={task.start_at || task.deadline_at?.slice(0, 10)} onAccepted={() => { tasks.reload(); }} />
+                <Button size="sm" onClick={async () => { if (await run(`reject-${task.id}`, () => api.teams.act(task.id, "reject"))) tasks.reload(); }}>{tr("Отклонить", "Decline")}</Button>
+              </div>}
+              {task.can_manage && <ConfirmButton size="sm" icon="trash" onConfirm={async () => (await run(`remove-${task.id}`, async () => (await api.teams.removeTask(team.id, task.id), true))) && tasks.reload()} />}
             </li>
           ))}
         </ul>
@@ -506,12 +516,7 @@ function MembersTab({ team, onChanged }: { team: TeamDetail; onChanged: () => vo
       {admin && (
         <GlassCard title={tr("Настройки задач", "Task settings")}>
           <div className="space-y-4">
-            <Switch
-              checked={team.task_confirm === "required"}
-              onChange={async (value) => (await run("confirm", () => api.teams.update(team.id, { task_confirm: value ? "required" : "auto" }))) && onChanged()}
-              label={tr("Исполнитель подтверждает задачу", "The performer confirms a task")}
-              hint={tr("Выключено — задача сразу появляется у исполнителя, без подтверждения.", "Off — a task goes straight to the performer, without confirming.")}
-            />
+            <p className="text-sm text-gray-600 dark:text-gray-300">{tr("Исполнитель принимает назначенную задачу и выбирает день выполнения. До принятия задача не попадает в его календарь.", "The performer accepts assigned tasks and chooses a work day. Tasks enter their calendar only after acceptance.")}</p>
             <Switch
               checked={team.check_default}
               onChange={async (value) => (await run("check", () => api.teams.update(team.id, { check_default: value }))) && onChanged()}

@@ -13,6 +13,7 @@ import { LanguageToggle, ThemeProvider, ThemeToggle } from "@/theme";
 import { tr } from "@/i18n";
 import { installAdminApiMock } from "@/dev/mockAdminApi";
 import { api } from "@/app/api/client";
+import { DEV_AUTH_BYPASS } from "@/config/devAuth";
 
 const BlogListPage = lazy(() => import("@/app/components/blog/BlogListPage"));
 const BlogPostPage = lazy(() => import("@/app/components/blog/BlogPostPage"));
@@ -44,7 +45,6 @@ const BroadcastAdmin = lazy(() => import("@/pages/Admin/BroadcastAdmin"));
      user.role === "superadmin" или user.is_superuser), поправь
      DEV_MOCK_ADMIN_USER — см. комментарий к объекту.
    ────────────────────────────────────────────────────────────────── */
-const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
 
 /**
  * Поля, которые обычно проверяют админские страницы:
