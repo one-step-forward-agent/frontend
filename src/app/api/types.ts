@@ -323,8 +323,8 @@ type AssistantReplyBody =
 export interface SendDraftCard {
   kind: "send_draft";
   draft_id: number;
-  type: "friend_task" | "friend_reminder" | "team_task";
-  operation?: "create" | "edit" | "cancel";
+  type: "friend_task" | "friend_reminder" | "team_task" | "schedule_share";
+  operation?: "create" | "edit" | "cancel" | "share";
   to: string;
   title: string;
   /** YYYY-MM-DD and HH:MM in the user's time; time is null for a task without a time */

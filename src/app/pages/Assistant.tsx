@@ -1200,7 +1200,7 @@ export function SendDraft({ reply, onReply }: { reply: SendDraftCard; onReply: (
       {!editing && reply.actions.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           <Button size="sm" variant="primary" icon="check" busy={busy === "send"} disabled={busy !== null} onClick={() => run("send", () => api.sendDrafts.act(reply.draft_id, "send"))}>
-            {reply.operation === "cancel" ? tr("Подтвердить отмену", "Confirm cancellation") : reply.operation === "edit" ? tr("Подтвердить изменение", "Confirm change") : reminder ? tr("Поставить напоминание", "Set the reminder") : tr("Отправить", "Send")}
+            {reply.operation === "share" ? tr("Открыть доступ", "Share") : reply.operation === "cancel" ? tr("Подтвердить отмену", "Confirm cancellation") : reply.operation === "edit" ? tr("Подтвердить изменение", "Confirm change") : reminder ? tr("Поставить напоминание", "Set the reminder") : tr("Отправить", "Send")}
           </Button>
           {reply.actions.includes("edit") && (
             <Button size="sm" icon="calendar" disabled={busy !== null} onClick={() => setEditing(true)}>
