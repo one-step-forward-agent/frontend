@@ -207,6 +207,9 @@ export function EventPage({ id }: { id: number }) {
       </Dialog>
 
       <GlassCard>
+        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+          {item.visibility === "friends" ? tr("Видна всем друзьям", "Visible to all friends") : item.visibility === "selected" ? tr("Видна выбранным друзьям", "Visible to selected friends") : tr("Скрыта от друзей", "Hidden from friends")}
+        </p>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
           <DetailRow icon="calendar" label={tr("Когда", "When")}>
             {formatDate(start, {

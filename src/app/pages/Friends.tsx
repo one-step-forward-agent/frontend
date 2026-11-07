@@ -10,6 +10,7 @@ import { cn } from "@/utils/cn";
 import { GlassCard } from "@/components/dashboard/glass";
 import { tr } from "@/i18n";
 import { FriendCalendar } from "../components/FriendCalendar";
+import { FriendSchedule } from "../components/FriendSchedule";
 import { useAuthStore } from "@/store/authStore";
 
 /**
@@ -91,6 +92,7 @@ export function FriendsPage() {
 
       <div className="space-y-4">
         <FriendCalendar friends={friends} />
+        <FriendSchedule friends={friends} />
         {showGuide && <GlassCard title={tr("Как дать задачу", "How to give a task")}>
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
             {tr(

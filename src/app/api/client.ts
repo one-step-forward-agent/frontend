@@ -18,6 +18,7 @@ import type {
   DraftItem,
   Friend,
   Friends,
+  FriendSchedule,
   FriendInviteCard,
   FriendTaskAction,
   FriendTaskCard,
@@ -321,6 +322,7 @@ export const api = {
     },
   },
   friends: {
+    schedule: (id: number, first: string, last: string) => request<FriendSchedule>(`/api/friends/${id}/schedule?date_from=${first}&date_to=${last}`),
     tasks: (id: number, first: string, last: string) => request<FriendTaskCard[]>(`/api/friends/${id}/tasks?date_from=${first}&date_to=${last}`),
     createTask: (id: number, body: FriendTaskWrite) => request<SendDraftCard>(`/api/friends/${id}/tasks`, json("POST", body)),
     editTask: (id: number, body: FriendTaskWrite) => request<FriendTaskCard>(`/api/friend-tasks/${id}`, json("PATCH", body)),
@@ -360,7 +362,7 @@ export const api = {
     updateMember: (id: number, memberId: number, body: { name?: string; role?: "admin" | "member" }) => request<TeamDetail>(`/api/teams/${id}/members/${memberId}`, json("PATCH", body)),
     removeMember: (id: number, memberId: number) => request<void>(`/api/teams/${id}/members/${memberId}`, { method: "DELETE" }, "team_member_remove"),
     projects: (id: number) => request<TeamProject[]>(`/api/teams/${id}/projects`),
-    saveProject: (id: number, body: { name?: string; description?: string | null; status?: "active" | "archived"; deadline_at?: string | null }, projectId?: number) =>
+    saveProject: (id: number, body: { name?: string; description?: string | null; status?: "active" | "archived"; deadline_at?: string | null; color?: TeamProject["color"] }, projectId?: number) =>
       request<TeamProject>(projectId ? `/api/teams/${id}/projects/${projectId}` : `/api/teams/${id}/projects`, json(projectId ? "PATCH" : "POST", body), "team_project_save"),
     removeProject: (id: number, projectId: number) => request<void>(`/api/teams/${id}/projects/${projectId}`, { method: "DELETE" }),
     tasks: (id: number) => request<TeamTask[]>(`/api/teams/${id}/tasks`),

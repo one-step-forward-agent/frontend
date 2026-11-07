@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { api } from "../api/client";
-import type { Calendar, CalendarEvent, DeleteScope, EventCreate, Priority, TagColor } from "../api/types";
+import type { Calendar, CalendarEvent, DeleteScope, EventCreate, Priority, TagColor, TaskVisibility as Visibility } from "../api/types";
 import { useAuth } from "../auth";
 import {
   PRIORITIES,
@@ -30,6 +30,7 @@ import { TimeField } from "@/components/ui/time-field";
 import { Badge, Button, Field, Switch } from "./ui";
 import { LOCALE, tr } from "@/i18n";
 import { AssignedTaskSchedule } from "./AssignedTaskSchedule";
+import { TaskVisibility } from "./TaskVisibility";
 
 export function EventRow({ event, showDate = false, extra }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode }) {
   const start = new Date(event.start_at);
@@ -161,6 +162,8 @@ const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 1440];
 
 /** Дата и время — отдельные поля: пустое время — полноценная задача без времени, а не «весь день по умолчанию». */
 interface FormState {
+  visibility: Visibility;
+  sharedFriendIds: number[];
   title: string;
   date: string;
   time: string;
@@ -191,6 +194,8 @@ function initialState(event?: CalendarEvent, day?: string | null, time?: string 
     const last = lastDay(event);
     const deadline = event.deadline_at ? new Date(event.deadline_at) : null;
     return {
+      visibility: event.visibility ?? "private",
+      sharedFriendIds: event.shared_friend_ids ?? [],
       title: event.title,
       date: dayKey(start),
       time: event.all_day ? "" : clock(start),
@@ -216,6 +221,8 @@ function initialState(event?: CalendarEvent, day?: string | null, time?: string 
   // Время из сетки — задача на час; с 23:00 окончание не ставим, иначе оно уйдёт на следующий день
   const end = start && start < "23:00" ? `${String(Number(start.slice(0, 2)) + 1).padStart(2, "0")}${start.slice(2)}` : "";
   return {
+    visibility: "private",
+    sharedFriendIds: [],
     title: "",
     date,
     time: start,
@@ -242,6 +249,7 @@ function at(day: Date, value: string): Date {
 }
 
 function toPayload(state: FormState, timezone: string): EventCreate | string {
+  if (state.visibility === "selected" && state.sharedFriendIds.length === 0) return tr("Выберите хотя бы одного друга", "Select at least one friend");
   const title = state.title.trim();
   if (!title) return tr("Введите название", "Enter a title");
   const day = parseDayKey(state.date);
@@ -263,6 +271,8 @@ function toPayload(state: FormState, timezone: string): EventCreate | string {
   if (repeatProblem) return repeatProblem;
   return {
     title,
+    visibility: state.visibility,
+    shared_friend_ids: state.visibility === "selected" ? state.sharedFriendIds : [],
     all_day: !state.time,
     start_at: start.toISOString(),
     end_at: end.toISOString(),
@@ -396,6 +406,7 @@ export function EventForm({
         <span className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{tr("Цвет в календаре", "Colour in the calendar")}</span>
         <ColorPicker value={state.color} onChange={(color) => set("color", color)} />
       </div>
+      <TaskVisibility value={state.visibility} friendIds={state.sharedFriendIds} onChange={(visibility, sharedFriendIds) => setState(current => ({ ...current, visibility, sharedFriendIds }))} />
 
       <details className="more" open={hasDetails}>
         <summary>{tr("Дедлайн и детали", "Deadline and details")}</summary>

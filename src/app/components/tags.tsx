@@ -28,11 +28,11 @@ export function taskColor(event: { color?: TagColor | null; tag_ids?: number[] }
 }
 
 /** The task's colour in its form: none (the usual) or one of the tag palette. */
-export function ColorPicker({ value, onChange }: { value: TagColor | null; onChange: (color: TagColor | null) => void }) {
+export function ColorPicker({ value, onChange, label = tr("Цвет задачи", "Task colour"), allowNone = true }: { value: TagColor | null; onChange: (color: TagColor | null) => void; label?: string; allowNone?: boolean }) {
   const swatch = "w-7 h-7 rounded-full inline-flex items-center justify-center ring-offset-2 ring-offset-white dark:ring-offset-gray-900 transition-shadow";
   return (
-    <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label={tr("Цвет задачи", "Task colour")}>
-      <button
+    <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label={label}>
+      {allowNone && <button
         type="button"
         role="radio"
         aria-checked={value === null}
@@ -41,7 +41,7 @@ export function ColorPicker({ value, onChange }: { value: TagColor | null; onCha
         className={`${swatch} border border-dashed border-gray-400 text-gray-500 ${value === null ? "ring-2 ring-sky-500" : ""}`}
       >
         <Icon name="close" size={12} />
-      </button>
+      </button>}
       {TAG_COLORS.map((color) => (
         <button
           key={color}

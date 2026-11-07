@@ -108,6 +108,8 @@ export interface Calendar {
 }
 
 export interface CalendarEvent {
+  visibility?: TaskVisibility;
+  shared_friend_ids?: number[];
   id: number;
   calendar_id: number;
   user_id: number;
@@ -139,6 +141,23 @@ export interface CalendarEvent {
 }
 
 export type TagColor = "indigo" | "blue" | "green" | "amber" | "red" | "pink" | "violet" | "slate";
+export type TaskVisibility = "private" | "friends" | "selected";
+
+export interface FriendSchedule {
+  timezone: string;
+  truncated: boolean;
+  events: {
+    id: number;
+    title: string;
+    start_at: string;
+    end_at: string;
+    first_day: string;
+    last_day: string;
+    all_day: boolean;
+    completed: boolean;
+    deadline_at: string | null;
+  }[];
+}
 
 export interface Tag {
   id: number;
@@ -149,6 +168,8 @@ export interface Tag {
 }
 
 export interface EventCreate {
+  visibility?: TaskVisibility;
+  shared_friend_ids?: number[];
   title: string;
   start_at: string;
   end_at: string;
@@ -383,6 +404,7 @@ export interface TeamInviteLink {
 export interface TeamProject {
   id: number;
   name: string;
+  color: TagColor;
   description: string | null;
   status: "active" | "archived";
   deadline_at: string | null;

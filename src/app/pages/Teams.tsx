@@ -1,7 +1,7 @@
 // src/app/pages/Teams.tsx
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "../api/client";
-import type { AssistantReply, TeamDetail, TeamProject, TeamTask, TeamTaskStatus } from "../api/types";
+import type { AssistantReply, TagColor, TeamDetail, TeamProject, TeamTask, TeamTaskStatus } from "../api/types";
 import { Icon } from "../components/icons";
 import { RichText } from "../components/RichText";
 import { Badge, Button, ConfirmButton, ErrorNote, Field, Loading, PageHeader, Switch, useErrorToast, useToast } from "../components/ui";
@@ -14,6 +14,9 @@ import { tr } from "@/i18n";
 import { SendDraft, TaskCard } from "./Assistant";
 import { TeamTaskAccept } from "../components/TeamTaskAccept";
 import { AssignedTaskSchedule } from "../components/AssignedTaskSchedule";
+import { ColorPicker } from "../components/tags";
+import { EMPTY_TEAM_FILTERS, filterTeamTasks, type TeamTaskFilters } from "../lib/teamTaskFilters";
+import { useAuthStore } from "@/store/authStore";
 
 /**
  * Teams: a list of the user's teams and a form to create one; a team's page with its tasks, projects, members and
@@ -96,12 +99,12 @@ export function TeamsPage() {
           </div>
         )}
         <GlassCard title={tr("Создать команду", "Create a team")}>
-          <form onSubmit={create} className="grid gap-3 sm:grid-cols-3 sm:items-end">
+          <form onSubmit={create} className="grid gap-3 sm:grid-cols-3 sm:items-start">
             <Field label={tr("Название", "Name")}>
               <input className={INPUT} required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder={tr("Разработка", "Development")} />
             </Field>
-            <Field label={tr("Тег (для личного чата)", "Tag (for the personal chat)")} hint={tr("«В команде @Тег поручи …»", "“In the team @Tag assign …”")}>
-              <input className={INPUT} maxLength={41} value={tag} onChange={(event) => setTag(event.target.value)} placeholder={`@${(name || tr("Разработка", "Development")).replace(/\s+/g, "_")}`} />
+            <Field label={tr("Тег (необязательно)", "Tag (optional)")} hint={tr("Оставьте пустым — подберём свободный тег для личного чата. Например: «В команде @Тег поручи …»", "Leave blank — we’ll choose an available tag for the personal chat. For example: “In the team @Tag assign …”")}>
+              <input className={INPUT} maxLength={41} value={tag} onChange={(event) => setTag(event.target.value)} placeholder={tr("Автоматически", "Automatic")} />
             </Field>
             <Field label={tr("Ваше имя в команде", "Your name in the team")}>
               <input className={INPUT} maxLength={60} value={myName} onChange={(event) => setMyName(event.target.value)} placeholder={tr("Анна", "Anna")} />
@@ -180,17 +183,18 @@ function TasksTab({ team }: { team: TeamDetail }) {
   const reportError = useErrorToast();
   const { pending, run } = useAction(reportError);
   const [filter, setFilter] = useState<"all" | "mine" | number>("all");
+  const [filters, setFilters] = useState<TeamTaskFilters>(EMPTY_TEAM_FILTERS);
+  const timezone = useAuthStore(state => state.user?.timezone) || "UTC";
+  const setTaskFilter = (key: keyof TeamTaskFilters, value: string) => setFilters(current => ({ ...current, [key]: value }));
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState("");
   const [project, setProject] = useState("");
   const [deadline, setDeadline] = useState("");
 
-  const shown = useMemo(
-    () =>
+  const shown = filterTeamTasks(
       (tasks.data ?? []).filter((task) =>
         filter === "all" ? true : filter === "mine" ? task.assignee_id === team.me.id : task.assignee_id === filter
-      ),
-    [tasks.data, filter, team.me.id]
+      ), filters, new Date(), timezone
   );
   const open = (tasks.data ?? []).filter((task) => task.status !== "done").length;
   const done = (tasks.data ?? []).length - open;
@@ -257,7 +261,7 @@ function TasksTab({ team }: { team: TeamDetail }) {
       <GlassCard
         title={`${tr("Задачи", "Tasks")} · ${open} ${tr("открыто", "open")}, ${done} ${tr("готово", "done")}`}
         actions={
-          <select className={cn(INPUT, "w-auto py-1 text-xs")} value={String(filter)} onChange={(event) => setFilter(event.target.value === "all" || event.target.value === "mine" ? event.target.value : Number(event.target.value))}>
+          <select aria-label={tr("Фильтр по исполнителю", "Filter by performer")} className={cn(INPUT, "w-auto py-1 text-xs")} value={String(filter)} onChange={(event) => setFilter(event.target.value === "all" || event.target.value === "mine" ? event.target.value : Number(event.target.value))}>
             <option value="all">{tr("Все участники", "All members")}</option>
             <option value="mine">{tr("Мои", "Mine")}</option>
             {team.members.map((member) => (
@@ -268,6 +272,44 @@ function TasksTab({ team }: { team: TeamDetail }) {
           </select>
         }
       >
+        <div className="mb-4 grid gap-3 sm:grid-cols-3" role="group" aria-label={tr("Фильтры задач команды", "Team task filters")}>
+          <Field label={tr("Статус", "Status")}>
+            <select aria-label={tr("Статус", "Status")} className={INPUT} value={filters.status} onChange={event => setTaskFilter("status", event.target.value)}>
+              <option value="all">{tr("Все статусы", "All statuses")}</option>
+              {Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </Field>
+          <Field label={tr("Проект", "Project")}>
+            <select aria-label={tr("Проект", "Project")} className={INPUT} value={filters.project} onChange={event => setTaskFilter("project", event.target.value)}>
+              <option value="all">{tr("Все проекты", "All projects")}</option>
+              <option value="none">{tr("Без проекта", "No project")}</option>
+              {(projects.data ?? []).map(project => <option key={project.id} value={project.id}>{project.name}{project.status === "archived" ? tr(" (архив)", " (archived)") : ""}</option>)}
+            </select>
+          </Field>
+          <Field label={tr("Дедлайн", "Deadline")}>
+            <select aria-label={tr("Дедлайн", "Deadline")} className={INPUT} value={filters.deadline} onChange={event => setTaskFilter("deadline", event.target.value)}>
+              <option value="all">{tr("Любой срок", "Any deadline")}</option>
+              <option value="overdue">{tr("Просроченные", "Overdue")}</option>
+              <option value="today">{tr("Сегодня", "Today")}</option>
+              <option value="week">{tr("Ближайшие 7 дней", "Next 7 days")}</option>
+              <option value="none">{tr("Без дедлайна", "No deadline")}</option>
+            </select>
+          </Field>
+          <Field label={tr("Дедлайн с", "Deadline from")}><input className={INPUT} type="date" value={filters.from} max={filters.to || undefined} onChange={event => setTaskFilter("from", event.target.value)} /></Field>
+          <Field label={tr("Дедлайн по", "Deadline through")}><input className={INPUT} type="date" value={filters.to} min={filters.from || undefined} onChange={event => setTaskFilter("to", event.target.value)} /></Field>
+          <Field label={tr("Подтверждение", "Confirmation")}>
+            <select aria-label={tr("Подтверждение", "Confirmation")} className={INPUT} value={filters.confirmation} onChange={event => setTaskFilter("confirmation", event.target.value)}>
+              <option value="all">{tr("Все", "All")}</option>
+              <option value="pending">{tr("Ждёт подтверждения", "Awaiting confirmation")}</option>
+              <option value="accepted">{tr("Принята", "Accepted")}</option>
+              <option value="rejected">{tr("Отклонена", "Declined")}</option>
+            </select>
+          </Field>
+          <Field label={tr("Поиск по названию", "Search by title")} className="sm:col-span-2"><input className={INPUT} type="search" value={filters.search} onChange={event => setTaskFilter("search", event.target.value)} /></Field>
+          <Button variant="ghost" onClick={() => { setFilters(EMPTY_TEAM_FILTERS); setFilter("all"); }}>{tr("Сбросить фильтры", "Reset filters")}</Button>
+        </div>
+        {projects.error && <ErrorNote message={projects.error} onRetry={projects.reload} />}
+        <p className="mb-2 text-xs text-gray-500">{tr("Показано", "Showing")}: {shown.length} / {tasks.data?.length ?? 0}</p>
         {tasks.error && <ErrorNote message={tasks.error} onRetry={tasks.reload} />}
         {!tasks.data && tasks.loading && <Loading />}
         {tasks.data && shown.length === 0 && <p className="text-sm text-gray-500">{tr("Задач нет.", "No tasks.")}</p>}
@@ -278,7 +320,7 @@ function TasksTab({ team }: { team: TeamDetail }) {
                 <p className={cn("font-medium text-gray-900 dark:text-white", task.status === "done" && "line-through opacity-60")}>{task.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {task.assignee ?? tr("без исполнителя", "no performer")}
-                  {task.project && <> · {task.project}</>}
+                  {task.project && <span className={`ml-1 inline-flex items-center gap-1 tag-${projects.data?.find(project => project.id === task.project_id)?.color ?? "indigo"}`}><i className="tag-dot" aria-hidden="true" />{task.project}</span>}
                   {task.scheduled_day && <> · {tr("день выполнения", "work day")}: {task.scheduled_day}</>}
                   {!task.scheduled_day && task.start_at && <> · {tr("начало", "start")}: {when(task.start_at)}</>}
                   {task.deadline_at && (
@@ -325,14 +367,16 @@ function ProjectsTab({ team }: { team: TeamDetail }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [editing, setEditing] = useState<TeamProject | null>(null);
+  const [color, setColor] = useState<TagColor>("indigo");
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
-    const body = { name: name.trim(), description: description.trim() || null };
+    const body = { name: name.trim(), description: description.trim() || null, color };
     if (await run("save", () => api.teams.saveProject(team.id, body, editing?.id))) {
       setName("");
       setDescription("");
       setEditing(null);
+      setColor("indigo");
       projects.reload();
     }
   };
@@ -344,10 +388,10 @@ function ProjectsTab({ team }: { team: TeamDetail }) {
       {projects.data?.map((project) => (
         <GlassCard
           key={project.id}
-          title={project.name}
+          title={<span className={`inline-flex items-center gap-2 tag-${project.color ?? "indigo"}`}><i className="tag-dot" aria-hidden="true" />{project.name}</span>}
           actions={
             <span className="flex gap-1.5">
-              <Button size="sm" variant="ghost" onClick={() => (setEditing(project), setName(project.name), setDescription(project.description ?? ""))}>
+              <Button size="sm" variant="ghost" onClick={() => (setEditing(project), setName(project.name), setDescription(project.description ?? ""), setColor(project.color ?? "indigo"))}>
                 {tr("Изменить", "Edit")}
               </Button>
               <Button size="sm" variant="ghost" onClick={async () => (await run(`archive-${project.id}`, () => api.teams.saveProject(team.id, { status: project.status === "active" ? "archived" : "active" }, project.id))) && projects.reload()}>
@@ -359,7 +403,7 @@ function ProjectsTab({ team }: { team: TeamDetail }) {
           {project.description && <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 whitespace-pre-wrap">{project.description}</p>}
           <div className="flex items-center gap-3">
             <div className="h-2 flex-1 rounded-full bg-gray-500/15 overflow-hidden" role="progressbar" aria-valuenow={project.progress} aria-valuemin={0} aria-valuemax={100}>
-              <div className="h-full rounded-full bg-emerald-500" style={{ width: `${project.progress}%` }} />
+              <div className={`h-full rounded-full tag-${project.color ?? "indigo"}`} style={{ width: `${project.progress}%`, background: "var(--dot)" }} />
             </div>
             <span className="text-xs tabular-nums text-gray-600 dark:text-gray-300">
               {project.done}/{project.tasks} · {project.progress}%
@@ -376,12 +420,15 @@ function ProjectsTab({ team }: { team: TeamDetail }) {
           <Field label={tr("Описание", "Description")}>
             <textarea className={INPUT} rows={3} maxLength={5000} value={description} onChange={(event) => setDescription(event.target.value)} />
           </Field>
+          <Field label={tr("Цвет проекта", "Project colour")}>
+            <ColorPicker label={tr("Цвет проекта", "Project colour")} allowNone={false} value={color} onChange={value => setColor(value ?? "indigo")} />
+          </Field>
           <div className="flex gap-2">
             <Button type="submit" variant="primary" busy={pending === "save"} disabled={!name.trim()}>
               {editing ? tr("Сохранить", "Save") : tr("Создать проект", "Create project")}
             </Button>
             {editing && (
-              <Button type="button" variant="ghost" onClick={() => (setEditing(null), setName(""), setDescription(""))}>
+              <Button type="button" variant="ghost" onClick={() => (setEditing(null), setName(""), setDescription(""), setColor("indigo"))}>
                 {tr("Отмена", "Cancel")}
               </Button>
             )}
