@@ -27,12 +27,14 @@ import { Icon } from "./icons";
 import { NO_REPEAT, RepeatEditor, parseRepeat, repeatError, repeatRule, sameRule, type Repeat } from "./repeat";
 import { ColorPicker, TagList, TagPicker } from "./tags";
 import { TimeField } from "@/components/ui/time-field";
-import { Badge, Button, Field, Switch } from "./ui";
+import { Badge, Button, Field, Switch, useErrorToast } from "./ui";
 import { LOCALE, tr } from "@/i18n";
 import { AssignedTaskSchedule } from "./AssignedTaskSchedule";
 import { TaskVisibility } from "./TaskVisibility";
+import { TaskFilePicker } from "./TaskFilePicker";
 
 export function EventRow({ event, showDate = false, extra }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode }) {
+  const reportError = useErrorToast();
   const start = new Date(event.start_at);
   const last = lastDay(event);
   const multiDay = !sameDay(last, start);
@@ -46,8 +48,9 @@ export function EventRow({ event, showDate = false, extra }: { event: CalendarEv
     try {
       await api.events.complete(event.id, !done);
       notifyTasksChanged();
-    } catch {
+    } catch (error) {
       setDone(done);
+      reportError(errorText(error));
     } finally {
       setBusy(false);
     }
@@ -308,13 +311,17 @@ export function EventForm({
   const [state, setState] = useState(() => initialState(event, day, time));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [createdEvent, setCreatedEvent] = useState<CalendarEvent | null>(null);
+  const [uploadedCount, setUploadedCount] = useState(0);
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setState((current) => ({ ...current, [key]: value }));
   const today = startOfDay(new Date());
   const quickDays = [
     { label: tr("Сегодня", "Today"), value: dayKey(today) },
     { label: tr("Завтра", "Tomorrow"), value: dayKey(addDays(today, 1)) },
   ];
-  const hasDetails = !!(event && (event.deadline_at || event.is_fixed || event.location || event.description || event.reminder_minutes != null || isHighPriority(event.priority)));
+  const hasDetails = !!(event && (event.deadline_at || event.is_fixed || event.location || event.reminder_minutes != null || isHighPriority(event.priority)));
+
 
   const changeTime = (value: string) =>
     setState((current) => {
@@ -337,10 +344,21 @@ export function EventForm({
     try {
       const { recurrence_rule, ...changes } = payload;
       // An existing task sends its repeat only when it changed: then this and the later tasks of the series follow it
-      const saved = event
+      const saved = createdEvent ?? (event
         ? await api.events.update(event.id, sameRule(recurrence_rule, event.recurrence_rule) ? changes : { ...changes, recurrence_rule })
-        : await api.events.create({ ...changes, recurrence_rule, ...(state.calendarId ? { calendar_id: Number(state.calendarId) } : {}) });
+        : await api.events.create({ ...changes, recurrence_rule, ...(state.calendarId ? { calendar_id: Number(state.calendarId) } : {}) }));
+      if (!event) setCreatedEvent(saved);
       notifyTasksChanged();
+      for (const file of files) {
+        try {
+          await api.events.uploadFile(saved.id, file);
+        } catch (err) {
+          setError(tr(`Задача создана, но файл «${file.name}» не прикреплён. ${errorText(err)} Повторите загрузку или уберите файл из списка.`, `The task was created, but “${file.name}” was not attached. ${errorText(err)} Retry the upload or remove the file from the list.`));
+          return;
+        }
+        setFiles(current => current.filter(item => item !== file));
+        setUploadedCount(count => count + 1);
+      }
       onSaved(saved);
     } catch (err) {
       setError(errorText(err));
@@ -353,8 +371,12 @@ export function EventForm({
 
   return (
     <form className="form" onSubmit={submit}>
+      <fieldset disabled={saving || !!createdEvent} className="contents">
       <Field label={tr("Название", "Title")}>
         <input value={state.title} onChange={(e) => set("title", e.target.value)} placeholder={tr("Что сделать?", "What needs doing?")} maxLength={300} autoFocus required />
+      </Field>
+      <Field label={tr("Описание", "Description")}>
+        <textarea value={state.description} onChange={e => set("description", e.target.value)} rows={3} placeholder={tr("Подробности задачи (необязательно)", "Task details (optional)")} />
       </Field>
 
       <div className="form-row form-row-when">
@@ -461,22 +483,22 @@ export function EventForm({
             <input value={state.location} onChange={(e) => set("location", e.target.value)} placeholder={tr("Адрес или ссылка", "Address or link")} maxLength={500} />
           </Field>
 
-          <Field label={tr("Описание", "Description")}>
-            <textarea value={state.description} onChange={(e) => set("description", e.target.value)} rows={3} />
-          </Field>
         </div>
       </details>
+      </fieldset>
+
+      {!event && <TaskFilePicker files={files} onChange={setFiles} onError={setError} disabled={saving} uploadedCount={uploadedCount} recurring={!!state.repeat.freq} />}
 
       {error && <p className="form-error" role="alert">{error}</p>}
 
       <div className="form-actions">
         {onCancel && (
-          <Button variant="ghost" onClick={onCancel}>
-            {tr("Отмена", "Cancel")}
+          <Button variant="ghost" disabled={saving} onClick={() => createdEvent ? onSaved(createdEvent) : onCancel()}>
+            {createdEvent ? tr("Открыть задачу", "Open task") : tr("Отмена", "Cancel")}
           </Button>
         )}
         <Button type="submit" variant="primary" busy={saving} icon="check">
-          {event ? tr("Сохранить", "Save") : tr("Создать", "Create")}
+          {createdEvent ? (files.length ? tr("Повторить загрузку", "Retry uploads") : tr("Открыть задачу", "Open task")) : event ? tr("Сохранить", "Save") : tr("Создать", "Create")}
         </Button>
       </div>
     </form>

@@ -6,7 +6,7 @@ import { Icon } from "../components/icons";
 import { RichText } from "../components/RichText";
 import { Badge, Button, ConfirmButton, ErrorNote, Field, Loading, PageHeader, Switch, useErrorToast, useToast } from "../components/ui";
 import { formatDate, formatTime } from "../lib/format";
-import { useAction, useAsync, useTasksChanged } from "../lib/hooks";
+import { notifyTasksChanged, useAction, useAsync, useTasksChanged } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_CHIP } from "@/components/dashboard/glass";
@@ -17,6 +17,9 @@ import { AssignedTaskSchedule } from "../components/AssignedTaskSchedule";
 import { ColorPicker } from "../components/tags";
 import { EMPTY_TEAM_FILTERS, filterTeamTasks, type TeamTaskFilters } from "../lib/teamTaskFilters";
 import { useAuthStore } from "@/store/authStore";
+import { TaskFilePicker } from "../components/TaskFilePicker";
+import { TeamTaskFiles } from "../components/TeamTaskFiles";
+import { errorText } from "../lib/format";
 
 /**
  * Teams: a list of the user's teams and a form to create one; a team's page with its tasks, projects, members and
@@ -187,6 +190,11 @@ function TasksTab({ team }: { team: TeamDetail }) {
   const timezone = useAuthStore(state => state.user?.timezone) || "UTC";
   const setTaskFilter = (key: keyof TeamTaskFilters, value: string) => setFilters(current => ({ ...current, [key]: value }));
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState("");
+  const [createdTask, setCreatedTask] = useState<TeamTask | null>(null);
+  const [uploadedCount, setUploadedCount] = useState(0);
   const [assignee, setAssignee] = useState("");
   const [project, setProject] = useState("");
   const [deadline, setDeadline] = useState("");
@@ -201,28 +209,48 @@ function TasksTab({ team }: { team: TeamDetail }) {
 
   const create = async (event: FormEvent) => {
     event.preventDefault();
-    const created = await run("create", () =>
-      api.teams.createTask(team.id, {
+    setUploadError("");
+    await run("create", async () => {
+      const created = createdTask ?? await api.teams.createTask(team.id, {
         title: title.trim(),
+        description: description.trim() || null,
         assignee_id: assignee ? Number(assignee) : null,
         project_id: project ? Number(project) : null,
         deadline_at: deadline ? new Date(`${deadline}T23:59`).toISOString() : null,
-      })
-    );
-    if (!created) return;
-    setTitle("");
-    setDeadline("");
-    tasks.reload();
+      });
+      setCreatedTask(created);
+      for (const file of files) {
+        try {
+          await api.teams.uploadTaskFile(team.id, created.id, file);
+        } catch (error) {
+          setUploadError(tr(`Задача создана, но файл «${file.name}» не прикреплён. ${errorText(error)} Повторите загрузку или уберите файл из списка.`, `The task was created, but “${file.name}” was not attached. ${errorText(error)} Retry the upload or remove the file from the list.`));
+          tasks.reload();
+          return;
+        }
+        setFiles(current => current.filter(item => item !== file));
+        setUploadedCount(count => count + 1);
+      }
+      setTitle(""); setDescription(""); setDeadline(""); setCreatedTask(null); setUploadedCount(0);
+      tasks.reload();
+      notifyTasksChanged();
+    });
   };
 
   const setStatus = async (task: TeamTask, status: TeamTaskStatus) => {
     if (await run(`status-${task.id}`, () => api.teams.updateTask(team.id, task.id, { status }))) tasks.reload();
   };
+  const advance = async (task: TeamTask, action: "start" | "done") => {
+    if (await run(`status-${task.id}`, () => api.teams.act(task.id, action))) {
+      tasks.reload();
+      notifyTasksChanged();
+    }
+  };
 
   return (
     <div className="space-y-4">
       <GlassCard title={tr("Новая задача", "New task")}>
-        <form onSubmit={create} className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_1fr_auto] sm:items-end">
+        <form onSubmit={create} className="grid gap-3 sm:grid-cols-4 sm:items-end">
+          <fieldset disabled={pending === "create" || !!createdTask} className="contents">
           <Field label={tr("Что сделать", "What to do")}>
             <input className={INPUT} required maxLength={300} value={title} onChange={(event) => setTitle(event.target.value)} />
           </Field>
@@ -249,8 +277,14 @@ function TasksTab({ team }: { team: TeamDetail }) {
           <Field label={tr("Срок", "Deadline")}>
             <input className={INPUT} type="date" value={deadline} onChange={(event) => setDeadline(event.target.value)} />
           </Field>
+          <Field label={tr("Описание", "Description")} className="sm:col-span-4">
+            <textarea className={INPUT} rows={3} maxLength={5000} value={description} onChange={event => setDescription(event.target.value)} placeholder={tr("Подробности задачи (необязательно)", "Task details (optional)")} />
+          </Field>
+          </fieldset>
+          <div className="sm:col-span-4"><TaskFilePicker files={files} onChange={setFiles} onError={setUploadError} uploadedCount={uploadedCount} disabled={pending === "create"} /></div>
+          {uploadError && <p className="sm:col-span-4 text-sm text-rose-600 dark:text-rose-400" role="alert">{uploadError}</p>}
           <Button type="submit" variant="primary" icon="plus" busy={pending === "create"} disabled={!title.trim()}>
-            {tr("Добавить", "Add")}
+            {createdTask ? (files.length ? tr("Повторить загрузку", "Retry uploads") : tr("Завершить", "Finish")) : tr("Добавить", "Add")}
           </Button>
         </form>
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -316,8 +350,9 @@ function TasksTab({ team }: { team: TeamDetail }) {
         <ul className="divide-y divide-gray-200/70 dark:divide-white/10">
           {shown.map((task) => (
             <li key={task.id} className="py-2.5 flex flex-wrap items-center gap-2">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 w-full sm:w-auto sm:flex-1">
                 <p className={cn("font-medium text-gray-900 dark:text-white", task.status === "done" && "line-through opacity-60")}>{task.title}</p>
+                {task.description && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-600 dark:text-gray-300">{task.description}</p>}
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {task.assignee ?? tr("без исполнителя", "no performer")}
                   {task.project && <span className={`ml-1 inline-flex items-center gap-1 tag-${projects.data?.find(project => project.id === task.project_id)?.color ?? "indigo"}`}><i className="tag-dot" aria-hidden="true" />{task.project}</span>}
@@ -332,20 +367,13 @@ function TasksTab({ team }: { team: TeamDetail }) {
                   {task.confirm === "pending" && <> · {tr("ждёт подтверждения", "awaiting confirmation")}</>}
                   {task.confirm === "rejected" && <span className="text-rose-600"> · {tr("отклонена", "declined")}</span>}
                 </p>
+                {!!task.files_count && <TeamTaskFiles teamId={team.id} taskId={task.id} count={task.files_count} canManage={!!task.can_manage} onChanged={tasks.reload} />}
               </div>
-              <select
-                className={cn(INPUT, "w-auto py-1 text-xs")}
-                value={task.status}
-                disabled={pending === `status-${task.id}` || task.confirm === "pending" || task.confirm === "rejected" || (!task.can_manage && task.assignee_id !== team.members.find(member => member.me)?.id)}
-                onChange={(event) => setStatus(task, event.target.value as TeamTaskStatus)}
-                aria-label={tr("Статус", "Status")}
-              >
-                {(Object.keys(STATUS_LABELS) as TeamTaskStatus[]).map((status) => (
-                  <option key={status} value={status}>
-                    {STATUS_LABELS[status]}
-                  </option>
-                ))}
-              </select>
+              <Badge>{STATUS_LABELS[task.status]}</Badge>
+              {task.confirm === "accepted" && task.assignee_id === team.me.id && task.status !== "done" && <Button size="sm" variant="primary" busy={pending === `status-${task.id}`} onClick={() => advance(task, task.status === "todo" ? "start" : "done")}>
+                {task.status === "todo" ? tr("Начал выполнение", "Started execution") : tr("Готово", "Done")}
+              </Button>}
+              {task.status === "done" && (task.can_manage || task.assignee_id === team.me.id) && <Button size="sm" variant="ghost" busy={pending === `status-${task.id}`} onClick={() => setStatus(task, "todo")}>{tr("Вернуть к выполнению", "Reopen")}</Button>}
               {task.calendar_event_id && <AssignedTaskSchedule eventId={task.calendar_event_id} title={task.title} />}
               {task.confirm === "pending" && task.assignee_id === team.members.find(member => member.me)?.id && <div className="w-full flex flex-wrap gap-2">
                 <TeamTaskAccept taskId={task.id} suggested={task.start_at || task.deadline_at?.slice(0, 10)} onAccepted={() => { tasks.reload(); }} />

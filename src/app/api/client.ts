@@ -348,6 +348,9 @@ export const api = {
     authorize: (body: { port: number; challenge: string; state: string }) => request<{ redirect: string }>("/api/desktop/authorize", json("POST", body), "desktop_authorize"),
   },
   teams: {
+    taskFiles: (id: number, taskId: number) => request<EventFile[]>(`/api/teams/${id}/tasks/${taskId}/files`),
+    uploadTaskFile: (id: number, taskId: number, file: File) => request<EventFile>(`/api/teams/${id}/tasks/${taskId}/files`, upload("file", file)),
+    removeTaskFile: (id: number, taskId: number, fileId: number) => request<void>(`/api/teams/${id}/tasks/${taskId}/files/${fileId}`, { method: "DELETE" }),
     list: () => request<TeamSummary[]>("/api/teams"),
     create: (body: { name: string; tag?: string; my_name?: string }) => request<TeamDetail>("/api/teams", json("POST", body), "team_create"),
     get: (id: number) => request<TeamDetail>(`/api/teams/${id}`),

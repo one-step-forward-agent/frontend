@@ -35,10 +35,10 @@ import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
 import { tr } from "@/i18n";
+import { EVENT_FILE_TYPES } from "../lib/files";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
 
-const FILE_TYPES = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
 
 /* ─── Общий контейнер страницы ──────────────────────────── */
 
@@ -352,7 +352,7 @@ function EventFiles({ eventId }: { eventId: number }) {
           <input
             ref={input}
             type="file"
-            accept={FILE_TYPES}
+            accept={EVENT_FILE_TYPES}
             multiple
             hidden
             onChange={(e) => uploadFiles(e.target.files)}

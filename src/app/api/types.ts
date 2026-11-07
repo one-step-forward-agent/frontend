@@ -414,6 +414,7 @@ export interface TeamProject {
 }
 
 export interface TeamTask {
+  files_count?: number;
   calendar_event_id?: number | null;
   id: number;
   title: string;
