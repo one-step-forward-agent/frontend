@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowUp, ArrowDown, Plus, Trash2, Image as ImageIcon,
   Heading2, Quote, Info, Minus, Save, Eye,
-  CheckCircle2, AlertTriangle, X, GripVertical, List as ListIcon,
+  CheckCircle2, AlertTriangle, X, GripVertical, List as ListIcon, Sparkles
 } from "lucide-react";
 import { Button } from "@/app/components/ui";
 import { Badge } from "@/components/ui/badge";
@@ -12,13 +12,30 @@ import { tr } from "@/i18n";
 import { api } from "@/app/api/client";
 import { makeSlug, newBlockId, toSave } from "@/app/lib/blogApi";
 import type { BlogBlock, BlogBlockType, BlogPost } from "@/types/blog";
-import { BLOG_HEADING_GRADIENT } from "./BlogRenderer";
+import { BLOG_HEADING_GRADIENT, CtaBlockView, BlogImage } from "./BlogRenderer";
 import { createPortal } from "react-dom";
 import { defaultUrlTransform } from "react-markdown";
 
 /* ════════════════════════════════════════════════════════════════════
    Локальные типы (расширяют BlogBlock, не трогая types/blog.ts)
    ════════════════════════════════════════════════════════════════════ */
+
+type CtaBlock = {
+  id: string;
+  type: "cta";
+  variant: "button" | "finalcta-mobile";
+  text: string;
+  href: string;
+  icons?: string[];
+  children?: AnyBlock[];
+};
+
+type AnyBlock =
+  | (BlogBlock & { children?: AnyBlock[] })
+  | ListBlock
+  | CtaBlock;
+
+type BlockType = BlogBlockType | "list" | "cta";
 
 type ListBlock = {
   id: string;
@@ -27,9 +44,6 @@ type ListBlock = {
   items: string[];
   children?: AnyBlock[];
 };
-
-type AnyBlock = (BlogBlock & { children?: AnyBlock[] }) | ListBlock;
-type BlockType = BlogBlockType | "list";
 
 /* ════════════════════════════════════════════════════════════════════
    Фабрика блоков
@@ -45,6 +59,15 @@ const makeBlock = (type: BlockType): AnyBlock => {
     case "callout":   return { id, type, variant: "info", title: "", text: "Текст подсказки" };
     case "divider":   return { id, type };
     case "list":      return { id, type: "list", ordered: true, items: [tr("Пункт 1", "Item 1")] };
+    case "cta":
+  return {
+    id,
+    type: "cta",
+    variant: "button",
+    text: tr("Начать бесплатно", "Start for free"),
+    href: "/onboarding/field-of-activity",
+    icons: undefined,
+  };
   }
 };
 
@@ -114,6 +137,109 @@ const handleListContinuation = (
   const newPos = pos + insertion.length;
   requestAnimationFrame(() => ta.setSelectionRange(newPos, newPos));
   return true;
+};
+
+const TagsInput = ({
+  value, onChange, suggestions = [],
+}: {
+  value: string[];
+  onChange: (tags: string[]) => void;
+  suggestions?: string[];
+}) => {
+  const [draft, setDraft] = React.useState("");
+  const [focused, setFocused] = React.useState(false);
+
+  const commit = (raw: string) => {
+    // Запятая = разделитель, пробелы ВНУТРИ тега сохраняются
+    const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!parts.length) return;
+    const seen = new Set(value);
+    const merged = [...value];
+    for (const p of parts) if (!seen.has(p)) { seen.add(p); merged.push(p); }
+    onChange(merged);
+  };
+
+  const removeAt = (idx: number) => onChange(value.filter((_, i) => i !== idx));
+
+  const available = suggestions.filter((s) => !value.includes(s));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5">
+        {value.map((tag, i) => (
+          <span
+            key={`${tag}-${i}`}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200/60 dark:ring-blue-800/50"
+          >
+            {tag}
+            <button
+              type="button"
+              onClick={() => removeAt(i)}
+              className="rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/60 p-0.5"
+              aria-label={tr("Удалить тег", "Remove tag")}
+            >
+              <X size={11} />
+            </button>
+          </span>
+        ))}
+      </div>
+
+      <input
+        className={inputCls}
+        value={draft}
+        onChange={(e) => {
+          const v = e.target.value;
+          // запятая сразу коммитит, всё до неё — теги
+          if (v.includes(",")) {
+            const lastComma = v.lastIndexOf(",");
+            commit(v.slice(0, lastComma));
+            setDraft(v.slice(lastComma + 1));
+          } else {
+            setDraft(v);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            commit(draft);
+            setDraft("");
+          } else if (e.key === "Backspace" && draft === "" && value.length) {
+            onChange(value.slice(0, -1));
+          }
+        }}
+        onBlur={() => {
+          commit(draft);
+          setDraft("");
+          setFocused(false);
+        }}
+        onFocus={() => setFocused(true)}
+        placeholder={tr(
+          "Введите тег (можно словосочетание) и нажмите Enter",
+          "Type a tag (phrases allowed) and press Enter"
+        )}
+      />
+
+      {focused && available.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10">
+          <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">
+            {tr("Уже в коллекции:", "Already in collection:")}
+          </span>
+          {available.map((s) => (
+            <button
+              key={s}
+              type="button"
+              // preventDefault — иначе input теряет фокус до click
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onChange([...value, s])}
+              className="px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-gray-700 dark:text-gray-200"
+            >
+              + {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -230,6 +356,24 @@ const PictureInput = ({
             }}
           />
         </label>
+        {value && (
+          <div className="mt-2">
+            <img
+              src={
+                /^(https?:|data:|blob:|\/)/i.test(value.trim())
+                  ? value.trim()
+                  : "/" + value.trim().replace(/^\.?\//, "")
+              }
+              alt=""
+              className="max-h-40 rounded-xl ring-1 ring-black/10"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+                // eslint-disable-next-line no-console
+                console.error("[PictureInput] failed to load:", value);
+              }}
+            />
+          </div>
+        )}
       </div>
       {problem && (
         <p className="mt-1 text-xs text-red-600 dark:text-red-400">{problem}</p>
@@ -372,6 +516,7 @@ const AddBlockMenu = ({
     { type: "quote",     label: tr("Цитата", "Quote"),          icon: <Quote size={14} /> },
     { type: "callout",   label: tr("Callout", "Callout"),       icon: <Info size={14} /> },
     { type: "divider",   label: tr("Разделитель", "Divider"),   icon: <Minus size={14} /> },
+    { type: "cta", label: tr("Кнопка CTA", "CTA button"), icon: <Sparkles size={14} /> },
   ];
   return (
     <div className="relative inline-block">
@@ -489,9 +634,94 @@ const ListBlockEditor = ({
   );
 };
 
-/* ════════════════════════════════════════════════════════════════════
-   Редактор одного блока (рекурсивный)
-   ════════════════════════════════════════════════════════════════════ */
+const CtaBlockEditor = ({
+  block, onChange,
+}: { block: CtaBlock; onChange: (b: CtaBlock) => void }) => {
+  const update = (patch: Partial<CtaBlock>) => onChange({ ...block, ...patch });
+  const icons = block.icons ?? [];
+
+  return (
+    <div className="space-y-3">
+      <Field label={tr("Вариант CTA", "CTA variant")}>
+        <select
+          className={inputCls}
+          value={block.variant}
+          onChange={(e) =>
+            update({ variant: e.target.value as "button" | "finalcta-mobile" })
+          }
+        >
+          <option value="button">{tr("Кнопка", "Button")}</option>
+          <option value="finalcta-mobile">
+            {tr("FinalCTA (мобильный)", "FinalCTA (mobile)")}
+          </option>
+        </select>
+      </Field>
+
+      <Field label={tr("Текст кнопки", "Button text")}>
+        <input
+          className={inputCls}
+          value={block.text}
+          onChange={(e) => update({ text: e.target.value })}
+        />
+      </Field>
+
+      <Field label={tr("Ссылка", "Link")}>
+        <input
+          className={inputCls}
+          value={block.href}
+          onChange={(e) => update({ href: e.target.value })}
+          placeholder="/onboarding/field-of-activity"
+        />
+      </Field>
+
+      {block.variant === "finalcta-mobile" && (
+        <div className="space-y-2">
+          <span className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+            {tr("Летающие картинки", "Floating icons")}
+          </span>
+
+          {icons.map((url, idx) => (
+            <div key={idx} className="flex gap-2 items-start">
+              <div className="flex-1">
+                <PictureInput
+                  placeholder={tr("URL картинки", "Icon URL")}
+                  value={url}
+                  onChange={(v) => {
+                    const next = [...icons];
+                    next[idx] = v;
+                    update({ icons: next });
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => update({ icons: icons.filter((_, i) => i !== idx) })}
+                className="p-1.5 mt-1 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => update({ icons: [...icons, ""] })}
+            className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-300 hover:underline"
+          >
+            <Plus size={14} /> {tr("Добавить картинку", "Add icon")}
+          </button>
+
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {tr(
+              "Пусто = по умолчанию: Google Calendar, Jira, Telegram, Notion",
+              "Empty = default: Google Calendar, Jira, Telegram, Notion"
+            )}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const BlockCard = ({
   block, index, total, depth = 0,
@@ -685,6 +915,13 @@ const BlockCard = ({
         </p>
       )}
 
+      {block.type === "cta" && (
+  <CtaBlockEditor
+    block={block as CtaBlock}
+    onChange={(b) => onChange(b as AnyBlock)}
+  />
+)}
+
       {block.type === "list" && (
         <ListBlockEditor
           block={block}
@@ -728,7 +965,17 @@ const BlockCard = ({
 const renderPreviewBlock = (block: AnyBlock): React.ReactNode => {
   const children = block.children ?? [];
   const inner = (() => {
-    switch (block.type) {
+  if (block.type === "cta") {
+    return (
+      <CtaBlockView
+        variant={block.variant}
+        text={block.text}
+        href={block.href}
+        icons={block.icons}
+      />
+    );
+  }
+  switch (block.type) {
       case "heading": {
         const Tag = (`h${block.level}` as "h1" | "h2" | "h3");
         const cls =
@@ -742,20 +989,14 @@ const renderPreviewBlock = (block: AnyBlock): React.ReactNode => {
       case "paragraph":
         return <div>{renderMarkdownBlocks(block.text)}</div>;
       case "image":
-        return block.src ? (
-          <figure className="my-6">
-            <img
-              src={block.src}
-              alt={block.alt}
-              className="rounded-2xl ring-1 ring-black/10 dark:ring-white/10 w-full h-auto"
-            />
-            {block.caption && (
-              <figcaption className="text-sm text-gray-500 mt-2 text-center">
-                {block.caption}
-              </figcaption>
-            )}
-          </figure>
-        ) : null;
+  return (
+    <BlogImage
+      key={block.id}
+      src={block.src}
+      alt={block.alt}
+      caption={block.caption}
+    />
+  );
       case "quote":
         return (
           <blockquote className="border-l-4 border-blue-400 pl-4 italic my-4">
@@ -820,6 +1061,27 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
   const [dirty, setDirty] = React.useState(false);
   const dragFrom = React.useRef<number | null>(null);
 
+  const [allTags, setAllTags] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    // Пытаемся взять полный админ-список, иначе — публичный
+    const load = async () => {
+      try {
+        const admin = api.admin as any;
+        const list: BlogPost[] =
+          typeof admin.blogPosts === "function"
+            ? await admin.blogPosts()
+            : await api.blog.posts();
+        const set = new Set<string>();
+        (list ?? []).forEach((p) => (p.tags ?? []).forEach((t) => set.add(t)));
+        setAllTags(Array.from(set).sort((a, b) => a.localeCompare(b)));
+      } catch {
+        setAllTags([]);
+      }
+    };
+    load();
+  }, []);
+
   React.useEffect(() => {
     setLoading(true);
     api.admin.blogPost(id)
@@ -846,7 +1108,7 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
 
   const blocks = post.blocks as unknown as AnyBlock[];
 
-  const patch = (p: Partial<BlogPost> & { blocks?: AnyBlock[] }) => {
+  const patch = (p: Omit<Partial<BlogPost>, "blocks"> & { blocks?: AnyBlock[] }) => {
     setDirty(true);
     setPost((prev) =>
       prev ? ({ ...prev, ...p } as unknown as BlogPost) : prev
@@ -1018,17 +1280,13 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
                       onChange={(e) => patch({ author: e.target.value })}
                     />
                   </Field>
-                  <Field label={tr("Теги (через запятую)", "Tags (comma-separated)")}>
-                    <input
-                      className={inputCls}
-                      value={post.tags.join(", ")}
-                      onChange={(e) =>
-                        patch({
-                          tags: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                        })
-                      }
-                    />
-                  </Field>
+                  <Field label={tr("Теги", "Tags")}>
+  <TagsInput
+    value={post.tags}
+    onChange={(tags) => patch({ tags })}
+    suggestions={allTags}
+  />
+</Field>
                 </div>
                 <Field label={tr("Обложка", "Cover")}>
                   <PictureInput
