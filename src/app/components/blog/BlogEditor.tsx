@@ -20,12 +20,21 @@ import { defaultUrlTransform } from "react-markdown";
    Локальные типы (расширяют BlogBlock, не трогая types/blog.ts)
    ════════════════════════════════════════════════════════════════════ */
 
+type CtaBgMode = "none" | "custom" | "gradient-blur" | "gradient-fade";
+
 type CtaBlock = {
   id: string;
   type: "cta";
-  variant: "button" | "finalcta-mobile";
+  bgMode: CtaBgMode;
+  /** @deprecated — только для обратной совместимости */
+  variant?: "button" | "finalcta-mobile";
   text: string;
   href: string;
+  bgColor?: string;
+  bgImage?: string;
+  textColor?: string;
+  buttonWidth?: number;
+  buttonHeight?: number;
   icons?: string[];
   children?: AnyBlock[];
 };
@@ -63,7 +72,7 @@ const makeBlock = (type: BlockType): AnyBlock => {
   return {
     id,
     type: "cta",
-    variant: "button",
+    bgMode: "gradient-blur",
     text: tr("Начать бесплатно", "Start for free"),
     href: "/onboarding/field-of-activity",
     icons: undefined,
@@ -639,86 +648,135 @@ const CtaBlockEditor = ({
 }: { block: CtaBlock; onChange: (b: CtaBlock) => void }) => {
   const update = (patch: Partial<CtaBlock>) => onChange({ ...block, ...patch });
   const icons = block.icons ?? [];
+  const bgMode: CtaBgMode =
+    block.bgMode ?? (block.variant === "finalcta-mobile" ? "gradient-fade" : "gradient-blur");
 
   return (
     <div className="space-y-3">
-      <Field label={tr("Вариант CTA", "CTA variant")}>
-        <select
-          className={inputCls}
-          value={block.variant}
-          onChange={(e) =>
-            update({ variant: e.target.value as "button" | "finalcta-mobile" })
-          }
-        >
-          <option value="button">{tr("Кнопка", "Button")}</option>
-          <option value="finalcta-mobile">
-            {tr("FinalCTA (мобильный)", "FinalCTA (mobile)")}
-          </option>
-        </select>
-      </Field>
+      <Field label={tr("Вариант фона", "Background variant")}>
+  <select
+    className={inputCls}
+    value={bgMode}
+    onChange={(e) => update({ bgMode: e.target.value as CtaBgMode })}
+  >
+    <option value="none">{tr("Без фона (чистая кнопка)", "No background (plain)")}</option>
+    <option value="gradient-blur">{tr("Градиентная кнопка", "Gradient button")}</option>
+    <option value="custom">{tr("Свой фон / картинка", "Custom bg / image")}</option>
+    <option value="gradient-fade">{tr("Градиент с растворением", "Gradient with fade")}</option>
+  </select>
+</Field>
 
-      <Field label={tr("Текст кнопки", "Button text")}>
+<Field label={tr("Текст кнопки", "Button text")}>
+  <input
+    className={inputCls}
+    value={block.text}
+    onChange={(e) => update({ text: e.target.value })}
+  />
+</Field>
+
+<Field label={tr("Ссылка", "Link")}>
+  <input
+    className={inputCls}
+    value={block.href}
+    onChange={(e) => update({ href: e.target.value })}
+    placeholder="/onboarding/field-of-activity"
+  />
+</Field>
+
+{bgMode === "custom" && (
+  <>
+    <Field label={tr("Цвет фона", "Background color")}>
+      <div className="flex gap-2">
+        <input
+          type="color"
+          className="h-10 w-12 rounded-lg ring-1 ring-black/10 dark:ring-white/10 cursor-pointer bg-transparent"
+          value={block.bgColor || "#2563eb"}
+          onChange={(e) => update({ bgColor: e.target.value })}
+        />
         <input
           className={inputCls}
-          value={block.text}
-          onChange={(e) => update({ text: e.target.value })}
+          value={block.bgColor ?? ""}
+          onChange={(e) => update({ bgColor: e.target.value })}
+          placeholder="#2563eb"
         />
-      </Field>
+      </div>
+    </Field>
+    <Field label={tr("Фоновое изображение (необязательно)", "Background image (optional)")}>
+      <PictureInput
+        placeholder="URL картинки"
+        value={block.bgImage ?? ""}
+        onChange={(bgImage) => update({ bgImage })}
+      />
+    </Field>
+  </>
+)}
 
-      <Field label={tr("Ссылка", "Link")}>
-        <input
-          className={inputCls}
-          value={block.href}
-          onChange={(e) => update({ href: e.target.value })}
-          placeholder="/onboarding/field-of-activity"
-        />
-      </Field>
+{bgMode !== "none" && (
+  <Field label={tr("Цвет текста (необязательно)", "Text color (optional)")}>
+    <div className="flex gap-2">
+      <input
+        type="color"
+        className="h-10 w-12 rounded-lg ring-1 ring-black/10 dark:ring-white/10 cursor-pointer bg-transparent"
+        value={block.textColor || "#ffffff"}
+        onChange={(e) => update({ textColor: e.target.value })}
+      />
+      <input
+        className={inputCls}
+        value={block.textColor ?? ""}
+        onChange={(e) => update({ textColor: e.target.value })}
+        placeholder={tr("по умолчанию", "default")}
+      />
+    </div>
+  </Field>
+)}
 
-      {block.variant === "finalcta-mobile" && (
-        <div className="space-y-2">
-          <span className="block text-xs font-medium text-gray-500 dark:text-gray-400">
-            {tr("Летающие картинки", "Floating icons")}
-          </span>
+{bgMode === "none" && (
+  <Field label={tr("Цвет текста", "Text color")}>
+    <div className="flex gap-2">
+      <input
+        type="color"
+        className="h-10 w-12 rounded-lg ring-1 ring-black/10 dark:ring-white/10 cursor-pointer bg-transparent"
+        value={block.textColor || "#111827"}
+        onChange={(e) => update({ textColor: e.target.value })}
+      />
+      <input
+        className={inputCls}
+        value={block.textColor ?? ""}
+        onChange={(e) => update({ textColor: e.target.value })}
+        placeholder={tr("по умолчанию — цвет темы", "default — theme color")}
+      />
+    </div>
+  </Field>
+)}
 
-          {icons.map((url, idx) => (
-            <div key={idx} className="flex gap-2 items-start">
-              <div className="flex-1">
-                <PictureInput
-                  placeholder={tr("URL картинки", "Icon URL")}
-                  value={url}
-                  onChange={(v) => {
-                    const next = [...icons];
-                    next[idx] = v;
-                    update({ icons: next });
-                  }}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => update({ icons: icons.filter((_, i) => i !== idx) })}
-                className="p-1.5 mt-1 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={() => update({ icons: [...icons, ""] })}
-            className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-300 hover:underline"
-          >
-            <Plus size={14} /> {tr("Добавить картинку", "Add icon")}
-          </button>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {tr(
-              "Пусто = по умолчанию: Google Calendar, Jira, Telegram, Notion",
-              "Empty = default: Google Calendar, Jira, Telegram, Notion"
-            )}
-          </p>
-        </div>
-      )}
+<div className="grid grid-cols-2 gap-2">
+  <Field label={tr("Ширина кнопки, px", "Button width, px")}>
+    <input
+      type="number"
+      min={0}
+      className={inputCls}
+      value={block.buttonWidth ?? ""}
+      onChange={(e) => {
+        const v = e.target.value;
+        update({ buttonWidth: v === "" ? undefined : Number(v) });
+      }}
+      placeholder={tr("авто", "auto")}
+    />
+  </Field>
+  <Field label={tr("Высота кнопки, px", "Button height, px")}>
+    <input
+      type="number"
+      min={0}
+      className={inputCls}
+      value={block.buttonHeight ?? ""}
+      onChange={(e) => {
+        const v = e.target.value;
+        update({ buttonHeight: v === "" ? undefined : Number(v) });
+      }}
+      placeholder={tr("авто", "auto")}
+    />
+  </Field>
+</div>
     </div>
   );
 };
@@ -966,15 +1024,21 @@ const renderPreviewBlock = (block: AnyBlock): React.ReactNode => {
   const children = block.children ?? [];
   const inner = (() => {
   if (block.type === "cta") {
-    return (
-      <CtaBlockView
-        variant={block.variant}
-        text={block.text}
-        href={block.href}
-        icons={block.icons}
-      />
-    );
-  }
+  return (
+    <CtaBlockView
+      bgMode={block.bgMode}
+      variant={block.variant}
+      text={block.text}
+      href={block.href}
+      bgColor={block.bgColor}
+      bgImage={block.bgImage}
+      textColor={block.textColor}
+      buttonWidth={block.buttonWidth}
+      buttonHeight={block.buttonHeight}
+      icons={block.icons}
+    />
+  );
+}
   switch (block.type) {
       case "heading": {
         const Tag = (`h${block.level}` as "h1" | "h2" | "h3");

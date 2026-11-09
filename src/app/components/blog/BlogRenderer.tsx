@@ -25,35 +25,39 @@ const mulberry32 = (seed: number) => {
   };
 };
 
-const DEFAULT_CTA_ICONS = [
-  "/images/google-calendar.png",
-  "/images/Jira_Software_Logo.svg",
-  "/images/TelegramWB.png",
-  "/images/Notion.webp",
-];
-
 /**
- * Одна иконка, летающая по «расходящейся» (Lissajous) траектории вокруг центра.
- * У каждой иконки свои случайные центр, амплитуды, частоты и фазы → хаотичное
- * движение, не строго по кругу.
+ * Иконка, летающая по Lissajous-траектории ВНУТРИ контейнера (boxW × boxH).
+ * У каждой иконки — свой центр, амплитуда, частота и фазы → иконки
+ * разлетаются по всей площади и не крутятся вокруг одной точки.
  */
-const FloatingCtaIcon: React.FC<{ src: string; seed: number }> = ({ src, seed }) => {
+const FloatingCtaIcon: React.FC<{
+  src: string;
+  seed: number;
+  boxW: number;
+  boxH: number;
+}> = ({ src, seed, boxW, boxH }) => {
   const ref = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || boxW <= 0 || boxH <= 0) return;
+
     const rnd = mulberry32(seed);
-    const cx = (rnd() - 0.5) * 120;
-    const cy = (rnd() - 0.5) * 60;
-    const ax = 20 + rnd() * 40;
-    const ay = 15 + rnd() * 30;
-    const fx = 0.3 + rnd() * 0.7;
-    const fy = 0.3 + rnd() * 0.7;
+
+    // Центр иконки — от 20% до 80% ширины и от 25% до 75% высоты
+    const cx = (0.20 + rnd() * 0.60) * boxW;
+    const cy = (0.25 + rnd() * 0.50) * boxH;
+
+    // Амплитуда — 4–10% ширины, 5–15% высоты (не выходит за края)
+    const ax = (0.04 + rnd() * 0.06) * boxW;
+    const ay = (0.05 + rnd() * 0.10) * boxH;
+
+    const fx = 0.25 + rnd() * 0.55;
+    const fy = 0.25 + rnd() * 0.55;
     const px = rnd() * Math.PI * 2;
     const py = rnd() * Math.PI * 2;
-    const scaleBase = 0.7 + rnd() * 0.4;
-    const opBase = 0.5 + rnd() * 0.5;
+    const scaleBase = 0.75 + rnd() * 0.35;
+    const opBase = 0.55 + rnd() * 0.45;
 
     let raf = 0;
     const start = performance.now();
@@ -62,20 +66,22 @@ const FloatingCtaIcon: React.FC<{ src: string; seed: number }> = ({ src, seed })
       const x = cx + ax * Math.sin(t * fx + px);
       const y = cy + ay * Math.cos(t * fy + py);
       const s = scaleBase * (0.85 + 0.25 * Math.sin(t * 0.9 + px));
-      const o = opBase * (0.7 + 0.3 * Math.sin(t * 1.1 + py));
-      el.style.transform = `translate(-50%, -50%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${s.toFixed(3)})`;
+      const o = opBase * (0.70 + 0.30 * Math.sin(t * 1.1 + py));
+      el.style.transform =
+        `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ` +
+        `translate(-50%, -50%) scale(${s.toFixed(3)})`;
       el.style.opacity = o.toFixed(3);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [seed]);
+  }, [seed, boxW, boxH]);
 
   return (
     <div
       ref={ref}
-      className="absolute left-1/2 top-1/2 will-change-transform"
-      style={{ transform: "translate(-50%, -50%)" }}
+      className="absolute left-0 top-0 will-change-transform"
+      style={{ transform: "translate(0,0)", opacity: 0 }}
     >
       <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/30 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_6px_20px_rgba(0,0,0,0.2)]">
         <img
@@ -90,69 +96,256 @@ const FloatingCtaIcon: React.FC<{ src: string; seed: number }> = ({ src, seed })
   );
 };
 
+export type CtaBgMode = "none" | "custom" | "gradient-blur" | "gradient-fade";
+
 export const CtaBlockView: React.FC<{
-  variant: "button" | "finalcta-mobile";
   text: string;
   href: string;
+  bgMode?: CtaBgMode;
+  /** @deprecated — оставлено для старых постов; используйте bgMode */
+  variant?: "button" | "finalcta-mobile";
+  bgColor?: string;
+  bgImage?: string;
+  textColor?: string;
+  buttonWidth?: number;
+  buttonHeight?: number;
   icons?: string[];
-}> = ({ variant, text, href, icons }) => {
-  const isExternal = /^https?:\/\//i.test(href);
+}> = ({
+  text,
+  href,
+  bgMode,
+  variant,
+  bgColor,
+  bgImage,
+  textColor,
+  buttonWidth,
+  buttonHeight,
+  icons,
+}) => {
+  const mode: CtaBgMode =
+    bgMode ??
+    (variant === "finalcta-mobile" ? "gradient-fade" : "gradient-blur");
 
-  if (variant === "button") {
+  const isExternal = /^https?:\/\//i.test(href);
+  const list = React.useMemo(
+    () => (Array.isArray(icons) ? icons.filter((s) => !!s && s.trim()) : []),
+    [icons]
+  );
+  const hasIcons = list.length > 0;
+
+  const boxRef = React.useRef<HTMLDivElement>(null);
+  const [box, setBox] = React.useState({ w: 0, h: 0 });
+
+  React.useLayoutEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const update = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const sizeStyle: React.CSSProperties = {};
+  if (typeof buttonWidth === "number" && buttonWidth > 0) sizeStyle.width = buttonWidth;
+  if (typeof buttonHeight === "number" && buttonHeight > 0) sizeStyle.height = buttonHeight;
+
+  // ── Кнопка ────────────────────────────────────────────
+  let buttonEl: React.ReactNode;
+
+  if (mode === "none") {
+  // Liquid glass кнопка без фоновой карточки — стоит прямо на фоне страницы
+  buttonEl = (
+    <a
+      href={href || "#"}
+      target={isExternal ? "_blank" : undefined}
+      rel={isExternal ? "noreferrer" : undefined}
+      className={cn(
+        "group relative z-10 inline-flex items-center justify-center gap-2 px-8 h-14",
+        "text-lg font-semibold rounded-full",
+        "bg-white/15 dark:bg-white/[0.08] backdrop-blur-xl",
+        "ring-1 ring-white/30 dark:ring-white/10",
+        "shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)]",
+        "dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.3)]",
+        "text-gray-900 dark:text-white",
+        "transition-all duration-300",
+        "hover:bg-white/25 dark:hover:bg-white/[0.15] hover:-translate-y-0.5 active:translate-y-0"
+      )}
+      style={{
+        ...sizeStyle,
+        ...(textColor ? { color: textColor } : {}),
+      }}
+    >
+      <span>{text}</span>
+      <ArrowRight
+        size={18}
+        className="transition-transform duration-300 group-hover:translate-x-0.5"
+        aria-hidden="true"
+      />
+    </a>
+  );
+}
+ else if (mode === "custom") {
+    const trimmedImg = (bgImage ?? "").trim();
+    const trimmedColor = (bgColor ?? "").trim();
+    const style: React.CSSProperties = {
+      ...sizeStyle,
+      color: textColor || "#fff",
+    };
+    if (trimmedImg) style.background = `url(${trimmedImg}) center/cover no-repeat`;
+    else style.background = trimmedColor || "#2563eb";
+
+    buttonEl = (
+      <a
+        href={href || "#"}
+        target={isExternal ? "_blank" : undefined}
+        rel={isExternal ? "noreferrer" : undefined}
+        className="group relative z-10 inline-flex items-center justify-center gap-2 px-8 h-14 text-lg font-semibold rounded-full shadow-[0_8px_24px_-8px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
+        style={style}
+      >
+        <span>{text}</span>
+        <ArrowRight
+          size={18}
+          className="transition-transform duration-300 group-hover:translate-x-0.5"
+          aria-hidden="true"
+        />
+      </a>
+    );
+  } else if (mode === "gradient-blur") {
+    buttonEl = (
+      <a
+        href={href || "#"}
+        target={isExternal ? "_blank" : undefined}
+        rel={isExternal ? "noreferrer" : undefined}
+        className="group relative z-10 inline-flex items-center justify-center gap-2 px-8 h-14 text-lg font-semibold rounded-full bg-gradient-to-br from-blue-500 to-violet-500 text-white shadow-[0_8px_24px_-8px_rgba(59,130,246,0.6)] transition-all duration-300 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0"
+        style={{
+          ...sizeStyle,
+          ...(textColor ? { color: textColor } : {}),
+        }}
+      >
+        <span>{text}</span>
+        <ArrowRight
+          size={18}
+          className="transition-transform duration-300 group-hover:translate-x-0.5"
+          aria-hidden="true"
+        />
+      </a>
+    );
+  } else {
+    // gradient-fade: стеклянная кнопка как в FinalCTA mobile
+    buttonEl = (
+      <a
+        href={href || "#"}
+        target={isExternal ? "_blank" : undefined}
+        rel={isExternal ? "noreferrer" : undefined}
+        className="group relative z-10 inline-flex items-center justify-center gap-2 px-8 h-14 text-lg font-semibold text-gray-900 dark:text-white rounded-full bg-white/15 dark:bg-white/[0.08] backdrop-blur-xl ring-1 ring-white/30 dark:ring-white/10 shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(15,23,42,0.06)] transition-all duration-300 hover:bg-white/25 dark:hover:bg-white/[0.15] hover:-translate-y-0.5 active:translate-y-0"
+        style={{
+          ...sizeStyle,
+          ...(textColor ? { color: textColor } : {}),
+        }}
+      >
+        <span>{text}</span>
+        <ArrowRight
+          size={20}
+          className="transition-transform duration-300 group-hover:translate-x-0.5"
+          aria-hidden="true"
+        />
+      </a>
+    );
+  }
+
+  // ── Чистая кнопка без карточки ────────────────────────
+  // Режимы none и gradient-blur никогда не рисуют фон-подложку
+  if (mode === "none" || mode === "gradient-blur") {
+    if (!hasIcons) {
+      return <div className="my-6 flex justify-center">{buttonEl}</div>;
+    }
     return (
-      <div className="my-6 flex justify-center">
-        <a
-          href={href || "#"}
-          target={isExternal ? "_blank" : undefined}
-          rel={isExternal ? "noreferrer" : undefined}
-          className="group inline-flex items-center justify-center gap-2 px-8 h-14 text-lg font-semibold text-white rounded-full bg-gradient-to-br from-blue-500 to-violet-500 shadow-[0_8px_24px_-8px_rgba(59,130,246,0.6)] transition-all duration-300 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0"
+      <div className="my-8 relative overflow-hidden rounded-3xl">
+        <div
+          ref={boxRef}
+          className="relative h-80 flex items-center justify-center p-6 md:p-10"
         >
-          <span>{text}</span>
-          <ArrowRight
-            size={18}
-            className="transition-transform duration-300 group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </a>
+          {box.w > 0 && box.h > 0 && (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 overflow-hidden pointer-events-none"
+            >
+              {list.map((src, i) => (
+                <FloatingCtaIcon
+                  key={`${src}-${i}`}
+                  src={src}
+                  seed={i * 9301 + 49297 + src.length}
+                  boxW={box.w}
+                  boxH={box.h}
+                />
+              ))}
+            </div>
+          )}
+          {buttonEl}
+        </div>
       </div>
     );
   }
 
-  // finalcta-mobile: статичный градиент + хаотично летающие иконки
-  const list = icons && icons.length ? icons : DEFAULT_CTA_ICONS;
+  // ── Карточка с фоном: custom и gradient-fade ─────────
+  const cardBg: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+  };
+
+  if (mode === "gradient-fade") {
+    cardBg.background =
+      "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)";
+    cardBg.WebkitMaskImage =
+      "radial-gradient(ellipse 88% 78% at center, black 22%, transparent 82%)";
+    cardBg.maskImage =
+      "radial-gradient(ellipse 88% 78% at center, black 22%, transparent 82%)";
+  } else {
+    // custom
+    const trimmedImg = (bgImage ?? "").trim();
+    const trimmedColor = (bgColor ?? "").trim();
+    if (trimmedImg) {
+      cardBg.background = `url(${trimmedImg}) center/cover no-repeat`;
+      cardBg.opacity = 0.65;
+    } else {
+      cardBg.background = trimmedColor || "#2563eb";
+      cardBg.opacity = 0.35;
+    }
+  }
 
   return (
-    <div className="my-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-6 md:p-10">
-      <div className="relative h-80 flex items-center justify-center">
-        <div aria-hidden="true" className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute left-1/2 top-1/2" style={{ width: 0, height: 0 }}>
+    <div className="my-8 relative overflow-hidden rounded-3xl">
+      <div aria-hidden="true" style={cardBg} />
+      <div
+        ref={boxRef}
+        className="relative h-80 flex items-center justify-center p-6 md:p-10"
+      >
+        {hasIcons && box.w > 0 && box.h > 0 && (
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 overflow-hidden pointer-events-none"
+          >
             {list.map((src, i) => (
               <FloatingCtaIcon
                 key={`${src}-${i}`}
                 src={src}
                 seed={i * 9301 + 49297 + src.length}
+                boxW={box.w}
+                boxH={box.h}
               />
             ))}
           </div>
-        </div>
-
-        <a
-          href={href || "#"}
-          target={isExternal ? "_blank" : undefined}
-          rel={isExternal ? "noreferrer" : undefined}
-          className="group relative z-10 inline-flex items-center justify-center gap-2 px-8 h-14 text-lg font-semibold text-gray-900 rounded-full bg-white/10 backdrop-blur-xl ring-1 ring-white/30 shadow-[0_4px_24px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.7)] transition-all duration-300 hover:bg-white/20 hover:-translate-y-0.5 active:translate-y-0"
-        >
-          <span>{text}</span>
-          <ArrowRight
-            size={20}
-            className="transition-transform duration-300 group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </a>
+        )}
+        {buttonEl}
       </div>
     </div>
   );
 };
+
+
 
 const BODY = "text-[15px] leading-relaxed text-gray-700 dark:text-gray-300";
 const MARKDOWN = "[&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_a]:text-blue-600 [&_a]:underline dark:[&_a]:text-blue-400 [&_p]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:pl-4";
