@@ -1,0 +1,10 @@
+.git
+node_modules
+dist
+.env
+.env.*
+!.env.example
+
+# Some hosting builders retain deleted files in their source workspace.
+# This removed dashboard control must never be copied into the build image.
+src/pages/Admin/RegistrationSettings.tsx
