@@ -1145,7 +1145,7 @@ const DesktopAgentVideoSection: React.FC = () => {
       <div className="max-w-5xl mx-auto">
         <div className="mb-8 md:mb-12 text-center">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-gray-900 dark:text-white max-w-3xl mx-auto">
-            {tr("Deyla может как взять тяжёлую задачу на себя", "Deyla can take a heavy task off your hands")}
+            {tr("Deyla может взять тяжёлую задачу на себя", "Deyla can take a heavy task off your hands")}
           </h2>
         </div>
         <div className="relative overflow-hidden bg-black" style={{ WebkitMaskImage: combinedMask, WebkitMaskComposite: "source-in", maskImage: combinedMask, maskComposite: "intersect" }}>
