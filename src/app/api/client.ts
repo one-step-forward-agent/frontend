@@ -250,7 +250,7 @@ export const api = {
       request<void>(`/api/events/${id}?scope=${scope}`, { method: "DELETE" }, "event_delete"),
     complete: async (id: number, completed: boolean) => {
       const event = await request<CalendarEvent>(`/api/events/${id}/complete`, json("POST", { completed }), completed ? "event_complete" : "event_uncomplete");
-      if (completed) offerCompletionReport(eventReportTarget(id, event.title));
+      if (completed && event.team_task) offerCompletionReport(eventReportTarget(id, event.title));
       return event;
     },
     move: (eventIds: number[], date: string) =>

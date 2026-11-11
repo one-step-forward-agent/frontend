@@ -80,7 +80,7 @@ export function EventPage({ id }: { id: number }) {
   const event = useAsync(() => api.events.get(id), [id]);
   const openedReport = useRef(false);
   useEffect(() => {
-    if (!openedReport.current && query.get("report") === "1" && event.data?.completed_at) {
+    if (!openedReport.current && query.get("report") === "1" && event.data?.completed_at && event.data.team_task) {
       openedReport.current = true;
       offerCompletionReport(eventReportTarget(id, event.data.title));
     }
@@ -299,7 +299,7 @@ export function EventPage({ id }: { id: number }) {
       </GlassCard>
 
       <div className="mt-6 space-y-6">
-        {item.completed_at && <CompletionReportSection target={eventReportTarget(item.id, item.title)} />}
+        {item.completed_at && item.team_task && <CompletionReportSection target={eventReportTarget(item.id, item.title)} />}
         <EventFiles eventId={item.id} />
       </div>
     </div>
