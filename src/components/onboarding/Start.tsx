@@ -36,7 +36,7 @@ export const Start: React.FC = () => {
         <Hero onStart={start} />
         <HowItWorks onStart={start} />
         <UserCaseCarousel paused={finalCtaActive} onStart={start} />
-        <DesktopAgentVideoSection />
+        
         <FAQSection />
         <FinalCTA onStart={start} onActiveChange={handleFinalCtaActive} />
         
@@ -1174,14 +1174,11 @@ const FAQ_ITEMS = [
   { q: tr("Работает ли Deyla в Telegram", "Does Deyla work in Telegram"), a: <p>{tr("Да. Добавьте Deyla в Telegram — и работайте с задачами прямо в чате.", "Yes. Add Deyla to Telegram and manage tasks right in the chat.")}</p> },
   { q: tr("Можно ли подключить Google Calendar", "Can I connect Google Calendar"), a: <p>{tr("Да. Deyla синхронизируется с Google Calendar, Apple Calendar, Yandex Calendar и другими.", "Yes. Deyla syncs with Google Calendar, Apple Calendar, Yandex Calendar and others.")}</p> },
   { 
-    q: tr("Как Deyla обращается с моими данными", "How does Deyla handle my data"), 
+    q: tr("Календарь подключается только по вашему согласию. Подробности о хранении и обработке данных есть в Политике конфиденциальности.", "How does Deyla handle my data"), 
     a: (
       <div className="space-y-4">
         <p>{tr("Deyla хранит данные в зашифрованном виде и не передаёт их третьим лицам. Вы можете удалить свои данные в любой момент.", "Deyla stores your data encrypted and never shares it with third parties. You can delete your data at any time.")}</p>
         <div className="relative flex justify-center mt-4">
-          <div className="relative inline-block isolate w-full max-w-sm">
-            <img src="/images/functional/whitetheme/safety.png" alt="Security" className="block w-full h-auto rounded-2xl" />
-          </div>
         </div>
       </div>
     )
