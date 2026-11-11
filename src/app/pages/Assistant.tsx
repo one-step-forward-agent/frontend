@@ -87,7 +87,7 @@ const ABILITIES = isEn
 
 let messageId = 0;
 const FRIEND_POLL_MS = 15000;
-const FRIEND_KINDS = ["friend_task", "friend_invite", "team_task", "send_draft"];
+const FRIEND_KINDS = ["friend_task", "friend_invite", "team_task", "send_draft", "send_drafts"];
 
 function fromHistory(items: HistoryMessage[]): Message[] {
   return items.map((item) =>
@@ -614,6 +614,7 @@ function ChatMessage({
             <TaskCard reply={reply} onReply={(next) => onReply(message.id, next)} />
           )}
           {reply.kind === "send_draft" && <SendDraft reply={reply} onReply={(next) => onReply(message.id, next)} />}
+          {reply.kind === "send_drafts" && <SendDraftBatch reply={reply} onReply={(next) => onReply(message.id, next)} />}
           {reply.kind === "stats" && <StatsReply stats={reply} />}
           {reply.kind === "help" && (
             <div className="space-y-3">
@@ -1127,6 +1128,20 @@ export function TaskCard({ reply, onReply }: { reply: FriendTaskCard | FriendInv
 
 const DRAFT_INPUT =
   "w-full rounded-lg border border-gray-300 bg-white/70 px-3 py-2 text-sm text-gray-900 dark:border-white/15 dark:bg-white/5 dark:text-white";
+
+export function SendDraftBatch({ reply, onReply }: { reply: Extract<AssistantReply, { kind: "send_drafts" }>; onReply: (next: AssistantReply) => void }) {
+  const latest = useRef(reply);
+  latest.current = reply;
+  return <div className="space-y-3"><RichText text={reply.text} />{reply.drafts.map((card, index) => {
+    const update = (next: AssistantReply) => {
+      latest.current = { ...latest.current, drafts: latest.current.drafts.map((item, position) => position === index ? next : item) };
+      onReply(latest.current);
+    };
+    return <div key={index} className="rounded-xl border border-gray-200 p-3 dark:border-white/10">
+      {card.kind === "send_draft" ? <SendDraft reply={card} onReply={update} /> : card.kind === "friend_task" || card.kind === "team_task" || card.kind === "friend_invite" ? <TaskCard reply={card} onReply={update} /> : <RichText text={"text" in card && typeof card.text === "string" ? card.text : ""} />}
+    </div>;
+  })}</div>;
+}
 
 export function SendDraft({ reply, onReply }: { reply: SendDraftCard; onReply: (next: AssistantReply) => void }) {
   const [busy, setBusy] = useState<string | null>(null);

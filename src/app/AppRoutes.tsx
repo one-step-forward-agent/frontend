@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout";
 import { Empty, Loading } from "./components/ui";
 import { AssistantPage } from "./pages/Assistant";
 import { CalendarPage } from "./pages/CalendarPage";
+import { CompletionReportProvider } from "./components/CompletionReport";
 import { EventPage, NewEventPage } from "./pages/EventPage";
 import { IntegrationsPage } from "./pages/Integrations";
 import { FriendsPage } from "./pages/Friends";
@@ -64,7 +65,7 @@ export default function AppRoutes() {
   }
   return (
     <div className="fd-app">
-      <Layout>{page}</Layout>
+      <CompletionReportProvider><Layout>{page}</Layout></CompletionReportProvider>
     </div>
   );
 }

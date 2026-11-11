@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useRef,
   useState,
   type ButtonHTMLAttributes,
@@ -509,6 +510,7 @@ export function Dialog({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -520,7 +522,12 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      onClose={onClose}
+      aria-labelledby={titleId}
+      onClose={(event) => {
+        // Closing a nested date picker must not also close its parent dialog.
+        event.stopPropagation();
+        onClose();
+      }}
       onClick={(event) => {
         if (event.target === ref.current) onClose();
       }}
@@ -535,7 +542,7 @@ export function Dialog({
         <span aria-hidden="true" className={GLASS_SHEEN} />
         <div className="relative p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="font-medium text-gray-900 dark:text-white">
+            <h2 id={titleId} className="font-medium text-gray-900 dark:text-white">
               {title}
             </h2>
             <Button

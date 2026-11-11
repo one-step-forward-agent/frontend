@@ -74,7 +74,7 @@ const makeBlock = (type: BlockType): AnyBlock => {
     type: "cta",
     bgMode: "gradient-blur",
     text: tr("Начать бесплатно", "Start for free"),
-    href: "/onboarding/field-of-activity",
+    href: "/register",
     icons: undefined,
   };
   }
@@ -679,7 +679,7 @@ const CtaBlockEditor = ({
     className={inputCls}
     value={block.href}
     onChange={(e) => update({ href: e.target.value })}
-    placeholder="/onboarding/field-of-activity"
+    placeholder="/register"
   />
 </Field>
 

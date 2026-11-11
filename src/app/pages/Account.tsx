@@ -7,7 +7,6 @@ import { LanguagePicker, ThemePicker } from "@/theme";
 import { useAuth, useSignOut, useUser } from "../auth";
 import { Icon, type IconName } from "../components/icons";
 import { TimeField } from "@/components/ui/time-field";
-import { restartTour, startTour } from "../components/Tour";
 import { IcsImportButton } from "../components/IcsImport";
 import { TAG_COLORS, TagChip } from "../components/tags";
 import { BadgeList, LevelBar } from "../components/Rewards";
@@ -255,11 +254,6 @@ function ProfileSection() {
     <div id="profile" className="anchor">
       <GlassCard
         title={tr("Профиль", "Profile")}
-        actions={
-          <button type="button" className="btn btn-ghost btn-sm h-8 px-3 text-xs" onClick={restartTour}>
-            {tr("Как пользоваться Deyla", "How to use Deyla")}
-          </button>
-        }
       >
         <form className={cn("form", COMPACT_FIELD)} onSubmit={save}>
           <div className="form-row">
@@ -331,13 +325,6 @@ function RewardsSection() {
     <div id="rewards" className="anchor">
       <GlassCard
         title={tr("Награды", "Awards")}
-        actions={
-          enabled && (
-            <button type="button" className="btn btn-ghost btn-sm h-8 px-3 text-xs" onClick={() => startTour("rewards")}>
-              {tr("Как это работает", "How it works")}
-            </button>
-          )
-        }
       >
         <Switch
           checked={enabled}

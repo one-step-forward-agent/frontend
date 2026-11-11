@@ -1,6 +1,6 @@
 # Third-party notices
 
-The landing page, onboarding flow, auth screens and UI kit (`src/components/{landing,onboarding,ui}`,
+The landing page, auth screens and UI kit (`src/components/{landing,ui}`,
 `src/layouts/AuthLayout.tsx`, `src/pages/{Auth,Documents}`, `public/images`) come from the
 MentrixLabs landing repository and are used under the MIT License:
 

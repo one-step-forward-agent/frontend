@@ -9,7 +9,7 @@ import { cn } from "@/utils/cn";
 import { tr } from "@/i18n";
 
 /**
- * «Перенос из чатов с нейросетями» (it used to be an onboarding step): links to chats with ChatGPT, Claude,
+ * «Перенос из чатов с нейросетями»: links to chats with ChatGPT, Claude,
  * Gemini and others, with the areas and kinds of notes Deyla may take and a comment. They are kept in the
  * profile (`aiChatSources`), and the assistant sees the topics and the comment when it plans.
  */
@@ -100,7 +100,7 @@ export function AiChatTransfer() {
   const save = async (next: AiChatSource[], message: string) => {
     setSaving(true);
     try {
-      await api.me.saveOnboarding({ ...profile, aiChatSources: next });
+      await api.me.saveProfile({ ...profile, aiChatSources: next });
       await reload();
       setEditingId(null);
       toast(message);

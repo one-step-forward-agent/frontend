@@ -114,9 +114,7 @@ const RegisterPage: React.FC = () => {
         email_code: emailCode.trim() || undefined, email_token: emailToken ?? undefined,
       });
       reachGoal("registration_success");
-      // A fresh account goes through onboarding, which is applied at its last step.
-      const next = searchParams.get("next");
-      navigate(next ? safeNext(next) : "/onboarding/field-of-activity", { replace: true });
+      navigate(safeNext(searchParams.get("next")), { replace: true });
     } catch {
     }
   };

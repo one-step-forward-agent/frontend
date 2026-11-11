@@ -30,7 +30,7 @@ import { tr } from "@/i18n";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
 
-/* ─── OAuth-провайдеры (совпадает с onboarding/Integrations.tsx) ─── */
+/* ─── OAuth-провайдеры ─── */
 
 type OAuthProvider = "google" | "yandex" | "notion" | "jira";
 

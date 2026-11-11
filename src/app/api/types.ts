@@ -84,6 +84,14 @@ export interface TokenResponse {
 }
 
 export type Priority = "low" | "medium" | "high" | "urgent";
+export interface CompletionReport {
+  tools: string;
+  conclusions: string;
+  note: string;
+  can_edit: boolean;
+  updated_at: string | null;
+  files: { id: number; filename: string; size: number }[];
+}
 export type Source = "local" | "ai" | "ics" | "google" | "apple" | "jira" | "notion";
 
 /** What an .ics import added: `skipped` were already in the calendar (imported before) */
@@ -158,6 +166,10 @@ export interface FriendSchedule {
     completed: boolean;
     deadline_at: string | null;
   }[];
+}
+
+export interface SharedFriendSchedule extends Omit<FriendSchedule, "events"> {
+  events: (FriendSchedule["events"][number] & { role: "sender" | "performer"; owned: boolean })[];
 }
 
 export interface Tag {
@@ -317,7 +329,8 @@ type AssistantReplyBody =
   | FriendTaskCard
   | FriendInviteCard
   | TeamTaskCard
-  | SendDraftCard;
+  | SendDraftCard
+  | { kind: "send_drafts"; text: string; drafts: AssistantReply[] };
 
 /** A task or reminder for a friend, or a team member's task, waiting for «Отправить» (backend app/services/send_drafts.py) */
 export interface SendDraftCard {
@@ -340,6 +353,16 @@ export interface SendDraftCard {
 
 export type TeamTaskAction = "accept" | "reject" | "start" | "done" | "check_on" | "check_off";
 export type TeamTaskStatus = "todo" | "in_progress" | "done";
+export interface TaskReassignment {
+  id: number;
+  task_id: number;
+  requester_id: number;
+  proposed_id: number;
+  requester: string;
+  proposed: string;
+  can_respond: boolean;
+  can_cancel: boolean;
+}
 
 export interface TeamTaskCard {
   calendar_event_id?: number | null;
@@ -557,7 +580,7 @@ export interface Activity {
   tags: { id: number; done: number }[];
 }
 
-/** A challenge in an onboarding sphere: `goal` ticked tasks with the sphere's tag. */
+/** A challenge in a life area: `goal` ticked tasks with the area's tag. */
 export interface RewardBadge {
   sphere: string;
   goal: number;

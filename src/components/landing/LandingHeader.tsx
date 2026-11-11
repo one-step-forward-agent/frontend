@@ -66,9 +66,9 @@ export const LandingHeader: React.FC = () => {
     navigate(isAuthenticated ? "/app" : "/login");
   };
 
-  // ── Desktop CTA: как было — онбординг для гостя, /app для авторизованного ──
+  // Guests register directly; signed-in users open the app.
   const onDesktopCta = () => {
-    navigate(isAuthenticated ? "/app" : "/onboarding/field-of-activity");
+    navigate(isAuthenticated ? "/app" : "/register");
   };
 
   return (

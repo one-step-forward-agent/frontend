@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import type { CalendarEvent } from "../api/types";
-import { occursOn, sameDay, startOfDay } from "../lib/format";
+import { dayKey, formatDate, occursOn, sameDay, startOfDay } from "../lib/format";
 import { taskColor } from "./tags";
 import { useNow, useTags } from "../lib/hooks";
 import { Link } from "../router";
 import { cn } from "@/utils/cn";
 import { LOCALE, tr } from "@/i18n";
 import { AssignedTaskGroup } from "./AssignedTaskGroup";
+import { Dialog } from "./ui";
+import { Icon } from "./icons";
 
 /**
  * Days by the hour, as in Google Calendar: the hours down the side, one column per day (one for the day view,
@@ -115,6 +117,7 @@ export function TimeGrid({
   // The click that ends a drag must not open the task
   const dragged = useRef(false);
   const [spot, setSpot] = useState<Spot | null>(null);
+  const [sharedDay, setSharedDay] = useState<string | null>(null);
 
   const spotOf = (current: Drag, pointer: PointerEvent): Spot | null => {
     const box = hoursRef.current?.getBoundingClientRect();
@@ -217,6 +220,7 @@ export function TimeGrid({
     [days, events]
   );
   const hasAllDay = columns.some((column) => column.allDay.length > 0 || column.assigned.length > 0);
+  const sharedColumn = columns.find(({ day }) => dayKey(day) === sharedDay);
   const todayIndex = days.findIndex((day) => sameDay(day, now));
   const nowTop = (minutesOf(now) / 60) * HOUR_PX;
 
@@ -230,9 +234,10 @@ export function TimeGrid({
   }, [days[0]?.getTime(), days.length]);
 
   const template = { gridTemplateColumns: `${GUTTER_PX}px repeat(${days.length}, minmax(0, 1fr))` };
-  const STICKY_BG = "bg-white/85 dark:bg-gray-900/85 backdrop-blur-xl";
+  const STICKY_BG = "bg-white dark:bg-gray-900";
 
   return (
+    <>
     <div
       ref={scrollRef}
       className="relative max-h-[70vh] overflow-auto overscroll-contain rounded-xl"
@@ -285,9 +290,28 @@ export function TimeGrid({
                   {tr("задачи", "tasks")}
                 </span>
                 {columns.map(({ day, allDay, assigned }, index) => (
-                  <div key={day.getTime()} className="min-w-0 flex flex-col gap-0.5 px-0.5">
-                    <AssignedTaskGroup events={assigned} compact />
-                    {allDay.map((event) => {
+                  <div key={day.getTime()} className="min-w-0 flex flex-col gap-1 px-0.5">
+                    {assigned.length > 0 && (
+                      <button
+                        type="button"
+                        aria-haspopup="dialog"
+                        aria-label={`${tr("Задачи от друзей и команд", "Tasks from friends and teams")}: ${assigned.length}, ${formatDate(day, { day: "numeric", month: "long" })}. ${tr("Выполнено", "Done")}: ${assigned.filter(event => event.completed_at).length}`}
+                        onClick={() => setSharedDay(dayKey(day))}
+                        className="flex min-w-0 w-full items-center gap-1 rounded-lg border border-sky-400/30 bg-sky-500/10 px-1.5 py-1.5 text-left hover:bg-sky-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
+                      >
+                        <Icon name="friends" size={14} className="shrink-0 text-sky-700 dark:text-sky-200" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate !text-[11px] !font-medium text-sky-800 dark:text-sky-200">{tr("Общие", "Shared")} · {assigned.length}</span>
+                          <span className="block truncate !text-[10px] text-gray-500 dark:text-gray-400">{assigned.filter(event => event.completed_at).length}/{assigned.length} {tr("готово", "done")}</span>
+                        </span>
+                      </button>
+                    )}
+                    {allDay.length > 0 && <div
+                      className="max-h-[72px] space-y-0.5 overflow-y-auto overscroll-contain rounded-md"
+                      tabIndex={0}
+                      role="region"
+                      aria-label={`${tr("Задачи без времени", "Untimed tasks")}, ${formatDate(day, { day: "numeric", month: "long" })}`}
+                    >{allDay.map((event) => {
                       const color = taskColor(event, tagsById);
                       const placeable = !!onMove && draggable(event);
                       return (
@@ -319,7 +343,7 @@ export function TimeGrid({
                           {event.title}
                         </Link>
                       );
-                    })}
+                    })}</div>}
                   </div>
                 ))}
               </div>
@@ -502,5 +526,21 @@ export function TimeGrid({
         </div>
       </div>
     </div>
+    <Dialog
+      open={!!sharedColumn}
+      onClose={() => setSharedDay(null)}
+      title={tr("Задачи от друзей и команд", "Tasks from friends and teams")}
+    >
+      {sharedColumn && <>
+        <p className="mb-3 text-sm capitalize-first text-gray-500 dark:text-gray-400">
+          {formatDate(sharedColumn.day, { weekday: "long", day: "numeric", month: "long" })}
+          {" · "}{sharedColumn.assigned.filter(event => event.completed_at).length}/{sharedColumn.assigned.length} {tr("выполнено", "done")}
+        </p>
+        <div className="max-h-[55dvh] overflow-y-auto overscroll-contain pr-1">
+          <AssignedTaskGroup events={sharedColumn.assigned} compact />
+        </div>
+      </>}
+    </Dialog>
+    </>
   );
 }

@@ -1,27 +1,25 @@
 // Points, levels and sphere badges: the level bar under the progress on Today and the badges in Account.
 // The server counts everything from the ticked tasks (GET /api/rewards); the page only shows it.
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "../api/client";
 import type { Rewards } from "../api/types";
 import { useAuth, useUser } from "../auth";
 import { errorText } from "../lib/format";
 import { Button, useErrorToast } from "./ui";
 import { Icon } from "./icons";
-import { startTour } from "./Tour";
 import { cn } from "@/utils/cn";
 import { isEn, pluralWord, tr } from "@/i18n";
 
 const points = (count: number) => pluralWord(count, ["очко", "очка", "очков"], ["point", "points"]);
 
-/** The level, the bar to the next one and today's points; the first time it shows, so do the hints about awards */
+/** The level, the bar to the next one and today's points. */
 export function LevelBar({ rewards }: { rewards: Rewards }) {
-  useEffect(() => startTour("rewards", true), []);
   const span = rewards.next_level_at - rewards.level_start;
   const percent = span ? Math.round(((rewards.points - rewards.level_start) * 100) / span) : 0;
   const left = rewards.next_level_at - rewards.points;
   return (
-    <div className="space-y-1.5" data-tour="level">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2 text-xs">
         <span className="inline-flex items-center gap-1 font-semibold text-violet-700 dark:text-violet-300">
           <Icon name="star" size={13} />
@@ -43,12 +41,12 @@ export function LevelBar({ rewards }: { rewards: Rewards }) {
   );
 }
 
-/** The badges of each onboarding sphere: earned, the one in progress with its count, and the later ones */
+/** The badges of each life area: earned, the one in progress with its count, and the later ones. */
 export function BadgeList({ rewards, onSpheres }: { rewards: Rewards; onSpheres?: () => void }) {
   const spheres = [...new Set(rewards.badges.map((badge) => badge.sphere))];
   if (!spheres.length) return <SpherePicker onSaved={onSpheres} />;
   return (
-    <ul className="space-y-3" data-tour="badges">
+    <ul className="space-y-3">
       {spheres.map((sphere) => {
         const badges = rewards.badges.filter((badge) => badge.sphere === sphere);
         const current = badges.find((badge) => !badge.earned);
@@ -88,7 +86,7 @@ export function BadgeList({ rewards, onSpheres }: { rewards: Rewards; onSpheres?
   );
 }
 
-// The onboarding's presets; colours as in its palette
+// Life area presets and their palette.
 const SPHERE_PRESETS = [
   tr("Работа", "Work"),
   tr("Учёба", "Study"),
@@ -99,7 +97,7 @@ const SPHERE_PRESETS = [
 ];
 const SPHERE_COLORS = ["#64748b", "#14b8a6", "#f97316", "#8b5cf6", "#f43f5e", "#f59e0b", "#06b6d4", "#ec4899", "#6366f1", "#84cc16"];
 
-/** No spheres yet (onboarding skipped): pick them right here. The server makes a tag of each, as onboarding does */
+/** Pick life areas here when none are set. The server makes a tag for each. */
 function SpherePicker({ onSaved }: { onSaved?: () => void }) {
   const user = useUser();
   const { setUser } = useAuth();
@@ -118,7 +116,7 @@ function SpherePicker({ onSaved }: { onSaved?: () => void }) {
         color: SPHERE_COLORS[index % SPHERE_COLORS.length],
         priority: index,
       }));
-      setUser(await api.me.saveOnboarding({ ...(user.profile ?? {}), spheres }));
+      setUser(await api.me.saveProfile({ ...(user.profile ?? {}), spheres }));
       onSaved?.();
     } catch (error) {
       reportError(errorText(error));

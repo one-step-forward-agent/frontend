@@ -1,5 +1,5 @@
 // src/pages/EventPage.tsx
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { CalendarEvent, DeleteScope, EventFile } from "../api/types";
 import { DeleteScopeButtons, EventForm } from "../components/events";
@@ -36,6 +36,8 @@ import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
 import { tr } from "@/i18n";
 import { EVENT_FILE_TYPES } from "../lib/files";
+import { CompletionReportSection } from "../components/CompletionReport";
+import { eventReportTarget, offerCompletionReport } from "../lib/completion";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
 
@@ -74,7 +76,15 @@ export function NewEventPage() {
 /* ─── EventPage ─────────────────────────────────────────── */
 
 export function EventPage({ id }: { id: number }) {
+  const { query } = useLocation();
   const event = useAsync(() => api.events.get(id), [id]);
+  const openedReport = useRef(false);
+  useEffect(() => {
+    if (!openedReport.current && query.get("report") === "1" && event.data?.completed_at) {
+      openedReport.current = true;
+      offerCompletionReport(eventReportTarget(id, event.data.title));
+    }
+  }, [id, query, event.data]);
   useTasksChanged(event.reload);
   const [editing, setEditing] = useState(false);
   const [askScope, setAskScope] = useState(false);
@@ -289,6 +299,7 @@ export function EventPage({ id }: { id: number }) {
       </GlassCard>
 
       <div className="mt-6 space-y-6">
+        {item.completed_at && <CompletionReportSection target={eventReportTarget(item.id, item.title)} />}
         <EventFiles eventId={item.id} />
       </div>
     </div>

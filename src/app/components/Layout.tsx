@@ -2,13 +2,11 @@
 import { Sparkles } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/theme";
-import type { User } from "../api/types";
-import { useAuth, useSignOut } from "../auth";
+import { useSignOut } from "../auth";
 import { Link, navigate, useLocation } from "../router";
 import { Icon, type IconName } from "./icons";
 import { ErrorBoundary, useToast } from "./ui";
 import { AssistantChat } from "../pages/Assistant";
-import { Tour } from "./Tour";
 import { LevelCelebration } from "./LevelCelebration";
 import { api } from "../api/client";
 import type { TeamSummary } from "../api/types";
@@ -49,29 +47,6 @@ const TABS: NavItem[] = [
 // Where the corner chat would only get in the way: the chat page itself and the task form with its buttons
 const NO_DOCK = ["/assistant", "/events/new"];
 const ACCOUNT_PATHS = ["/account", "/settings", "/integrations"];
-
-// The first-visit hints point at these (see Tour.tsx)
-const TOUR_IDS: Record<string, string> = {
-  "/": "today",
-  "/calendar": "calendar",
-  "/assistant": "assistant",
-  "/tasks": "tasks",
-  "/events/new": "new",
-  "/account": "account",
-  "/teams": "teams",
-};
-
-// Relationships among the top three spheres of the onboarding: the tour stresses planning with friends
-const RELATIONSHIPS = ["отношения", "relationships", "семья", "family", "друзья", "friends"];
-function relationshipsFirst(user: User): boolean {
-  const spheres = Array.isArray(user.profile?.spheres) ? (user.profile.spheres as { name?: unknown; priority?: unknown }[]) : [];
-  return spheres.some(
-    (sphere) =>
-      typeof sphere?.name === "string" &&
-      RELATIONSHIPS.includes(sphere.name.trim().toLowerCase()) &&
-      (typeof sphere.priority !== "number" || sphere.priority < 3)
-  );
-}
 
 const isActive = (to: string, path: string) =>
   to === "/"
@@ -186,7 +161,6 @@ function useHideOnScroll(threshold = 80): boolean {
 /* ─── Layout ────────────────────────────────────────────── */
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
   const signOut = useSignOut();
   const { path, query } = useLocation();
   const toast = useToast();
@@ -230,7 +204,6 @@ export function Layout({ children }: { children: ReactNode }) {
     <Link
       key={item.to}
       to={item.to}
-      data-tour={TOUR_IDS[item.to]}
       aria-current={active ? "page" : undefined}
       className={cn(
         "relative flex items-center gap-2.5 overflow-hidden",
@@ -289,7 +262,6 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="shrink-0 px-3 py-2.5 flex items-center gap-1.5">
             <Link
               to="/account"
-              data-tour="account"
               aria-current={accountActive ? "page" : undefined}
               title={tr("Профиль, настройки и интеграции", "Profile, settings and integrations")}
               className={cn(
@@ -369,9 +341,6 @@ export function Layout({ children }: { children: ReactNode }) {
         {/* ═══ Чат в углу каждого раздела ═══ */}
         {docked && <ChatDock path={path} />}
 
-        {/* ═══ Подсказки при первом входе ═══ */}
-        {user && <Tour userId={user.id} relationships={relationshipsFirst(user)} />}
-
         {/* ═══ TABBAR (mobile) — парящий ═══ */}
         <nav
           className={cn(
@@ -390,7 +359,6 @@ export function Layout({ children }: { children: ReactNode }) {
                   <li key={item.to} className="relative flex items-center justify-center">
                     <Link
                       to={item.to}
-                      data-tour={TOUR_IDS[item.to]}
                       aria-current={active ? "page" : undefined}
                       aria-label={item.label}
                       className={cn(
@@ -413,7 +381,6 @@ export function Layout({ children }: { children: ReactNode }) {
                 <li key={item.to}>
                   <Link
                     to={item.to}
-                    data-tour={TOUR_IDS[item.to]}
                     aria-current={active ? "page" : undefined}
                     aria-label={item.label}
                     title={item.label}
@@ -483,7 +450,6 @@ function ChatDock({ path }: { path: string }) {
     <button
       type="button"
       onClick={() => setOpen(true)}
-      data-tour="dock"
       aria-label={tr("Спросить Deyla", "Ask Deyla")}
       title={tr("Спросить Deyla", "Ask Deyla")}
       className={cn(

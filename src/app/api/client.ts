@@ -1,4 +1,7 @@
 import { reachGoal } from "@/app/lib/metrics";
+import { eventReportTarget, offerCompletionReport, teamReportTarget } from "../lib/completion";
+import type { CompletionReport } from "./types";
+import type { TaskReassignment } from "./types";
 import type { BlogPost, BlogPostSave, BlogStats } from "@/types/blog";
 import type { TableData, TableInfo } from "@/pages/Admin/sheet";
 import type {
@@ -19,6 +22,7 @@ import type {
   Friend,
   Friends,
   FriendSchedule,
+  SharedFriendSchedule,
   FriendInviteCard,
   FriendTaskAction,
   FriendTaskCard,
@@ -169,6 +173,12 @@ const voiceSuffix = (type: string): string =>
   type.includes("mp4") ? ".m4a" : type.includes("ogg") ? ".ogg" : type.includes("mpeg") ? ".mp3" : ".webm";
 
 export const api = {
+  completion: {
+    get: (path: string) => request<CompletionReport>(path),
+    save: (path: string, body: Pick<CompletionReport, "tools" | "conclusions" | "note">) => request<CompletionReport>(path, json("PUT", body)),
+    upload: (path: string, file: File) => request<CompletionReport>(`${path}/files`, upload("file", file)),
+    removeFile: (id: number) => request<void>(`/api/completion-files/${id}`, { method: "DELETE" }),
+  },
   auth: {
     register: (body: {
       email: string; password: string; name?: string | null; timezone?: string; website?: string; form_ms?: number;
@@ -200,8 +210,9 @@ export const api = {
     saveMemory: (notes: string[]) => request<User>("/api/me/assistant-memory", json("PUT", { notes })),
     update: (body: { name?: string | null; timezone?: string; rewards_enabled?: boolean }) =>
       request<User>("/api/me", json("PATCH", body), "me_update"),
-    saveOnboarding: (profile: Record<string, unknown>) =>
-      request<User>("/api/me/onboarding", json("PUT", profile), "onboarding_save"),
+    // The existing profile endpoint also saves life areas and imported chat preferences in the app.
+    saveProfile: (profile: Record<string, unknown>) =>
+      request<User>("/api/me/onboarding", json("PUT", profile), "profile_save"),
     remove: () => request<void>("/api/me", { method: "DELETE" }, "account_delete"),
   },
   calendars: {
@@ -237,8 +248,11 @@ export const api = {
       request<CalendarEvent>(`/api/events/${id}`, json("PUT", body), "event_update"),
     remove: (id: number, scope: DeleteScope = "one") =>
       request<void>(`/api/events/${id}?scope=${scope}`, { method: "DELETE" }, "event_delete"),
-    complete: (id: number, completed: boolean) =>
-      request<CalendarEvent>(`/api/events/${id}/complete`, json("POST", { completed }), completed ? "event_complete" : "event_uncomplete"),
+    complete: async (id: number, completed: boolean) => {
+      const event = await request<CalendarEvent>(`/api/events/${id}/complete`, json("POST", { completed }), completed ? "event_complete" : "event_uncomplete");
+      if (completed) offerCompletionReport(eventReportTarget(id, event.title));
+      return event;
+    },
     move: (eventIds: number[], date: string) =>
       request<{ moved: number }>("/api/events/move", json("POST", { event_ids: eventIds, date }), "event_move"),
     syncGoogle: (id: number) =>
@@ -327,6 +341,7 @@ export const api = {
     },
   },
   friends: {
+    sharedSchedule: (id: number, first: string, last: string) => request<SharedFriendSchedule>(`/api/friends/${id}/shared-schedule?date_from=${first}&date_to=${last}`),
     schedule: (id: number, first: string, last: string) => request<FriendSchedule>(`/api/friends/${id}/schedule?date_from=${first}&date_to=${last}`),
     tasks: (id: number, first: string, last: string) => request<FriendTaskCard[]>(`/api/friends/${id}/tasks?date_from=${first}&date_to=${last}`),
     createTask: (id: number, body: FriendTaskWrite) => request<SendDraftCard>(`/api/friends/${id}/tasks`, json("POST", body)),
@@ -353,6 +368,9 @@ export const api = {
     authorize: (body: { port: number; challenge: string; state: string }) => request<{ redirect: string }>("/api/desktop/authorize", json("POST", body), "desktop_authorize"),
   },
   teams: {
+    reassignments: (teamId: number) => request<TaskReassignment[]>(`/api/teams/${teamId}/reassignments`),
+    reassign: (teamId: number, taskId: number, assigneeId: number, force: boolean) => request<{ status: string }>(`/api/teams/${teamId}/tasks/${taskId}/reassign`, json("POST", { assignee_id: assigneeId, force })),
+    respondReassignment: (teamId: number, requestId: number, action: "accept" | "reject" | "cancel") => request<{ status: string }>(`/api/teams/${teamId}/reassignments/${requestId}/${action}`, { method: "POST" }),
     taskFiles: (id: number, taskId: number) => request<EventFile[]>(`/api/teams/${id}/tasks/${taskId}/files`),
     uploadTaskFile: (id: number, taskId: number, file: File) => request<EventFile>(`/api/teams/${id}/tasks/${taskId}/files`, upload("file", file)),
     removeTaskFile: (id: number, taskId: number, fileId: number) => request<void>(`/api/teams/${id}/tasks/${taskId}/files/${fileId}`, { method: "DELETE" }),
@@ -378,10 +396,17 @@ export const api = {
       id: number,
       body: { title: string; description?: string | null; assignee_id?: number | null; project_id?: number | null; deadline_at?: string | null; start_at?: string | null }
     ) => request<TeamTask>(`/api/teams/${id}/tasks`, json("POST", body), "team_task_create"),
-    updateTask: (id: number, taskId: number, body: Partial<Pick<TeamTask, "title" | "description" | "assignee_id" | "project_id" | "deadline_at" | "start_at" | "status">>) =>
-      request<TeamTask>(`/api/teams/${id}/tasks/${taskId}`, json("PATCH", body), "team_task_update"),
+    updateTask: async (id: number, taskId: number, body: Partial<Pick<TeamTask, "title" | "description" | "assignee_id" | "project_id" | "deadline_at" | "start_at" | "status">>) => {
+      const task = await request<TeamTask>(`/api/teams/${id}/tasks/${taskId}`, json("PATCH", body), "team_task_update");
+      if (body.status === "done") offerCompletionReport(teamReportTarget(id, taskId, task.title));
+      return task;
+    },
     removeTask: (id: number, taskId: number) => request<void>(`/api/teams/${id}/tasks/${taskId}`, { method: "DELETE" }),
-    act: (taskId: number, action: TeamTaskAction, schedule?: { day: string; start_time: string | null }) => request<TeamTaskCard>(`/api/team-tasks/${taskId}/${action}`, schedule ? json("POST", schedule) : { method: "POST" }, { name: "team_task", params: { action } }),
+    act: async (taskId: number, action: TeamTaskAction, schedule?: { day: string; start_time: string | null }) => {
+      const task = await request<TeamTaskCard>(`/api/team-tasks/${taskId}/${action}`, schedule ? json("POST", schedule) : { method: "POST" }, { name: "team_task", params: { action } });
+      if (action === "done") offerCompletionReport(teamReportTarget(task.team_id, taskId, task.title));
+      return task;
+    },
     chat: (id: number) => request<TeamChatMessage[]>(`/api/teams/${id}/chat`),
     send: (id: number, text: string) => request<AssistantReply & { message_id?: number }>(`/api/teams/${id}/chat`, json("POST", { text }), "team_chat"),
   },

@@ -1,9 +1,8 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect } from "react";
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { NavigationBridge } from "@/app/router";
 import { ToastProvider } from "@/app/components/ui";
-import { FinishOnboarding, OnboardingProvider } from "@/components/onboarding/OnboardingContext";
-import { Start } from "@/components/onboarding/Start";
+import { Start } from "@/components/landing/Start";
 import AuthLayout from "@/layouts/AuthLayout";
 import LoginPage from "@/pages/Auth/LoginPage";
 import RegisterPage from "@/pages/Auth/RegisterPage";
@@ -20,8 +19,6 @@ const BlogPostPage = lazy(() => import("@/app/components/blog/BlogPostPage"));
 const BlogAdmin = lazy(() => import("@/pages/Admin/BlogAdmin"));
 
 const AppRoutes = lazy(() => import("@/app/AppRoutes"));
-const FieldOfActivity = lazy(() => import("@/components/onboarding/FieldOfActivity").then((module) => ({ default: module.FieldOfActivity })));
-const Integrations = lazy(() => import("@/components/onboarding/Integrations").then((module) => ({ default: module.Integrations })));
 const TermsOfUsePage = lazy(() => import("@/pages/Documents/TermsOfUsePage"));
 const PersonalDataConsentPage = lazy(() => import("@/pages/Documents/PersonalDataConsentPage"));
 const AdminDashboard = lazy(() => import("@/pages/Admin/AdminDashboard"));
@@ -90,23 +87,11 @@ function RootRoute() {
   return isAuthenticated ? <Navigate to={`/app${search}`} replace /> : <Start />;
 }
 
-// Onboarding runs before registration: its integrations step signs the user up through Google or Yandex,
-// or sends them to the registration form and connects the chosen services after it.
-function OnboardingRouteLayout() {
-  return (
-    <OnboardingProvider>
-      <Outlet />
-    </OnboardingProvider>
-  );
-}
-
-// The last step saves the answers, so it needs an account.
-function RequireAccount({ children }: { children: ReactNode }) {
+// Old signup links still reach registration; existing accounts go straight to the app.
+function LegacySignupRedirect() {
   const { isAuthenticated, isLoading } = useAuthStore();
-  const { pathname } = useLocation();
   if (isLoading) return <FullScreenLoader />;
-  if (!isAuthenticated) return <Navigate to={`/register?next=${encodeURIComponent(pathname)}`} replace />;
-  return <>{children}</>;
+  return <Navigate to={isAuthenticated ? "/app" : "/register"} replace />;
 }
 
 // /privacy-policy is a static page served by nginx; here only when the app itself navigates to it (or in `vite dev`)
@@ -163,17 +148,7 @@ function Routing() {
       <Routes>
         <Route path="/" element={<RootRoute />} />
 
-        <Route element={<OnboardingRouteLayout />}>
-          <Route path="/onboarding" element={<Navigate to="/onboarding/field-of-activity" replace />} />
-          <Route path="/onboarding/start" element={<Navigate to="/" replace />} />
-          <Route path="/onboarding/field-of-activity" element={<FieldOfActivity />} />
-          {/* Areas are the one question; the rest moved to the app (chats with other assistants: Integrations) */}
-          <Route path="/onboarding/goals-and-habits" element={<Navigate to="/onboarding/integrations" replace />} />
-          <Route path="/onboarding/existing-plans" element={<Navigate to="/onboarding/integrations" replace />} />
-          <Route path="/onboarding/integrations" element={<Integrations />} />
-          <Route path="/onboarding/finish" element={<RequireAccount><FinishOnboarding /></RequireAccount>} />
-          <Route path="/onboarding/success-and-learning" element={<Navigate to="/onboarding/finish" replace />} />
-        </Route>
+        <Route path="/onboarding/*" element={<LegacySignupRedirect />} />
 
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />

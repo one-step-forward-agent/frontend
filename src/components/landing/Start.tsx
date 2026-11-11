@@ -20,7 +20,7 @@ import { tr } from "@/i18n";
 
 export const Start: React.FC = () => {
   const navigate = useNavigate();
-  const start = () => navigate("/onboarding/field-of-activity");
+  const start = () => navigate("/register");
 
   const [finalCtaActive, setFinalCtaActive] = React.useState(false);
   const handleFinalCtaActive = React.useCallback((active: boolean) => {

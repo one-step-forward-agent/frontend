@@ -11,7 +11,7 @@ import { Link, navigate, useLocation, useTitle } from "../router";
 import { cn } from "@/utils/cn";
 import { GlassCard, GLASS_CHIP } from "@/components/dashboard/glass";
 import { tr } from "@/i18n";
-import { SendDraft, TaskCard } from "./Assistant";
+import { SendDraft, SendDraftBatch, TaskCard } from "./Assistant";
 import { TeamTaskAccept } from "../components/TeamTaskAccept";
 import { AssignedTaskSchedule } from "../components/AssignedTaskSchedule";
 import { ColorPicker } from "../components/tags";
@@ -19,6 +19,9 @@ import { EMPTY_TEAM_FILTERS, filterTeamTasks, type TeamTaskFilters } from "../li
 import { useAuthStore } from "@/store/authStore";
 import { TaskFilePicker } from "../components/TaskFilePicker";
 import { TeamTaskFiles } from "../components/TeamTaskFiles";
+import { TaskReassignment } from "../components/TaskReassignment";
+import { CompletionReportDetails } from "../components/CompletionReport";
+import { teamReportTarget } from "../lib/completion";
 import { errorText } from "../lib/format";
 
 /**
@@ -181,6 +184,14 @@ export function TeamPage({ id }: { id: number }) {
 
 function TasksTab({ team }: { team: TeamDetail }) {
   const tasks = useAsync(() => api.teams.tasks(team.id), [team.id]);
+  const reassignments = useAsync(() => api.teams.reassignments(team.id), [team.id]);
+  useTasksChanged(reassignments.reload);
+  useEffect(() => {
+    const refresh = () => { if (document.visibilityState === "visible") { void tasks.reload(); void reassignments.reload(); } };
+    const timer = window.setInterval(refresh, 20000);
+    window.addEventListener("focus", refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", refresh); };
+  }, [tasks.reload, reassignments.reload]);
   useTasksChanged(tasks.reload);
   const projects = useAsync(() => api.teams.projects(team.id), [team.id]);
   const reportError = useErrorToast();
@@ -346,6 +357,7 @@ function TasksTab({ team }: { team: TeamDetail }) {
         <p className="mb-2 text-xs text-gray-500">{tr("Показано", "Showing")}: {shown.length} / {tasks.data?.length ?? 0}</p>
         {tasks.error && <ErrorNote message={tasks.error} onRetry={tasks.reload} />}
         {!tasks.data && tasks.loading && <Loading />}
+        {reassignments.error && <ErrorNote message={reassignments.error} onRetry={reassignments.reload} />}
         {tasks.data && shown.length === 0 && <p className="text-sm text-gray-500">{tr("Задач нет.", "No tasks.")}</p>}
         <ul className="divide-y divide-gray-200/70 dark:divide-white/10">
           {shown.map((task) => (
@@ -368,6 +380,8 @@ function TasksTab({ team }: { team: TeamDetail }) {
                   {task.confirm === "rejected" && <span className="text-rose-600"> · {tr("отклонена", "declined")}</span>}
                 </p>
                 {!!task.files_count && <TeamTaskFiles teamId={team.id} taskId={task.id} count={task.files_count} canManage={!!task.can_manage} onChanged={tasks.reload} />}
+                {task.status === "done" && <CompletionReportDetails target={teamReportTarget(team.id, task.id, task.title)} />}
+                <TaskReassignment team={team} task={task} requests={reassignments.data ?? []} onChanged={() => { tasks.reload(); reassignments.reload(); notifyTasksChanged(); }} />
               </div>
               <Badge>{STATUS_LABELS[task.status]}</Badge>
               {task.confirm === "accepted" && task.assignee_id === team.me.id && task.status !== "done" && <Button size="sm" variant="primary" busy={pending === `status-${task.id}`} onClick={() => advance(task, task.status === "todo" ? "start" : "done")}>
@@ -704,6 +718,8 @@ function TeamChatTab({ team }: { team: TeamDetail }) {
                 <TaskCard reply={item.reply} onReply={(next) => replace(item.id, next)} />
               ) : item.reply && item.reply.kind === "send_draft" ? (
                 <SendDraft reply={item.reply} onReply={(next) => replace(item.id, next)} />
+              ) : item.reply && item.reply.kind === "send_drafts" ? (
+                <SendDraftBatch reply={item.reply} onReply={(next) => replace(item.id, next)} />
               ) : (
                 <RichText text={item.reply && "text" in item.reply && typeof item.reply.text === "string" ? item.reply.text : item.text} />
               )}

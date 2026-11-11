@@ -1,19 +1,19 @@
 # Deyla frontend
 
-One React app for the whole site: the public landing, onboarding, sign-in and the product itself.
+One React app for the whole site: the public landing, registration, sign-in and the product itself.
 It is served by nginx in Docker (and on Amvera), with the backend proxied on the same origin.
 
 | Path | What it is | Code |
 | --- | --- | --- |
-| `/` | Landing page (logged-in visitors go straight to `/app`) | `src/components/onboarding/Start.tsx`, `src/components/landing/` |
-| `/onboarding/*` | Two steps: areas of life, then sign-up and integrations. Answers are kept in `sessionStorage` and applied after sign-up (`/onboarding/finish`): timezone, profile, and a calendar for each chosen area | `src/components/onboarding/` |
+| `/` | Landing page; signup buttons open `/register` (logged-in visitors go straight to `/app`) | `src/components/landing/` |
+| `/onboarding/*` | Legacy links redirect to `/register`, or `/app` for signed-in users | `src/App.tsx` |
 | `/login`, `/register` | Auth screens (`?next=` returns you to the page you came from) | `src/pages/Auth/`, `src/layouts/AuthLayout.tsx` |
 | `/terms-of-use`, `/personal-data-consent` | Legal documents (Markdown) | `src/pages/Documents/` |
 | `/app/*` | The product: Today, Calendar (day/week/month), Tasks, Event, Assistant, Integrations, Account (profile, tags and all settings; `/app/settings` still opens it) | `src/app/` |
 
 ## Design and themes
 
-- The landing, onboarding and auth pages use Tailwind (`tailwind.config.js`, `src/index.css`).
+- The landing and auth pages use Tailwind (`tailwind.config.js`, `src/index.css`).
 - The app under `/app` uses `src/app/app.css`, which is scoped to `.fd-app` and follows the same visual language: Inter, a blue→violet gradient, and glass cards on a soft grid.
 - **Themes:** light, dark, or follow the system.
   - `src/theme.tsx` stores the choice in `localStorage` (`deyla-theme`) and sets the `dark` class on `<html>`. Tailwind (`darkMode: "class"`) and `app.css` both key off that class.
@@ -28,8 +28,17 @@ It is served by nginx in Docker (and on Amvera), with the backend proxied on the
   - `GET /api/public/config` provides the Telegram bot link for the landing footer.
 - `src/store/authStore.ts` (zustand) is the single session store, shared by the landing header, the auth pages and the app.
 - `src/app/router.tsx` lets the app's pages use paths relative to `/app` on top of react-router.
+- Registration opens `/app` directly unless a safe `?next=` destination was provided. Life areas and integrations can be configured in the app; the existing `/api/me/onboarding` endpoint remains the profile-preferences API used there.
 
 ## Development
+
+Email confirmation is controlled by the backend environment variable `EMAIL_VERIFICATION_ENABLED` (set `false` to disable it), with no dashboard control. Accounts created with verification disabled have no special flag, badge, color, column or filter in the user sheets.
+
+Task completion is immediate. The optional completion-report dialog records tools, conclusions, a note and result files; reports can be edited later from the completed task. Team reports are readable by current members and editable by the performer.
+
+The Friends calendar includes assigned tasks/reminders and personal events explicitly shared in either direction. Private events and report contents are never exposed by schedule sharing.
+
+Team task lists filter by executor (all members, mine, or a specific member). Admins can reassign directly; other members offer to take a task or request a handover that needs approval. Text/document distribution produces individual sending drafts, with clarification questions before incomplete specifications are assigned.
 
 ```bash
 npm install
