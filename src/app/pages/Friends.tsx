@@ -75,19 +75,13 @@ export function FriendsPage() {
             <Field label={tr("Email в Deyla", "Email in Deyla")}>
               <input className={INPUT} type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="friend@example.com" />
             </Field>
-            <Field label={tr("Как вы его зовёте (необязательно)", "What you call them (optional)")}>
+            <Field label={tr("Как вы его зовёте (необязательно)", "What you call them (optional)")} hint={tr("Друг должен быть зарегистрирован в Deyla. По имени, которое вы укажете, ассистент поймёт, кому задача.", "Your friend needs a Deyla account. The assistant knows whom a task is for by the name you give.")}>
               <input className={INPUT} value={nickname} maxLength={100} onChange={(event) => setNickname(event.target.value)} placeholder={tr("Маша", "Masha")} />
             </Field>
             <Button type="submit" variant="primary" icon="plus" busy={pending === "invite"} disabled={!email.trim()}>
               {tr("Пригласить", "Invite")}
             </Button>
           </form>
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            {tr(
-              "Друг должен быть зарегистрирован в Deyla. По имени, которое вы укажете, ассистент поймёт, кому задача.",
-              "Your friend needs a Deyla account. The assistant knows whom a task is for by the name you give."
-            )}
-          </p>
         </GlassCard>
 
         {data.error && <ErrorNote message={data.error} onRetry={data.reload} />}

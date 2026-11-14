@@ -17,6 +17,7 @@ import {
   ConfirmButton,
   ErrorNote,
   Field,
+  HelpHint,
   Loading,
   Switch,
   useErrorToast,
@@ -593,14 +594,13 @@ function RemindersSection() {
             />
 
             <fieldset className="fieldset" disabled={!draft.enabled}>
-              <legend className="field-label">{tr("Когда напоминать", "When to remind")}</legend>
+              <legend className="field-label">{tr("Когда напоминать", "When to remind")} <HelpHint label={tr("Когда напоминать", "When to remind")}>
+                {tr("Для отдельного события можно задать своё время в его настройках.", "A single event can have its own time in its settings.")}
+              </HelpHint></legend>
               <LeadTimes
                 value={draft.lead_times}
                 onChange={(lead_times) => update({ lead_times })}
               />
-              <span className="field-hint">
-                {tr("Для отдельного события можно задать своё время в его настройках.", "A single event can have its own time in its settings.")}
-              </span>
             </fieldset>
 
             <Switch
@@ -663,7 +663,11 @@ function RemindersSection() {
             )}
 
             <fieldset className="fieldset">
-              <legend className="field-label">{tr("Источники", "Sources")}</legend>
+              <legend className="field-label">{tr("Источники", "Sources")} <HelpHint label={tr("Источники", "Sources")}>
+                {draft.sources.length
+                  ? tr("Напоминания только для выбранных источников.", "Reminders only for the chosen sources.")
+                  : tr("Ничего не выбрано — напоминания для всех событий.", "Nothing chosen — reminders for all events.")}
+              </HelpHint></legend>
               <div className="chips">
                 {sources.map((source) => (
                   <button
@@ -681,11 +685,6 @@ function RemindersSection() {
                   </button>
                 ))}
               </div>
-              <span className="field-hint">
-                {draft.sources.length
-                  ? tr("Напоминания только для выбранных источников.", "Reminders only for the chosen sources.")
-                  : tr("Ничего не выбрано — напоминания для всех событий.", "Nothing chosen — reminders for all events.")}
-              </span>
             </fieldset>
 
             <div className="form-actions">

@@ -4,7 +4,7 @@ import { api } from "../api/client";
 import type { AssistantReply, TagColor, TeamDetail, TeamProject, TeamTask, TeamTaskStatus } from "../api/types";
 import { Icon } from "../components/icons";
 import { RichText } from "../components/RichText";
-import { Badge, Button, ConfirmButton, ErrorNote, Field, Loading, PageHeader, Switch, useErrorToast, useToast } from "../components/ui";
+import { Badge, Button, ConfirmButton, ErrorNote, Field, HelpHint, Loading, PageHeader, Switch, useErrorToast, useToast } from "../components/ui";
 import { formatDate, formatTime } from "../lib/format";
 import { notifyTasksChanged, useAction, useAsync, useTasksChanged } from "../lib/hooks";
 import { Link, navigate, useLocation, useTitle } from "../router";
@@ -298,9 +298,9 @@ function TasksTab({ team }: { team: TeamDetail }) {
             {createdTask ? (files.length ? tr("Повторить загрузку", "Retry uploads") : tr("Завершить", "Finish")) : tr("Добавить", "Add")}
           </Button>
         </form>
-        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        <HelpHint label={tr("Добавить задачу через чат", "Add a task through chat")}>
           {tr("Или напишите на вкладке «Чат»: «Поставь Ивану задачу подготовить презентацию к пятнице».", "Or write on the Chat tab: “Assign Ivan to prepare the slides by Friday”.")}
-        </p>
+        </HelpHint>
       </GlassCard>
 
       <GlassCard
@@ -562,16 +562,13 @@ function MembersTab({ team, onChanged }: { team: TeamDetail; onChanged: () => vo
       {admin && (
         <GlassCard title={tr("Пригласить по ссылке", "Invite by link")}>
           <form onSubmit={invite} className="flex flex-wrap items-end gap-2">
-            <Field label={tr("Для кого (заметка, необязательно)", "For whom (a note, optional)")} className="flex-1 min-w-[12rem]">
+            <Field label={tr("Для кого (заметка, необязательно)", "For whom (a note, optional)")} hint={tr("Каждая ссылка — для одного человека и действует 24 часа. При вступлении участник сам выбирает имя в команде.", "Each link is for one person and works for 24 hours. A member chooses their own name in the team when joining.")} className="flex-1 min-w-[12rem]">
               <input className={INPUT} maxLength={100} value={note} onChange={(event) => setNote(event.target.value)} placeholder={tr("Иван из маркетинга", "Ivan from marketing")} />
             </Field>
             <Button type="submit" variant="primary" icon="plus" busy={pending === "invite"}>
               {tr("Создать ссылку", "Create a link")}
             </Button>
           </form>
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            {tr("Каждая ссылка — для одного человека и действует 24 часа. При вступлении участник сам выбирает имя в команде.", "Each link is for one person and works for 24 hours. A member chooses their own name in the team when joining.")}
-          </p>
           {invites.data && invites.data.length > 0 && (
             <ul className="mt-3 space-y-1.5">
               {invites.data.map((item) => {

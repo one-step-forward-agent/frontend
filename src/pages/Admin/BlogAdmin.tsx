@@ -7,6 +7,7 @@ import type { BlogPost, BlogStats } from "@/types/blog";
 import BlogEditor from "@/app/components/blog/BlogEditor";
 import { BLOG_HEADING_GRADIENT } from "@/app/components/blog/BlogRenderer";
 import { cn } from "@/utils/cn";
+import { HelpHint } from "@/components/ui/help-hint";
 
 /** deyla.tech/dashboard/blog: the posts with how they are read, the editor (/dashboard/blog/:id) and one post's
  * analytics (/dashboard/blog/:id/stats). Views, unique readers, reading time and scroll depth come from the post
@@ -31,9 +32,8 @@ const shortDay = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString
 function Tile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className={panel}>
-      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">{label}{hint && <HelpHint label={label}>{hint}</HelpHint>}</div>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">{hint}</p>}
     </div>
   );
 }

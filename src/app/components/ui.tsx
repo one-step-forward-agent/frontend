@@ -13,6 +13,8 @@ import {
 } from "react";
 import { Icon, type IconName } from "./icons";
 import { tr } from "@/i18n";
+import { HelpHint } from "@/components/ui/help-hint";
+export { HelpHint } from "@/components/ui/help-hint";
 
 /* ─── Мини-утилита для склейки классов ──────────────────── */
 type ClassValue = string | number | false | null | undefined;
@@ -420,17 +422,15 @@ export function Field({
   className?: string;
 }) {
   return (
-    <label className={cx("block", className)}>
-      <span className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-        {label}
-      </span>
-      {children}
-      {hint && (
-        <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-          {hint}
+    <div className={cx("relative", className)}>
+      <label className="block">
+        <span className={cx("flex min-h-6 items-center text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5", !!hint && "pr-8")}>
+          {label}
         </span>
-      )}
-    </label>
+        {children}
+      </label>
+      {hint && <span className="absolute right-0 top-0"><HelpHint label={label}>{hint}</HelpHint></span>}
+    </div>
   );
 }
 
@@ -447,6 +447,7 @@ export function Switch({
   hint?: string;
 }) {
   return (
+    <div className="flex items-start gap-1">
     <label className="flex items-start gap-3 cursor-pointer select-none">
       <input
         type="checkbox"
@@ -487,13 +488,10 @@ export function Switch({
         <span className="block text-sm font-medium text-gray-800 dark:text-gray-100">
           {label}
         </span>
-        {hint && (
-          <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {hint}
-          </span>
-        )}
       </span>
     </label>
+      {hint && <HelpHint label={label}>{hint}</HelpHint>}
+    </div>
   );
 }
 

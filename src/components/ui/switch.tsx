@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/utils/cn";
+import { HelpHint } from "./help-hint";
 
 interface SwitchProps {
   id: string;
@@ -13,9 +14,9 @@ export const Switch: React.FC<SwitchProps> = ({ id, checked, onCheckedChange, la
   const labelId = `${id}-label`;
   return (
     <div className="flex items-center justify-between gap-4">
-      <div>
+      <div className="flex items-center gap-1">
         <p id={labelId} className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
-        {description && <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>}
+        {description && <HelpHint label={label}>{description}</HelpHint>}
       </div>
       <button
         id={id}

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/utils/cn";
+import { HelpHint } from "./help-hint";
 
 interface FormFieldProps {
   id: string;
@@ -16,18 +17,21 @@ interface FormFieldProps {
 
 export const FormField: React.FC<FormFieldProps> = ({ id, label, error, hint, required, children }) => {
   const errorId = error ? `${id}-error` : undefined;
-  const hintId = hint ? `${id}-hint` : undefined;
-  const describedBy = [errorId, hintId].filter(Boolean).join(" ") || undefined;
+  const hintId = hint && !error ? `${id}-hint` : undefined;
+  const describedBy = errorId || hintId;
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        {label}
-        {required && <span className="text-red-600 ml-0.5" aria-hidden="true">*</span>}
-      </label>
+      <div className="flex items-center gap-1">
+        <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {label}
+          {required && <span className="text-red-600 ml-0.5" aria-hidden="true">*</span>}
+        </label>
+        {hint && !error && <HelpHint label={label}>{hint}</HelpHint>}
+      </div>
       {children({ id, "aria-invalid": !!error, "aria-describedby": describedBy })}
       {hint && !error && (
-        <p id={hintId} className="text-sm text-gray-500 dark:text-gray-400">{hint}</p>
+        <span id={hintId} className="sr-only">{hint}</span>
       )}
       {error && (
         <p id={errorId} role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>
