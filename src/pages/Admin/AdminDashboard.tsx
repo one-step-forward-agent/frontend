@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Combine, Download, Eye, Lightbulb, NotebookPen, RefreshCw, Search, Send, ShieldAlert, Sheet as SheetIcon, X } from "lucide-react";
+import { ArrowLeft, Combine, Download, ExternalLink, Eye, Lightbulb, NotebookPen, RefreshCw, Search, Send, ShieldAlert, Sheet as SheetIcon, X } from "lucide-react";
 import { ApiError, api } from "@/app/api/client";
 import { errorText } from "@/app/lib/format";
 import { useAuthStore } from "@/store/authStore";
 import { ThemeToggle } from "@/theme";
 import { cn } from "@/utils/cn";
+import { tr } from "@/i18n";
 import { ColumnMenu } from "./ColumnMenu";
 import { CombineDialog } from "./CombineDialog";
 import { Grid } from "./Grid";
@@ -254,6 +255,15 @@ export default function AdminDashboard() {
         <Link to="/dashboard/research" className={toolButton}>
           <Lightbulb size={14} /> Гипотезы
         </Link>
+        <a
+          href="https://colab.research.google.com/drive/19P1euIETQinqrWQfW42xL0G0HW0rdIkr#scrollTo=IfxthF4nPDAe"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={toolButton}
+          aria-label={tr("Открыть аналитику в Colab (новая вкладка)", "Open analytics in Colab (new tab)")}
+        >
+          <ExternalLink size={14} aria-hidden="true" /> {tr("Открыть Colab", "Open Colab")}
+        </a>
         <Link to="/dashboard/broadcast" className={toolButton}>
           <Send size={14} /> Рассылка
         </Link>
