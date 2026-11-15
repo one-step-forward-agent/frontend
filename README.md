@@ -53,6 +53,18 @@ In Docker, nginx serves the build and proxies `/api`, `/auth` and `/health` to t
 `BACKEND_URL` (default `http://app:8000`, see `nginx.conf.template`). Hashed assets are cached
 for a year, and pages are revalidated on every load.
 
+## Product analytics
+
+Admins open **Metrics & charts** from `/dashboard`, which goes to `/dashboard/analytics`. The page displays the Colab notebook's observable metrics directly from `GET /api/admin/analytics`: daily extended/product DAU, LLM requests, cumulative/new users, input/output/cached/total tokens by model, request purposes, goal totals and the goal-by-day heatmap. It supports inclusive date ranges, IANA timezones, model filters, the notebook's two activity definitions and their union, and CSV exports. Missing instrumentation is explicitly listed under Goals & activity. The table workbook at `/dashboard` is preserved.
+
+The Python / SQL tab runs pandas and read-only SQLite in a fresh Web Worker over aggregate tables (`daily`, `model_daily`, `goals`, `goals_daily`, `purposes`). It never executes submitted code on the backend. Python assigns a DataFrame to `result`; SQL binds `:start_date`, `:end_date`, `:timezone`. Select the returned X/Y columns and line/bar chart type, or export the result. Stop terminates the worker. Limits are 120 seconds, 10,000 result rows, 100 columns and 5 MB. Charts sample evenly above 1,000 rows and say so; table previews show 500 rows and CSV exports keep every result row. Code and results are held in component memory, and are cleared on navigation; applying new filters clears results.
+
+`npm run dev` and `npm run build` prepare the pinned Pyodide runtime through `scripts/prepare-analytics-runtime.mjs`. The first build needs access to the pinned Pyodide package distribution on jsDelivr; every Python wheel is checked against the lockfile's SHA-256. The resulting ~21 MB runtime is self-hosted under `/analytics-runtime/` and loads only when running code. Browsers do not send analytics data to a CDN. The generated directory is ignored by Git and copied into `dist` by Vite.
+
+Preserve the dedicated `/analytics-worker.js` response policy in Nginx. It permits only the local `/analytics-runtime/` asset path and WebAssembly, and blocks API/auth requests, external networking and child workers. Vite applies the same worker policy in local development. The Nginx runtime location declares `.mjs` and `.wasm` MIME types. Serving the worker without this restrictive policy is not supported. This is separate from the optional DEV auth mock, which does not authenticate real backend requests.
+
+No new backend environment variables or migration are required. Deploy the backend analytics endpoint before or alongside the frontend. See `backend/docs/admin-analytics.md` in the shared workspace for definitions and test prerequisites.
+
 ## Blog builder
 
 Admins manage articles at `/dashboard/blog`. Open an article and use **Landing page card** to select it for the landing page, set its position (lower numbers first), and override its title, description, caption, image, alt text and link text. The card preview matches the public landing page. Blank overrides use the article title, excerpt, first tag and cover. Save or publish to persist changes; selected drafts stay hidden. Deselecting or unpublishing removes a card from the landing page without deleting the article.

@@ -4,6 +4,7 @@ import type { CompletionReport } from "./types";
 import type { TaskReassignment } from "./types";
 import type { BlogPost, BlogPostSave, BlogStats } from "@/types/blog";
 import type { TableData, TableInfo } from "@/pages/Admin/sheet";
+import type { AnalyticsDefinition, AnalyticsResponse } from "@/pages/Admin/analyticsTypes";
 import type {
   AdminNote,
   Broadcasts,
@@ -474,6 +475,11 @@ export const api = {
     unlink: () => request<void>("/api/telegram", { method: "DELETE" }, "telegram_unlink"),
   },
   admin: {
+    analytics: (filters: { start_date: string; end_date: string; timezone: string; definition: AnalyticsDefinition; models: string[] }) => {
+      const params = new URLSearchParams({ start_date: filters.start_date, end_date: filters.end_date, timezone: filters.timezone, definition: filters.definition });
+      filters.models.forEach(model => params.append("model", model));
+      return request<AnalyticsResponse>(`/api/admin/analytics?${params}`);
+    },
     tables: () => request<TableInfo[]>("/api/admin/tables"),
     table: (name: string) => request<TableData>(`/api/admin/tables/${encodeURIComponent(name)}`),
     note: () => request<AdminNote>("/api/admin/notes"),
