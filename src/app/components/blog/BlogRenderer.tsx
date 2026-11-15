@@ -1,5 +1,5 @@
 import * as React from "react";
-import Markdown from "react-markdown";
+import Markdown, { defaultUrlTransform } from "react-markdown";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/utils/cn";
 import type { BlogBlock } from "@/types/blog";
@@ -126,6 +126,8 @@ export const CtaBlockView: React.FC<{
     bgMode ??
     (variant === "finalcta-mobile" ? "gradient-fade" : "gradient-blur");
 
+  href = defaultUrlTransform(href);
+
   const isExternal = /^https?:\/\//i.test(href);
   const list = React.useMemo(
     () => (Array.isArray(icons) ? icons.filter((s) => !!s && s.trim()) : []),
@@ -145,9 +147,10 @@ export const CtaBlockView: React.FC<{
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [mode, hasIcons]);
 
   const sizeStyle: React.CSSProperties = {};
+  sizeStyle.maxWidth = "100%";
   if (typeof buttonWidth === "number" && buttonWidth > 0) sizeStyle.width = buttonWidth;
   if (typeof buttonHeight === "number" && buttonHeight > 0) sizeStyle.height = buttonHeight;
 
@@ -413,17 +416,7 @@ export const BlogImage: React.FC<{
 };
 
 const renderContent = (block: BlogBlock): React.ReactNode => {
-  if ((block as any).type === "cta") {
-    const b = block as any;
-    return (
-      <CtaBlockView
-        variant={b.variant ?? "button"}
-        text={b.text ?? ""}
-        href={b.href ?? "#"}
-        icons={b.icons}
-      />
-    );
-  }
+  if (block.type === "cta") return <CtaBlockView {...block} />;
 
   switch (block.type) {
     case "heading": {

@@ -11,48 +11,17 @@ import { cn } from "@/utils/cn";
 import { tr } from "@/i18n";
 import { api } from "@/app/api/client";
 import { makeSlug, newBlockId, toSave } from "@/app/lib/blogApi";
-import type { BlogBlock, BlogBlockType, BlogPost } from "@/types/blog";
-import { BLOG_HEADING_GRADIENT, CtaBlockView, BlogImage } from "./BlogRenderer";
+import type { BlogBlock, BlogBlockType, BlogPost, CtaBlock, CtaBgMode, ListBlock } from "@/types/blog";
+import { BLOG_HEADING_GRADIENT, renderBlocks } from "./BlogRenderer";
 import { createPortal } from "react-dom";
-import { defaultUrlTransform } from "react-markdown";
+import { BlogCard } from "@/components/landing/BlogCard";
 
 /* ════════════════════════════════════════════════════════════════════
-   Локальные типы (расширяют BlogBlock, не трогая types/blog.ts)
+   Общие типы блоков редактора и публичного рендера
    ════════════════════════════════════════════════════════════════════ */
 
-type CtaBgMode = "none" | "custom" | "gradient-blur" | "gradient-fade";
-
-type CtaBlock = {
-  id: string;
-  type: "cta";
-  bgMode: CtaBgMode;
-  /** @deprecated — только для обратной совместимости */
-  variant?: "button" | "finalcta-mobile";
-  text: string;
-  href: string;
-  bgColor?: string;
-  bgImage?: string;
-  textColor?: string;
-  buttonWidth?: number;
-  buttonHeight?: number;
-  icons?: string[];
-  children?: AnyBlock[];
-};
-
-type AnyBlock =
-  | (BlogBlock & { children?: AnyBlock[] })
-  | ListBlock
-  | CtaBlock;
-
-type BlockType = BlogBlockType | "list" | "cta";
-
-type ListBlock = {
-  id: string;
-  type: "list";
-  ordered: boolean;
-  items: string[];
-  children?: AnyBlock[];
-};
+type AnyBlock = BlogBlock;
+type BlockType = BlogBlockType;
 
 /* ════════════════════════════════════════════════════════════════════
    Фабрика блоков
@@ -293,14 +262,19 @@ SmartTextarea.displayName = "SmartTextarea";
    UI-обёртки полей
    ════════════════════════════════════════════════════════════════════ */
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <label className="block">
-    <span className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-      {label}
-    </span>
-    {children}
-  </label>
-);
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => {
+  const labelId = React.useId();
+  const control = React.isValidElement(children) &&
+    (typeof children.type === "string" || children.type === SmartTextarea)
+    ? React.cloneElement(children as React.ReactElement<{ "aria-labelledby"?: string }>, { "aria-labelledby": labelId })
+    : children;
+  return (
+    <label className="block">
+      <span id={labelId} className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{label}</span>
+      {control}
+    </label>
+  );
+};
 
 const inputCls =
   "w-full h-10 px-3 rounded-xl text-sm " +
@@ -392,125 +366,7 @@ const PictureInput = ({
 };
 
 /* ════════════════════════════════════════════════════════════════════
-   Markdown: минимальный inline + block-рендерер для preview
-   ════════════════════════════════════════════════════════════════════ */
-
-const renderInline = (text: string): React.ReactNode => {
-  const parts: React.ReactNode[] = [];
-  let key = 0;
-  const re = /(\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|\[([^\]]+)\]\(([^)]+)\))/g;
-  let last = 0;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text))) {
-    if (m.index > last) parts.push(text.slice(last, m.index));
-    if (m[2]) parts.push(<strong key={key++}>{m[2]}</strong>);
-    else if (m[3]) parts.push(<em key={key++}>{m[3]}</em>);
-    else if (m[4])
-      parts.push(
-        <code key={key++} className="px-1 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-[0.9em]">
-          {m[4]}
-        </code>
-      );
-    else if (m[5] && m[6])
-      parts.push(
-        <a key={key++} href={defaultUrlTransform(m[6])} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-300 underline">
-          {m[5]}
-        </a>
-      );
-    last = m.index + m[0].length;
-  }
-  if (last < text.length) parts.push(text.slice(last));
-  return parts;
-};
-
-const renderMarkdownBlocks = (text: string): React.ReactNode => {
-  const lines = text.split("\n");
-  const out: React.ReactNode[] = [];
-  let i = 0;
-  let key = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-    if (line.trim() === "") { i++; continue; }
-
-    const numbered = line.match(/^(\s*)(\d+(?:\.\d+)*)\.\s+(.*)$/);
-    if (numbered) {
-      const items: { text: string; indent: number }[] = [];
-      while (i < lines.length) {
-        const mm = lines[i].match(/^(\s*)(\d+(?:\.\d+)*)\.\s+(.*)$/);
-        if (!mm) break;
-        items.push({ text: mm[3], indent: mm[1].length });
-        i++;
-      }
-      out.push(
-        <ol key={key++} className="list-decimal pl-6 my-2 space-y-1">
-          {items.map((it, idx) => (
-            <li key={idx} style={{ marginLeft: Math.max(0, it.indent - 2) * 8 }}>
-              {renderInline(it.text)}
-            </li>
-          ))}
-        </ol>
-      );
-      continue;
-    }
-
-    const bullet = line.match(/^(\s*)[-*+]\s+(.*)$/);
-    if (bullet) {
-      const items: { text: string; indent: number }[] = [];
-      while (i < lines.length) {
-        const mm = lines[i].match(/^(\s*)[-*+]\s+(.*)$/);
-        if (!mm) break;
-        items.push({ text: mm[2], indent: mm[1].length });
-        i++;
-      }
-      out.push(
-        <ul key={key++} className="list-disc pl-6 my-2 space-y-1">
-          {items.map((it, idx) => (
-            <li key={idx} style={{ marginLeft: Math.max(0, it.indent - 2) * 8 }}>
-              {renderInline(it.text)}
-            </li>
-          ))}
-        </ul>
-      );
-      continue;
-    }
-
-    const quote = line.match(/^>\s?(.*)$/);
-    if (quote) {
-      const buf: string[] = [];
-      while (i < lines.length) {
-        const mm = lines[i].match(/^>\s?(.*)$/);
-        if (!mm) break;
-        buf.push(mm[1]);
-        i++;
-      }
-      out.push(
-        <blockquote key={key++} className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic my-2">
-          {buf.map((l, idx) => (<div key={idx}>{renderInline(l)}</div>))}
-        </blockquote>
-      );
-      continue;
-    }
-
-    // Абзац
-    const paras: string[] = [];
-    while (i < lines.length && lines[i].trim() !== "") {
-      const l = lines[i];
-      if (/^\s*\d+\./.test(l) || /^\s*[-*+]\s/.test(l) || /^\s*>/.test(l)) break;
-      paras.push(l);
-      i++;
-    }
-    if (paras.length) {
-      out.push(
-        <p key={key++} className="my-2 whitespace-pre-wrap">{renderInline(paras.join("\n"))}</p>
-      );
-    }
-  }
-  return out;
-};
-
-/* ════════════════════════════════════════════════════════════════════
-   Меню добавления блока
+   Меню добавления блоков
    ════════════════════════════════════════════════════════════════════ */
 
 const AddBlockMenu = ({
@@ -647,7 +503,6 @@ const CtaBlockEditor = ({
   block, onChange,
 }: { block: CtaBlock; onChange: (b: CtaBlock) => void }) => {
   const update = (patch: Partial<CtaBlock>) => onChange({ ...block, ...patch });
-  const icons = block.icons ?? [];
   const bgMode: CtaBgMode =
     block.bgMode ?? (block.variant === "finalcta-mobile" ? "gradient-fade" : "gradient-blur");
 
@@ -777,6 +632,10 @@ const CtaBlockEditor = ({
     />
   </Field>
 </div>
+      <Field label={tr("Летающие иконки (URL, по одной на строку)", "Floating icons (one image URL per line)")}>
+        <textarea className={textareaCls} value={(block.icons ?? []).join("\n")}
+          onChange={(e) => update({ icons: e.target.value.split("\n") })} />
+      </Field>
     </div>
   );
 };
@@ -1020,101 +879,6 @@ const BlockCard = ({
    Preview: рендер блоков с Markdown и вложениями
    ════════════════════════════════════════════════════════════════════ */
 
-const renderPreviewBlock = (block: AnyBlock): React.ReactNode => {
-  const children = block.children ?? [];
-  const inner = (() => {
-  if (block.type === "cta") {
-  return (
-    <CtaBlockView
-      bgMode={block.bgMode}
-      variant={block.variant}
-      text={block.text}
-      href={block.href}
-      bgColor={block.bgColor}
-      bgImage={block.bgImage}
-      textColor={block.textColor}
-      buttonWidth={block.buttonWidth}
-      buttonHeight={block.buttonHeight}
-      icons={block.icons}
-    />
-  );
-}
-  switch (block.type) {
-      case "heading": {
-        const Tag = (`h${block.level}` as "h1" | "h2" | "h3");
-        const cls =
-          block.level === 1
-            ? cn("text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1]", BLOG_HEADING_GRADIENT, "inline-block mb-4 mt-6")
-            : block.level === 2
-            ? "text-2xl md:text-3xl font-semibold mt-6 mb-3"
-            : "text-xl md:text-2xl font-semibold mt-4 mb-2";
-        return <Tag className={cls}>{renderInline(block.text)}</Tag>;
-      }
-      case "paragraph":
-        return <div>{renderMarkdownBlocks(block.text)}</div>;
-      case "image":
-  return (
-    <BlogImage
-      key={block.id}
-      src={block.src}
-      alt={block.alt}
-      caption={block.caption}
-    />
-  );
-      case "quote":
-        return (
-          <blockquote className="border-l-4 border-blue-400 pl-4 italic my-4">
-            {renderMarkdownBlocks(block.text)}
-            {block.author && (
-              <footer className="text-sm text-gray-500 mt-2 not-italic">
-                — {block.author}
-              </footer>
-            )}
-          </blockquote>
-        );
-      case "callout": {
-        const styles =
-          block.variant === "tip"
-            ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400"
-            : block.variant === "warning"
-            ? "bg-amber-50 dark:bg-amber-950/40 border-amber-400"
-            : "bg-blue-50 dark:bg-blue-950/40 border-blue-400";
-        return (
-          <div className={cn("border-l-4 rounded-r-xl p-4 my-4", styles)}>
-            {block.title && <p className="font-semibold mb-1">{block.title}</p>}
-            <div>{renderMarkdownBlocks(block.text)}</div>
-          </div>
-        );
-      }
-      case "divider":
-        return <hr className="my-8 border-gray-200 dark:border-white/10" />;
-      case "list": {
-        const Tag = block.ordered ? "ol" : "ul";
-        return (
-          <Tag className={cn("pl-6 my-4 space-y-1", block.ordered ? "list-decimal" : "list-disc")}>
-            {block.items.map((it, idx) => (
-              <li key={idx}>{renderInline(it)}</li>
-            ))}
-          </Tag>
-        );
-      }
-      default:
-        return null;
-    }
-  })();
-
-  return (
-    <React.Fragment key={block.id}>
-      {inner}
-      {children.map((c) => renderPreviewBlock(c))}
-    </React.Fragment>
-  );
-};
-
-/* ════════════════════════════════════════════════════════════════════
-   Основной редактор
-   ════════════════════════════════════════════════════════════════════ */
-
 const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
   const [post, setPost] = React.useState<BlogPost | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -1147,11 +911,16 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
   }, []);
 
   React.useEffect(() => {
+    let active = true;
     setLoading(true);
+    setDirty(false);
+    setProblem(null);
+    setSaved(false);
     api.admin.blogPost(id)
-      .then(setPost)
-      .catch(() => setPost(null))
-      .finally(() => setLoading(false));
+      .then((next) => { if (active) setPost(next); })
+      .catch(() => { if (active) setPost(null); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [id]);
 
   React.useEffect(() => {
@@ -1302,10 +1071,10 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
                 {post.excerpt}
               </p>
             )}
-            {blocks.map((b) => renderPreviewBlock(b))}
+            {renderBlocks(blocks)}
           </article>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <fieldset disabled={saving} className="grid min-w-0 gap-6 lg:grid-cols-[1fr_320px]">
             <div className="space-y-4">
               {/* Мета-поля */}
               <div className="rounded-2xl p-4 bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 -xl space-y-3">
@@ -1397,6 +1166,37 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
 
             {/* SEO-панель */}
             <aside className="space-y-4">
+              <div id="landing-card" className="rounded-2xl p-4 bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 space-y-3">
+                <h3 className="font-semibold">{tr("Карточка на главной", "Landing page card")}</h3>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={post.landing?.enabled ?? false}
+                    onChange={(e) => patch({ landing: { position: 0, ...post.landing, enabled: e.target.checked } })} />
+                  {tr("Показывать на главной", "Show on landing page")}
+                </label>
+                <p className="text-xs text-gray-500">{tr("На главной видны только опубликованные статьи. Пустые поля используют данные статьи. Меньший номер показывается первым.", "Only published articles appear. Empty fields use article details. Lower positions appear first.")}</p>
+                <Field label={tr("Порядок", "Position")}>
+                  <input type="number" min={0} max={10000} className={inputCls} value={post.landing?.position ?? 0}
+                    onChange={(e) => patch({ landing: { enabled: false, ...post.landing, position: Number(e.target.value) } })} />
+                </Field>
+                {([
+                  ["title", tr("Заголовок карточки", "Card title")],
+                  ["description", tr("Описание карточки", "Card description")],
+                  ["caption", tr("Подпись / категория", "Caption / category")],
+                  ["imageAlt", tr("Описание изображения", "Image alt text")],
+                  ["linkText", tr("Текст ссылки", "Link text")],
+                ] as const).map(([key, label]) => (
+                  <Field key={key} label={label}>
+                    <SmartTextarea className={textareaCls} value={post.landing?.[key] ?? ""}
+                      onChange={(e) => patch({ landing: { enabled: false, position: 0, ...post.landing, [key]: e.target.value } })} />
+                  </Field>
+                ))}
+                <Field label={tr("Изображение карточки", "Card image")}>
+                  <PictureInput value={post.landing?.image ?? ""} placeholder={tr("По умолчанию — обложка", "Defaults to article cover")}
+                    onChange={(image) => patch({ landing: { enabled: false, position: 0, ...post.landing, image } })} />
+                </Field>
+                <a href="/#blog" className="text-sm text-blue-600 dark:text-blue-300">{tr("Открыть главную", "Open landing page")}</a>
+                <BlogCard post={post} preview />
+              </div>
               <div className="rounded-2xl p-4 bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 -xl">
                 <h3 className="font-semibold mb-3">SEO</h3>
                 <div className="space-y-3">
@@ -1457,7 +1257,7 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
                 )}
               </div>
             </aside>
-          </div>
+          </fieldset>
         )}
       </div>
     </div>

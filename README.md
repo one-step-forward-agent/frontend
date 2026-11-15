@@ -53,6 +53,14 @@ In Docker, nginx serves the build and proxies `/api`, `/auth` and `/health` to t
 `BACKEND_URL` (default `http://app:8000`, see `nginx.conf.template`). Hashed assets are cached
 for a year, and pages are revalidated on every load.
 
+## Blog builder
+
+Admins manage articles at `/dashboard/blog`. Open an article and use **Landing page card** to select it for the landing page, set its position (lower numbers first), and override its title, description, caption, image, alt text and link text. The card preview matches the public landing page. Blank overrides use the article title, excerpt, first tag and cover. Save or publish to persist changes; selected drafts stay hidden. Deselecting or unpublishing removes a card from the landing page without deleting the article.
+
+The article preview uses the public renderer. CTA blocks save their destination, text, background style/image, colors, dimensions and floating icon image URLs, including when nested in other blocks. Images can use HTTP(S) URLs or the editor's upload control.
+
+The backend must be migrated through `0059_blog_landing` before running this frontend. Existing articles are initially unselected. The public landing page uses `/api/blog/landing` and links cards to `/blog/:slug`.
+
 ## Content to review before launch
 
 - `src/pages/Documents/md_texts/*.md`: the terms and the personal-data consent come from the

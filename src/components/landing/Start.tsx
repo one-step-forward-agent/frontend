@@ -13,6 +13,9 @@ import { cn } from "@/utils/cn";
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
 import { tr } from "@/i18n";
+import { api } from "@/app/api/client";
+import type { BlogPost } from "@/types/blog";
+import { BlogCard } from "./BlogCard";
 
 /* ═══════════════════════════════════════════════════════════
    Main Page Component
@@ -1478,70 +1481,46 @@ const ReviewsSection: React.FC = () => (
    Blogs Section
    ═══════════════════════════════════════════════════════════ */
 
-const BlogsSection: React.FC = () => (
-  <section className="relative py-16 md:py-24 px-4 md:px-6 max-w-6xl mx-auto">
-    <div className="text-center mb-12">
-      <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white mb-4">
-        {tr("С временем можно подружиться", "You can make friends with time")}
-      </h2>
-      <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-        {tr("Практичные идеи о времени, внимании и привычках — в нашем блоге и телеграм-канале.", "Practical ideas about time, attention, and habits — in our blog and Telegram channel.")}
-      </p>
-    </div>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-      <a href="https://deyla.tech/blogs" target="_blank" rel="noreferrer" className="group block">
-        <Card className="overflow-hidden border-none shadow-lg bg-white dark:bg-gray-900 group-hover:-translate-y-1 transition-transform duration-300">
-          <div className="h-48 bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('/images/functional/whitetheme/today.png')] bg-cover bg-center opacity-30 mix-blend-overlay" />
-            <div className="z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md px-4 py-2 rounded-full font-medium text-sm text-purple-600 dark:text-purple-300">
-              {tr("Фокус · 5 минут", "Focus · 5 min")}
-            </div>
-          </div>
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors">
-              {tr("Как планировать день, если всё меняется", "How to plan your day when everything changes")}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-              {tr("Гибкий план, который помогает, а не диктует правила.", "A flexible plan that helps rather than dictates rules.")}
-            </p>
-            <span className="text-blue-600 dark:text-blue-400 text-sm font-medium inline-flex items-center gap-1">
-              {tr("Читать краткий экнос", "Read the summary")} <ArrowRight size={14} />
-            </span>
-          </div>
-        </Card>
-      </a>
-
-      <a href="https://deyla.tech/blogs" target="_blank" rel="noreferrer" className="group block">
-        <Card className="overflow-hidden border-none shadow-lg bg-white dark:bg-gray-900 group-hover:-translate-y-1 transition-transform duration-300">
-          <div className="h-48 bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('/images/functional/whitetheme/assistant.png')] bg-cover bg-center opacity-30 mix-blend-overlay" />
-            <div className="z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md px-4 py-2 rounded-full font-medium text-sm text-emerald-600 dark:text-emerald-300">
-              {tr("Планирование · 4 минуты", "Planning · 4 min")}
-            </div>
-          </div>
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors">
-              {tr("Календарь и список задач: почему им лучше быть рядом", "Calendar and task list: why they are better together")}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-              {tr("Разбираемся, где рождается перегруз и как его избежать.", "Understanding where overload is born and how to avoid it.")}
-            </p>
-            <span className="text-blue-600 dark:text-blue-400 text-sm font-medium inline-flex items-center gap-1">
-              {tr("Читать краткий экнос", "Read the summary")} <ArrowRight size={14} />
-            </span>
-          </div>
-        </Card>
-      </a>
-    </div>
-
-    <div className="flex justify-center">
-      <LiquidButton href="https://deyla.tech/blogs" target="_blank" rel="noreferrer">
-        {tr("Больше статей в блоге", "More articles in the blog")}
-        <ArrowRight size={18} />
-      </LiquidButton>
-    </div>
-  </section>
-);
+const BlogsSection: React.FC = () => {
+  const [posts, setPosts] = React.useState<BlogPost[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [failed, setFailed] = React.useState(false);
+  const [attempt, setAttempt] = React.useState(0);
+  React.useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setFailed(false);
+    api.blog.landing().then((items) => { if (active) setPosts(items); })
+      .catch(() => { if (active) setFailed(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [attempt]);
+  return (
+    <section id="blog" className="relative py-16 md:py-24 px-4 md:px-6 max-w-6xl mx-auto">
+      <div className="text-center mb-12">
+        <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white mb-4">
+          {tr("С временем можно подружиться", "You can make friends with time")}
+        </h2>
+        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          {tr("Практичные идеи о времени, внимании и привычках — в нашем блоге и телеграм-канале.", "Practical ideas about time, attention, and habits — in our blog and Telegram channel.")}
+        </p>
+      </div>
+      {loading ? <p role="status" className="text-center mb-8 text-gray-500">{tr("Загрузка статей…", "Loading articles…")}</p>
+        : failed ? <div role="alert" className="text-center mb-8">
+          <p>{tr("Не удалось загрузить статьи", "Could not load articles")}</p>
+          <button type="button" className="text-blue-600 underline" onClick={() => setAttempt((value) => value + 1)}>{tr("Повторить", "Retry")}</button>
+        </div>
+        : posts.length === 0 ? <p className="text-center mb-8 text-gray-500">{tr("Новые статьи скоро появятся", "New articles are coming soon")}</p>
+        : <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          {posts.map((post) => <BlogCard key={post.id} post={post} />)}
+        </div>}
+      <div className="flex justify-center">
+        <LiquidButton href="/blog">
+          {tr("Больше статей в блоге", "More articles in the blog")} <ArrowRight size={18} />
+        </LiquidButton>
+      </div>
+    </section>
+  );
+};
 
 export default Start;

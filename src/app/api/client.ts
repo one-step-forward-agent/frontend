@@ -499,6 +499,7 @@ export const api = {
   },
   /** The public blog: published posts and how they are read */
   blog: {
+    landing: () => request<BlogPost[]>("/api/blog/landing"),
     posts: () => request<BlogPost[]>("/api/blog/posts"),
     post: (slug: string) => request<BlogPost>(`/api/blog/posts/${encodeURIComponent(slug)}`),
     startView: (slug: string, visitor: string, referrer: string | null) =>

@@ -50,6 +50,7 @@ export const toSave = (post: BlogPost): BlogPostSave => ({
   author: post.author || undefined,
   seo: post.seo,
   blocks: post.blocks,
+  landing: post.landing,
 });
 
 /** The posts written before the blog had a server, still in this browser */

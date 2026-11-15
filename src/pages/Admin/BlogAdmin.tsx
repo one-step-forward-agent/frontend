@@ -8,6 +8,7 @@ import BlogEditor from "@/app/components/blog/BlogEditor";
 import { BLOG_HEADING_GRADIENT } from "@/app/components/blog/BlogRenderer";
 import { cn } from "@/utils/cn";
 import { HelpHint } from "@/components/ui/help-hint";
+import { tr } from "@/i18n";
 
 /** deyla.tech/dashboard/blog: the posts with how they are read, the editor (/dashboard/blog/:id) and one post's
  * analytics (/dashboard/blog/:id/stats). Views, unique readers, reading time and scroll depth come from the post
@@ -213,6 +214,18 @@ function BlogAdminList() {
         </div>
 
         {problem && <p className="rounded-xl bg-red-500/10 px-4 py-2 text-sm text-red-700 dark:text-red-300">{problem}</p>}
+        {posts && <div className={panel}>
+          <h2 className="font-semibold mb-2">{tr("Статьи на главной", "Landing page articles")}</h2>
+          <p className="text-sm text-gray-500 mb-3">{tr("Откройте редактор статьи, чтобы выбрать её для главной, изменить карточку и порядок показа.", "Open an article editor to select it for the landing page, customize its card and set its position.")}</p>
+          <div className="flex flex-wrap gap-2">
+            {posts.filter((post) => post.landing?.enabled).sort((a, b) => (a.landing?.position ?? 0) - (b.landing?.position ?? 0) || a.id - b.id).map((post) => (
+              <Link key={post.id} className={action} to={`/dashboard/blog/${post.id}#landing-card`}>
+                {post.landing?.position ?? 0}. {post.landing?.title || post.title}
+                {post.status === "draft" && tr(" (черновик, скрыт)", " (draft, hidden)")}
+              </Link>
+            ))}
+          </div>
+        </div>}
         {leftInBrowser.length > 0 && (
           <div className="flex flex-wrap items-center gap-3 rounded-xl bg-amber-500/10 px-4 py-3 text-sm">
             <span className="flex-1 min-w-[220px]">

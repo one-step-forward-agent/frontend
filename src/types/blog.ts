@@ -18,7 +18,8 @@ export type BlogBlockType =
   | "quote"
   | "callout"
   | "divider"
-  | "list";
+  | "list"
+  | "cta";
 
 interface BlogBlockBase {
   id: string;
@@ -74,6 +75,33 @@ export interface ListBlock extends BlogBlockBase {
   items: string[];
 }
 
+export type CtaBgMode = "none" | "custom" | "gradient-blur" | "gradient-fade";
+
+export interface CtaBlock extends BlogBlockBase {
+  type: "cta";
+  text: string;
+  href: string;
+  bgMode?: CtaBgMode;
+  variant?: "button" | "finalcta-mobile";
+  bgColor?: string;
+  bgImage?: string;
+  textColor?: string;
+  buttonWidth?: number;
+  buttonHeight?: number;
+  icons?: string[];
+}
+
+export interface BlogLandingCard {
+  enabled: boolean;
+  position: number;
+  title?: string;
+  description?: string;
+  caption?: string;
+  image?: string | null;
+  imageAlt?: string;
+  linkText?: string;
+}
+
 export type BlogBlock =
   | HeadingBlock
   | ParagraphBlock
@@ -81,7 +109,8 @@ export type BlogBlock =
   | QuoteBlock
   | CalloutBlock
   | DividerBlock
-  | ListBlock;
+  | ListBlock
+  | CtaBlock;
 
 /* ════════════════════════════════════════════════════════════════════
    Пост
@@ -107,6 +136,7 @@ export interface BlogPost {
     canonical?: string;
   };
   blocks: BlogBlock[];
+  landing?: BlogLandingCard;
 }
 
 /** What the editor sends: the post without the fields the server sets */
