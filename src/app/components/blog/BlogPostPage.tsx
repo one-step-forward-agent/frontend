@@ -15,33 +15,52 @@ function useSeo(post: BlogPost | null) {
   React.useEffect(() => {
     if (!post) return;
     const prev = document.title;
+    const restore: (() => void)[] = [];
     document.title = post.seo.title || post.title;
 
     const setMeta = (attr: "name" | "property", key: string, value: string) => {
       let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      const existing = el;
+      const previousContent = el?.getAttribute("content");
       if (!el) {
         el = document.createElement("meta");
         el.setAttribute(attr, key);
         document.head.appendChild(el);
       }
       el.setAttribute("content", value);
+      const changed = el;
+      restore.push(() => {
+        if (!existing) changed.remove();
+        else if (previousContent === null || previousContent === undefined) changed.removeAttribute("content");
+        else changed.setAttribute("content", previousContent);
+      });
     };
     setMeta("name", "description", post.seo.description || post.excerpt || "");
     setMeta("property", "og:title", post.seo.title || post.title);
     setMeta("property", "og:description", post.seo.description || post.excerpt || "");
     setMeta("property", "og:type", "article");
-    const ogImage = post.seo.ogImage || post.coverImage;
-    if (ogImage) setMeta("property", "og:image", ogImage);
+    const ogImage = post.seo.ogImage || post.coverImage || "";
+    let absoluteOgImage = "";
+    try { if (ogImage) absoluteOgImage = new URL(ogImage, window.location.origin).href; } catch { /* Ignore malformed legacy URLs. */ }
+    setMeta("property", "og:image", absoluteOgImage);
 
     let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    const previousCanonical = canonical;
+    const previousHref = canonical?.getAttribute("href");
     if (!canonical) {
       canonical = document.createElement("link");
       canonical.rel = "canonical";
       document.head.appendChild(canonical);
     }
     canonical.href = post.seo.canonical || `${window.location.origin}/blog/${post.slug}`;
-
-    return () => { document.title = prev; };
+    const changedCanonical = canonical;
+    return () => {
+      document.title = prev;
+      restore.forEach((undo) => undo());
+      if (!previousCanonical) changedCanonical.remove();
+      else if (previousHref === null || previousHref === undefined) changedCanonical.removeAttribute("href");
+      else changedCanonical.setAttribute("href", previousHref);
+    };
   }, [post]);
 }
 
@@ -52,8 +71,12 @@ export default function BlogPostPage() {
   const article = React.useRef<HTMLElement>(null);
 
   React.useEffect(() => {
+    let active = true;
     setPost(undefined);
-    api.blog.post(slug).then(setPost).catch(() => setPost(null));
+    api.blog.post(slug)
+      .then((next) => { if (active) setPost(next); })
+      .catch(() => { if (active) setPost(null); });
+    return () => { active = false; };
   }, [slug]);
   useSeo(post ?? null);
 

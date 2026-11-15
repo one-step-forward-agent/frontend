@@ -292,22 +292,39 @@ const textareaCls =
    Загрузка картинки
    ════════════════════════════════════════════════════════════════════ */
 
+const UploadActivity = React.createContext<(delta: number) => void>(() => {});
+
 const PictureInput = ({
   value, onChange, placeholder,
 }: { value: string; onChange: (url: string) => void; placeholder: string }) => {
   const [busy, setBusy] = React.useState(false);
   const [problem, setProblem] = React.useState<string | null>(null);
+  const onUploadActivity = React.useContext(UploadActivity);
+  const latestChange = React.useRef(onChange);
+  const mounted = React.useRef(false);
+
+  React.useLayoutEffect(() => { latestChange.current = onChange; }, [onChange]);
+  React.useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+  React.useEffect(() => {
+    if (!busy) return;
+    onUploadActivity(1);
+    return () => onUploadActivity(-1);
+  }, [busy, onUploadActivity]);
 
   const pick = async (file: File | undefined) => {
     if (!file) return;
     setBusy(true);
     setProblem(null);
     try {
-      onChange((await api.admin.uploadBlogImage(file)).url);
+      const { url } = await api.admin.uploadBlogImage(file);
+      if (mounted.current) latestChange.current(url);
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : "Не получилось загрузить");
+      if (mounted.current) setProblem(error instanceof Error ? error.message : "Не получилось загрузить");
     } finally {
-      setBusy(false);
+      if (mounted.current) setBusy(false);
     }
   };
 
@@ -318,6 +335,7 @@ const PictureInput = ({
           className={inputCls}
           placeholder={placeholder}
           value={value}
+          disabled={busy}
           onChange={(e) => onChange(e.target.value)}
         />
         <label
@@ -331,6 +349,7 @@ const PictureInput = ({
           <ImageIcon size={14} /> {busy ? "Загрузка…" : "Загрузить"}
           <input
             type="file"
+            disabled={busy}
             accept="image/png,image/jpeg,image/webp,image/gif"
             className="hidden"
             onChange={(e) => {
@@ -342,6 +361,7 @@ const PictureInput = ({
         {value && (
           <div className="mt-2">
             <img
+              key={value}
               src={
                 /^(https?:|data:|blob:|\/)/i.test(value.trim())
                   ? value.trim()
@@ -887,6 +907,10 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
   const [saving, setSaving] = React.useState(false);
   const [problem, setProblem] = React.useState<string | null>(null);
   const [dirty, setDirty] = React.useState(false);
+  const [uploads, setUploads] = React.useState(0);
+  const onUploadActivity = React.useCallback((delta: number) => {
+    setUploads((count) => Math.max(0, count + delta));
+  }, []);
   const dragFrom = React.useRef<number | null>(null);
 
   const [allTags, setAllTags] = React.useState<string[]>([]);
@@ -949,7 +973,7 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
   };
 
   const save = async (status?: BlogPost["status"]) => {
-    if (!post) return;
+    if (!post || saving || uploads > 0) return;
     setSaving(true);
     setProblem(null);
     try {
@@ -989,6 +1013,7 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
   };
 
   return (
+    <UploadActivity.Provider value={onUploadActivity}>
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
         {/* Верхняя панель */}
@@ -1003,6 +1028,7 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
           <button
             type="button"
             onClick={() => setPreview((v) => !v)}
+            disabled={uploads > 0}
             className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
           >
             <Eye size={14} /> {preview ? tr("Редактор", "Editor") : tr("Превью", "Preview")}
@@ -1010,7 +1036,7 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
           <button
             type="button"
             onClick={() => save()}
-            disabled={saving}
+            disabled={saving || uploads > 0}
             className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06] disabled:opacity-50"
           >
             <Save size={14} /> {tr("Сохранить", "Save")}{dirty ? " •" : ""}
@@ -1019,7 +1045,7 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
             <button
               type="button"
               onClick={() => save("draft")}
-              disabled={saving}
+              disabled={saving || uploads > 0}
               className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm bg-white/70 dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06] disabled:opacity-50"
             >
               <X size={14} /> {tr("Снять с публикации", "Unpublish")}
@@ -1028,7 +1054,7 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
           <button
             type="button"
             onClick={() => save("published")}
-            disabled={saving}
+            disabled={saving || uploads > 0}
             className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm text-white bg-gradient-to-br from-blue-500 to-violet-500 shadow-md hover:brightness-110"
           >
             <CheckCircle2 size={14} /> {tr("Опубликовать", "Publish")}
@@ -1040,6 +1066,9 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
             <AlertTriangle size={14} /> {problem}
           </div>
         )}
+        {uploads > 0 && <p role="status" className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          {tr("Изображения загружаются. Сохранение будет доступно после загрузки.", "Images are uploading. Saving will be available when uploads finish.")}
+        </p>}
         {saved && (
           <div className="mb-4 px-4 py-2 rounded-xl bg-emerald-500/10 ring-1 ring-emerald-400/30 text-emerald-700 dark:text-emerald-300 text-sm">
             {tr("Сохранено", "Saved")}
@@ -1261,6 +1290,7 @@ const BlogEditor: React.FC<{ id: number }> = ({ id }) => {
         )}
       </div>
     </div>
+    </UploadActivity.Provider>
   );
 };
 
