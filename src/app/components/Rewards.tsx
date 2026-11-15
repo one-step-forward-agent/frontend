@@ -6,7 +6,7 @@ import { api } from "../api/client";
 import type { Rewards } from "../api/types";
 import { useAuth, useUser } from "../auth";
 import { errorText } from "../lib/format";
-import { Button, useErrorToast } from "./ui";
+import { Button, HelpHint, useErrorToast } from "./ui";
 import { Icon } from "./icons";
 import { cn } from "@/utils/cn";
 import { isEn, pluralWord, tr } from "@/i18n";
@@ -127,12 +127,15 @@ function SpherePicker({ onSaved }: { onSaved?: () => void }) {
 
   return (
     <div className="space-y-3">
-      <p className="muted small">
-        {tr(
-          "Выберите сферы жизни — для каждой появятся свои значки и тег.",
-          "Choose your life areas — each gets its own badges and tag."
-        )}
-      </p>
+      <div className="flex items-center gap-1 text-sm font-medium text-gray-900 dark:text-white">
+        {tr("Сферы жизни", "Life areas")}
+        <HelpHint label={tr("Сферы жизни", "Life areas")}>
+          {tr(
+            "Выберите сферы жизни — для каждой появятся свои значки и тег.",
+            "Choose your life areas — each gets its own badges and tag."
+          )}
+        </HelpHint>
+      </div>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label={tr("Сферы жизни", "Life areas")}>
         {SPHERE_PRESETS.map((name) => (
           <button

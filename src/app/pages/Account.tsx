@@ -326,6 +326,12 @@ function RewardsSection() {
     <div id="rewards" className="anchor">
       <GlassCard
         title={tr("Награды", "Awards")}
+        actions={enabled && <HelpHint label={tr("Награды", "Awards")}>
+          {tr(
+            "Очки даются за каждую выполненную задачу и за дни, когда сделано всё, а за серии дней — бонус. Значки — за задачи в ваших сферах жизни: ставьте тег сферы, например «#Спорт».",
+            "You get points for every task done and for days with everything done, plus a bonus for streaks. Badges come from tasks in your life areas: add the area's tag, like “#Sport”."
+          )}
+        </HelpHint>}
       >
         <Switch
           checked={enabled}
@@ -333,17 +339,9 @@ function RewardsSection() {
           label={tr("Очки, уровни и значки", "Points, levels and badges")}
           hint={tr("Если выключить, они пропадут с сайта и из вечерних итогов в Telegram", "Turn off to hide them on the site and in the evening summary in Telegram")}
         />
-        {enabled && (
-        <p className="muted small">
-          {tr(
-            "Очки даются за каждую выполненную задачу и за дни, когда сделано всё, а за серии дней — бонус. Значки — за задачи в ваших сферах жизни: ставьте тег сферы, например «#Спорт».",
-            "You get points for every task done and for days with everything done, plus a bonus for streaks. Badges come from tasks in your life areas: add the area's tag, like “#Sport”."
-          )}
-        </p>
-        )}
         {enabled &&
           (rewards.data ? (
-            <div className="space-y-5">
+            <div className="mt-4 space-y-5">
               <LevelBar rewards={rewards.data} />
               <BadgeList rewards={rewards.data} onSpheres={rewards.reload} />
             </div>
@@ -399,13 +397,14 @@ function TagsSection() {
 
   return (
     <div id="tags" className="anchor">
-      <GlassCard title={tr("Теги", "Tags")}>
-        <p className="muted small">
+      <GlassCard title={tr("Теги", "Tags")} actions={
+        <HelpHint label={tr("Теги", "Tags")}>
           {tr(
             "Отмечайте задачи тегами и фильтруйте по ним в «Задачах». В чате тег ставится так: «отчёт завтра #работа». Снимите «в прогрессе» у тегов вроде «прогулка» — такие задачи не будут влиять на процент и серию.",
             "Tag your tasks and filter by tags in Tasks. In the chat, add a tag like this: “report tomorrow #work”. Untick “in progress” for tags like “walk” — such tasks won't affect the percentage and the streak."
           )}
-        </p>
+        </HelpHint>
+      }>
         {tags.length > 0 && (
           <ul className="simple-list tag-manage">
             {tags.map((tag) => (
@@ -736,7 +735,7 @@ function Hub() {
         id="integrations"
         to="/integrations"
         icon="calendar"
-        title={tr("Календари и сервисы", "Calendars & services")}
+        title={tr("Интеграции", "Integrations")}
         loading={integrations.loading}
         status={
           rows.length
@@ -785,9 +784,8 @@ function HubCard(props: {
   badge?: ReactNode;
 }) {
   return (
-    <Link
+    <div
       id={props.id}
-      to={props.to}
       className={cn(
         "anchor group relative block rounded-2xl p-4 transition-colors",
         GLASS_BODY,
@@ -795,30 +793,31 @@ function HubCard(props: {
       )}
     >
       <div className="flex items-center gap-2">
-        <Icon name={props.icon} size={18} className="text-sky-600 dark:text-sky-400 shrink-0" />
-        <span className="font-medium text-gray-900 dark:text-white truncate">{props.title}</span>
-        <span className="ml-auto shrink-0">{props.badge}</span>
+        <Link to={props.to} className="flex min-w-0 flex-1 items-center gap-2 after:absolute after:inset-0 after:rounded-2xl">
+          <Icon name={props.icon} size={18} className="text-sky-600 dark:text-sky-400 shrink-0" />
+          <span className="font-medium text-gray-900 dark:text-white truncate">{props.title}</span>
+          <span className="ml-auto shrink-0">{props.badge}</span>
+        </Link>
+        <span className="relative z-10 shrink-0">
+          <HelpHint label={props.title}>{props.loading ? tr("Загрузка…", "Loading…") : props.status}</HelpHint>
+        </span>
       </div>
-      <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 min-h-[2rem]">
-        {props.loading ? "…" : props.status}
-      </p>
-    </Link>
+    </div>
   );
 }
 
 function ImportSection() {
   return (
     <div id="import" className="anchor">
-      <GlassCard title={tr("Импорт из файла .ics", "Import from an .ics file")}>
-        <p className="muted small">
+      <GlassCard title={tr("Импорт из файла .ics", "Import from an .ics file")} actions={
+        <HelpHint label={tr("Импорт из файла .ics", "Import from an .ics file")}>
           {tr(
             "Файл .ics выгружают Google, Яндекс, Apple и Outlook календари, расписания вузов и сайты мероприятий. Все его события добавятся в Deyla; при повторном импорте того же файла — только новые. Импортировать только месяц или день можно на странице «Календарь», а ещё — просто прислать файл в чат.",
             "Google, Yandex, Apple and Outlook calendars, university timetables and event sites export .ics files. All of the file's events are added to Deyla; importing the same file again adds only the new ones. To import just a month or a day, use the Calendar page — or simply send the file to the chat."
           )}
-        </p>
-        <div style={{ marginTop: 12 }}>
-          <IcsImportButton showResult label={tr("Выбрать файл .ics", "Choose an .ics file")} />
-        </div>
+        </HelpHint>
+      }>
+        <IcsImportButton showResult label={tr("Выбрать файл .ics", "Choose an .ics file")} />
       </GlassCard>
     </div>
   );
@@ -839,7 +838,15 @@ function TelegramSection() {
 
   return (
     <div id="telegram" className="anchor">
-      <GlassCard title="Telegram">
+      <GlassCard title="Telegram" actions={<HelpHint label="Telegram">
+        {status.data?.linked ? tr(
+          "Пишите боту планы обычными словами, голосом или файлом PDF/DOCX — события появятся в календаре. Спросите «что у меня завтра?», чтобы увидеть план.",
+          "Send the bot your plans in plain words, by voice or as a PDF/DOCX file — the events will appear in the calendar. Ask “what do I have tomorrow?” to see the plan."
+        ) : tr(
+          "Привяжите Telegram, чтобы планировать в чате с Deyla: пишите или надиктовывайте планы, спрашивайте о расписании и получайте напоминания и план на утро.",
+          "Link Telegram to plan in a chat with Deyla: type or dictate plans, ask about your schedule and get reminders and a morning plan."
+        )}
+      </HelpHint>}>
         {status.error && (
           <ErrorNote message={status.error} onRetry={status.reload} />
         )}
@@ -856,12 +863,6 @@ function TelegramSection() {
                 {" "}
                 · {tr("с", "since")} {formatDateTime(status.data.linked_at)}
               </span>
-            </p>
-            <p className="muted small">
-              {tr(
-                "Пишите боту планы обычными словами, голосом или файлом PDF/DOCX — события появятся в календаре. Спросите «что у меня завтра?», чтобы увидеть план.",
-                "Send the bot your plans in plain words, by voice or as a PDF/DOCX file — the events will appear in the calendar. Ask “what do I have tomorrow?” to see the plan."
-              )}
             </p>
             <div className="button-row">
               <Button
@@ -894,12 +895,6 @@ function TelegramSection() {
           </div>
         ) : (
           <div className="form">
-            <p className="muted">
-              {tr(
-                "Привяжите Telegram, чтобы планировать в чате с Deyla: пишите или надиктовывайте планы, спрашивайте о расписании и получайте напоминания и план на утро.",
-                "Link Telegram to plan in a chat with Deyla: type or dictate plans, ask about your schedule and get reminders and a morning plan."
-              )}
-            </p>
             {link ? (
               <div className="link-code">
                 {link.deep_link && (
@@ -912,27 +907,23 @@ function TelegramSection() {
                     {tr("Открыть бота", "Open the bot")} <Icon name="external" size={14} />
                   </a>
                 )}
-                <p className="small">
-                  {link.deep_link
-                    ? tr("Или отправьте боту команду:", "Or send the bot this command:")
-                    : tr("Отправьте боту команду:", "Send the bot this command:")}
-                </p>
-                <button
-                  type="button"
-                  className="code h-8 px-3 text-xs rounded-lg"
-                  onClick={() => copy(`/start ${link.code}`)}
-                  title={tr("Скопировать", "Copy")}
-                >
-                  /start {link.code}
-                </button>
-                <p className="muted small">
-                  {tr("Код действует до", "The code is valid until")}{" "}
-                  {new Date(link.expires_at).toLocaleTimeString(LOCALE, {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  .
-                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="code h-8 px-3 text-xs rounded-lg"
+                    onClick={() => copy(`/start ${link.code}`)}
+                    title={tr("Скопировать", "Copy")}
+                  >
+                    /start {link.code}
+                  </button>
+                  <HelpHint label={tr("Команда для Telegram", "Telegram command")}>
+                    {link.deep_link
+                      ? tr("Или отправьте боту команду:", "Or send the bot this command:")
+                      : tr("Отправьте боту команду:", "Send the bot this command:")}{" "}
+                    {tr("Код действует до", "The code is valid until")}{" "}
+                    {new Date(link.expires_at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })}.
+                  </HelpHint>
+                </div>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -983,7 +974,17 @@ function SecuritySection() {
 
   return (
     <div id="security" className="anchor">
-      <GlassCard title={tr("Безопасность", "Security")}>
+      <GlassCard title={tr("Безопасность", "Security")} actions={
+        <HelpHint label={tr("Удаление аккаунта", "Account deletion")}>
+          {tr(
+            "Удаление аккаунта стирает все ваши задачи, файлы, переписку с ассистентом и подключения и отзывает доступ Deyla к Google Calendar. Отменить его нельзя. Подробнее — в",
+            "Deleting the account erases all your tasks, files, chats with the assistant and connections, and revokes Deyla's access to Google Calendar. It cannot be undone. More in the"
+          )}{" "}
+          <a href="/privacy-policy" className="text-sky-600 dark:text-sky-400 hover:underline">
+            {tr("политике конфиденциальности", "privacy policy")}
+          </a>.
+        </HelpHint>
+      }>
         <div className="flex flex-col gap-3">
           <div className="button-row">
             <Button size="sm" icon="logout" onClick={() => logout()}>
@@ -997,16 +998,6 @@ function SecuritySection() {
               {tr("Выйти везде", "Sign out everywhere")}
             </ConfirmButton>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {tr(
-              "Удаление аккаунта стирает все ваши задачи, файлы, переписку с ассистентом и подключения и отзывает доступ Deyla к Google Calendar. Отменить его нельзя. Подробнее — в",
-              "Deleting the account erases all your tasks, files, chats with the assistant and connections, and revokes Deyla's access to Google Calendar. It cannot be undone. More in the"
-            )}{" "}
-            <a href="/privacy-policy" className="text-sky-600 dark:text-sky-400 hover:underline">
-              {tr("политике конфиденциальности", "privacy policy")}
-            </a>
-            .
-          </p>
           <div className="button-row">
             <ConfirmButton
               size="sm"
