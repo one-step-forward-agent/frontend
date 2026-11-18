@@ -152,7 +152,7 @@ const ChatContextMenu: React.FC = () => (
 const RegisterButton: React.FC = () => (
   <div className="mt-1">
     <LiquidButton 
-      href="https://deyla.tech/registration" 
+      href="https://deyla.tech/register" 
       target="_blank" 
       rel="noreferrer" 
       className="h-7 px-3 text-xs bg-blue-600/10 text-blue-600 dark:text-blue-400 ring-blue-500/20 hover:bg-blue-600/20"
