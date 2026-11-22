@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { api, type CustomReminder, type CustomReminderBody } from "../api/client";
 import { dayKey, errorText, openPicker } from "../lib/format";
-import { useAsync } from "../lib/hooks";
+import { notifyTasksChanged, useAsync } from "../lib/hooks";
 import { Icon } from "./icons";
 import { Button, ConfirmButton, ErrorNote, Field, Loading, useErrorToast, useToast } from "./ui";
 import { TimeField } from "@/components/ui/time-field";
@@ -95,6 +95,7 @@ export function CustomRemindersSection() {
     try {
       if (editing) await api.customReminders.update(editing, body);
       else await api.customReminders.create(body);
+      notifyTasksChanged();
       toast(editing ? tr("Напоминание изменено", "Reminder updated") : tr("Напоминание поставлено", "Reminder set"));
       setForm(null);
       setEditing(null);
@@ -110,6 +111,7 @@ export function CustomRemindersSection() {
     setRemoving(id);
     try {
       await api.customReminders.remove(id);
+      notifyTasksChanged();
       toast(tr("Напоминание отменено", "Reminder cancelled"));
       list.reload();
     } catch (err) {

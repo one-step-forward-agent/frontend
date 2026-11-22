@@ -276,7 +276,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     try {
       const { message_id: serverId, ...reply } = attached.length ? await api.assistant.chatFiles(attached, value) : await api.assistant.chat(value);
       push({ id: ++messageId, role: "assistant", reply: reply as AssistantReply, serverId });
-      if (reply.kind === "completed") notifyTasksChanged();
+      if (reply.kind === "completed" || reply.kind === "reminder") notifyTasksChanged();
       const events = "events" in reply && Array.isArray(reply.events) ? (reply.events as { tag_ids?: number[] }[]) : [];
       if (events.some((event) => event.tag_ids?.some((id) => !tagsById.has(id)))) notifyTagsChanged();
       if (reply.kind === "send_draft") await refreshDraftCards();
@@ -307,7 +307,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     try {
       const { message_id: serverId, ...reply } = await api.assistant.chatVoice(audio, duration, attached);
       push({ id: ++messageId, role: "assistant", reply: reply as AssistantReply, serverId });
-      if (reply.kind === "completed") notifyTasksChanged();
+      if (reply.kind === "completed" || reply.kind === "reminder") notifyTasksChanged();
       if (reply.kind === "send_draft") await refreshDraftCards();
     } catch (error) {
       // Speech that could not be made out or a limit reached is said in words, not as a failure to retry
@@ -1294,6 +1294,7 @@ function ReminderReply({
     setBusy(id);
     try {
       const result = await api.assistant.cancelReminder(id);
+      notifyTasksChanged();
       onDone(result.kind === "cancelled" ? result.text : tr("Напоминание отменено", "Reminder cancelled"));
     } catch {
       reportError(tr("Напоминание уже пришло или отменено", "The reminder has already come or been cancelled"));
