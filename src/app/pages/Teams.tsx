@@ -199,7 +199,11 @@ function TasksTab({ team }: { team: TeamDetail }) {
   const [filter, setFilter] = useState<"all" | "mine" | number>("all");
   const [filters, setFilters] = useState<TeamTaskFilters>(EMPTY_TEAM_FILTERS);
   const timezone = useAuthStore(state => state.user?.timezone) || "UTC";
-  const setTaskFilter = (key: keyof TeamTaskFilters, value: string) => setFilters(current => ({ ...current, [key]: value }));
+  const setTaskFilter = (key: keyof TeamTaskFilters, value: string) => setFilters(current => ({
+    ...current, [key]: value,
+    ...(key === "from" && value && current.to && value > current.to ? { to: value } : {}),
+    ...(key === "to" && value && current.from && value < current.from ? { from: value } : {}),
+  }));
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -340,8 +344,8 @@ function TasksTab({ team }: { team: TeamDetail }) {
               <option value="none">{tr("Без дедлайна", "No deadline")}</option>
             </select>
           </Field>
-          <Field label={tr("Дедлайн с", "Deadline from")}><input className={INPUT} type="date" value={filters.from} max={filters.to || undefined} onChange={event => setTaskFilter("from", event.target.value)} /></Field>
-          <Field label={tr("Дедлайн по", "Deadline through")}><input className={INPUT} type="date" value={filters.to} min={filters.from || undefined} onChange={event => setTaskFilter("to", event.target.value)} /></Field>
+          <Field label={tr("Дедлайн с", "Deadline from")}><input className={INPUT} type="date" value={filters.from} onChange={event => setTaskFilter("from", event.target.value)} /></Field>
+          <Field label={tr("Дедлайн по", "Deadline through")}><input className={INPUT} type="date" value={filters.to} onChange={event => setTaskFilter("to", event.target.value)} /></Field>
           <Field label={tr("Подтверждение", "Confirmation")}>
             <select aria-label={tr("Подтверждение", "Confirmation")} className={INPUT} value={filters.confirmation} onChange={event => setTaskFilter("confirmation", event.target.value)}>
               <option value="all">{tr("Все", "All")}</option>
@@ -641,6 +645,8 @@ function TeamChatTab({ team }: { team: TeamDetail }) {
   const [loaded, setLoaded] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -661,12 +667,14 @@ function TeamChatTab({ team }: { team: TeamDetail }) {
 
   const send = async (input: string) => {
     const value = input.trim();
-    if (!value || busy) return;
+    if ((!value && !files.length) || busy) return;
+    const attached = files;
     setText("");
-    setItems((current) => [...current, { id: ++chatId, role: "user", text: value }]);
+    setFiles([]);
+    setItems((current) => [...current, { id: ++chatId, role: "user", text: [value, ...attached.map(file => `📎 ${file.name}`)].join("\n") }]);
     setBusy(true);
     try {
-      const reply = await api.teams.send(team.id, value);
+      const reply = attached.length ? await api.teams.sendFiles(team.id, value, attached) : await api.teams.send(team.id, value);
       setItems((current) => [...current, { id: ++chatId, role: "assistant", text: reply.kind === "answer" ? reply.text : "", reply }]);
     } catch (error) {
       setItems((current) => [...current, { id: ++chatId, role: "error", text: error instanceof Error ? error.message : tr("Не получилось", "Didn't work") }]);
@@ -735,7 +743,7 @@ function TeamChatTab({ team }: { team: TeamDetail }) {
         {busy && <p className="text-sm text-gray-500">{tr("Думаю…", "Thinking…")}</p>}
       </div>
       <form
-        className="mt-3 flex gap-2"
+        className="mt-3 flex flex-wrap gap-2"
         onSubmit={(event) => {
           event.preventDefault();
           send(text);
@@ -749,7 +757,9 @@ function TeamChatTab({ team }: { team: TeamDetail }) {
           placeholder={tr("Поставь Ивану задачу подготовить презентацию к пятнице", "Assign Ivan to prepare the slides by Friday")}
           aria-label={tr("Сообщение ассистенту команды", "Message to the team's assistant")}
         />
-        <Button type="submit" variant="primary" icon="send" busy={busy} disabled={!text.trim()} aria-label={tr("Отправить", "Send")} />
+        <Button type="submit" variant="primary" icon="send" busy={busy} disabled={!text.trim() && !files.length} aria-label={tr("Отправить", "Send")} />
+        <div className="w-full"><TaskFilePicker label={tr("Вложения к сообщению", "Message attachments")} files={files} onChange={setFiles} onError={setFileError} disabled={busy} /></div>
+        {fileError && <p role="alert" className="text-sm text-rose-600">{fileError}</p>}
       </form>
     </GlassCard>
   );

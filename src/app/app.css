@@ -336,6 +336,8 @@
 .fd-app textarea {
   width: 100%;
   min-height: 42px;
+  min-width: 0;
+  max-width: 100%;
   padding: 9px 12px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
@@ -447,6 +449,8 @@
   .fd-app .move-tomorrow .move-label { display: none; }
 }
 .fd-app .picker-field input { cursor: pointer; }
+.fd-app input[type="date"], .fd-app input[type="datetime-local"] { appearance: none; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.fd-app input::-webkit-date-and-time-value { text-align: left; min-width: 0; }
 
 .fd-app .day-group + .day-group { margin-top: 14px; }
 .fd-app .day-group h3 { margin: 0 0 4px 14px; }

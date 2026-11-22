@@ -33,7 +33,7 @@ import { AssignedTaskSchedule } from "./AssignedTaskSchedule";
 import { TaskVisibility } from "./TaskVisibility";
 import { TaskFilePicker } from "./TaskFilePicker";
 
-export function EventRow({ event, showDate = false, extra, startBeforeComplete = false }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode; startBeforeComplete?: boolean }) {
+export function EventRow({ event, showDate = false, extra, startBeforeComplete = true }: { event: CalendarEvent; showDate?: boolean; extra?: ReactNode; startBeforeComplete?: boolean }) {
   const reportError = useErrorToast();
   const start = new Date(event.start_at);
   const last = lastDay(event);
@@ -137,7 +137,7 @@ export function EventRow({ event, showDate = false, extra, startBeforeComplete =
   );
 }
 
-export function EventList({ events, showDate, extra, startBeforeComplete = false }: { events: CalendarEvent[]; showDate?: boolean; extra?: (event: CalendarEvent) => ReactNode; startBeforeComplete?: boolean }) {
+export function EventList({ events, showDate, extra, startBeforeComplete = true }: { events: CalendarEvent[]; showDate?: boolean; extra?: (event: CalendarEvent) => ReactNode; startBeforeComplete?: boolean }) {
   return (
     <ul className="event-list">
       {events.map((event) => (
@@ -373,7 +373,7 @@ export function EventForm({
         try {
           await api.events.uploadFile(saved.id, file);
         } catch (err) {
-          setError(tr(`Задача создана, но файл «${file.name}» не прикреплён. ${errorText(err)} Повторите загрузку или уберите файл из списка.`, `The task was created, but “${file.name}” was not attached. ${errorText(err)} Retry the upload or remove the file from the list.`));
+          setError(tr(`Задача сохранена, но файл «${file.name}» не прикреплён. ${errorText(err)} Повторите загрузку или уберите файл из списка.`, `The task was saved, but “${file.name}” was not attached. ${errorText(err)} Retry the upload or remove the file from the list.`));
           return;
         }
         setFiles(current => current.filter(item => item !== file));
@@ -507,7 +507,7 @@ export function EventForm({
       </details>
       </fieldset>
 
-      {!event && <TaskFilePicker files={files} onChange={setFiles} onError={setError} disabled={saving} uploadedCount={uploadedCount} recurring={!!state.repeat.freq} />}
+      <TaskFilePicker files={files} onChange={setFiles} onError={setError} disabled={saving} uploadedCount={uploadedCount} recurring={!!state.repeat.freq} />
 
       {error && <p className="form-error" role="alert">{error}</p>}
 

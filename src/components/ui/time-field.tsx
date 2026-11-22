@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 import { createPortal } from "react-dom";
 import { Clock } from "lucide-react";
 import { cn } from "@/utils/cn";
@@ -55,7 +55,7 @@ export function TimeField({ value, onChange, allowEmpty = false, disabled = fals
   const [text, setText] = React.useState(current);
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(-1);
-  const [place, setPlace] = React.useState<{ left: number; top: number; width: number; up: boolean } | null>(null);
+  const [place, setPlace] = React.useState<{ left: number; top: number; width: number; height: number; up: boolean } | null>(null);
   const boxRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const listRef = React.useRef<HTMLUListElement>(null);
@@ -89,9 +89,16 @@ export function TimeField({ value, onChange, allowEmpty = false, disabled = fals
   const measure = React.useCallback(() => {
     const box = boxRef.current?.getBoundingClientRect();
     if (!box) return;
-    const below = window.innerHeight - box.bottom;
-    const up = below < 260 && box.top > below;
-    setPlace({ left: box.left, top: up ? box.top - 6 : box.bottom + 6, width: Math.max(box.width, 120), up });
+    const viewport = window.visualViewport;
+    const leftEdge = (viewport?.offsetLeft ?? 0) + 8;
+    const topEdge = (viewport?.offsetTop ?? 0) + 8;
+    const rightEdge = leftEdge + (viewport?.width ?? window.innerWidth) - 16;
+    const bottomEdge = topEdge + (viewport?.height ?? window.innerHeight) - 16;
+    const below = Math.max(0, bottomEdge - box.bottom - 6);
+    const above = Math.max(0, box.top - topEdge - 6);
+    const up = below < 240 && above > below;
+    const width = Math.min(Math.max(box.width, 120), rightEdge - leftEdge);
+    setPlace({ left: Math.max(leftEdge, Math.min(box.left, rightEdge - width)), top: up ? box.top - 6 : box.bottom + 6, width, height: Math.min(240, up ? above : below), up });
   }, []);
 
   const show = () => {
@@ -123,6 +130,8 @@ export function TimeField({ value, onChange, allowEmpty = false, disabled = fals
     };
     window.addEventListener("mousedown", close);
     window.addEventListener("resize", measure);
+    window.visualViewport?.addEventListener("resize", measure);
+    window.visualViewport?.addEventListener("scroll", measure);
     // Scrolling the list itself does not move the field
     const follow = (event: Event) => {
       if (!listRef.current?.contains(event.target as Node)) measure();
@@ -131,6 +140,8 @@ export function TimeField({ value, onChange, allowEmpty = false, disabled = fals
     return () => {
       window.removeEventListener("mousedown", close);
       window.removeEventListener("resize", measure);
+      window.visualViewport?.removeEventListener("resize", measure);
+      window.visualViewport?.removeEventListener("scroll", measure);
       window.removeEventListener("scroll", follow, true);
     };
   });
@@ -189,7 +200,7 @@ export function TimeField({ value, onChange, allowEmpty = false, disabled = fals
               "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100",
               "ring-1 ring-black/10 dark:ring-white/10 shadow-xl tabular-nums text-sm"
             )}
-            style={{ left: place.left, width: place.width, ...(place.up ? { bottom: window.innerHeight - place.top } : { top: place.top }) }}
+            style={{ left: place.left, width: place.width, maxHeight: place.height, ...(place.up ? { bottom: window.innerHeight - place.top } : { top: place.top }) }}
           >
             {options.map((option, index) => {
               const highlighted = index === (active >= 0 ? active : typedIndex);

@@ -125,7 +125,12 @@ export function EventPage({ id }: { id: number }) {
 
   const toggleDone = () =>
     run("done", async () => {
-      event.setData(await api.events.complete(item.id, !item.completed_at));
+      if (item.team_task && !item.completed_at) {
+        await api.teams.act(item.team_task.task_id, item.team_task.status === "in_progress" ? "done" : "start");
+        await event.reload();
+      } else {
+        event.setData(await api.events.complete(item.id, !item.completed_at));
+      }
       notifyTasksChanged();
     });
 
@@ -172,12 +177,12 @@ export function EventPage({ id }: { id: number }) {
             {item.assignment && <AssignedTaskSchedule event={item} />}
             <Button
               size="sm"
-              icon="check"
+              icon={item.team_task?.status === "todo" && !item.completed_at ? "play" : "check"}
               variant={item.completed_at ? "primary" : "secondary"}
               busy={pending === "done"}
               onClick={toggleDone}
             >
-              {item.completed_at ? tr("Выполнено", "Done") : tr("Отметить выполненной", "Mark as done")}
+              {item.completed_at ? tr("Выполнено", "Done") : item.team_task?.status === "todo" ? tr("Начать выполнение", "Start execution") : tr("Отметить выполненной", "Mark as done")}
             </Button>
             <Button size="sm" icon="settings" onClick={() => setEditing(true)}>
               {tr("Изменить", "Edit")}

@@ -13,13 +13,14 @@ export interface TeamTaskFilters {
 export const EMPTY_TEAM_FILTERS: TeamTaskFilters = { status: "all", project: "all", deadline: "all", from: "", to: "", confirmation: "all", search: "" };
 
 export function filterTeamTasks(tasks: TeamTask[], filters: TeamTaskFilters, now = new Date(), timezone = "UTC"): TeamTask[] {
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  const dateFormat = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" });
+  const today = dateFormat.format(now);
   const last = new Date(`${today}T12:00:00Z`);
   last.setUTCDate(last.getUTCDate() + 6);
   const weekEnd = last.toISOString().slice(0, 10);
   const search = filters.search.trim().toLocaleLowerCase();
   return tasks.filter(task => {
-    const due = task.deadline_at?.slice(0, 10);
+    const due = task.deadline_at ? dateFormat.format(new Date(task.deadline_at)) : undefined;
     return (filters.status === "all" || task.status === filters.status)
       && (filters.project === "all" || (filters.project === "none" ? !task.project_id : task.project_id === Number(filters.project)))
       && (filters.confirmation === "all" || task.confirm === filters.confirmation)

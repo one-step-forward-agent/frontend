@@ -22,7 +22,7 @@ export function assignmentGroups(events: CalendarEvent[]) {
   return [...groups.values()];
 }
 
-export function AssignedTaskGroup({ events, compact = false, startBeforeComplete = false }: { events: CalendarEvent[]; compact?: boolean; startBeforeComplete?: boolean }) {
+export function AssignedTaskGroup({ events, compact = false, startBeforeComplete = true }: { events: CalendarEvent[]; compact?: boolean; startBeforeComplete?: boolean }) {
   if (!events.length) return null;
   return <div className="min-w-0 space-y-2">{assignmentGroups(events).map(group => {
     const done = group.events.filter(event => event.completed_at).length;

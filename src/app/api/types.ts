@@ -549,8 +549,8 @@ export interface HistoryMessage {
   /** A user message with a file keeps { kind: "file", caption, file } here, a voice message { kind: "voice", voice } */
   reply:
     | AssistantReply
-    | { kind: "file"; caption: string; file: ChatFile }
-    | { kind: "voice"; voice: { id: string; duration: number }; transcript: string; file?: ChatFile }
+    | { kind: "file"; caption: string; file: ChatFile; files?: ChatFile[] }
+    | { kind: "voice"; voice: { id: string; duration: number }; transcript: string; file?: ChatFile; files?: ChatFile[] }
     | null;
   rating: -1 | 1 | null;
   created_at: string;

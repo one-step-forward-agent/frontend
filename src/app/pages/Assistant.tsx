@@ -1,5 +1,6 @@
 // src/pages/AssistantPage.tsx
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent, type RefObject } from "react";
+import { pasteFiles } from "../lib/files";
 import { ApiError, api } from "../api/client";
 import { TeamTaskAccept } from "../components/TeamTaskAccept";
 import { AssignedTaskSchedule } from "../components/AssignedTaskSchedule";
@@ -53,7 +54,7 @@ const GLASS_BODY = GLASS_BODY_FLAT;
 
 type Message =
   // `voice`: a voice message, shown as audio as in a messenger (the assistant gets what was said)
-  | { id: number; role: "user"; text: string; file?: ChatFile; voice?: { src: string; duration: number } }
+  | { id: number; role: "user"; text: string; file?: ChatFile; files?: ChatFile[]; voice?: { src: string; duration: number } }
   | { id: number; role: "assistant"; reply: AssistantReply; serverId?: number; rating?: -1 | 1 | null }
   | { id: number; role: "error"; text: string };
 
@@ -93,14 +94,15 @@ function fromHistory(items: HistoryMessage[]): Message[] {
   return items.map((item) =>
     item.role === "user"
       ? item.reply?.kind === "file"
-        ? { id: ++messageId, role: "user", text: item.reply.caption, file: item.reply.file }
+        ? { id: ++messageId, role: "user", text: item.reply.caption, file: item.reply.files ? undefined : item.reply.file, files: item.reply.files }
         : item.reply?.kind === "voice"
           ? {
               id: ++messageId,
               role: "user",
               text: "",
               voice: { src: api.assistant.voiceUrl(item.reply.voice.id), duration: item.reply.voice.duration },
-              file: item.reply.file,
+              file: item.reply.files ? undefined : item.reply.file,
+              files: item.reply.files,
             }
           : { id: ++messageId, role: "user", text: item.text }
       : {
@@ -128,7 +130,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
   const { query } = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -221,15 +223,15 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     }
   };
 
-  const send = async (input: string, attached: File | null = null) => {
+  const send = async (input: string, attached: File[] = []) => {
     const value = input.trim();
-    if ((!value && !attached) || busy) return;
+    if ((!value && !attached.length) || busy) return;
     setText("");
-    setFile(null);
-    push({ id: ++messageId, role: "user", text: value, file: attached ? { name: attached.name, size: attached.size } : undefined });
+    setFiles([]);
+    push({ id: ++messageId, role: "user", text: value, files: attached.map(file => ({ name: file.name, size: file.size })) });
     setBusy(true);
     try {
-      const { message_id: serverId, ...reply } = attached ? await api.assistant.chatFile(attached, value) : await api.assistant.chat(value);
+      const { message_id: serverId, ...reply } = attached.length ? await api.assistant.chatFiles(attached, value) : await api.assistant.chat(value);
       push({ id: ++messageId, role: "assistant", reply: reply as AssistantReply, serverId });
       if (reply.kind === "completed") notifyTasksChanged();
       const events = "events" in reply && Array.isArray(reply.events) ? (reply.events as { tag_ids?: number[] }[]) : [];
@@ -249,14 +251,14 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
   // A file attached before recording goes with it, as with a typed message
   const sendVoice = async (audio: Blob, duration: number) => {
     if (busy) return;
-    const attached = file;
-    setFile(null);
+    const attached = files;
+    setFiles([]);
     push({
       id: ++messageId,
       role: "user",
       text: "",
       voice: { src: URL.createObjectURL(audio), duration },
-      file: attached ? { name: attached.name, size: attached.size } : undefined,
+      files: attached.map(file => ({ name: file.name, size: file.size })),
     });
     setBusy(true);
     try {
@@ -460,7 +462,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
             </button>
           ))}
         </div>
-        <Composer value={text} onChange={setText} file={file} onFile={setFile} onSend={() => send(text, file)} onVoice={sendVoice} busy={busy} inputRef={inputRef} />
+        <Composer value={text} onChange={setText} files={files} onFiles={setFiles} onSend={() => send(text, files)} onVoice={sendVoice} busy={busy} inputRef={inputRef} />
       </div>
     </div>
   );
@@ -496,6 +498,7 @@ function ChatMessage({
           )}
         >
           {message.file && <FileChip file={message.file} />}
+          {message.files?.map((file, index) => <FileChip key={index} file={file} />)}
           {message.voice && (
             <div className={cn(message.file && "mt-1.5")}>
               <VoiceBubble src={message.voice.src} duration={message.voice.duration} />
@@ -2205,8 +2208,8 @@ const MAX_CHAT_FILE_MB = 20;
 function Composer({
   value,
   onChange,
-  file,
-  onFile,
+  files,
+  onFiles,
   onSend,
   onVoice,
   busy,
@@ -2214,8 +2217,8 @@ function Composer({
 }: {
   value: string;
   onChange: (value: string) => void;
-  file: File | null;
-  onFile: (file: File | null) => void;
+  files: File[];
+  onFiles: (files: File[]) => void;
   onSend: () => void;
   /** A finished recording: sent at once as a voice message */
   onVoice: (audio: Blob, duration: number) => void;
@@ -2223,6 +2226,8 @@ function Composer({
   inputRef?: RefObject<HTMLTextAreaElement | null>;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
+  const galleryInput = useRef<HTMLInputElement>(null);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const recorder = useRef<MediaRecorder | null>(null);
   const [recording, setRecording] = useState(false);
   const reportError = useErrorToast();
@@ -2274,17 +2279,18 @@ function Composer({
   };
 
   // A file over the limit is refused here, before a long upload ends in an error
-  const attach = (picked: File) => {
-    if (picked.size > MAX_CHAT_FILE_MB * 1024 * 1024) {
-      reportError(tr(`Файл больше ${MAX_CHAT_FILE_MB} МБ — выберите файл поменьше`, `The file is larger than ${MAX_CHAT_FILE_MB} MB — pick a smaller one`));
+  const attach = (picked: File[]) => {
+    if (busy) return;
+    const next = [...files];
+    picked.forEach(file => {
+      if (!next.some(item => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified)) next.push(file);
+    });
+    if (next.length > 6 || next.reduce((size, file) => size + file.size, 0) > MAX_CHAT_FILE_MB * 1024 * 1024) {
+      reportError(tr("Можно прикрепить до 6 файлов общим размером до 20 МБ", "Attach up to 6 files totaling up to 20 MB"));
       return;
     }
-    onFile(picked);
-  };
-
-  const pickFile = (picked: File | undefined) => {
-    if (picked) attach(picked);
-    if (fileInput.current) fileInput.current.value = "";
+    onFiles(next);
+    setSourcesOpen(false);
   };
 
   const submit = (event: FormEvent) => {
@@ -2301,27 +2307,22 @@ function Composer({
 
   return (
     <div className="space-y-1.5">
-    {file && (
-      <div className="flex">
-        <FileChip file={{ name: file.name, size: file.size }} onRemove={() => onFile(null)} />
-      </div>
-    )}
+    {files.length > 0 && <div className="flex flex-wrap gap-2">
+      {files.map((file, index) => <FileChip key={index} file={{ name: file.name, size: file.size }} onRemove={() => onFiles(files.filter((_, item) => item !== index))} />)}
+    </div>}
+    {sourcesOpen && <div className="flex flex-wrap gap-2" role="group" aria-label={tr("Источник вложения", "Attachment source")}>
+      <Button disabled={busy} icon="image" onClick={() => galleryInput.current?.click()}>{tr("Галерея", "Gallery")}</Button>
+      <Button disabled={busy} icon="file" onClick={() => fileInput.current?.click()}>{tr("Файлы", "Files")}</Button>
+    </div>}
     <form
       onSubmit={submit}
       // A screenshot pasted or a file dropped on the field is attached, as in any messenger
-      onPaste={(event) => {
-        const pasted = event.clipboardData.files[0];
-        if (pasted) {
+      onPaste={event => pasteFiles(event, attach)}
+      onDragOver={event => event.preventDefault()}
+      onDrop={event => {
+        if (event.dataTransfer.files.length) {
           event.preventDefault();
-          attach(pasted);
-        }
-      }}
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={(event) => {
-        const dropped = event.dataTransfer.files[0];
-        if (dropped) {
-          event.preventDefault();
-          attach(dropped);
+          attach(Array.from(event.dataTransfer.files));
         }
       }}
       className={cn(
@@ -2333,18 +2334,22 @@ function Composer({
         ref={fileInput}
         type="file"
         hidden
-        onChange={(e) => pickFile(e.target.files?.[0])}
+        multiple
+        disabled={busy}
+        onChange={event => { attach(Array.from(event.target.files ?? [])); event.target.value = ""; }}
       />
+      <input ref={galleryInput} type="file" accept="image/*" multiple hidden disabled={busy} onChange={event => { attach(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
       <Button
         variant="ghost"
         icon="clip"
         aria-label={tr("Прикрепить файл или фото", "Attach a file or photo")}
         title={tr(
-          "Любой файл до 20 МБ: документы, таблицы и фото Deyla прочитает, а любой файл пришлёт в Telegram к сроку",
-          "Any file up to 20 MB: Deyla reads documents, tables and photos, and sends any file to Telegram when asked"
+          "До 6 файлов общим размером до 20 МБ: документы, таблицы и фото Deyla прочитает, а файлы пришлёт в Telegram к сроку",
+          "Up to 6 files totaling 20 MB: Deyla reads documents, tables and photos, and sends files to Telegram when asked"
         )}
         disabled={busy}
-        onClick={() => fileInput.current?.click()}
+        aria-expanded={sourcesOpen}
+        onClick={() => setSourcesOpen(open => !open)}
       />
       <textarea
         ref={textarea}
@@ -2391,7 +2396,7 @@ function Composer({
         variant="primary"
         icon="send"
         aria-label={tr("Отправить", "Send")}
-        disabled={(!value.trim() && !file) || busy}
+        disabled={(!value.trim() && !files.length) || busy}
       />
     </form>
     </div>

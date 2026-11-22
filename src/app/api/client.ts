@@ -340,16 +340,22 @@ export const api = {
     transcribe: (audio: Blob) =>
       request<{ text: string }>("/api/assistant/transcribe", upload("audio", audio, "voice.webm"), "assistant_transcribe"),
     /** A voice message, as in a messenger: the chat keeps the recording, the assistant answers what was said. */
-    chatVoice: (audio: Blob, duration: number, file?: File | null) => {
+    chatVoice: (audio: Blob, duration: number, files: File[] = []) => {
       const init = upload("audio", audio, `voice${voiceSuffix(audio.type)}`);
       (init.body as FormData).append("duration", String(Math.round(duration * 10) / 10));
       // A file attached before recording goes with the voice message, as with a typed one
-      if (file) (init.body as FormData).append("file", file, file.name);
+      for (const file of files) (init.body as FormData).append("files", file, file.name);
       return request<AssistantReply & { message_id?: number }>("/api/assistant/chat/voice", init, "assistant_voice");
     },
     /** Where the chat plays a voice message from */
     voiceUrl: (id: string) => `/api/assistant/voice/${encodeURIComponent(id)}`,
     /** A message with a file (PDF, Word, Excel, CSV, text, photo): the server reads it and answers like any message. */
+    chatFiles: (files: File[], text: string) => {
+      const body = new FormData();
+      files.forEach(file => body.append("files", file, file.name));
+      body.append("text", text);
+      return request<AssistantReply & { message_id?: number }>("/api/assistant/chat/files", { method: "POST", body }, "assistant_file");
+    },
     chatFile: (file: File, text: string) => {
       const init = upload("file", file);
       (init.body as FormData).append("text", text);
@@ -424,6 +430,12 @@ export const api = {
       return task;
     },
     chat: (id: number) => request<TeamChatMessage[]>(`/api/teams/${id}/chat`),
+    sendFiles: (id: number, text: string, files: File[]) => {
+      const body = new FormData();
+      body.append("text", text);
+      files.forEach(file => body.append("files", file, file.name));
+      return request<AssistantReply & { message_id?: number }>(`/api/teams/${id}/chat/files`, { method: "POST", body }, "team_chat");
+    },
     send: (id: number, text: string) => request<AssistantReply & { message_id?: number }>(`/api/teams/${id}/chat`, json("POST", { text }), "team_chat"),
   },
   integrations: {
