@@ -256,12 +256,13 @@ export function Layout({ children }: { children: ReactNode }) {
       />
       <span
         className={cn(
-          "relative truncate",
+          "relative min-w-0 flex-1 truncate",
           item.main && "drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
         )}
       >
-        {item.label}{item.to === "/assistant" && <UnreadAssistant />}
+        {item.label}
       </span>
+      {item.to === "/assistant" && <UnreadAssistant />}
     </Link>
   );
 })}
@@ -371,7 +372,7 @@ export function Layout({ children }: { children: ReactNode }) {
                       aria-current={active ? "page" : undefined}
                       aria-label={item.label}
                       className={cn(
-                        "flex items-center justify-center",
+                        "relative flex items-center justify-center",
                         "w-12 h-12 rounded-xl text-white",
                         "bg-gradient-to-br from-sky-400 to-violet-500",
                         "shadow-[0_4px_14px_rgba(99,102,241,0.4)]",
@@ -380,8 +381,8 @@ export function Layout({ children }: { children: ReactNode }) {
                       )}
                     >
                       <Icon name={item.icon} size={22} className="relative" />
+                      {item.to === "/assistant" && <UnreadAssistant corner />}
                     </Link>
-                    {item.to === "/assistant" && <UnreadAssistant />}
                     {active && <ActiveDot />}
                   </li>
                 );
@@ -405,13 +406,13 @@ export function Layout({ children }: { children: ReactNode }) {
                     {/* The section you are in: a tinted pill behind the icon and a dot under it, not only a colour */}
                     <span
                       className={cn(
-                        "flex items-center justify-center w-12 h-10 rounded-xl transition-colors duration-200",
+                        "relative flex items-center justify-center w-12 h-10 rounded-xl transition-colors duration-200",
                         active && "bg-sky-500/15 ring-1 ring-sky-500/30 dark:bg-sky-400/20 dark:ring-sky-300/30"
                       )}
                     >
                       {item.to === "/" ? <TodayMark /> : <Icon name={item.icon} size={22} />}
+                      {item.to === "/assistant" && <UnreadAssistant corner />}
                     </span>
-                    {item.to === "/assistant" && <UnreadAssistant />}
                     {active && <ActiveDot />}
                   </Link>
                 </li>
@@ -491,8 +492,9 @@ function ChatDock({ path }: { path: string }) {
         className="relative drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
       />
       <span className="relative text-sm font-semibold drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-        {tr("Спросить Deyla", "Ask Deyla")} <UnreadAssistant />
+        {tr("Спросить Deyla", "Ask Deyla")}
       </span>
+      <UnreadAssistant />
     </button>
   );
 }
