@@ -114,7 +114,7 @@ const RegisterPage: React.FC = () => {
         email_code: emailCode.trim() || undefined, email_token: emailToken ?? undefined,
       });
       reachGoal("registration_success");
-      navigate(safeNext(searchParams.get("next")), { replace: true });
+      navigate(searchParams.get("next") ? safeNext(searchParams.get("next")) : "/app/assistant", { replace: true });
     } catch {
     }
   };

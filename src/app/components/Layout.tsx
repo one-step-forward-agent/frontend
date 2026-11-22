@@ -1,4 +1,5 @@
 // src/components/Layout.tsx
+import { UnreadAssistant, useAssistantInbox } from "../lib/assistantInbox";
 import { Sparkles } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/theme";
@@ -162,6 +163,14 @@ function useHideOnScroll(threshold = 80): boolean {
 
 export function Layout({ children }: { children: ReactNode }) {
   const signOut = useSignOut();
+  const refreshInbox = useAssistantInbox((state) => state.refresh);
+  useEffect(() => {
+    const refresh = () => { if (!document.hidden) refreshInbox(); };
+    refresh();
+    const timer = window.setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", refresh); };
+  }, [refreshInbox]);
   const { path, query } = useLocation();
   const toast = useToast();
   const accountActive = isActive("/account", path);
@@ -251,7 +260,7 @@ export function Layout({ children }: { children: ReactNode }) {
           item.main && "drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
         )}
       >
-        {item.label}
+        {item.label}{item.to === "/assistant" && <UnreadAssistant />}
       </span>
     </Link>
   );
@@ -372,6 +381,7 @@ export function Layout({ children }: { children: ReactNode }) {
                     >
                       <Icon name={item.icon} size={22} className="relative" />
                     </Link>
+                    {item.to === "/assistant" && <UnreadAssistant />}
                     {active && <ActiveDot />}
                   </li>
                 );
@@ -401,6 +411,7 @@ export function Layout({ children }: { children: ReactNode }) {
                     >
                       {item.to === "/" ? <TodayMark /> : <Icon name={item.icon} size={22} />}
                     </span>
+                    {item.to === "/assistant" && <UnreadAssistant />}
                     {active && <ActiveDot />}
                   </Link>
                 </li>
@@ -480,7 +491,7 @@ function ChatDock({ path }: { path: string }) {
         className="relative drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
       />
       <span className="relative text-sm font-semibold drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-        {tr("Спросить Deyla", "Ask Deyla")}
+        {tr("Спросить Deyla", "Ask Deyla")} <UnreadAssistant />
       </span>
     </button>
   );

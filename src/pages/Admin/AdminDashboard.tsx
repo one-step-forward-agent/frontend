@@ -252,6 +252,7 @@ export default function AdminDashboard() {
         <button type="button" className={toolButton} onClick={refresh} aria-label="Обновить данные" title="Обновить данные">
           <RefreshCw size={14} className={cn(loadingSheet && "animate-spin")} />
         </button>
+        <Link to="/dashboard/proactivity" className={toolButton}>Проактивность</Link>
         <Link to="/dashboard/research" className={toolButton}>
           <Lightbulb size={14} /> Гипотезы
         </Link>

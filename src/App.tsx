@@ -12,6 +12,7 @@ import { LanguageToggle, ThemeProvider, ThemeToggle } from "@/theme";
 import { tr } from "@/i18n";
 import { installAdminApiMock } from "@/dev/mockAdminApi";
 import { api } from "@/app/api/client";
+import { captureCampaign, campaignAttribution } from "@/lib/attribution";
 import { DEV_AUTH_BYPASS } from "@/config/devAuth";
 
 const BlogListPage = lazy(() => import("@/app/components/blog/BlogListPage"));
@@ -23,6 +24,7 @@ const TermsOfUsePage = lazy(() => import("@/pages/Documents/TermsOfUsePage"));
 const PersonalDataConsentPage = lazy(() => import("@/pages/Documents/PersonalDataConsentPage"));
 const AdminDashboard = lazy(() => import("@/pages/Admin/AdminDashboard"));
 const AdminAnalytics = lazy(() => import("@/pages/Admin/AdminAnalytics"));
+const ProactivityAdmin = lazy(() => import("@/pages/Admin/ProactivityAdmin"));
 const ResearchAdmin = lazy(() => import("@/pages/Admin/ResearchAdmin"));
 const BroadcastAdmin = lazy(() => import("@/pages/Admin/BroadcastAdmin"));
 
@@ -131,6 +133,18 @@ function NotFoundPage() {
   );
 }
 
+function CampaignTracking() {
+  const location = useLocation();
+  const userId = useAuthStore((state) => state.user?.id);
+  useLayoutEffect(() => { captureCampaign(); }, [location.search]);
+  useEffect(() => {
+    if (!userId || DEV_AUTH_BYPASS) return;
+    const attribution = campaignAttribution();
+    if (attribution) api.me.saveAttribution(attribution).catch(() => undefined);
+  }, [userId, location.search]);
+  return null;
+}
+
 function Routing() {
   const loadUser = useAuthStore((state) => state.loadUser);
   useEffect(() => {
@@ -145,6 +159,7 @@ function Routing() {
 
   return (
     <Suspense fallback={<FullScreenLoader />}>
+      <CampaignTracking />
       <NavigationBridge />
       <Routes>
         <Route path="/" element={<RootRoute />} />
@@ -171,6 +186,7 @@ function Routing() {
           <Route path="/dashboard" element={<AdminDashboard />} />
           <Route path="/dashboard/analytics" element={<AdminAnalytics />} />
           <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard/proactivity" element={<ProactivityAdmin />} />
           <Route path="/dashboard/research" element={<ResearchAdmin />} />
           <Route path="/dashboard/broadcast" element={<BroadcastAdmin />} />
           <Route path="/dashboard/blog" element={<BlogAdmin />} />

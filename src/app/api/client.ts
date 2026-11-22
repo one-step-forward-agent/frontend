@@ -188,6 +188,8 @@ const upload = (field: string, file: Blob, filename?: string): RequestInit => {
 const voiceSuffix = (type: string): string =>
   type.includes("mp4") ? ".m4a" : type.includes("ogg") ? ".ogg" : type.includes("mpeg") ? ".mp3" : ".webm";
 
+import { campaignAttribution } from "@/lib/attribution";
+
 export const api = {
   completion: {
     get: (path: string) => request<CompletionReport>(path),
@@ -200,7 +202,7 @@ export const api = {
       email: string; password: string; name?: string | null; timezone?: string; website?: string; form_ms?: number;
       email_code?: string; email_token?: string;
     }) =>
-      request<TokenResponse>("/auth/register", json("POST", body), "register_success"),
+      request<TokenResponse>("/auth/register", json("POST", { ...body, attribution: campaignAttribution() }), "register_success"),
     // Mails a code that confirms the email; required false: the server has no mail set up and needs no code
     registerCode: (body: { email: string; website?: string }) =>
       request<{ required: boolean; email_token: string | null; expires_in: number | null }>(
@@ -217,11 +219,12 @@ export const api = {
     ) =>
       request<{ authorization_url: string }>(
         `/auth/oauth/${provider}/start`,
-        json("POST", body),
+        json("POST", { ...body, attribution: campaignAttribution() }),
         { name: body.mode === "signup" ? "oauth_signup_start" : "oauth_login_start", params: { provider } },
       ),
   },
   me: {
+    saveAttribution: (body: NonNullable<ReturnType<typeof campaignAttribution>>) => request<{ saved: boolean }>("/api/me/attribution", json("PUT", body)),
     get: () => request<User>("/api/me"),
     saveMemory: (notes: string[]) => request<User>("/api/me/assistant-memory", json("PUT", { notes })),
     update: (body: { name?: string | null; timezone?: string; rewards_enabled?: boolean }) =>
@@ -299,7 +302,17 @@ export const api = {
     update: (id: number, body: { name?: string; color?: TagColor; counts_progress?: boolean }) => request<Tag>(`/api/tags/${id}`, json("PATCH", body), "tag_update"),
     remove: (id: number) => request<void>(`/api/tags/${id}`, { method: "DELETE" }, "tag_delete"),
   },
+  proactivity: {
+    catalog: () => request<{ questions: import("./types").ProactivityQuestion[] }>("/api/admin/proactivity"),
+    save: (body: import("./types").ProactivityQuestionSave, id?: number) =>
+      request<import("./types").ProactivityQuestion>(`/api/admin/proactivity/questions${id ? `/${id}` : ""}`, json(id ? "PUT" : "POST", body)),
+    remove: (id: number) => request<void>(`/api/admin/proactivity/questions/${id}`, { method: "DELETE" }),
+  },
   assistant: {
+    inbox: (after = 0, includeMessages = true) => request<{ unread: number; messages: HistoryMessage[] }>(`/api/assistant/inbox?after=${after}&include_messages=${includeMessages}`),
+    read: (throughId: number) => request<{ read: boolean }>("/api/assistant/read", json("POST", { through_id: throughId })),
+    openOffer: (id: number) => request<AssistantReply>(`/api/assistant/messages/${id}/proposal`, { method: "POST" }),
+    dismissOffer: (id: number) => request<{ dismissed: boolean }>(`/api/assistant/messages/${id}/dismiss`, { method: "POST" }),
     /** Ответ ассистента и id сообщения, по которому его можно оценить. */
     chat: (text: string) =>
       request<AssistantReply & { message_id?: number }>("/api/assistant/chat", json("POST", { text }), "assistant_message"),

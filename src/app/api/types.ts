@@ -1,3 +1,15 @@
+export interface ProactivityQuestionSave {
+  text: string;
+  text_en: string | null;
+  prompts: string[];
+  prompts_en: string[];
+  group_id: string | null;
+  scenario: "study" | "work" | "personal" | "day" | null;
+  active: boolean;
+  position: number;
+}
+export interface ProactivityQuestion extends ProactivityQuestionSave { id: number; asked: number }
+
 export interface User {
   id: number;
   email: string;
@@ -275,7 +287,7 @@ export interface ChatQuestion {
 }
 
 /** What the assistant answers; any kind may carry a team question and ready answers to send with one tap. */
-export type AssistantReply = AssistantReplyBody & { question?: ChatQuestion; replies?: string[] };
+export type AssistantReply = AssistantReplyBody & { message_id?: number; question?: ChatQuestion; replies?: string[]; proactivity?: { status: "offered" | "proposed" | "dismissed" } };
 
 type AssistantReplyBody =
   | {

@@ -2,6 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent, type RefObject } from "react";
 import { pasteFiles } from "../lib/files";
 import { ApiError, api } from "../api/client";
+import { useAssistantInbox } from "../lib/assistantInbox";
 import { TeamTaskAccept } from "../components/TeamTaskAccept";
 import { AssignedTaskSchedule } from "../components/AssignedTaskSchedule";
 import { TelegramPrompt } from "../components/TelegramPrompt";
@@ -90,6 +91,27 @@ let messageId = 0;
 const FRIEND_POLL_MS = 15000;
 const FRIEND_KINDS = ["friend_task", "friend_invite", "team_task", "send_draft", "send_drafts"];
 
+function ProactiveOffer({ messageId, reply, onReply, onAppend }: { messageId: number; reply: AssistantReply; onReply: (reply: AssistantReply) => void; onAppend: (reply: AssistantReply) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const act = async (open: boolean) => {
+    setBusy(true); setError(null);
+    try {
+      if (open) onAppend(await api.assistant.openOffer(messageId));
+      else await api.assistant.dismissOffer(messageId);
+      onReply({ ...reply, proactivity: { status: open ? "proposed" : "dismissed" } });
+    } catch (err) { setError(errorText(err)); }
+    finally { setBusy(false); }
+  };
+  return <div className="space-y-2">
+    {reply.proactivity?.status === "offered" ? <div className="flex flex-wrap gap-2">
+      <Button size="sm" disabled={busy} onClick={() => act(true)}>{tr("Посмотреть черновик", "Review draft")}</Button>
+      <Button size="sm" disabled={busy} onClick={() => act(false)}>{tr("Не сейчас", "Not now")}</Button>
+    </div> : <p className="text-xs text-gray-500">{reply.proactivity?.status === "proposed" ? tr("Черновик ниже — проверьте и подтвердите", "Review and confirm the draft below") : tr("Предложение отклонено", "Offer dismissed")}</p>}
+    {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}
+  </div>;
+}
+
 function fromHistory(items: HistoryMessage[]): Message[] {
   return items.map((item) =>
     item.role === "user"
@@ -128,6 +150,7 @@ export function AssistantPage() {
  */
 export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onClose?: () => void }) {
   const { query } = useLocation();
+  const inbox = useAssistantInbox();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -155,9 +178,10 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     if (!loaded) return;
     const poll = () => {
       if (document.hidden) return;
-      api.friends
+      api.assistant
         .inbox(latest.current)
-        .then((items) => {
+        .then(({ messages: items, unread }) => {
+          useAssistantInbox.getState().setUnread(unread);
           if (!items.length) return;
           setMessages((current) => {
             const known = new Set(current.map((item) => (item.role === "assistant" ? item.serverId : undefined)));
@@ -181,6 +205,21 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
     list.scrollTo({ top: list.scrollHeight, behavior: placed.current ? "smooth" : "auto" });
     placed.current = true;
   }, [messages, busy, loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    const read = () => {
+      if (document.hidden || !document.hasFocus() || !latest.current) return;
+      api.assistant.read(latest.current).then(() => inbox.refresh()).catch(() => undefined);
+    };
+    read();
+    window.addEventListener("focus", read);
+    document.addEventListener("visibilitychange", read);
+    return () => {
+      window.removeEventListener("focus", read);
+      document.removeEventListener("visibilitychange", read);
+    };
+  }, [loaded, messages]);
 
   const [clearing, setClearing] = useState(false);
   const reportError = useErrorToast();
@@ -212,7 +251,11 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
   // A tag the assistant has just created is not in the list loaded before
   const { byId: tagsById } = useTags();
 
-  const push = (message: Message) => setMessages((items) => [...items, message]);
+  const push = (message: Message) => setMessages((items) =>
+    message.role === "assistant" && message.serverId && items.some((item) => item.role === "assistant" && item.serverId === message.serverId)
+      ? items
+      : [...items, message]
+  );
 
   const refreshDraftCards = async () => {
     try {
@@ -415,7 +458,7 @@ export function AssistantChat({ panel = false, onClose }: { panel?: boolean; onC
             key={message.id}
             message={message}
             onReply={replace}
-            onAppend={(reply) => push({ id: ++messageId, role: "assistant", reply })}
+            onAppend={(reply) => push({ id: ++messageId, role: "assistant", reply, serverId: reply.message_id })}
             onSend={position === messages.length - 1 && !busy ? send : undefined}
             send={busy ? undefined : send}
           />
@@ -678,6 +721,7 @@ function ChatMessage({
               ))}
             </div>
           )}
+          {reply.proactivity && message.serverId && <ProactiveOffer messageId={message.serverId} reply={reply} onReply={(next) => onReply(message.id, next)} onAppend={onAppend} />}
           {reply.question && <QuestionCard question={reply.question} messageId={message.serverId} />}
           {rating}
         </div>
