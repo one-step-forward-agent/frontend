@@ -4,6 +4,7 @@ import { formatSize } from "../lib/format";
 import { useAction, useAsync } from "../lib/hooks";
 import { ConfirmButton, ErrorNote, Loading, useErrorToast } from "./ui";
 import { tr } from "@/i18n";
+import { FileDownload } from "./FileDownload";
 
 export function TeamTaskFiles({ teamId, taskId, count, canManage, onChanged }: {
   teamId: number; taskId: number; count: number; canManage: boolean; onChanged: () => void;
@@ -17,7 +18,7 @@ export function TeamTaskFiles({ teamId, taskId, count, canManage, onChanged }: {
       {files.loading && <Loading />}
       {files.error && <ErrorNote message={files.error} onRetry={files.reload} />}
       {files.data?.map(file => <div key={file.id} className="flex min-w-0 items-center gap-2">
-        <a className="min-w-0 flex-1 break-all underline" href={`/api/teams/${teamId}/tasks/${taskId}/files/${file.id}`} download>{file.filename}</a>
+        <FileDownload className="min-w-0 flex-1 break-all text-left underline" path={`/api/teams/${teamId}/tasks/${taskId}/files/${file.id}`} filename={file.filename} />
         <span className="shrink-0 text-xs text-gray-500">{formatSize(file.size)}</span>
         {canManage && <ConfirmButton size="sm" icon="trash" label={tr("Удалить файл", "Delete file")} busy={pending === String(file.id)} onConfirm={async () => {
           if (await run(String(file.id), async () => { await api.teams.removeTaskFile(teamId, taskId, file.id); return true; })) { files.reload(); onChanged(); }

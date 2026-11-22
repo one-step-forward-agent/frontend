@@ -157,6 +157,21 @@ async function request<T>(path: string, init: RequestInit = {}, goal?: Goal): Pr
   return (await response.json().catch(() => undefined)) as T;
 }
 
+/** Download only successful responses, using the same session refresh as other API calls. */
+export async function downloadFile(path: string, filename: string): Promise<void> {
+  const response = await send(path);
+  if (!response.ok) throw await errorFrom(response);
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  // Give the browser time to start reading the blob before releasing it.
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 const json = (method: string, body?: unknown): RequestInit => ({
   method,
   headers: { "Content-Type": "application/json" },

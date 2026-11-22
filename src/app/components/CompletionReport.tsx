@@ -6,6 +6,7 @@ import { errorText, formatSize } from "../lib/format";
 import { useAsync } from "../lib/hooks";
 import { Button, ConfirmButton, Dialog, ErrorNote, Field, Loading } from "./ui";
 import { TaskFilePicker } from "./TaskFilePicker";
+import { FileDownload } from "./FileDownload";
 import { tr } from "@/i18n";
 
 export function CompletionReportProvider({ children }: { children: ReactNode }) {
@@ -29,7 +30,7 @@ export function CompletionReportProvider({ children }: { children: ReactNode }) 
 
 function ReportFiles({ files, onRemove, busy }: { files: Report["files"]; onRemove?: (id: number) => void; busy?: boolean }) {
   return <ul className="space-y-2">{files.map(file => <li key={file.id} className="flex min-w-0 items-center gap-2 text-sm">
-    <a href={`/api/completion-files/${file.id}`} download className="min-w-0 flex-1 break-all text-sky-700 underline dark:text-sky-300">{file.filename}</a>
+    <FileDownload path={`/api/completion-files/${file.id}`} filename={file.filename} className="min-w-0 flex-1 break-all text-left text-sky-700 underline dark:text-sky-300" />
     <span className="shrink-0 text-xs text-gray-500">{formatSize(file.size)}</span>
     {onRemove && <ConfirmButton icon="trash" size="sm" label={tr("Удалить файл", "Delete file")} busy={busy} onConfirm={() => onRemove(file.id)} />}
   </li>)}</ul>;

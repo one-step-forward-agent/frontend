@@ -37,6 +37,7 @@ import { GlassCard, GLASS_BODY_FLAT } from "@/components/dashboard/glass";
 import { tr } from "@/i18n";
 import { EVENT_FILE_TYPES } from "../lib/files";
 import { CompletionReportSection } from "../components/CompletionReport";
+import { FileDownload } from "../components/FileDownload";
 import { eventReportTarget, offerCompletionReport } from "../lib/completion";
 
 const GLASS_BODY = GLASS_BODY_FLAT;
@@ -400,9 +401,7 @@ function EventFiles({ eventId }: { eventId: number }) {
                 size={16}
                 className="shrink-0 text-gray-500 dark:text-gray-400"
               />
-              <span className="truncate flex-1 min-w-0 text-sm text-gray-900 dark:text-white">
-                {file.filename}
-              </span>
+              <FileDownload path={`/api/files/${file.id}`} filename={file.filename} className="truncate flex-1 min-w-0 text-left text-sm text-sky-700 underline dark:text-sky-300" />
               <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
                 {formatSize(file.size)}
               </span>
