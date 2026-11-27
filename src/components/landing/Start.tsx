@@ -968,11 +968,29 @@ const useIsDarkTheme = () => {
   return isDark;
 };
 
+const FunctionalPagePreview: React.FC<{ item: typeof SCREENSHOTS[number] }> = ({ item }) => {
+  const rows: Record<string, string[]> = {
+    today: ["Задачи · 1/4", "12:00 · Созвон с командой", "15:00–18:00 · Поставка рабочих ТЗОБ", "Без времени", "Схематехника: Лабораторная работа №4", "Прогресс · 1 из 4 выполнено сегодня"],
+    assistant: ["Ассистент", "Поставить задачу: «Составить весь маркетинговый ролик»", "Составить весь маркетинговый ролик", "28.10.2026 · 17:00–18:00", "Google Calendar · Яндекс Календарь · Apple Calendar", "Советы · Анализ идеи"],
+    commandprojects: ["DeylaProduction", "Команды · Проекты · Участники", "Разработка · 5 задач", "Аналитика · 2 задачи", "SEO · 5 задач", "Marketing · 4 задачи"],
+    comandassistant: ["Ассистент команды @DeylaProduction", "Задача поставлена. Готова выполнить её, в том числе через Gmail: найду контакты и отправлю письма.", "Поставь задачу другу сделать маркетинговый «вечный план» на товары только сегодня", "Оформить · Изменить · Отмена"],
+    doingforme: ["Ассистент", "Egor Andreyev вам прислал задачу: «Поднять Production» · хотите, я сделаю это сама?", "Сделай за меня"],
+    friends: ["Друзья", "Как мне помочь?", "Задайте вопрос", "Пригласите друзей", "Ваши друзья", "Александр Андреевич · На этой неделе"],
+    gamification: ["Активность · Вся активность · Учёба", "Уровень 1 · 90 опыта", "Для уровня 2 — 10 уроков", "Учёба · Новое · Практика · Мастер", "Работа · Новое · Практика · Мастер"],
+  };
+  const content = rows[item.id] ?? [];
+  return (
+    <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900" aria-label={item.title}>
+      {item.id !== "gamification" && <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-blue-500"/><span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Deyla</span><span className="ml-auto text-xs text-slate-400">⌕　⋯</span></div>}
+      <div className="space-y-3 p-4 md:p-6">
+        {content.map((line, index) => <div key={line} className={cn("rounded-xl px-3 py-2 text-xs md:text-sm", index === 0 ? "bg-slate-50 font-semibold text-slate-800 dark:bg-slate-800 dark:text-white" : index === content.length - 1 ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-200" : "border border-slate-100 text-slate-600 dark:border-slate-800 dark:text-slate-300")}>{line}</div>)}
+        {item.id === "gamification" && <div className="flex h-28 items-end gap-1 rounded-xl bg-gradient-to-br from-violet-50 to-blue-50 p-3 dark:from-violet-950 dark:to-blue-950">{Array.from({ length: 18 }, (_, i) => <span key={i} className={cn("flex-1 rounded-sm", i % 3 === 0 ? "h-4 bg-violet-300" : i % 2 ? "h-8 bg-emerald-300" : "h-6 bg-blue-300")} />)}</div>}
+      </div>
+    </div>
+  );
+};
+
 const SlideScreenshot: React.FC<{ mobile: boolean; item: typeof SCREENSHOTS[0]; onStart: () => void }> = ({ mobile, item, onStart }) => {
-  const isDark = useIsDarkTheme();
-  const imgSrc = isDark ? item.darkImage : item.lightImage;
-  const isGamification = item.id === "gamification";
-  
   return (
     <div className={SLIDE_PAD(mobile)}>
       <div className={cn("max-w-6xl mx-auto", SLIDE_INNER(mobile))}>
@@ -980,17 +998,7 @@ const SlideScreenshot: React.FC<{ mobile: boolean; item: typeof SCREENSHOTS[0]; 
           <SlideCaption title={item.title} bullets={item.bullets} onStart={onStart} />
           <div className="relative flex justify-center">
             <div className="relative inline-block isolate w-full max-w-xl">
-              <img 
-                src={imgSrc} 
-                alt={item.title} 
-                className={cn("block w-full h-auto", !isGamification && "rounded-2xl shadow-2xl")} 
-                style={{ 
-                  maxHeight: "70vh", 
-                  objectFit: "contain",
-                  filter: isGamification ? "drop-shadow(0 20px 40px rgba(0,0,0,0.25))" : undefined
-                }} 
-                loading="lazy" 
-              />
+              <FunctionalPagePreview item={item} />
             </div>
           </div>
         </div>

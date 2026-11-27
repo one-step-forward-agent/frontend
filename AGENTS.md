@@ -1,11 +1,15 @@
-# Frontend instructions
-When this checkout is inside Dayla_AI, also read `../AGENTS.md` and `../codex-setup/commands.md`; they may not be auto-discovered when starting inside this Git root.
+# Frontend Deyla
 
-- `src/App.tsx` owns public/auth/onboarding routing and providers. `src/app/AppRoutes.tsx` and `src/app/router.tsx` implement the authenticated `/app` route layer and navigation bridge. Preserve `/app` prefixes in bot/deep links and login return paths.
-- Extend `src/app/api/client.ts` and `types.ts` for API work; keep same-origin credentials, the single refresh retry, `ApiError` sanitization and `Accept-Language`. Use `src/store/authStore.ts`; do not add a second session store or persist access tokens in browser storage.
-- Reuse `src/app/components/ui.tsx` and `src/app/app.css` for app screens; `src/components/ui/`, Tailwind and glass helpers serve public/onboarding pages. Inspect the screen's layer before introducing primitives. Use the `@/` alias and existing functional components/hooks.
-- Preserve `src/theme.tsx`, `public/theme-init.js`, class-based dark mode and system theme. Localize via `src/i18n.ts` / `tr`. Check both languages, light/dark, narrow phone layouts, keyboard focus and dialog behavior for changed UI. Check `Start.tsx` animation cleanup and mobile static icon layout when touching onboarding.
-- `VITE_DEV_AUTH_BYPASS` is DEV-only and explicitly opt-in. It mocks frontend identity, not backend authorization; never use it as evidence that real auth works.
-- From this directory: `npm.cmd ci`, `npm.cmd run dev`, `npm.cmd run typecheck`, `npm.cmd run build` (use `npm` off Windows). Node 24 matches the Docker build. `preview` serves built assets without the dev API proxy.
-- There is no configured lint/format script, frontend unit runner or browser test suite. Do not invent successful checks or add frameworks as incidental work. Run a browser review against a local app when available and report its actual scope.
-- Review Nginx CSP, proxy paths, forwarded headers and upload limits when changing network-facing behavior. Keep secrets out of `VITE_*`, which are public build inputs.
+Это отдельный Git-репозиторий веб-клиента на React, TypeScript и Vite. Если он открыт в составе Dayla_AI, учитывай также существующие `../AGENTS.md` и `../codex-setup/commands.md`. Для изменений экранов и их проверки используй [скилл фронтенда](.agents/skills/deyla-frontend/SKILL.md).
+
+## Где менять код
+
+- Вход приложения — `src/main.tsx`. Публичные страницы, авторизация, административные маршруты и провайдеры подключены в `src/App.tsx`. Личный кабинет сопоставляет пути с экранами в `src/app/AppRoutes.tsx`. Его навигационный слой в `src/app/router.tsx` добавляет префикс `/app`. Сохраняй адреса внешних ссылок и возврат после входа.
+- Расширяй `src/app/api/client.ts` и типы в `src/app/api/types.ts`. Сохраняй отправку cookie для своего origin, однократный повтор после обновления сессии, обработку ошибок через `ApiError` и заголовок `Accept-Language`. Состояние пользователя ведёт `src/store/authStore.ts`. Токены доступа должны оставаться вне браузерных хранилищ.
+- Для кабинета используй компоненты `src/app/components/ui.tsx` и стили `src/app/app.css`. Для публичных страниц и онбординга доступны `src/components/ui/`, Tailwind и утилиты из `src/styles/glass.ts`. Следуй импортам соседнего экрана, используй существующие функциональные компоненты, хуки и алиас `@/`.
+- Тему задают `public/theme-init.js` до загрузки React и `src/theme.tsx` после запуска. Сохраняй класс тёмной темы и поддержку системных настроек. Для переводов используй `src/i18n.ts` и `tr`.
+- Для изменений сетевого поведения проверь соответствующие пути прокси, CSP, передаваемые заголовки и ограничения загрузки в `vite.config.ts` и `nginx.conf.template`. Значения `VITE_*` доступны в клиентской сборке.
+
+## Локальные команды
+
+Из корня Frontend используй Node 24 и npm (в Windows доступен `npm.cmd`). Установи зависимости через `npm ci`, запусти сервер через `npm run dev`. Проверка TypeScript — `npm run typecheck`, полная сборка — `npm run build`. Команда `npm run preview` обслуживает сборку без прокси dev-сервера. В `package.json` отсутствуют команды линтера, форматирования и тестов. Для изменённого интерфейса проверь доступный локальный сценарий в браузере и укажи, какие состояния удалось воспроизвести.
